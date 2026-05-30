@@ -1,18 +1,18 @@
 #' S7 class definitions for plotit
 #'
-#' @import S7 ggplot2 cli
+#' @name plotit-class
 #' @keywords internal
 NULL
 
-plotit_labels <- new_class(
+plotit_labels <- S7::new_class(
   "plotit_labels",
   properties = list(
-    title = class_character | NULL,
-    subtitle = class_character | NULL,
-    caption = class_character | NULL,
-    x = class_character | NULL,
-    y = class_character | NULL,
-    legend = class_list | NULL
+    title = S7::class_character | NULL,
+    subtitle = S7::class_character | NULL,
+    caption = S7::class_character | NULL,
+    x = S7::class_character | NULL,
+    y = S7::class_character | NULL,
+    legend = S7::class_list | NULL
   ),
   constructor = function(
     title = NULL,
@@ -22,8 +22,8 @@ plotit_labels <- new_class(
     y = NULL,
     legend = list()
   ) {
-    new_object(
-      S7_object(),
+    S7::new_object(
+      S7::S7_object(),
       title = title,
       subtitle = subtitle,
       caption = caption,
@@ -34,15 +34,15 @@ plotit_labels <- new_class(
   }
 )
 
-plotit_metadata <- new_class(
+plotit_metadata <- S7::new_class(
   "plotit_metadata",
   properties = list(
-    autofit = class_logical,
-    width = class_numeric | NULL,
-    height = class_numeric | NULL,
-    unit = class_character | NULL,
-    dodge = class_numeric | NULL,
-    default_color = class_character | NULL,
+    autofit = S7::class_logical,
+    width = S7::class_numeric | NULL,
+    height = S7::class_numeric | NULL,
+    unit = S7::class_character | NULL,
+    dodge = S7::class_numeric | NULL,
+    default_color = S7::class_character | NULL,
     labels = plotit_labels
   ),
   constructor = function(
@@ -60,8 +60,8 @@ plotit_metadata <- new_class(
         cli::cli_abort("{.arg unit} must be one of {.val {valid_units}}.")
       }
     }
-    new_object(
-      S7_object(),
+    S7::new_object(
+      S7::S7_object(),
       autofit = autofit,
       width = width,
       height = height,
@@ -73,10 +73,10 @@ plotit_metadata <- new_class(
   }
 )
 
-plotit <- new_class(
+plotit_class <- S7::new_class(
   "plotit",
   properties = list(
-    gg = class_any,
+    gg = S7::class_any,
     meta = plotit_metadata
   ),
   validator = function(self) {

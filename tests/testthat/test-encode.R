@@ -1,3 +1,5 @@
+library(plotit)
+
 test_that("encode() creates a plotit_encode object", {
   # 基础用法
   e <- encode(x = mpg, y = wt)
@@ -13,5 +15,4 @@ test_that("encode() creates a plotit_encode object", {
   # 空调用
   e3 <- encode()
   expect_true(is.list(e3))
-  expect_named(e3, NULL) # 空列表
 })

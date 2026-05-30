@@ -1,6 +1,6 @@
-# 在 R/export.R 中
-
 #' Export a plotit object to a file
+#'
+#' @include class.R utils.R
 #'
 #' @param plot A plotit object.
 #' @param filename Output filename (extension determines device, e.g., ".pdf").
@@ -23,12 +23,12 @@ export <- S7::new_generic(
     device = NULL,
     ...
   ) {
-    S7_dispatch()
+    S7::S7_dispatch()
   }
 )
 
 #' @export
-S7::method(export, plotit) <- function(
+S7::method(export, plotit_class) <- function(
   plot,
   filename,
   width = NULL,
@@ -40,10 +40,10 @@ S7::method(export, plotit) <- function(
   # 确定最终尺寸
   final_width <- width %||%
     plot@meta@width %||%
-    getOption("plotit.default_width", 6)
+    getOption("plotit.default_width", 7)
   final_height <- height %||%
     plot@meta@height %||%
-    getOption("plotit.default_height", 4)
+    getOption("plotit.default_height", 5)
 
   if (isTRUE(plot@meta@autofit)) {
     final_width <- NULL

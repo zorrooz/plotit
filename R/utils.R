@@ -1,4 +1,8 @@
-`%>%` <- dplyr::`%>%`
+#' Internal utility functions for plotit
+#'
+#' @noRd
+#' @keywords internal
+NULL
 
 # Null coalescing operator
 `%||%` <- function(x, y) {
@@ -12,7 +16,7 @@ is_discrete <- function(data, var) {
   }
   tryCatch(
     {
-      col <- rlang::eval_tidy(var, data = data)
+      col <- eval(ggplot2::quo_get_expr(var), data, parent.frame())
       is.factor(col) || is.character(col) || is.logical(col)
     },
     error = function(e) FALSE
