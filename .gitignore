@@ -8,3 +8,6 @@ CLAUDE.md
 /.quarto/
 **/*.quarto_ipynb
 playground.R
+Rplots.pdf
+tests/testthat/Rplots.pdf
+.reasonix/
