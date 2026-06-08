@@ -20,7 +20,7 @@ plotit_labels <- S7::new_class(
     caption = NULL,
     x = NULL,
     y = NULL,
-    legend = list()
+    legend = NULL
   ) {
     S7::new_object(
       S7::S7_object(),

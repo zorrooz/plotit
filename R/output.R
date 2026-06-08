@@ -14,8 +14,8 @@ S7::method(print, plotit_class) <- function(x, ...) {
     x@gg <- x@gg + plotit_theme_default()
     attr(x@gg$theme, "plotit_applied") <- TRUE
   }
-  # 若有指定尺寸，以指定尺寸打开设备（dev.new 始终使用英寸）
-  if (!is.null(x@meta@width) && !is.null(x@meta@height)) {
+  # 若有指定尺寸且为交互会话，以指定尺寸打开设备（dev.new 始终使用英寸）
+  if (interactive() && !is.null(x@meta@width) && !is.null(x@meta@height)) {
     unit_factor <- switch(x@meta@unit %||% "in",
       "in" = 1,
       "cm" = 2.54,
@@ -69,6 +69,10 @@ S7::method(export, plotit_class) <- function(
   device = NULL,
   ...
 ) {
+  if (is.null(filename) || identical(filename, "")) {
+    cli::cli_abort("{.arg filename} must be a non-empty file path.")
+  }
+
   final_width <- width %||%
     plot@meta@width %||%
     getOption("plotit.default_width", 7)

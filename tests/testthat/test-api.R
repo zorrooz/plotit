@@ -178,6 +178,17 @@ test_that("export() 可导出 PNG 和 PDF", {
   expect_no_error(export(p, tempfile(fileext = ".pdf")))
 })
 
+test_that("set_size + export round-trip: dimensions propagate correctly", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
+              autofit = TRUE) |>
+    mark_point() |>
+    set_size(width = 6, height = 4, unit = "cm")
+  expect_false(p@meta@autofit)           # set_size clears autofit
+  expect_equal(p@meta@width, 6)
+  expect_equal(p@meta@height, 4)
+  expect_no_error(export(p, tempfile(fileext = ".png"), dpi = 72))
+})
+
 # ---- mark_bar / mark_boxplot ----
 test_that("mark_bar 添加柱状图层后返回 plotit 对象", {
   p <- plotit(iris, encode(x = Species))

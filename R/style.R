@@ -1,6 +1,6 @@
 #' Build default plotit theme
 #'
-#' @include class.R
+#' @include class.R utils.R
 #' @return A ggplot2 theme object.
 #' @keywords internal
 plotit_theme_default <- function(base_size = NULL, base_family = NULL) {
@@ -13,6 +13,8 @@ plotit_theme_default <- function(base_size = NULL, base_family = NULL) {
       panel.background = ggplot2::element_rect(fill = NA, colour = NA),
       legend.background = ggplot2::element_rect(fill = NA, colour = NA),
       legend.key = ggplot2::element_rect(fill = NA, colour = NA),
+      legend.box.background = ggplot2::element_rect(fill = NA, colour = NA),
+      legend.box.spacing = ggplot2::unit(0, "cm"),
       strip.background = ggplot2::element_rect(fill = NA, colour = NA),
       # 仅保留主要网格线
       panel.grid.minor = ggplot2::element_blank(),

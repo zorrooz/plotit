@@ -86,6 +86,10 @@ S7::method(set_size, plotit_class) <- function(
   height = NULL,
   unit = NULL
 ) {
+  # Setting explicit dimensions overrides autofit
+  if (!is.null(width) || !is.null(height) || !is.null(unit)) {
+    plot@meta@autofit <- FALSE
+  }
   if (!is.null(width)) {
     plot@meta@width <- width
   }

@@ -145,6 +145,9 @@ S7::method(label_axis, plotit_class) <- function(plot, text = NULL, aes = NULL, 
   if (is.null(aes)) {
     cli::cli_abort("{.arg aes} must be specified: {.code aes = \"x\"} or {.code aes = \"y\"}.")
   }
+  if (!(aes %in% c("x", "y"))) {
+    cli::cli_abort("{.arg aes} must be one of {.val c('x', 'y')}, not {.val {aes}}.")
+  }
 
   if (.label_hide(text)) {
     S7::prop(plot@meta@labels, aes) <- NULL
@@ -195,6 +198,10 @@ S7::method(label_legend, plotit_class) <- function(plot, text = NULL, aes = NULL
   } else {
     plot@meta@labels@legend[[aes]] <- if (.label_hide(text) || .label_default(text)) NULL else text
     plot@gg <- .label_set_aes(plot@gg, aes, text)
+    # 若 aes 不在当前映射中，给出友好提示
+    if (!(aes %in% names(plot@gg$mapping))) {
+      cli::cli_warn("Aesthetic {.val {aes}} is not present in the plot mapping.")
+    }
   }
   plot
 }
