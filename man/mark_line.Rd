@@ -4,7 +4,14 @@
 \alias{mark_line}
 \title{Generic for adding a line layer}
 \usage{
-mark_line(plot, mapping = NULL, data = NULL, ...)
+mark_line(
+  plot,
+  mapping = NULL,
+  data = NULL,
+  ...,
+  rasterize = FALSE,
+  rasterize_dpi = 300
+)
 }
 \arguments{
 \item{plot}{A plotit object}

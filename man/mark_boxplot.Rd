@@ -4,7 +4,14 @@
 \alias{mark_boxplot}
 \title{Generic for adding a boxplot layer}
 \usage{
-mark_boxplot(plot, mapping = NULL, data = NULL, ...)
+mark_boxplot(
+  plot,
+  mapping = NULL,
+  data = NULL,
+  ...,
+  rasterize = FALSE,
+  rasterize_dpi = 300
+)
 }
 \arguments{
 \item{plot}{A plotit object}

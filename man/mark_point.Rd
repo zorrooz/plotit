@@ -4,7 +4,14 @@
 \alias{mark_point}
 \title{Generic for adding a point layer}
 \usage{
-mark_point(plot, mapping = NULL, data = NULL, ...)
+mark_point(
+  plot,
+  mapping = NULL,
+  data = NULL,
+  ...,
+  rasterize = FALSE,
+  rasterize_dpi = 300
+)
 }
 \arguments{
 \item{plot}{A plotit object}
