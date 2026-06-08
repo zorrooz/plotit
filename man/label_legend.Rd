@@ -4,15 +4,14 @@
 \alias{label_legend}
 \title{Generic for setting legend title(s)}
 \usage{
-label_legend(plot, title = NULL, aesthetic = NULL, ...)
+label_legend(plot, text = NULL, aes = NULL, ...)
 }
 \arguments{
 \item{plot}{A plotit object}
 
-\item{title}{Legend title text}
+\item{text}{Legend title text. \code{NULL} = skip, \code{FALSE} = hide, \code{TRUE} = variable name, \code{"str"} = custom}
 
-\item{aesthetic}{Aesthetic to apply the title to (e.g. "colour", "fill").
-If \code{NULL}, applies to all currently mapped aesthetics.}
+\item{aes}{Aesthetic to apply to (e.g. \code{"colour"}, \code{"fill"}). \code{NULL} = all mapped aesthetics.}
 
 \item{...}{Currently unused}
 }

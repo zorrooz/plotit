@@ -11,7 +11,7 @@ NULL
 scale_color <- S7::new_generic(
   "scale_color",
   "plot",
-  function(plot, name = NULL, ...) {
+  function(plot, name = ggplot2::waiver(), ...) {
     S7::S7_dispatch()
   }
 )
@@ -27,7 +27,7 @@ scale_color <- S7::new_generic(
 }
 
 #' @export
-S7::method(scale_color, plotit_class) <- function(plot, name = NULL, ...) {
+S7::method(scale_color, plotit_class) <- function(plot, name = ggplot2::waiver(), ...) {
   plot <- .reset_default_color(plot)
   plot@gg <- plot@gg + ggplot2::scale_color_discrete(name = name, ...)
   plot
@@ -43,13 +43,13 @@ S7::method(scale_color, plotit_class) <- function(plot, name = NULL, ...) {
 scale_fill <- S7::new_generic(
   "scale_fill",
   "plot",
-  function(plot, name = NULL, ...) {
+  function(plot, name = ggplot2::waiver(), ...) {
     S7::S7_dispatch()
   }
 )
 
 #' @export
-S7::method(scale_fill, plotit_class) <- function(plot, name = NULL, ...) {
+S7::method(scale_fill, plotit_class) <- function(plot, name = ggplot2::waiver(), ...) {
   plot <- .reset_default_color(plot)
   plot@gg <- plot@gg + ggplot2::scale_fill_discrete(name = name, ...)
   plot

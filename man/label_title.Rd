@@ -9,7 +9,7 @@ label_title(plot, text = NULL, ...)
 \arguments{
 \item{plot}{A plotit object}
 
-\item{text}{Title text}
+\item{text}{Title text. \code{NULL} = skip, \code{FALSE} = hide, \code{TRUE} = default, \code{"str"} = custom}
 
 \item{...}{Currently unused}
 }

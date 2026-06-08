@@ -9,7 +9,7 @@ label_caption(plot, text = NULL, ...)
 \arguments{
 \item{plot}{A plotit object}
 
-\item{text}{Caption text}
+\item{text}{Caption text. \code{NULL} = skip, \code{FALSE} = hide, \code{TRUE} = default, \code{"str"} = custom}
 
 \item{...}{Currently unused}
 }

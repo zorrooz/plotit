@@ -4,14 +4,14 @@
 \alias{label_axis}
 \title{Generic for setting axis titles}
 \usage{
-label_axis(plot, x = NULL, y = NULL, ...)
+label_axis(plot, text = NULL, aes = NULL, ...)
 }
 \arguments{
 \item{plot}{A plotit object}
 
-\item{x}{X-axis title (character)}
+\item{text}{Axis title text. \code{NULL} = skip, \code{FALSE} = hide, \code{TRUE} = variable name, \code{"str"} = custom}
 
-\item{y}{Y-axis title (character)}
+\item{aes}{Which axis to apply to: \code{"x"} or \code{"y"} (required).}
 
 \item{...}{Currently unused}
 }

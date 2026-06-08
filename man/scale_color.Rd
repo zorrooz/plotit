@@ -4,7 +4,7 @@
 \alias{scale_color}
 \title{Generic for adding a color scale}
 \usage{
-scale_color(plot, name = NULL, ...)
+scale_color(plot, name = ggplot2::waiver(), ...)
 }
 \arguments{
 \item{plot}{A plotit object}

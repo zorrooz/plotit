@@ -111,7 +111,8 @@ test_that("label_title 同步更新 meta 和 gg", {
 
 test_that("label_axis 同步更新 x/y 轴标签", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
-  p <- label_axis(p, x = "X轴", y = "Y轴")
+  p <- label_axis(p, text = "X轴", aes = "x")
+  p <- label_axis(p, text = "Y轴", aes = "y")
   expect_equal(p@meta@labels@x, "X轴")
   expect_equal(p@meta@labels@y, "Y轴")
   expect_equal(p@gg$labels$x, "X轴")
@@ -120,7 +121,7 @@ test_that("label_axis 同步更新 x/y 轴标签", {
 
 test_that("label_axis 部分更新时不影响另一轴", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
-  p <- label_axis(p, x = "仅 X")
+  p <- label_axis(p, text = "仅 X", aes = "x")
   expect_equal(p@meta@labels@x, "仅 X")
   expect_null(p@meta@labels@y)
 })
@@ -209,14 +210,14 @@ test_that("label_caption 同步更新 meta 和 gg", {
 
 test_that("label_legend 按 aesthetic 设置图例标题", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species))
-  p <- label_legend(p, title = "物种", aesthetic = "colour")
+  p <- label_legend(p, text = "物种", aes = "colour")
   expect_equal(p@meta@labels@legend[["colour"]], "物种")
   expect_equal(p@gg$labels$colour, "物种")
 })
 
 test_that("label_legend 不指定 aesthetic 时影响所有映射", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species))
-  p <- label_legend(p, title = "全部")
+  p <- label_legend(p, text = "全部")
   expect_equal(p@meta@labels@legend[["default"]], "全部")
   expect_equal(p@gg$labels$colour, "全部")
 })
@@ -310,7 +311,8 @@ test_that("扩展管道链含新功能不崩溃", {
     scale_fill(name = "物种") |>
     label_title("箱线图") |>
     label_subtitle("按鸢尾花种类") |>
-    label_axis(x = "种类", y = "花萼长度") |>
+    label_axis(text = "种类", aes = "x") |>
+    label_axis(text = "花萼长度", aes = "y") |>
     project_flip() |>
     style()
   expect_s3_class(p, "plotit::plotit")

@@ -4,7 +4,7 @@
 \alias{scale_fill}
 \title{Generic for adding a fill scale}
 \usage{
-scale_fill(plot, name = NULL, ...)
+scale_fill(plot, name = ggplot2::waiver(), ...)
 }
 \arguments{
 \item{plot}{A plotit object}

@@ -9,7 +9,7 @@ label_subtitle(plot, text = NULL, ...)
 \arguments{
 \item{plot}{A plotit object}
 
-\item{text}{Subtitle text}
+\item{text}{Subtitle text. \code{NULL} = skip, \code{FALSE} = hide, \code{TRUE} = default, \code{"str"} = custom}
 
 \item{...}{Currently unused}
 }
