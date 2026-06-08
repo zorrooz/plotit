@@ -2,15 +2,31 @@
 NULL
 
 # ---- Internal helpers for label family ----
-# Three-state protocol for all text parameters:
+# Four-state protocol for all text parameters:
 #   NULL  = skip (no change)
 #   FALSE = hide
 #   TRUE  = show default
 #   "str" = show custom text
 
+#' @noRd
 .label_skip <- function(x) is.null(x)
+#' @noRd
 .label_hide <- function(x) identical(x, FALSE)
+#' @noRd
 .label_default <- function(x) isTRUE(x)
+
+# Helper: construct a single-element theme() call with dynamic name
+.theme_el <- function(el, val) {
+  args <- list(val)
+  names(args) <- el
+  do.call(ggplot2::theme, args)
+}
+# Helper: construct a single-element labs() call with dynamic name
+.labs_el <- function(a, val) {
+  args <- list(val)
+  names(args) <- a
+  do.call(ggplot2::labs, args)
+}
 
 # ---- label_title ----
 #' Generic for setting plot title
@@ -107,17 +123,6 @@ S7::method(label_axis, plotit_class) <- function(plot, text = NULL, aes = NULL, 
     cli::cli_abort("{.arg aes} must be specified: {.code aes = \"x\"} or {.code aes = \"y\"}.")
   }
 
-  .theme_el <- function(el, val) {
-    args <- list(val)
-    names(args) <- el
-    do.call(ggplot2::theme, args)
-  }
-  .labs_el <- function(a, val) {
-    args <- list(val)
-    names(args) <- a
-    do.call(ggplot2::labs, args)
-  }
-
   if (.label_hide(text)) {
     S7::prop(plot@meta@labels, aes) <- NULL
     plot@gg <- plot@gg + .theme_el(paste0("axis.title.", aes), ggplot2::element_blank())
@@ -131,7 +136,7 @@ S7::method(label_axis, plotit_class) <- function(plot, text = NULL, aes = NULL, 
     plot@gg$labels <- labs
   } else {
     S7::prop(plot@meta@labels, aes) <- text
-    plot@gg <- plot@gg + .theme_el(paste0("axis.title.", aes), ggplot2::element_text())
+    plot@gg <- plot@gg + .theme_el(paste0("axis.title.", aes), NULL)
     plot@gg <- plot@gg + .labs_el(aes, text)
   }
   plot

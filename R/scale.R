@@ -85,9 +85,12 @@ S7::method(scale_x, plotit_class) <- function(plot, name = NULL, discrete = NULL
     discrete <- is_discrete(plot@gg$data, plot@gg$mapping$x)
   }
   if (discrete) {
-    plot@gg <- plot@gg + ggplot2::scale_x_discrete(name = name, limits = limits, ...)
+    args <- list(name = name, limits = limits, ...)
+    if (!is.null(breaks)) args$breaks <- breaks
+    plot@gg <- plot@gg + do.call(ggplot2::scale_x_discrete, args)
   } else {
-    args <- list(name = name, limits = limits, breaks = breaks, ...)
+    args <- list(name = name, limits = limits, ...)
+    if (!is.null(breaks)) args$breaks <- breaks
     if (!is.null(trans)) args$trans <- trans
     plot@gg <- plot@gg + do.call(ggplot2::scale_x_continuous, args)
   }
@@ -124,9 +127,12 @@ S7::method(scale_y, plotit_class) <- function(plot, name = NULL, discrete = NULL
     discrete <- is_discrete(plot@gg$data, plot@gg$mapping$y)
   }
   if (discrete) {
-    plot@gg <- plot@gg + ggplot2::scale_y_discrete(name = name, limits = limits, ...)
+    args <- list(name = name, limits = limits, ...)
+    if (!is.null(breaks)) args$breaks <- breaks
+    plot@gg <- plot@gg + do.call(ggplot2::scale_y_discrete, args)
   } else {
-    args <- list(name = name, limits = limits, breaks = breaks, ...)
+    args <- list(name = name, limits = limits, ...)
+    if (!is.null(breaks)) args$breaks <- breaks
     if (!is.null(trans)) args$trans <- trans
     plot@gg <- plot@gg + do.call(ggplot2::scale_y_continuous, args)
   }

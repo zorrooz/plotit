@@ -1,6 +1,8 @@
+#' @include class.R
+NULL
+
 #' Generic for polar coordinate projection
 #'
-#' @include class.R
 #' @param plot A plotit object
 #' @param theta Variable to map to angle ("x" or "y")
 #' @param start Starting angle in radians

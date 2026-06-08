@@ -42,7 +42,7 @@ plotit <- function(
     dodge <- if (disc_x || disc_y) 0.8 else 0
   }
 
-  has_color <- "colour" %in% names(mapping) || "color" %in% names(mapping)
+  has_color <- "colour" %in% names(mapping)
   has_fill <- "fill" %in% names(mapping)
 
   # 单色映射：如果没有颜色/填充映射，使用 default_color 并隐藏图例
@@ -122,6 +122,10 @@ S7::method(set_size, plotit_class) <- function(
     plot@meta@height <- height
   }
   if (!is.null(unit)) {
+    valid_units <- c("in", "cm", "mm")
+    if (!(unit %in% valid_units)) {
+      cli::cli_abort("{.arg unit} must be one of {.val {valid_units}}.")
+    }
     plot@meta@unit <- unit
   }
   plot

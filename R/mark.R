@@ -1,6 +1,8 @@
+#' @include class.R
+NULL
+
 #' Generic for adding a point layer
 #'
-#' @include class.R
 #' @param plot A plotit object
 #' @param mapping Optional new aesthetics
 #' @param data Optional data for this layer
@@ -61,7 +63,15 @@ mark_bar <- S7::new_generic(
 
 #' @export
 S7::method(mark_bar, plotit_class) <- function(plot, mapping = NULL, data = NULL, ...) {
-  plot@gg <- plot@gg + ggplot2::geom_bar(mapping = mapping, data = data, ...)
+  # Auto-detect: if y is mapped, use geom_col (pre-computed values);
+  # otherwise use geom_bar (counts)
+  has_y <- (!is.null(mapping) && !is.null(mapping$y)) ||
+           (!is.null(plot@gg$mapping$y))
+  if (has_y) {
+    plot@gg <- plot@gg + ggplot2::geom_col(mapping = mapping, data = data, ...)
+  } else {
+    plot@gg <- plot@gg + ggplot2::geom_bar(mapping = mapping, data = data, ...)
+  }
   plot
 }
 

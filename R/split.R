@@ -1,6 +1,8 @@
+#' @include class.R
+NULL
+
 #' Generic for wrapping facets
 #'
-#' @include class.R
 #' @param plot A plotit object.
 #' @param ... Variables to facet by, wrapped in `ggplot2::vars()`.
 #' @param nrow Number of rows in the facet grid (optional).
@@ -67,10 +69,7 @@ S7::method(split_grid, plotit_class) <- function(
 ) {
   if (...length() > 0) {
     if (!is.null(rows)) {
-      warning(
-        "Both `...` and `rows` provided; `...` will be used.",
-        call. = FALSE
-      )
+      cli::cli_warn("Both {.code ...} and {.code rows} provided; {.code ...} will be used.")
     }
     rows <- ggplot2::vars(...)
   }

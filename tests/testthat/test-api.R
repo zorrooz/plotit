@@ -222,6 +222,42 @@ test_that("label_legend 不指定 aesthetic 时影响所有映射", {
   expect_equal(p@gg$labels$colour, "全部")
 })
 
+# ---- Four-state protocol tests ----
+test_that("label_title four-state: FALSE hides, TRUE resets, NULL skips", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
+  p1 <- p |> label_title(FALSE)
+  expect_null(p1@gg$labels$title)
+  p2 <- p |> label_title(TRUE)
+  expect_null(p2@gg$labels$title)  # title has no default, same as FALSE
+  p3 <- p |> label_title("Old") |> label_title(NULL)
+  expect_equal(p3@gg$labels$title, "Old")  # NULL = skip
+})
+
+test_that("label_axis four-state: FALSE hides, TRUE shows variable name, NULL skips", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
+  p1 <- p |> label_axis(text = FALSE, aes = "x")
+  expect_true(inherits(p1@gg$theme$axis.title.x, "element_blank"))
+  p2 <- p |> label_axis(text = TRUE, aes = "x")
+  expect_false("x" %in% names(p2@gg$labels))  # key removed → fallback to variable name
+  p3 <- p |> label_axis(text = "Old", aes = "x") |> label_axis(text = NULL, aes = "x")
+  expect_equal(p3@gg$labels$x, "Old")  # NULL = skip
+  # TRUE after custom removes the key
+  p4 <- p |> label_axis(text = "Old", aes = "x") |> label_axis(text = TRUE, aes = "x")
+  expect_false("x" %in% names(p4@gg$labels))
+})
+
+test_that("label_legend four-state: FALSE hides, TRUE shows default, NULL skips", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+    scale_color()
+  p1 <- p |> label_legend(text = FALSE, aes = "colour")
+  expect_null(p1@gg$scales$scales[[1]]$name)  # blanked
+  p2 <- p |> label_legend(text = TRUE, aes = "colour")
+  expect_true(inherits(p2@gg$scales$scales[[1]]$name, "waiver"))  # default
+  p3 <- p |> label_legend(text = "Custom", aes = "colour") |>
+    label_legend(text = NULL, aes = "colour")
+  expect_equal(p3@gg$scales$scales[[1]]$name, "Custom")  # NULL = skip
+})
+
 # ---- scale_x / scale_y ----
 test_that("scale_x 使用连续尺度", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
