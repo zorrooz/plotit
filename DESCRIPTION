@@ -17,7 +17,8 @@ Config/testthat/edition: 3
 Imports: 
     ggplot2,
     S7,
-    cli
+    cli,
+    patchwork
 Collate: 
     'class.R'
     'encode.R'
