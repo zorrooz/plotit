@@ -10,7 +10,8 @@ mark_boxplot(
   data = NULL,
   ...,
   rasterize = FALSE,
-  rasterize_dpi = 300
+  rasterize_dpi = 300,
+  rasterize_dev = "cairo"
 )
 }
 \arguments{
