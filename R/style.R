@@ -8,6 +8,12 @@ plotit_theme_default <- function(base_size = NULL, base_family = NULL) {
     base_size = base_size %||% 11,
     base_family = base_family %||% ""
   ) + ggplot2::theme(
+      # 透明背景（固定面板尺寸时多余区域透明）
+      plot.background = ggplot2::element_rect(fill = NA, colour = NA),
+      panel.background = ggplot2::element_rect(fill = NA, colour = NA),
+      legend.background = ggplot2::element_rect(fill = NA, colour = NA),
+      legend.key = ggplot2::element_rect(fill = NA, colour = NA),
+      strip.background = ggplot2::element_rect(fill = NA, colour = NA),
       # 仅保留主要网格线
       panel.grid.minor = ggplot2::element_blank(),
       panel.grid.major = ggplot2::element_line(
@@ -16,10 +22,8 @@ plotit_theme_default <- function(base_size = NULL, base_family = NULL) {
       # 轴线可见
       axis.line = ggplot2::element_line(colour = "grey50", linewidth = 0.3),
       axis.ticks = ggplot2::element_line(colour = "grey50", linewidth = 0.3),
-      # 图例右侧，背景透明
+      # 图例右侧
       legend.position = "right",
-      legend.background = ggplot2::element_blank(),
-      legend.key = ggplot2::element_blank(),
       # 标题加粗
       plot.title = ggplot2::element_text(face = "bold", hjust = 0),
       plot.subtitle = ggplot2::element_text(hjust = 0),
