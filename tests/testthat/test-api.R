@@ -223,6 +223,11 @@ test_that("label_legend 不指定 aesthetic 时影响所有映射", {
 })
 
 # ---- Four-state protocol tests ----
+test_that("label_axis errors when aes is missing", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
+  expect_error(label_axis(p, text = "X"), "must be specified")
+})
+
 test_that("label_title four-state: FALSE hides, TRUE resets, NULL skips", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
   p1 <- p |> label_title(FALSE)

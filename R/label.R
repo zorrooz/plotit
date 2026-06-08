@@ -28,6 +28,29 @@ NULL
   do.call(ggplot2::labs, args)
 }
 
+# Set legend scale name + labels for a single aesthetic.
+# Scales are ggproto (environment) objects, so the for-loop variable s refers
+# to the actual scale; modifying s$name is equivalent to modifying in-place.
+.label_set_aes <- function(gg, a, val) {
+  if (.label_default(val)) {
+    labs <- gg$labels
+    labs[a] <- NULL
+    gg$labels <- labs
+    final_name <- ggplot2::waiver()
+  } else {
+    labs_val <- if (.label_hide(val)) NULL else val
+    gg <- gg + .labs_el(a, labs_val)
+    final_name <- labs_val
+  }
+  for (s in gg$scales$scales) {
+    if (any(s$aesthetics == a)) {
+      s$name <- final_name
+      break
+    }
+  }
+  gg
+}
+
 # ---- label_title ----
 #' Generic for setting plot title
 #' @param plot A plotit object
@@ -125,15 +148,13 @@ S7::method(label_axis, plotit_class) <- function(plot, text = NULL, aes = NULL, 
 
   if (.label_hide(text)) {
     S7::prop(plot@meta@labels, aes) <- NULL
+    labs <- plot@gg$labels; labs[aes] <- NULL; plot@gg$labels <- labs
     plot@gg <- plot@gg + .theme_el(paste0("axis.title.", aes), ggplot2::element_blank())
   } else if (.label_default(text)) {
     S7::prop(plot@meta@labels, aes) <- NULL
     plot@gg <- plot@gg + .theme_el(paste0("axis.title.", aes), NULL)
-    # Rebuild labels without this aesthetic key so setup_plot_labels()
-    # falls back to the mapping variable name
-    labs <- plot@gg$labels
-    labs[aes] <- NULL
-    plot@gg$labels <- labs
+    # Remove label key so ggplot2 uses the variable name from the mapping
+    labs <- plot@gg$labels; labs[aes] <- NULL; plot@gg$labels <- labs
   } else {
     S7::prop(plot@meta@labels, aes) <- text
     plot@gg <- plot@gg + .theme_el(paste0("axis.title.", aes), NULL)
@@ -162,42 +183,18 @@ label_legend <- S7::new_generic(
 S7::method(label_legend, plotit_class) <- function(plot, text = NULL, aes = NULL, ...) {
   if (.label_skip(text)) return(plot)
 
-  .set_aes <- function(plot, a, val) {
-    if (.label_default(val)) {
-      # Rebuild labels without this aesthetic key so setup_plot_labels()
-      # falls back to the mapping variable name
-      labs <- plot@gg$labels
-      labs[a] <- NULL
-      plot@gg$labels <- labs
-      final_name <- ggplot2::waiver()
-    } else {
-      labs_val <- if (.label_hide(val)) NULL else val
-      labs_args <- list(labs_val)
-      names(labs_args) <- a
-      plot@gg <- plot@gg + do.call(ggplot2::labs, labs_args)
-      final_name <- labs_val
-    }
-    for (s in plot@gg$scales$scales) {
-      if (any(s$aesthetics == a)) {
-        s$name <- final_name
-        break
-      }
-    }
-    plot
-  }
-
   if (is.null(aes)) {
     plot@meta@labels@legend[["default"]] <- if (.label_hide(text) || .label_default(text)) NULL else text
     aes_names <- intersect(
       names(plot@gg$mapping),
-      c("colour", "color", "fill", "shape", "linetype", "size", "alpha")
+      c("colour", "fill", "shape", "linetype", "size", "alpha")
     )
     for (a in aes_names) {
-      plot <- .set_aes(plot, a, text)
+      plot@gg <- .label_set_aes(plot@gg, a, text)
     }
   } else {
     plot@meta@labels@legend[[aes]] <- if (.label_hide(text) || .label_default(text)) NULL else text
-    plot <- .set_aes(plot, aes, text)
+    plot@gg <- .label_set_aes(plot@gg, aes, text)
   }
   plot
 }
