@@ -84,20 +84,20 @@ S7::method(print, plotit_class) <- function(x, ...) {
     x@gg <- x@gg + plotit_theme_default()
     attr(x@gg$theme, "plotit_applied") <- TRUE
   }
-  if (
-    isTRUE(getOption("plotit.preview_lock", FALSE)) &&
-      !is.null(x@meta@width) &&
-      !is.null(x@meta@height)
-  ) {
+  # 若有指定尺寸，以指定尺寸打开设备（dev.new 始终使用英寸）
+  if (!is.null(x@meta@width) && !is.null(x@meta@height)) {
+    unit_factor <- switch(x@meta@unit %||% "in",
+      "in" = 1,
+      "cm" = 2.54,
+      "mm" = 25.4
+    )
     grDevices::dev.new(
-      width = x@meta@width,
-      height = x@meta@height,
+      width = x@meta@width / unit_factor,
+      height = x@meta@height / unit_factor,
       noRStudioGD = TRUE
     )
-    print(x@gg)
-  } else {
-    print(x@gg)
   }
+  print(x@gg)
   invisible(x)
 }
 
