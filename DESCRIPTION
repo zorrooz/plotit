@@ -22,11 +22,11 @@ Imports:
 Collate: 
     'class.R'
     'encode.R'
-    'utils.R'
-    'export.R'
     'label.R'
     'mark.R'
     'style.R'
+    'utils.R'
+    'output.R'
     'plot.R'
     'project.R'
     'scale.R'

@@ -1,6 +1,38 @@
-#' Export a plotit object to a file
+#' @include class.R utils.R style.R
+NULL
+
+# ---- print ----
+#' Print a plotit object (automatically render the plot)
 #'
-#' @include class.R utils.R
+#' @param x A plotit object
+#' @param ... Additional arguments (not used)
+#' @return The plotit object (invisibly)
+#' @noRd
+S7::method(print, plotit_class) <- function(x, ...) {
+  # 兜底：若 plotit_applied 标记不存在（如绕过 plotit() 直接构造 S7 对象），补注默认主题
+  if (is.null(attr(x@gg$theme, "plotit_applied", exact = TRUE))) {
+    x@gg <- x@gg + plotit_theme_default()
+    attr(x@gg$theme, "plotit_applied") <- TRUE
+  }
+  # 若有指定尺寸，以指定尺寸打开设备（dev.new 始终使用英寸）
+  if (!is.null(x@meta@width) && !is.null(x@meta@height)) {
+    unit_factor <- switch(x@meta@unit %||% "in",
+      "in" = 1,
+      "cm" = 2.54,
+      "mm" = 25.4
+    )
+    grDevices::dev.new(
+      width = x@meta@width / unit_factor,
+      height = x@meta@height / unit_factor,
+      noRStudioGD = TRUE
+    )
+  }
+  print(x@gg)
+  invisible(x)
+}
+
+# ---- export ----
+#' Export a plotit object to a file
 #'
 #' @param plot A plotit object.
 #' @param filename Output filename (extension determines device, e.g., ".pdf").
@@ -37,7 +69,6 @@ S7::method(export, plotit_class) <- function(
   device = NULL,
   ...
 ) {
-  # 确定最终尺寸
   final_width <- width %||%
     plot@meta@width %||%
     getOption("plotit.default_width", 7)
@@ -50,11 +81,8 @@ S7::method(export, plotit_class) <- function(
     final_height <- NULL
   }
 
-  # 确定单位
   unit <- plot@meta@unit %||% getOption("plotit.default_unit", "in")
 
-  # 确定设备（如果未给出，则由 ggsave 根据扩展名自动判断）
-  # 直接调用 ggsave
   ggplot2::ggsave(
     filename = filename,
     plot = plot@gg,

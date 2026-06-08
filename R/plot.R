@@ -72,35 +72,6 @@ plotit <- function(
   plotit_class(gg = p, meta = meta)
 }
 
-#' Print a plotit object (automatically render the plot)
-#'
-#' @param x A plotit object
-#' @param ... Additional arguments (not used)
-#' @return The plotit object (invisibly)
-#' @noRd
-S7::method(print, plotit_class) <- function(x, ...) {
-  # 兜底：若 plotit_applied 标记不存在（如绕过 plotit() 直接构造 S7 对象），补注默认主题
-  if (is.null(attr(x@gg$theme, "plotit_applied", exact = TRUE))) {
-    x@gg <- x@gg + plotit_theme_default()
-    attr(x@gg$theme, "plotit_applied") <- TRUE
-  }
-  # 若有指定尺寸，以指定尺寸打开设备（dev.new 始终使用英寸）
-  if (!is.null(x@meta@width) && !is.null(x@meta@height)) {
-    unit_factor <- switch(x@meta@unit %||% "in",
-      "in" = 1,
-      "cm" = 2.54,
-      "mm" = 25.4
-    )
-    grDevices::dev.new(
-      width = x@meta@width / unit_factor,
-      height = x@meta@height / unit_factor,
-      noRStudioGD = TRUE
-    )
-  }
-  print(x@gg)
-  invisible(x)
-}
-
 #' Modify output dimensions
 #'
 #' @param plot A plotit object.
