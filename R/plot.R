@@ -103,16 +103,5 @@ S7::method(set_size, plotit_class) <- function(
     }
     plot@meta@unit <- unit
   }
-  # Patch the gg object with fixed panel dimensions so the plot panel
-  # stays at exactly this size regardless of device/window dimensions
-  w <- plot@meta@width
-  h <- plot@meta@height
-  u <- plot@meta@unit %||% "in"
-  if (!is.null(w) && !is.null(h) && !is.na(w) && !is.na(h)) {
-    plot@gg <- plot@gg + patchwork::plot_layout(
-      widths = ggplot2::unit(w, u),
-      heights = ggplot2::unit(h, u)
-    )
-  }
   plot
 }
