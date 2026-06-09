@@ -103,5 +103,16 @@ S7::method(set_size, plotit_class) <- function(
     }
     plot@meta@unit <- unit
   }
+  # Lock panel size via plot_layout so the panel doesn't scale with window
+  # (export() strips this before saving to get correct total-size rendering)
+  w <- plot@meta@width
+  h <- plot@meta@height
+  u <- plot@meta@unit %||% "in"
+  if (!is.null(w) && !is.null(h) && !is.na(w) && !is.na(h)) {
+    plot@gg <- plot@gg + patchwork::plot_layout(
+      widths = ggplot2::unit(w, u),
+      heights = ggplot2::unit(h, u)
+    )
+  }
   plot
 }
