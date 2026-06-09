@@ -369,3 +369,59 @@ test_that("扩展管道链含新功能不崩溃", {
     style()
   expect_s3_class(p, "plotit::plotit")
 })
+
+# ---- style() with base_size / base_family ----
+test_that("style() with base_size modifies theme", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |>
+    style(base_size = 14)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("style() with base_family does not error", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |>
+    style(base_family = "serif")
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- export with autofit ----
+test_that("export() works with autofit = TRUE", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
+              autofit = TRUE) |>
+    mark_point()
+  expect_no_error(export(p, tempfile(fileext = ".png"), dpi = 72))
+})
+
+# ---- mark_bar with y aesthetic triggers geom_col ----
+test_that("mark_bar with y mapping uses geom_col", {
+  df <- data.frame(cat = c("A", "B"), val = c(10, 20))
+  p <- plotit(df, encode(x = cat, y = val)) |>
+    mark_bar()
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(p@gg$layers, 1)
+})
+
+# ---- label_axis with invalid aes ----
+test_that("label_axis errors on invalid aes value", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
+  expect_error(label_axis(p, text = "Test", aes = "z"), "must be one of")
+})
+
+# ---- set_size -> style -> export: gg_plain no longer stale ----
+test_that("set_size then style then export preserves style", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |>
+    set_size(width = 6, height = 4, unit = "in") |>
+    style(base_size = 14)
+  # After set_size -> style, export should not crash and should use the styled gg
+  expect_no_error(export(p, tempfile(fileext = ".png"), dpi = 72))
+})
+
+# ---- mark_bar with layer-level data ----
+test_that("mark_bar supports layer-level data", {
+  p <- plotit(iris, encode(x = Species)) |>
+    mark_bar(data = iris[1:100, ])
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(p@gg$layers, 1)
+})

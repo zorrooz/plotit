@@ -1,9 +1,9 @@
 Package: plotit
-Title: What the Package Does (One Line, Title Case)
+Title: Declarative Plotting with ggplot2
 Version: 0.0.0.9000
 Authors@R: 
     person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Description: A declarative plotting package built on top of 'ggplot2', providing a simplified, consistent API for creating publication-ready visualizations with sensible defaults.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -12,13 +12,13 @@ URL: https://github.com/zorrooz/plotit
 BugReports: https://github.com/zorrooz/plotit/issues
 Suggests: 
     testthat (>= 3.0.0),
-    ggrastr
+    ggrastr,
+    patchwork
 Config/testthat/edition: 3
 Imports: 
     ggplot2,
     S7,
-    cli,
-    patchwork
+    cli
 Collate: 
     'class.R'
     'encode.R'

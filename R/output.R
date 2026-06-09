@@ -81,8 +81,8 @@ S7::method(export, plotit_class) <- function(
     getOption("plotit.default_height", 5)
 
   if (isTRUE(plot@meta@autofit)) {
-    final_width <- NULL
-    final_height <- NULL
+    final_width <- NA
+    final_height <- NA
   }
 
   unit <- plot@meta@unit %||% getOption("plotit.default_unit", "in")

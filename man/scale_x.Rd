@@ -6,7 +6,7 @@
 \usage{
 scale_x(
   plot,
-  name = NULL,
+  name = ggplot2::waiver(),
   discrete = NULL,
   trans = NULL,
   limits = NULL,

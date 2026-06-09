@@ -71,14 +71,14 @@ S7::method(scale_fill, plotit_class) <- function(plot, name = ggplot2::waiver(),
 scale_x <- S7::new_generic(
   "scale_x",
   "plot",
-  function(plot, name = NULL, discrete = NULL, trans = NULL,
+  function(plot, name = ggplot2::waiver(), discrete = NULL, trans = NULL,
            limits = NULL, breaks = NULL, ...) {
     S7::S7_dispatch()
   }
 )
 
 #' @export
-S7::method(scale_x, plotit_class) <- function(plot, name = NULL, discrete = NULL,
+S7::method(scale_x, plotit_class) <- function(plot, name = ggplot2::waiver(), discrete = NULL,
                                               trans = NULL, limits = NULL,
                                               breaks = NULL, ...) {
   if (is.null(discrete)) {
@@ -112,14 +112,14 @@ S7::method(scale_x, plotit_class) <- function(plot, name = NULL, discrete = NULL
 scale_y <- S7::new_generic(
   "scale_y",
   "plot",
-  function(plot, name = NULL, discrete = NULL, trans = NULL,
+  function(plot, name = ggplot2::waiver(), discrete = NULL, trans = NULL,
            limits = NULL, breaks = NULL, ...) {
     S7::S7_dispatch()
   }
 )
 
 #' @export
-S7::method(scale_y, plotit_class) <- function(plot, name = NULL, discrete = NULL,
+S7::method(scale_y, plotit_class) <- function(plot, name = ggplot2::waiver(), discrete = NULL,
                                               trans = NULL, limits = NULL,
                                               breaks = NULL, ...) {
   if (is.null(discrete)) {
