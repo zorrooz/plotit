@@ -87,12 +87,8 @@ S7::method(export, plotit_class) <- function(
 
   unit <- plot@meta@unit %||% getOption("plotit.default_unit", "in")
 
-  # Strip plot_layout (if any) so the panel fills the total output dimensions
-  gg <- plot@gg
-  if (inherits(gg, "patchwork")) {
-    class(gg) <- setdiff(class(gg), "patchwork")
-    attr(gg, "patchwork") <- NULL
-  }
+  # Use pre-patchwork gg copy if available (set_size stores it for clean export rendering)
+  gg <- plot@meta@gg_plain %||% plot@gg
   ggplot2::ggsave(
     filename = filename,
     plot = gg,

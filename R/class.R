@@ -43,6 +43,7 @@ plotit_metadata <- S7::new_class(
     unit = S7::class_character | NULL,
     dodge = S7::class_numeric | NULL,
     default_color = S7::class_character | NULL,
+    gg_plain = S7::class_any | NULL,
     labels = plotit_labels
   ),
   constructor = function(
@@ -52,6 +53,7 @@ plotit_metadata <- S7::new_class(
     unit = "in",
     dodge = NULL,
     default_color = NULL,
+    gg_plain = NULL,
     labels = plotit_labels()
   ) {
     if (!is.null(unit)) {
@@ -68,6 +70,7 @@ plotit_metadata <- S7::new_class(
       unit = unit,
       dodge = dodge,
       default_color = default_color,
+      gg_plain = gg_plain,
       labels = labels
     )
   }
