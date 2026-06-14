@@ -103,17 +103,5 @@ S7::method(set_size, plotit_class) <- function(
     }
     plot@meta@unit <- unit
   }
-  # Lock panel size via plot_layout for consistent interactive display
-  # Save a pre-patchwork copy for export() to use (avoids fragile class hacking)
-  w <- plot@meta@width
-  h <- plot@meta@height
-  u <- plot@meta@unit %||% "in"
-  if (!is.null(w) && !is.null(h) && !is.na(w) && !is.na(h)) {
-    plot@meta@gg_plain <- plot@gg
-    plot@gg <- plot@gg + patchwork::plot_layout(
-      widths = ggplot2::unit(w, u),
-      heights = ggplot2::unit(h, u)
-    )
-  }
   plot
 }

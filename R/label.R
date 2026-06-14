@@ -151,7 +151,6 @@ S7::method(label_axis, plotit_class) <- function(plot, text = NULL, aes = NULL, 
 
   if (.label_hide(text)) {
     S7::prop(plot@meta@labels, aes) <- NULL
-    labs <- plot@gg$labels; labs[aes] <- NULL; plot@gg$labels <- labs
     plot@gg <- plot@gg + .theme_el(paste0("axis.title.", aes), ggplot2::element_blank())
   } else if (.label_default(text)) {
     S7::prop(plot@meta@labels, aes) <- NULL

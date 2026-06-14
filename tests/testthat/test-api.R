@@ -425,3 +425,77 @@ test_that("mark_bar supports layer-level data", {
   expect_s3_class(p, "plotit::plotit")
   expect_length(p@gg$layers, 1)
 })
+
+# ============================================================
+# 补充测试 — 审查中发现的覆盖缺口
+# ============================================================
+
+# ---- set_size 无效 unit ----
+test_that("set_size 非法 unit 报错", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
+  expect_error(set_size(p, unit = "ft"), "unit")
+})
+
+# ---- export 非法 filename ----
+test_that("export() 非法 filename 报错", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
+  expect_error(export(p, NULL), "filename")
+  expect_error(export(p, ""), "filename")
+})
+
+# ---- set_size + style + export 导出正确性 ----
+test_that("set_size then style then export: style 保留在导出中", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |>
+    set_size(width = 6, height = 4, unit = "in") |>
+    style(base_size = 14)
+  expect_no_error(export(p, tempfile(fileext = ".png"), dpi = 72))
+  # 验证 gg 对象中包含 style 设置的元素
+  expect_true(!is.null(p@gg$theme$plot.title))
+})
+
+# ---- label_legend FALSE 隐藏图例标题 ----
+test_that("label_legend FALSE 隐藏图例标题", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+    scale_color()
+  p <- label_legend(p, text = FALSE, aes = "colour")
+  expect_null(p@gg$scales$scales[[1]]$name)
+})
+
+# ---- label_legend TRUE 显示默认图例标题 ----
+test_that("label_legend TRUE 显示默认图例标题", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+    scale_color()
+  p <- label_legend(p, text = TRUE, aes = "colour")
+  expect_true(inherits(p@gg$scales$scales[[1]]$name, "waiver"))
+})
+
+# ---- label_legend 不存在的 aes 给出警告 ----
+test_that("label_legend 不存在的 aes 给出警告", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length), default_color = NULL)
+  expect_warning(label_legend(p, text = "test", aes = "colour"))
+})
+
+# ---- style() 同时传入 theme + base_size + base_family ----
+test_that("style() 同时传入 theme + base_size + base_family", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |>
+    style(ggplot2::theme_minimal(), base_size = 14, base_family = "serif")
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- set_size autofit 清除 ----
+test_that("set_size 传入尺寸时清除 autofit", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length), autofit = TRUE)
+  expect_true(p@meta@autofit)
+  p <- set_size(p, width = 6, height = 4)
+  expect_false(p@meta@autofit)
+  expect_equal(p@meta@width, 6)
+  expect_equal(p@meta@height, 4)
+})
+
+# ---- print() 方法基本测试 ----
+test_that("print() 返回 plotit 对象", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
+  expect_s3_class(print(p), "plotit::plotit")
+})

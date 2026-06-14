@@ -41,12 +41,14 @@ plotit_theme_default <- function(base_size = NULL, base_family = NULL) {
 #' @param theme A ggplot2 theme object (e.g., `theme_minimal()`).
 #'   If `NULL`, the default plotit theme is applied.
 #' @param ... Additional arguments passed to `ggplot2::theme()`.
+#' @param base_size Base font size for the theme.
+#' @param base_family Base font family for the theme.
 #' @return Modified plotit object.
 #' @export
 style <- S7::new_generic(
   "style",
   "plot",
-  function(plot, theme = NULL, ...) {
+  function(plot, theme = NULL, ..., base_size = NULL, base_family = NULL) {
     S7::S7_dispatch()
   }
 )
