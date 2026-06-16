@@ -11,7 +11,7 @@ NULL
 S7::method(print, plotit_class) <- function(x, ...) {
   # 兜底：若 plotit_applied 标记不存在（如绕过 plotit() 直接构造 S7 对象），补注默认主题
   if (is.null(attr(x@meta, "plotit_applied", exact = TRUE))) {
-    x@gg <- x@gg + plotit_theme_default()
+    x@gg <- x@gg + .theme_default()
     attr(x@meta, "plotit_applied") <- TRUE
   }
 

@@ -2,25 +2,20 @@
 % Please edit documentation in R/style.R
 \name{style}
 \alias{style}
-\title{Apply a theme to a plotit object}
+\title{Apply an arbitrary ggplot2 theme}
 \usage{
-style(plot, theme = NULL, ..., base_size = NULL, base_family = NULL)
+style(plot, theme, ...)
 }
 \arguments{
 \item{plot}{A plotit object.}
 
-\item{theme}{A ggplot2 theme object (e.g., \code{theme_minimal()}).
-If \code{NULL}, the default plotit theme is applied.}
+\item{theme}{A ggplot2 theme object (e.g., \code{theme_minimal()}).}
 
 \item{...}{Additional arguments passed to \code{ggplot2::theme()}.}
-
-\item{base_size}{Base font size for the theme.}
-
-\item{base_family}{Base font family for the theme.}
 }
 \value{
 Modified plotit object.
 }
 \description{
-Apply a theme to a plotit object
+Apply an arbitrary ggplot2 theme
 }

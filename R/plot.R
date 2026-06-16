@@ -72,7 +72,7 @@ plotit <- function(
   )
 
   # 应用包级默认主题
-  p <- p + plotit_theme_default()
+  p <- p + .theme_default()
 
   # 标记已应用默认主题（存于 meta 而非 gg$theme，因后续 patchwork 包装会遮蔽 $theme）
   attr(meta, "plotit_applied") <- TRUE

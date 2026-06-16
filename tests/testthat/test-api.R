@@ -195,16 +195,16 @@ test_that("label_axis TRUE 在 meta 中存储 NULL", {
   expect_null(p@meta@labels@x)
 })
 
-# ---- style ----
-test_that("style() 默认应用 plotit_theme_default", {
+# ---- style_default / style ----
+test_that("style_default() 应用默认主题", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
-  p <- style(p)
+  p <- style_default(p)
   expect_s3_class(p, "plotit::plotit")
 })
 
 test_that("style() 接受自定义主题", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
-  p <- style(p, ggplot2::theme_minimal(base_size = 14))
+  p <- style(p, ggplot2::theme_minimal())
   expect_s3_class(p, "plotit::plotit")
 })
 
@@ -442,7 +442,7 @@ test_that("完整管道链不崩溃", {
     mark_point(size = 2) |>
     scale_color(name = "Species") |>
     label_title("Test") |>
-    style()
+    style_default()
   expect_s3_class(p, "plotit::plotit")
 })
 
@@ -456,29 +456,30 @@ test_that("扩展管道链含新功能不崩溃", {
     label_axis(text = "种类", aes = "x") |>
     label_axis(text = "花萼长度", aes = "y") |>
     project_flip() |>
-    style()
+    style_default()
   expect_s3_class(p, "plotit::plotit")
 })
 
-# ---- style() with base_size / base_family ----
-test_that("style() with base_size modifies theme", {
+# ---- style_default 参数 ----
+test_that("style_default(base_size) 不报错", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
-    style(base_size = 14)
+    style_default(base_size = 14)
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("style() with base_family does not error", {
+test_that("style_default(base_family) 不报错", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
-    style(base_family = "serif")
+    style_default(base_family = "serif")
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("style() 同时传入 theme + base_size + base_family", {
+test_that("style() with ... theme overrides", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
-    style(ggplot2::theme_minimal(), base_size = 14, base_family = "serif")
+    style(ggplot2::theme_minimal(),
+      plot.title = ggplot2::element_text(face = "bold"))
   expect_s3_class(p, "plotit::plotit")
 })
 

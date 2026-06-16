@@ -1,9 +1,9 @@
-#' Build default plotit theme
-#'
 #' @include class.R utils.R
-#' @return A ggplot2 theme object.
-#' @keywords internal
-plotit_theme_default <- function(base_size = NULL, base_family = NULL) {
+NULL
+
+# ---- Internal theme builder ----
+# Constructs the default plotit theme object (not exported — use style_default())
+.theme_default <- function(base_size = NULL, base_family = NULL) {
   ggplot2::theme_minimal(
     base_size = base_size %||% 11,
     base_family = base_family %||% ""
@@ -35,20 +35,45 @@ plotit_theme_default <- function(base_size = NULL, base_family = NULL) {
     )
 }
 
-#' Apply a theme to a plotit object
+# ---- style_default ----
+#' Apply the default plotit theme
+#'
+#' @param plot A plotit object.
+#' @param base_size Base font size in pts (default 11).
+#' @param base_family Base font family (default `""` = system sans-serif).
+#' @return Modified plotit object.
+#' @export
+style_default <- S7::new_generic(
+  "style_default",
+  "plot",
+  function(plot, base_size = NULL, base_family = NULL) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(style_default, plotit_class) <- function(
+  plot,
+  base_size = NULL,
+  base_family = NULL
+) {
+  plot@gg <- plot@gg + .theme_default(base_size, base_family)
+  attr(plot@meta, "plotit_applied") <- TRUE
+  plot
+}
+
+# ---- style ----
+#' Apply an arbitrary ggplot2 theme
 #'
 #' @param plot A plotit object.
 #' @param theme A ggplot2 theme object (e.g., `theme_minimal()`).
-#'   If `NULL`, the default plotit theme is applied.
 #' @param ... Additional arguments passed to `ggplot2::theme()`.
-#' @param base_size Base font size for the theme.
-#' @param base_family Base font family for the theme.
 #' @return Modified plotit object.
 #' @export
 style <- S7::new_generic(
   "style",
   "plot",
-  function(plot, theme = NULL, ..., base_size = NULL, base_family = NULL) {
+  function(plot, theme, ...) {
     S7::S7_dispatch()
   }
 )
@@ -56,28 +81,9 @@ style <- S7::new_generic(
 #' @export
 S7::method(style, plotit_class) <- function(
   plot,
-  theme = NULL,
-  ...,
-  base_size = NULL,
-  base_family = NULL
+  theme,
+  ...
 ) {
-  # 若默认主题已应用且未传入新 theme/base 参数，跳过以避免重复叠加
-  has_applied <- !is.null(attr(plot@meta, "plotit_applied", exact = TRUE))
-  no_new_theme <- is.null(theme) && is.null(base_size) &&
-    is.null(base_family) && ...length() == 0L
-  if (has_applied && no_new_theme) return(plot)
-
-  if (is.null(theme)) {
-    theme <- plotit_theme_default()
-  }
-  if (!is.null(base_size) || !is.null(base_family)) {
-    theme <- theme + ggplot2::theme(
-      text = ggplot2::element_text(
-        size = base_size %||% ggplot2::rel(1),
-        family = base_family %||% ""
-      )
-    )
-  }
   plot@gg <- plot@gg + theme + ggplot2::theme(...)
   attr(plot@meta, "plotit_applied") <- TRUE
   plot
