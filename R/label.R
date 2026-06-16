@@ -28,6 +28,17 @@ NULL
   do.call(ggplot2::labs, args)
 }
 
+# Collect all aesthetic names from global + layer-level mappings
+.collect_aes_names <- function(gg, candidates) {
+  unique(c(
+    intersect(names(gg$mapping), candidates),
+    unlist(lapply(gg$layers, function(l) {
+      if (is.null(l$mapping)) character(0)
+      else intersect(names(l$mapping), candidates)
+    }))
+  ))
+}
+
 # Set legend scale name + labels for a single aesthetic.
 # Scales are ggproto (environment) objects, so the for-loop variable s refers
 # to the actual scale; modifying s$name is equivalent to modifying in-place.
@@ -150,7 +161,7 @@ S7::method(label_axis, plotit_class) <- function(plot, text = NULL, aes = NULL, 
   }
 
   if (.label_hide(text)) {
-    S7::prop(plot@meta@labels, aes) <- NULL
+    S7::prop(plot@meta@labels, aes) <- FALSE
     plot@gg <- plot@gg + .theme_el(paste0("axis.title.", aes), ggplot2::element_blank())
   } else if (.label_default(text)) {
     S7::prop(plot@meta@labels, aes) <- NULL
@@ -186,19 +197,24 @@ S7::method(label_legend, plotit_class) <- function(plot, text = NULL, aes = NULL
   if (.label_skip(text)) return(plot)
 
   if (is.null(aes)) {
-    plot@meta@labels@legend[["default"]] <- if (.label_hide(text) || .label_default(text)) NULL else text
-    aes_names <- intersect(
-      names(plot@gg$mapping),
+    plot@meta@labels@legend[["default"]] <-
+      if (.label_hide(text) || .label_default(text)) NULL else text
+    # 收集全局映射和所有图层局部映射中的美学名称
+    aes_names <- .collect_aes_names(
+      plot@gg,
       c("colour", "fill", "shape", "linetype", "size", "alpha")
     )
     for (a in aes_names) {
       plot@gg <- .label_set_aes(plot@gg, a, text)
     }
   } else {
-    plot@meta@labels@legend[[aes]] <- if (.label_hide(text) || .label_default(text)) NULL else text
+    plot@meta@labels@legend[[aes]] <-
+      if (.label_hide(text) || .label_default(text)) NULL else text
     plot@gg <- .label_set_aes(plot@gg, aes, text)
     # 若 aes 不在当前映射中，给出友好提示
-    if (!(aes %in% names(plot@gg$mapping))) {
+    aes_all <- .collect_aes_names(plot@gg,
+      c("colour", "fill", "shape", "linetype", "size", "alpha"))
+    if (!(aes %in% aes_all)) {
       cli::cli_warn("Aesthetic {.val {aes}} is not present in the plot mapping.")
     }
   }

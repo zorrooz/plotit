@@ -61,6 +61,12 @@ S7::method(style, plotit_class) <- function(
   base_size = NULL,
   base_family = NULL
 ) {
+  # 若默认主题已应用且未传入新 theme/base 参数，跳过以避免重复叠加
+  has_applied <- !is.null(attr(plot@meta, "plotit_applied", exact = TRUE))
+  no_new_theme <- is.null(theme) && is.null(base_size) &&
+    is.null(base_family) && ...length() == 0L
+  if (has_applied && no_new_theme) return(plot)
+
   if (is.null(theme)) {
     theme <- plotit_theme_default()
   }
@@ -73,6 +79,6 @@ S7::method(style, plotit_class) <- function(
     )
   }
   plot@gg <- plot@gg + theme + ggplot2::theme(...)
-  attr(plot@gg$theme, "plotit_applied") <- TRUE
+  attr(plot@meta, "plotit_applied") <- TRUE
   plot
 }

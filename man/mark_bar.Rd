@@ -21,7 +21,7 @@ mark_bar(
 
 \item{data}{Optional data for this layer}
 
-\item{...}{Other arguments passed to \code{geom_bar}}
+\item{...}{Other arguments passed to \code{geom_bar} or \code{geom_col}}
 }
 \value{
 Modified plotit object

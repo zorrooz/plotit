@@ -17,5 +17,7 @@ scale_color(plot, name = ggplot2::waiver(), ...)
 Modified plotit object
 }
 \description{
-Generic for adding a color scale
+Auto-detects whether the mapped variable is discrete or continuous and
+dispatches to the appropriate ggplot2 scale (discrete → default hue palette;
+continuous → viridis).
 }

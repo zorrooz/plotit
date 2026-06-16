@@ -39,6 +39,14 @@ test_that("plotit() autofit=TRUE 时忽略 width/height", {
   expect_null(p@meta@unit)
 })
 
+test_that("plotit() size_unit 不受 autofit 影响，始终验证", {
+  expect_error(
+    plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
+           autofit = TRUE, size_unit = "ft"),
+    "unit"
+  )
+})
+
 test_that("plotit() 的 default_color 注入 I() 到 mapping", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
             default_color = "steelblue")
@@ -60,6 +68,24 @@ test_that("plotit() 的 default_color 在有 colour 映射时跳过", {
   expect_false(inherits(p@gg$mapping$colour, "AsIs"))
 })
 
+# ---- plotit() 尺寸初始化（替代旧 set_size 测试）----
+test_that("plotit() 正确设置 meta 尺寸字段", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
+              width = 10, height = 8, size_unit = "cm")
+  expect_equal(p@meta@width, 10)
+  expect_equal(p@meta@height, 8)
+  expect_equal(p@meta@unit, "cm")
+})
+
+test_that("plotit() 尺寸可通过 export() 覆盖", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
+              width = 6, height = 4, size_unit = "in") |>
+    mark_point()
+  # Export 时传入不同尺寸
+  expect_no_error(export(p, tempfile(fileext = ".png"),
+                         width = 8, height = 6, dpi = 72))
+})
+
 # ---- default_color 失效机制 ----
 test_that("scale_color 清除 default_color 的 I() 注入和 guides", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
@@ -76,6 +102,36 @@ test_that("scale_fill 也清除 default_color 注入", {
   p <- scale_fill(p, name = "测试")
   expect_null(p@gg$mapping$colour)
   expect_null(p@meta@default_color)
+})
+
+# ---- scale_color / scale_fill 自动检测 ----
+test_that("scale_color 对连续变量使用 viridis 连续尺度", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg, colour = hp)) |>
+    mark_point()
+  expect_no_error(p <- scale_color(p, name = "马力"))
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("scale_color 对离散变量使用离散尺度", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length,
+             colour = Species)) |>
+    mark_point()
+  expect_no_error(p <- scale_color(p, name = "物种"))
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("scale_fill 对连续变量使用 viridis 连续尺度", {
+  p <- plotit(mtcars, encode(x = factor(cyl), fill = hp)) |>
+    mark_bar()
+  expect_no_error(p <- scale_fill(p, name = "马力"))
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("scale_fill 对离散变量使用离散尺度", {
+  p <- plotit(iris, encode(x = Species, fill = Species)) |>
+    mark_bar()
+  expect_no_error(p <- scale_fill(p, name = "物种"))
+  expect_s3_class(p, "plotit::plotit")
 })
 
 # ---- mark_point / mark_line ----
@@ -126,6 +182,19 @@ test_that("label_axis 部分更新时不影响另一轴", {
   expect_null(p@meta@labels@y)
 })
 
+# ---- label_axis FALSE vs TRUE 在 meta 中可区分 ----
+test_that("label_axis FALSE 在 meta 中存储 FALSE（非 NULL）", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
+  p <- label_axis(p, text = FALSE, aes = "x")
+  expect_false(p@meta@labels@x)
+})
+
+test_that("label_axis TRUE 在 meta 中存储 NULL", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
+  p <- label_axis(p, text = TRUE, aes = "x")
+  expect_null(p@meta@labels@x)
+})
+
 # ---- style ----
 test_that("style() 默认应用 plotit_theme_default", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
@@ -153,23 +222,6 @@ test_that("split_wrap 添加分面", {
   expect_true(inherits(p@gg$facet, "FacetWrap"))
 })
 
-# ---- set_size ----
-test_that("set_size 更新 meta 尺寸字段", {
-  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
-  p <- set_size(p, width = 10, height = 8, unit = "cm")
-  expect_equal(p@meta@width, 10)
-  expect_equal(p@meta@height, 8)
-  expect_equal(p@meta@unit, "cm")
-})
-
-test_that("set_size 部分更新不影响其他字段", {
-  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
-  orig_w <- p@meta@width
-  p <- set_size(p, height = 6)
-  expect_equal(p@meta@width, orig_w)
-  expect_equal(p@meta@height, 6)
-})
-
 # ---- export ----
 test_that("export() 可导出 PNG 和 PDF", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
@@ -178,15 +230,35 @@ test_that("export() 可导出 PNG 和 PDF", {
   expect_no_error(export(p, tempfile(fileext = ".pdf")))
 })
 
-test_that("set_size + export round-trip: dimensions propagate correctly", {
+test_that("export() 非法 filename 报错", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
+  expect_error(export(p, NULL), "filename")
+  expect_error(export(p, ""), "filename")
+})
+
+# ---- export autofit ----
+test_that("export() works with autofit = TRUE", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
               autofit = TRUE) |>
-    mark_point() |>
-    set_size(width = 6, height = 4, unit = "cm")
-  expect_false(p@meta@autofit)           # set_size clears autofit
-  expect_equal(p@meta@width, 6)
-  expect_equal(p@meta@height, 4)
+    mark_point()
   expect_no_error(export(p, tempfile(fileext = ".png"), dpi = 72))
+})
+
+test_that("export() autofit + 用户显式参数：用户参数不被覆盖", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
+              autofit = TRUE) |>
+    mark_point()
+  # 用户显式传 width=10, height=8 — autofit 不应覆盖
+  f <- tempfile(fileext = ".png")
+  expect_no_error(export(p, f, width = 10, height = 8, dpi = 72))
+})
+
+test_that("export() autofit + 用户只传 width：height 仍由 autofit 决定", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
+              autofit = TRUE) |>
+    mark_point()
+  f <- tempfile(fileext = ".png")
+  expect_no_error(export(p, f, width = 10, dpi = 72))
 })
 
 # ---- mark_bar / mark_boxplot ----
@@ -233,6 +305,22 @@ test_that("label_legend 不指定 aesthetic 时影响所有映射", {
   expect_equal(p@gg$labels$colour, "全部")
 })
 
+# ---- label_legend 图层级映射 ----
+test_that("label_legend 全局模式可发现图层级 colour 映射", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
+  p <- mark_point(p, mapping = encode(colour = Species))
+  p <- label_legend(p, text = "物种")
+  # 应能找到图层中的 colour 映射
+  expect_equal(p@meta@labels@legend[["default"]], "物种")
+})
+
+test_that("label_legend aes 警告检查包含图层映射", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
+  p <- mark_point(p, mapping = encode(colour = Species))
+  # colour 在图层映射中存在，不应警告
+  expect_no_warning(label_legend(p, text = "test", aes = "colour"))
+})
+
 # ---- Four-state protocol tests ----
 test_that("label_axis errors when aes is missing", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
@@ -253,8 +341,10 @@ test_that("label_axis four-state: FALSE hides, TRUE shows variable name, NULL sk
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
   p1 <- p |> label_axis(text = FALSE, aes = "x")
   expect_true(inherits(p1@gg$theme$axis.title.x, "element_blank"))
+  expect_false(p1@meta@labels@x)  # FALSE stored in meta, not NULL
   p2 <- p |> label_axis(text = TRUE, aes = "x")
   expect_false("x" %in% names(p2@gg$labels))  # key removed → fallback to variable name
+  expect_null(p2@meta@labels@x)  # TRUE → NULL in meta
   p3 <- p |> label_axis(text = "Old", aes = "x") |> label_axis(text = NULL, aes = "x")
   expect_equal(p3@gg$labels$x, "Old")  # NULL = skip
   # TRUE after custom removes the key
@@ -385,12 +475,11 @@ test_that("style() with base_family does not error", {
   expect_s3_class(p, "plotit::plotit")
 })
 
-# ---- export with autofit ----
-test_that("export() works with autofit = TRUE", {
-  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
-              autofit = TRUE) |>
-    mark_point()
-  expect_no_error(export(p, tempfile(fileext = ".png"), dpi = 72))
+test_that("style() 同时传入 theme + base_size + base_family", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |>
+    style(ggplot2::theme_minimal(), base_size = 14, base_family = "serif")
+  expect_s3_class(p, "plotit::plotit")
 })
 
 # ---- mark_bar with y aesthetic triggers geom_col ----
@@ -402,23 +491,6 @@ test_that("mark_bar with y mapping uses geom_col", {
   expect_length(p@gg$layers, 1)
 })
 
-# ---- label_axis with invalid aes ----
-test_that("label_axis errors on invalid aes value", {
-  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
-  expect_error(label_axis(p, text = "Test", aes = "z"), "must be one of")
-})
-
-# ---- set_size -> style -> export: gg_plain no longer stale ----
-test_that("set_size then style then export preserves style", {
-  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
-    mark_point() |>
-    set_size(width = 6, height = 4, unit = "in") |>
-    style(base_size = 14)
-  # After set_size -> style, export should not crash and should use the styled gg
-  expect_no_error(export(p, tempfile(fileext = ".png"), dpi = 72))
-})
-
-# ---- mark_bar with layer-level data ----
 test_that("mark_bar supports layer-level data", {
   p <- plotit(iris, encode(x = Species)) |>
     mark_bar(data = iris[1:100, ])
@@ -426,35 +498,13 @@ test_that("mark_bar supports layer-level data", {
   expect_length(p@gg$layers, 1)
 })
 
-# ============================================================
-# 补充测试 — 审查中发现的覆盖缺口
-# ============================================================
-
-# ---- set_size 无效 unit ----
-test_that("set_size 非法 unit 报错", {
+# ---- label_axis with invalid aes ----
+test_that("label_axis errors on invalid aes value", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
-  expect_error(set_size(p, unit = "ft"), "unit")
+  expect_error(label_axis(p, text = "Test", aes = "z"), "must be one of")
 })
 
-# ---- export 非法 filename ----
-test_that("export() 非法 filename 报错", {
-  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
-  expect_error(export(p, NULL), "filename")
-  expect_error(export(p, ""), "filename")
-})
-
-# ---- set_size + style + export 导出正确性 ----
-test_that("set_size then style then export: style 保留在导出中", {
-  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
-    mark_point() |>
-    set_size(width = 6, height = 4, unit = "in") |>
-    style(base_size = 14)
-  expect_no_error(export(p, tempfile(fileext = ".png"), dpi = 72))
-  # 验证 gg 对象中包含 style 设置的元素
-  expect_true(!is.null(p@gg$theme$plot.title))
-})
-
-# ---- label_legend FALSE 隐藏图例标题 ----
+# ---- label_legend 边际情况 ----
 test_that("label_legend FALSE 隐藏图例标题", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
     scale_color()
@@ -462,7 +512,6 @@ test_that("label_legend FALSE 隐藏图例标题", {
   expect_null(p@gg$scales$scales[[1]]$name)
 })
 
-# ---- label_legend TRUE 显示默认图例标题 ----
 test_that("label_legend TRUE 显示默认图例标题", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
     scale_color()
@@ -470,28 +519,9 @@ test_that("label_legend TRUE 显示默认图例标题", {
   expect_true(inherits(p@gg$scales$scales[[1]]$name, "waiver"))
 })
 
-# ---- label_legend 不存在的 aes 给出警告 ----
 test_that("label_legend 不存在的 aes 给出警告", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length), default_color = NULL)
   expect_warning(label_legend(p, text = "test", aes = "colour"))
-})
-
-# ---- style() 同时传入 theme + base_size + base_family ----
-test_that("style() 同时传入 theme + base_size + base_family", {
-  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
-    mark_point() |>
-    style(ggplot2::theme_minimal(), base_size = 14, base_family = "serif")
-  expect_s3_class(p, "plotit::plotit")
-})
-
-# ---- set_size autofit 清除 ----
-test_that("set_size 传入尺寸时清除 autofit", {
-  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length), autofit = TRUE)
-  expect_true(p@meta@autofit)
-  p <- set_size(p, width = 6, height = 4)
-  expect_false(p@meta@autofit)
-  expect_equal(p@meta@width, 6)
-  expect_equal(p@meta@height, 4)
 })
 
 # ---- print() 方法基本测试 ----

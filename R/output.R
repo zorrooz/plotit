@@ -10,22 +10,35 @@ NULL
 #' @noRd
 S7::method(print, plotit_class) <- function(x, ...) {
   # 兜底：若 plotit_applied 标记不存在（如绕过 plotit() 直接构造 S7 对象），补注默认主题
-  if (is.null(attr(x@gg$theme, "plotit_applied", exact = TRUE))) {
+  if (is.null(attr(x@meta, "plotit_applied", exact = TRUE))) {
     x@gg <- x@gg + plotit_theme_default()
-    attr(x@gg$theme, "plotit_applied") <- TRUE
+    attr(x@meta, "plotit_applied") <- TRUE
   }
-  # 若有指定尺寸且为交互会话，以指定尺寸打开设备（dev.new 始终使用英寸）
+
+  has_patchwork <- inherits(x@gg, "patchwork")
+
   if (interactive() && !is.null(x@meta@width) && !is.null(x@meta@height)) {
-    unit_factor <- switch(x@meta@unit %||% "in",
-      "in" = 1,
-      "cm" = 2.54,
-      "mm" = 25.4
-    )
-    grDevices::dev.new(
-      width = x@meta@width / unit_factor,
-      height = x@meta@height / unit_factor,
-      noRStudioGD = TRUE
-    )
+    if (has_patchwork) {
+      # 通过 patchworkGrob 构建完整 gtable，测量精确总尺寸（参考 tidyplots）
+      gt <- patchwork::patchworkGrob(x@gg)
+      pw <- grid::convertWidth(
+        sum(gt$widths) + ggplot2::unit(1, "mm"), "inches", valueOnly = TRUE)
+      ph <- grid::convertHeight(
+        sum(gt$heights) + ggplot2::unit(1, "mm"), "inches", valueOnly = TRUE)
+      grDevices::dev.new(width = pw, height = ph, noRStudioGD = TRUE)
+    } else {
+      # 无 patchwork：按 meta 尺寸换算后打开设备
+      unit_factor <- switch(x@meta@unit %||% "in",
+        "in" = 1,
+        "cm" = 2.54,
+        "mm" = 25.4
+      )
+      grDevices::dev.new(
+        width  = x@meta@width  / unit_factor,
+        height = x@meta@height / unit_factor,
+        noRStudioGD = TRUE
+      )
+    }
   }
   print(x@gg)
   invisible(x)
@@ -73,21 +86,50 @@ S7::method(export, plotit_class) <- function(
     cli::cli_abort("{.arg filename} must be a non-empty file path.")
   }
 
-  final_width <- width %||%
-    plot@meta@width %||%
-    getOption("plotit.default_width", 7)
-  final_height <- height %||%
-    plot@meta@height %||%
-    getOption("plotit.default_height", 5)
+  meta_unit <- plot@meta@unit %||% getOption("plotit.default_unit", "in")
 
-  if (isTRUE(plot@meta@autofit)) {
-    final_width <- NA
-    final_height <- NA
+  # 若 patchwork 可用，从 gtable 测量总尺寸（面板+装饰+1mm）
+  # 这比 meta 面板尺寸更精确——避免裁切；用户显式参数可覆盖
+  has_patchwork <- requireNamespace("patchwork", quietly = TRUE) &&
+    inherits(plot@gg, "patchwork")
+  if (has_patchwork) {
+    gt <- patchwork::patchworkGrob(plot@gg)
+    # 用户显式参数优先，未传则用 gtable 测量值（已是英寸）
+    final_width <- if (is.null(width))
+      grid::convertWidth(
+        sum(gt$widths) + ggplot2::unit(1, "mm"), "in", valueOnly = TRUE)
+    else
+      width / switch(meta_unit, "in" = 1, "cm" = 2.54, "mm" = 25.4)
+    final_height <- if (is.null(height))
+      grid::convertHeight(
+        sum(gt$heights) + ggplot2::unit(1, "mm"), "in", valueOnly = TRUE)
+    else
+      height / switch(meta_unit, "in" = 1, "cm" = 2.54, "mm" = 25.4)
+  } else {
+    # 无 patchwork：按 meta 面板尺寸 + 用户回退
+    final_width <- width %||%
+      plot@meta@width %||%
+      getOption("plotit.default_width", 7)
+    final_height <- height %||%
+      plot@meta@height %||%
+      getOption("plotit.default_height", 5)
+
+    if (isTRUE(plot@meta@autofit)) {
+      if (is.null(width))  final_width  <- NA
+      if (is.null(height)) final_height <- NA
+    }
+    if (!is.na(final_width) && !is.na(final_height)) {
+      unit_factor <- switch(meta_unit, "in" = 1, "cm" = 2.54, "mm" = 25.4)
+      final_width  <- final_width  / unit_factor
+      final_height <- final_height / unit_factor
+    }
   }
 
-  unit <- plot@meta@unit %||% getOption("plotit.default_unit", "in")
-
   gg <- plot@gg
+
+  # 统一 PDF 设备 bg 选项，避免跨调用 'mode(bg) differs' 警告
+  grDevices::pdf.options(bg = "white")
+
   ggplot2::ggsave(
     filename = filename,
     plot = gg,
@@ -95,7 +137,8 @@ S7::method(export, plotit_class) <- function(
     height = final_height,
     dpi = dpi,
     device = device,
-    units = unit,
+    units = "in",
+    bg = "white",
     ...
   )
 

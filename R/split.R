@@ -4,7 +4,7 @@ NULL
 #' Generic for wrapping facets
 #'
 #' @param plot A plotit object.
-#' @param ... Variables to facet by, wrapped in `ggplot2::vars()`.
+#' @param ... Variables to facet by (passed directly, e.g., `Species`).
 #' @param nrow Number of rows in the facet grid (optional).
 #' @param ncol Number of columns in the facet grid (optional).
 #' @param scales Should scales be fixed ("fixed"), free ("free"), or free in

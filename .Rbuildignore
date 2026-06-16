@@ -1,3 +1,9 @@
 ^plotit\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
+^playground\.R$
+^scratch/
+^AGENTS\.md$
+^iris_plot\.svg$
+^Rplots\.pdf$
+^tests/testthat/Rplots\.pdf$

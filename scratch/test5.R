@@ -1,5 +1,0 @@
-library(plotit)
-p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
-p2 <- label_axis(p, text = "X轴", aes = "x")
-cat("meta x:", deparse(p2@meta@labels@x), "\n")
-cat("gg x:", deparse(p2@gg$labels$x), "\n")

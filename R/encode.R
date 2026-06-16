@@ -1,3 +1,6 @@
+#' @include class.R
+NULL
+
 #' Create aesthetic mapping
 #'
 #' @param ... List of aesthetic mappings (e.g., x = wt, y = mpg, color = cyl)

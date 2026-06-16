@@ -4,7 +4,7 @@
 \alias{style}
 \title{Apply a theme to a plotit object}
 \usage{
-style(plot, theme = NULL, ...)
+style(plot, theme = NULL, ..., base_size = NULL, base_family = NULL)
 }
 \arguments{
 \item{plot}{A plotit object.}
@@ -13,6 +13,10 @@ style(plot, theme = NULL, ...)
 If \code{NULL}, the default plotit theme is applied.}
 
 \item{...}{Additional arguments passed to \code{ggplot2::theme()}.}
+
+\item{base_size}{Base font size for the theme.}
+
+\item{base_family}{Base font family for the theme.}
 }
 \value{
 Modified plotit object.

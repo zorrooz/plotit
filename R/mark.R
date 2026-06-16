@@ -72,7 +72,7 @@ S7::method(mark_line, plotit_class) <- function(plot, mapping = NULL, data = NUL
 #' @param plot A plotit object
 #' @param mapping Optional new aesthetics
 #' @param data Optional data for this layer
-#' @param ... Other arguments passed to `geom_bar`
+#' @param ... Other arguments passed to `geom_bar` or `geom_col`
 #' @return Modified plotit object
 #' @export
 mark_bar <- S7::new_generic(

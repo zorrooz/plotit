@@ -9,7 +9,7 @@ split_wrap(plot, ..., nrow = NULL, ncol = NULL, scales = "fixed")
 \arguments{
 \item{plot}{A plotit object.}
 
-\item{...}{Variables to facet by, wrapped in \code{ggplot2::vars()}.}
+\item{...}{Variables to facet by (passed directly, e.g., \code{Species}).}
 
 \item{nrow}{Number of rows in the facet grid (optional).}
 

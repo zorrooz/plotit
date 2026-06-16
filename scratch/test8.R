@@ -1,7 +1,0 @@
-library(plotit)
-p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
-cat("S7 class:", S7::S7_class(p), "\n")
-cat("class:", class(p), "\n")
-cat("inherits plotit:", inherits(p, "plotit"), "\n")
-cat("inherits plotit::plotit:", inherits(p, "plotit::plotit"), "\n")
-cat("S7 inherits plotit_class:", S7::S7_inherits(p, plotit_class), "\n")
