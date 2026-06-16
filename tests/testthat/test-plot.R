@@ -1,9 +1,9 @@
 library(plotit)
 
-test_that("plotit() 初始化应用默认主题并设置 plotit_applied 标记", {
+test_that("plotit() 初始化应用默认主题并设置 plotit_theme_managed 标记", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
   expect_s3_class(p, "plotit::plotit")
-  expect_true(attr(p@meta, "plotit_applied"))
+  expect_true(attr(p@meta, "plotit_theme_managed"))
 })
 
 test_that("plotit() default_color 在无 color/fill 映射时存入 meta", {
@@ -71,4 +71,48 @@ test_that("plotit() 无 patchwork 时正常降级", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
               width = 6, height = 4)
   expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- plotit() 基本构造与守卫 ----
+test_that("plotit() 和 encode() 协作创建 plotit 对象", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
+  expect_s3_class(p, "plotit::plotit")
+  expect_true(inherits(p@gg, "ggplot"))
+  expect_true(inherits(p@meta, "plotit::plotit_metadata"))
+})
+
+test_that("plotit() 拒绝非 encode() 映射", {
+  expect_error(
+    plotit(iris, ggplot2::aes(x = Sepal.Width, y = Sepal.Length)),
+    "must be created with"
+  )
+})
+
+test_that("plotit() autofit=FALSE 时要求 width 和 height", {
+  expect_error(
+    plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
+           autofit = FALSE, width = NULL, height = 5),
+    "both.*width.*height"
+  )
+  expect_error(
+    plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
+           autofit = FALSE, width = 7, height = NULL),
+    "both.*width.*height"
+  )
+})
+
+test_that("plotit() autofit=TRUE 时忽略 width/height 但保留 unit", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
+              autofit = TRUE, width = 100, height = 100)
+  expect_null(p@meta@width)
+  expect_null(p@meta@height)
+  expect_equal(p@meta@unit, "in")
+})
+
+test_that("plotit() size_unit 不受 autofit 影响始终验证", {
+  expect_error(
+    plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
+           autofit = TRUE, size_unit = "ft"),
+    "unit"
+  )
 })

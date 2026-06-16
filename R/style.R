@@ -58,7 +58,7 @@ S7::method(style_default, plotit_class) <- function(
   base_family = NULL
 ) {
   plot@gg <- plot@gg + .theme_default(base_size, base_family)
-  attr(plot@meta, "plotit_applied") <- TRUE
+  attr(plot@meta, "plotit_theme_managed") <- TRUE
   plot
 }
 
@@ -85,6 +85,6 @@ S7::method(style, plotit_class) <- function(
   ...
 ) {
   plot@gg <- plot@gg + theme + ggplot2::theme(...)
-  attr(plot@meta, "plotit_applied") <- TRUE
+  attr(plot@meta, "plotit_theme_managed") <- TRUE
   plot
 }

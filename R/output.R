@@ -9,10 +9,10 @@ NULL
 #' @return The plotit object (invisibly)
 #' @noRd
 S7::method(print, plotit_class) <- function(x, ...) {
-  # 兜底：若 plotit_applied 标记不存在（如绕过 plotit() 直接构造 S7 对象），补注默认主题
-  if (is.null(attr(x@meta, "plotit_applied", exact = TRUE))) {
+  # 兜底：若 plotit_theme_managed 标记不存在（如绕过 plotit() 直接构造 S7 对象），补注默认主题
+  if (is.null(attr(x@meta, "plotit_theme_managed", exact = TRUE))) {
     x@gg <- x@gg + .theme_default()
-    attr(x@meta, "plotit_applied") <- TRUE
+    attr(x@meta, "plotit_theme_managed") <- TRUE
   }
 
   has_patchwork <- inherits(x@gg, "patchwork")
@@ -28,14 +28,14 @@ S7::method(print, plotit_class) <- function(x, ...) {
       grDevices::dev.new(width = pw, height = ph, noRStudioGD = TRUE)
     } else {
       # 无 patchwork：按 meta 尺寸换算后打开设备
-      unit_factor <- switch(x@meta@unit %||% "in",
+      units_per_inch <- switch(x@meta@unit %||% "in",
         "in" = 1,
         "cm" = 2.54,
         "mm" = 25.4
       )
       grDevices::dev.new(
-        width  = x@meta@width  / unit_factor,
-        height = x@meta@height / unit_factor,
+        width  = x@meta@width  / units_per_inch,
+        height = x@meta@height / units_per_inch,
         noRStudioGD = TRUE
       )
     }
@@ -119,16 +119,13 @@ S7::method(export, plotit_class) <- function(
       if (is.null(height)) final_height <- NA
     }
     if (!is.na(final_width) && !is.na(final_height)) {
-      unit_factor <- switch(meta_unit, "in" = 1, "cm" = 2.54, "mm" = 25.4)
-      final_width  <- final_width  / unit_factor
-      final_height <- final_height / unit_factor
+      units_per_inch <- switch(meta_unit, "in" = 1, "cm" = 2.54, "mm" = 25.4)
+      final_width  <- final_width  / units_per_inch
+      final_height <- final_height / units_per_inch
     }
   }
 
   gg <- plot@gg
-
-  # 统一 PDF 设备 bg 选项，避免跨调用 'mode(bg) differs' 警告
-  grDevices::pdf.options(bg = "white")
 
   ggplot2::ggsave(
     filename = filename,

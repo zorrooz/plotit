@@ -20,23 +20,33 @@ NULL
 #' @param plot A plotit object
 #' @param mapping Optional new aesthetics
 #' @param data Optional data for this layer
+#' @param position Position adjustment; if `NULL` and global dodge is set, auto-applies `position_dodge()`.
 #' @param ... Other arguments passed to `geom_point`
 #' @return Modified plotit object
 #' @export
 mark_point <- S7::new_generic(
   "mark_point",
   "plot",
-  function(plot, mapping = NULL, data = NULL, ...,
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
            rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
     S7::S7_dispatch()
   }
 )
 
 #' @export
-S7::method(mark_point, plotit_class) <- function(plot, mapping = NULL, data = NULL, ...,
+S7::method(mark_point, plotit_class) <- function(plot, mapping = NULL, data = NULL,
+                                                  position = NULL, ...,
                                                   rasterize = FALSE, rasterize_dpi = 300,
                                                   rasterize_dev = "cairo") {
-  geom <- ggplot2::geom_point(mapping = mapping, data = data, ...)
+  pos <- position
+  if (is.null(pos) && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
+    pos <- ggplot2::position_dodge(plot@meta@dodge)
+  }
+  if (is.null(pos)) {
+    geom <- ggplot2::geom_point(mapping = mapping, data = data, ...)
+  } else {
+    geom <- ggplot2::geom_point(mapping = mapping, data = data, position = pos, ...)
+  }
   .add_geom(plot, geom, rasterize = rasterize, rasterize_dpi = rasterize_dpi,
             rasterize_dev = rasterize_dev)
 }
@@ -46,23 +56,33 @@ S7::method(mark_point, plotit_class) <- function(plot, mapping = NULL, data = NU
 #' @param plot A plotit object
 #' @param mapping Optional new aesthetics
 #' @param data Optional data for this layer
+#' @param position Position adjustment; if `NULL` and global dodge is set, auto-applies `position_dodge()`.
 #' @param ... Other arguments passed to `geom_line`
 #' @return Modified plotit object
 #' @export
 mark_line <- S7::new_generic(
   "mark_line",
   "plot",
-  function(plot, mapping = NULL, data = NULL, ...,
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
            rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
     S7::S7_dispatch()
   }
 )
 
 #' @export
-S7::method(mark_line, plotit_class) <- function(plot, mapping = NULL, data = NULL, ...,
+S7::method(mark_line, plotit_class) <- function(plot, mapping = NULL, data = NULL,
+                                                  position = NULL, ...,
                                                   rasterize = FALSE, rasterize_dpi = 300,
                                                   rasterize_dev = "cairo") {
-  geom <- ggplot2::geom_line(mapping = mapping, data = data, ...)
+  pos <- position
+  if (is.null(pos) && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
+    pos <- ggplot2::position_dodge(plot@meta@dodge)
+  }
+  if (is.null(pos)) {
+    geom <- ggplot2::geom_line(mapping = mapping, data = data, ...)
+  } else {
+    geom <- ggplot2::geom_line(mapping = mapping, data = data, position = pos, ...)
+  }
   .add_geom(plot, geom, rasterize = rasterize, rasterize_dpi = rasterize_dpi,
             rasterize_dev = rasterize_dev)
 }
@@ -72,28 +92,35 @@ S7::method(mark_line, plotit_class) <- function(plot, mapping = NULL, data = NUL
 #' @param plot A plotit object
 #' @param mapping Optional new aesthetics
 #' @param data Optional data for this layer
+#' @param position Position adjustment; if `NULL` and global dodge is set, auto-applies `position_dodge()`. Overrides `geom_bar`/`geom_col` default.
 #' @param ... Other arguments passed to `geom_bar` or `geom_col`
 #' @return Modified plotit object
 #' @export
 mark_bar <- S7::new_generic(
   "mark_bar",
   "plot",
-  function(plot, mapping = NULL, data = NULL, ...,
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
            rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
     S7::S7_dispatch()
   }
 )
 
 #' @export
-S7::method(mark_bar, plotit_class) <- function(plot, mapping = NULL, data = NULL, ...,
+S7::method(mark_bar, plotit_class) <- function(plot, mapping = NULL, data = NULL,
+                                                 position = NULL, ...,
                                                  rasterize = FALSE, rasterize_dpi = 300,
                                                  rasterize_dev = "cairo") {
+  pos <- position
+  if (is.null(pos) && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
+    pos <- ggplot2::position_dodge(plot@meta@dodge)
+  }
   has_y <- (!is.null(mapping) && !is.null(mapping$y)) ||
            (!is.null(plot@gg$mapping$y))
-  if (has_y) {
-    geom <- ggplot2::geom_col(mapping = mapping, data = data, ...)
+  geom_fun <- if (has_y) ggplot2::geom_col else ggplot2::geom_bar
+  if (is.null(pos)) {
+    geom <- geom_fun(mapping = mapping, data = data, ...)
   } else {
-    geom <- ggplot2::geom_bar(mapping = mapping, data = data, ...)
+    geom <- geom_fun(mapping = mapping, data = data, position = pos, ...)
   }
   .add_geom(plot, geom, rasterize = rasterize, rasterize_dpi = rasterize_dpi,
             rasterize_dev = rasterize_dev)
@@ -104,23 +131,33 @@ S7::method(mark_bar, plotit_class) <- function(plot, mapping = NULL, data = NULL
 #' @param plot A plotit object
 #' @param mapping Optional new aesthetics
 #' @param data Optional data for this layer
+#' @param position Position adjustment; if `NULL` and global dodge is set, auto-applies `position_dodge()`. Overrides `geom_boxplot` default (`"dodge2"`).
 #' @param ... Other arguments passed to `geom_boxplot`
 #' @return Modified plotit object
 #' @export
 mark_boxplot <- S7::new_generic(
   "mark_boxplot",
   "plot",
-  function(plot, mapping = NULL, data = NULL, ...,
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
            rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
     S7::S7_dispatch()
   }
 )
 
 #' @export
-S7::method(mark_boxplot, plotit_class) <- function(plot, mapping = NULL, data = NULL, ...,
+S7::method(mark_boxplot, plotit_class) <- function(plot, mapping = NULL, data = NULL,
+                                                     position = NULL, ...,
                                                      rasterize = FALSE, rasterize_dpi = 300,
                                                      rasterize_dev = "cairo") {
-  geom <- ggplot2::geom_boxplot(mapping = mapping, data = data, ...)
+  pos <- position
+  if (is.null(pos) && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
+    pos <- ggplot2::position_dodge(plot@meta@dodge)
+  }
+  if (is.null(pos)) {
+    geom <- ggplot2::geom_boxplot(mapping = mapping, data = data, ...)
+  } else {
+    geom <- ggplot2::geom_boxplot(mapping = mapping, data = data, position = pos, ...)
+  }
   .add_geom(plot, geom, rasterize = rasterize, rasterize_dpi = rasterize_dpi,
             rasterize_dev = rasterize_dev)
 }

@@ -65,7 +65,7 @@ plotit <- function(
     autofit = autofit,
     width = if (autofit) NULL else width,
     height = if (autofit) NULL else height,
-    unit = if (autofit) NULL else size_unit,
+    unit = size_unit,
     dodge = dodge,
     default_color = if (use_default) default_color else NULL,
     labels = meta_labels
@@ -75,7 +75,7 @@ plotit <- function(
   p <- p + .theme_default()
 
   # 标记已应用默认主题（存于 meta 而非 gg$theme，因后续 patchwork 包装会遮蔽 $theme）
-  attr(meta, "plotit_applied") <- TRUE
+  attr(meta, "plotit_theme_managed") <- TRUE
 
   # 若 patchwork 可用且非 autofit 模式，固定面板尺寸（参考 tidyplots 方案）
   if (!autofit && requireNamespace("patchwork", quietly = TRUE)) {

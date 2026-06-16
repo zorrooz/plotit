@@ -32,7 +32,7 @@ NULL
 # Per-aesthetic trans validation sets
 .trans_cf <- c("identity", "discrete", "reverse", "binned")  # colour/fill
 .trans_n  <- c("identity", "discrete", "reverse", "binned")  # size/alpha (numeric)
-.trans_sl <- c("discrete", "binned")                          # shape/linetype
+.trans_sl <- c("identity", "discrete", "binned")              # shape/linetype
 .trans_xy <- c("identity", "discrete", "log", "log10", "log2", "sqrt", "reverse", "binned")
 
 # Resolve trans=NULL: auto-detect; otherwise validate and return
@@ -186,7 +186,10 @@ NULL
     else         ggplot2::scale_y_continuous
   }
   args <- list(name = name, limits = limits, breaks = breaks, labels = labels)
-  # range 对 x/y 无意义（ggplot2 无 pixel range 概念），忽略
+  # range 对 x/y 无意义（ggplot2 无 pixel range 概念），忽略但给出提示
+  if (!is.null(range)) {
+    cli::cli_warn("{.arg range} is not meaningful for position scales and will be ignored.")
+  }
   if (!discrete && !binned) args$trans <- trans
   args <- args[!vapply(args, is.null, logical(1))]
   plot@gg <- plot@gg + do.call(scale_fun, c(args, list(...)))
@@ -194,6 +197,25 @@ NULL
 }
 
 # ---- scale_color ----
+#' Color scale
+#'
+#' Maps data values to colours. Auto-detects discrete vs continuous variables;
+#' supports manual colour vectors and named colour schemes.
+#'
+#' @param plot A plotit object.
+#' @param name Scale title (legend name). `ggplot2::waiver()` = use variable name.
+#' @param trans Scale transformation. `NULL` auto-detects, otherwise one of:
+#'   `"identity"`, `"discrete"`, `"reverse"`, `"binned"`.
+#' @param limits Data domain. `c(min, max)` for continuous; character vector for discrete limits.
+#' @param range Output range. `NULL` = auto (discrete→hue, continuous→viridis).
+#'   A colour vector (`c("blue","red")`) for manual colours, or a scheme name:
+#'   `"viridis"`, `"brewer"`, `"grey"`, `"hue"`.
+#'   For binned: only `"viridis"`, `"brewer"`.
+#'   For continuous: only `"viridis"`, `"brewer"`.
+#' @param breaks Legend key positions.
+#' @param labels Legend key labels.
+#' @param ... Passed to the underlying ggplot2 scale function.
+#' @return A modified plotit object.
 #' @export
 scale_color <- S7::new_generic(
   "scale_color", "plot",
@@ -215,6 +237,22 @@ S7::method(scale_color, plotit_class) <- function(plot, name = ggplot2::waiver()
 }
 
 # ---- scale_fill ----
+#' Fill scale
+#'
+#' Maps data values to fill colours. Same semantics as [scale_color()] but for
+#' the `fill` aesthetic (bars, boxes, polygons, etc.).
+#'
+#' @param plot A plotit object.
+#' @param name Scale title (legend name). `ggplot2::waiver()` = use variable name.
+#' @param trans Scale transformation. `NULL` auto-detects, otherwise one of:
+#'   `"identity"`, `"discrete"`, `"reverse"`, `"binned"`.
+#' @param limits Data domain.
+#' @param range Output range. Same as [scale_color()]: colour vector, or `"viridis"`,
+#'   `"brewer"`, `"grey"`, `"hue"`.
+#' @param breaks Legend key positions.
+#' @param labels Legend key labels.
+#' @param ... Passed to the underlying ggplot2 scale function.
+#' @return A modified plotit object.
 #' @export
 scale_fill <- S7::new_generic(
   "scale_fill", "plot",
@@ -236,6 +274,21 @@ S7::method(scale_fill, plotit_class) <- function(plot, name = ggplot2::waiver(),
 }
 
 # ---- scale_size ----
+#' Size scale
+#'
+#' Maps data values to point/line sizes.
+#'
+#' @param plot A plotit object.
+#' @param name Scale title (legend name).
+#' @param trans Scale transformation. `NULL` auto-detects, otherwise one of:
+#'   `"identity"`, `"discrete"`, `"reverse"`, `"binned"`.
+#' @param limits Data domain.
+#' @param range Output size range as `c(min, max)`. `NULL` = default `c(1, 6)`.
+#'   Only meaningful for continuous scales (ignored for discrete/binned).
+#' @param breaks Legend key positions.
+#' @param labels Legend key labels.
+#' @param ... Passed to the underlying ggplot2 scale function.
+#' @return A modified plotit object.
 #' @export
 scale_size <- S7::new_generic(
   "scale_size", "plot",
@@ -256,6 +309,21 @@ S7::method(scale_size, plotit_class) <- function(plot, name = ggplot2::waiver(),
 }
 
 # ---- scale_alpha ----
+#' Alpha (transparency) scale
+#'
+#' Maps data values to alpha transparency.
+#'
+#' @param plot A plotit object.
+#' @param name Scale title (legend name).
+#' @param trans Scale transformation. `NULL` auto-detects, otherwise one of:
+#'   `"identity"`, `"discrete"`, `"reverse"`, `"binned"`.
+#' @param limits Data domain.
+#' @param range Output alpha range as `c(min, max)`. `NULL` = default `c(0.1, 1)`.
+#'   Only meaningful for continuous scales.
+#' @param breaks Legend key positions.
+#' @param labels Legend key labels.
+#' @param ... Passed to the underlying ggplot2 scale function.
+#' @return A modified plotit object.
 #' @export
 scale_alpha <- S7::new_generic(
   "scale_alpha", "plot",
@@ -276,6 +344,21 @@ S7::method(scale_alpha, plotit_class) <- function(plot, name = ggplot2::waiver()
 }
 
 # ---- scale_shape ----
+#' Shape scale
+#'
+#' Maps data values to point shapes. Only discrete and binned scales are supported;
+#' continuous variables must be binned first.
+#'
+#' @param plot A plotit object.
+#' @param name Scale title (legend name).
+#' @param trans Scale transformation. Default `"discrete"`. Allowed:
+#'   `"discrete"`, `"binned"`. `"identity"` is rejected with a helpful error.
+#' @param limits Data domain.
+#' @param range Shape numbers as `c(from, to)`. `NULL` = ggplot2 default shapes.
+#' @param breaks Legend key positions.
+#' @param labels Legend key labels.
+#' @param ... Passed to the underlying ggplot2 scale function.
+#' @return A modified plotit object.
 #' @export
 scale_shape <- S7::new_generic(
   "scale_shape", "plot",
@@ -300,6 +383,20 @@ S7::method(scale_shape, plotit_class) <- function(plot, name = ggplot2::waiver()
 }
 
 # ---- scale_linetype ----
+#' Linetype scale
+#'
+#' Maps data values to line types. Only discrete and binned scales are supported.
+#'
+#' @param plot A plotit object.
+#' @param name Scale title (legend name).
+#' @param trans Scale transformation. Default `"discrete"`. Allowed:
+#'   `"discrete"`, `"binned"`. `"identity"` is rejected with a helpful error.
+#' @param limits Data domain.
+#' @param range Linetype names or codes (`c("solid","dashed")`). `NULL` = ggplot2 defaults.
+#' @param breaks Legend key positions.
+#' @param labels Legend key labels.
+#' @param ... Passed to the underlying ggplot2 scale function.
+#' @return A modified plotit object.
 #' @export
 scale_linetype <- S7::new_generic(
   "scale_linetype", "plot",
@@ -324,6 +421,21 @@ S7::method(scale_linetype, plotit_class) <- function(plot, name = ggplot2::waive
 }
 
 # ---- scale_x ----
+#' X-axis position scale
+#'
+#' Controls the x-axis scale: transformation, limits, breaks, and labels.
+#'
+#' @param plot A plotit object.
+#' @param name Axis title. `ggplot2::waiver()` = use variable name.
+#' @param trans Scale transformation. Default `"identity"`. Allowed:
+#'   `"identity"`, `"discrete"`, `"log"`, `"log10"`, `"log2"`,
+#'   `"sqrt"`, `"reverse"`, `"binned"`.
+#' @param limits Axis limits as `c(min, max)`.
+#' @param range Ignored for position scales (a warning is issued if non-NULL).
+#' @param breaks Axis tick positions.
+#' @param labels Axis tick labels.
+#' @param ... Passed to the underlying ggplot2 scale function.
+#' @return A modified plotit object.
 #' @export
 scale_x <- S7::new_generic(
   "scale_x", "plot",
@@ -341,6 +453,21 @@ S7::method(scale_x, plotit_class) <- function(plot, name = ggplot2::waiver(),
 }
 
 # ---- scale_y ----
+#' Y-axis position scale
+#'
+#' Controls the y-axis scale: transformation, limits, breaks, and labels.
+#'
+#' @param plot A plotit object.
+#' @param name Axis title. `ggplot2::waiver()` = use variable name.
+#' @param trans Scale transformation. Default `"identity"`. Allowed:
+#'   `"identity"`, `"discrete"`, `"log"`, `"log10"`, `"log2"`,
+#'   `"sqrt"`, `"reverse"`, `"binned"`.
+#' @param limits Axis limits as `c(min, max)`.
+#' @param range Ignored for position scales (a warning is issued if non-NULL).
+#' @param breaks Axis tick positions.
+#' @param labels Axis tick labels.
+#' @param ... Passed to the underlying ggplot2 scale function.
+#' @return A modified plotit object.
 #' @export
 scale_y <- S7::new_generic(
   "scale_y", "plot",
