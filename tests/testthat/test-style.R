@@ -47,7 +47,8 @@ test_that("style() 支持 ... 传递 theme() 微调", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     style(ggplot2::theme_minimal(),
-      plot.title = ggplot2::element_text(face = "bold"))
+      plot.title = ggplot2::element_text(face = "bold")
+    )
   expect_s3_class(p, "plotit::plotit")
 })
 

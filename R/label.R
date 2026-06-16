@@ -2,11 +2,7 @@
 NULL
 
 # ---- Internal helpers for label family ----
-# Four-state protocol for all text parameters:
-#   NULL  = skip (no change)
-#   FALSE = hide
-#   TRUE  = show default
-#   "str" = show custom text
+# Four-state protocol for text parameters: NULL=skip, FALSE=hide, TRUE=default, "str"=custom
 
 #' @noRd
 .label_skip <- function(x) is.null(x)
@@ -33,8 +29,11 @@ NULL
   unique(c(
     intersect(names(gg$mapping), candidates),
     unlist(lapply(gg$layers, function(l) {
-      if (is.null(l$mapping)) character(0)
-      else intersect(names(l$mapping), candidates)
+      if (is.null(l$mapping)) {
+        character(0)
+      } else {
+        intersect(names(l$mapping), candidates)
+      }
     }))
   ))
 }
@@ -79,7 +78,9 @@ label_title <- S7::new_generic(
 
 #' @export
 S7::method(label_title, plotit_class) <- function(plot, text = NULL, ...) {
-  if (.label_skip(text)) return(plot)
+  if (.label_skip(text)) {
+    return(plot)
+  }
   final <- if (.label_hide(text) || .label_default(text)) NULL else text
   plot@meta@labels@title <- final
   plot@gg <- plot@gg + ggplot2::labs(title = final)
@@ -103,7 +104,9 @@ label_subtitle <- S7::new_generic(
 
 #' @export
 S7::method(label_subtitle, plotit_class) <- function(plot, text = NULL, ...) {
-  if (.label_skip(text)) return(plot)
+  if (.label_skip(text)) {
+    return(plot)
+  }
   final <- if (.label_hide(text) || .label_default(text)) NULL else text
   plot@meta@labels@subtitle <- final
   plot@gg <- plot@gg + ggplot2::labs(subtitle = final)
@@ -127,7 +130,9 @@ label_caption <- S7::new_generic(
 
 #' @export
 S7::method(label_caption, plotit_class) <- function(plot, text = NULL, ...) {
-  if (.label_skip(text)) return(plot)
+  if (.label_skip(text)) {
+    return(plot)
+  }
   final <- if (.label_hide(text) || .label_default(text)) NULL else text
   plot@meta@labels@caption <- final
   plot@gg <- plot@gg + ggplot2::labs(caption = final)
@@ -152,7 +157,9 @@ label_axis <- S7::new_generic(
 
 #' @export
 S7::method(label_axis, plotit_class) <- function(plot, text = NULL, aes = NULL, ...) {
-  if (.label_skip(text)) return(plot)
+  if (.label_skip(text)) {
+    return(plot)
+  }
   if (is.null(aes)) {
     cli::cli_abort("{.arg aes} must be specified: {.code aes = \"x\"} or {.code aes = \"y\"}.")
   }
@@ -167,7 +174,9 @@ S7::method(label_axis, plotit_class) <- function(plot, text = NULL, aes = NULL, 
     S7::prop(plot@meta@labels, aes) <- NULL
     plot@gg <- plot@gg + .theme_el(paste0("axis.title.", aes), NULL)
     # Remove label key so ggplot2 uses the variable name from the mapping
-    labs <- plot@gg$labels; labs[aes] <- NULL; plot@gg$labels <- labs
+    labs <- plot@gg$labels
+    labs[aes] <- NULL
+    plot@gg$labels <- labs
   } else {
     S7::prop(plot@meta@labels, aes) <- text
     plot@gg <- plot@gg + .theme_el(paste0("axis.title.", aes), NULL)
@@ -194,7 +203,9 @@ label_legend <- S7::new_generic(
 
 #' @export
 S7::method(label_legend, plotit_class) <- function(plot, text = NULL, aes = NULL, ...) {
-  if (.label_skip(text)) return(plot)
+  if (.label_skip(text)) {
+    return(plot)
+  }
 
   if (is.null(aes)) {
     plot@meta@labels@legend[["default"]] <-
@@ -212,8 +223,10 @@ S7::method(label_legend, plotit_class) <- function(plot, text = NULL, aes = NULL
       if (.label_hide(text) || .label_default(text)) NULL else text
     plot@gg <- .label_set_aes(plot@gg, aes, text)
     # 若 aes 不在当前映射中，给出友好提示
-    aes_all <- .collect_aes_names(plot@gg,
-      c("colour", "fill", "shape", "linetype", "size", "alpha"))
+    aes_all <- .collect_aes_names(
+      plot@gg,
+      c("colour", "fill", "shape", "linetype", "size", "alpha")
+    )
     if (!(aes %in% aes_all)) {
       cli::cli_warn("Aesthetic {.val {aes}} is not present in the plot mapping.")
     }

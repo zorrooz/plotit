@@ -122,14 +122,16 @@ test_that("label_axis TRUE：显示变量名，meta 存 NULL", {
 
 test_that("label_axis TRUE 覆盖之前自定义", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
-  p <- p |> label_axis(text = "Old", aes = "x") |>
+  p <- p |>
+    label_axis(text = "Old", aes = "x") |>
     label_axis(text = TRUE, aes = "x")
   expect_false("x" %in% names(p@gg$labels))
 })
 
 test_that("label_axis NULL 跳过，保留之前自定义", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
-  p <- p |> label_axis(text = "Old", aes = "x") |>
+  p <- p |>
+    label_axis(text = "Old", aes = "x") |>
     label_axis(text = NULL, aes = "x")
   expect_equal(p@gg$labels$x, "Old")
 })

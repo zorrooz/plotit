@@ -23,7 +23,8 @@ test_that("scale_color 对离散变量自动使用离散尺度", {
 
 test_that("scale_color 清除 default_color 注入", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
-              default_color = "steelblue")
+    default_color = "steelblue"
+  )
   p <- scale_color(p, name = "测试")
   expect_null(p@gg$mapping$colour)
   expect_null(p@meta@default_color)
@@ -158,7 +159,8 @@ test_that("scale_fill 对离散变量自动使用离散尺度", {
 
 test_that("scale_fill 清除 default_color 注入", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
-              default_color = "steelblue")
+    default_color = "steelblue"
+  )
   p <- scale_fill(p, name = "测试")
   expect_null(p@gg$mapping$colour)
   expect_null(p@meta@default_color)

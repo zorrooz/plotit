@@ -35,13 +35,12 @@ plotit <- function(
     )
   }
 
-  # 始终验证 size_unit（不受 autofit 影响，属于包层自约束）
+  # Always validate size_unit (package-level constraint, independent of autofit)
   valid_units <- c("in", "cm", "mm")
   if (!(size_unit %in% valid_units)) {
     cli::cli_abort("{.arg size_unit} must be one of {.val {valid_units}}.")
   }
 
-  # 启发式 dodge
   if (is.null(dodge)) {
     disc_x <- !is.null(mapping$x) && is_discrete(data, mapping$x)
     disc_y <- !is.null(mapping$y) && is_discrete(data, mapping$y)
@@ -51,11 +50,12 @@ plotit <- function(
   has_color <- "colour" %in% names(mapping)
   has_fill <- "fill" %in% names(mapping)
 
-  # 单色映射：如果没有颜色/填充映射，使用 default_color 并隐藏图例
+  # Default-color injection: if no colour/fill mapping, inject I(default_color) and suppress legend
   use_default <- !is.null(default_color) && !has_color && !has_fill
   if (use_default) {
     mapping$colour <- I(default_color)
-    p <- ggplot2::ggplot(data, mapping) + ggplot2::guides(colour = "none")
+    p <- ggplot2::ggplot(data, mapping) +
+      ggplot2::guides(colour = "none")
   } else {
     p <- ggplot2::ggplot(data, mapping)
   }
@@ -71,21 +71,18 @@ plotit <- function(
     labels = meta_labels
   )
 
-  # 应用包级默认主题
   p <- p + .theme_default()
 
-  # 标记已应用默认主题（存于 meta 而非 gg$theme，因后续 patchwork 包装会遮蔽 $theme）
+  # Mark theme as managed (stored on meta, not gg$theme, since patchwork wrapping shadows $theme)
   attr(meta, "plotit_theme_managed") <- TRUE
 
-  # 若 patchwork 可用且非 autofit 模式，固定面板尺寸（参考 tidyplots 方案）
+  # If patchwork is available and autofit is off, fix panel dimensions
   if (!autofit && requireNamespace("patchwork", quietly = TRUE)) {
     p <- p + patchwork::plot_layout(
-      widths  = ggplot2::unit(width,  size_unit),
+      widths  = ggplot2::unit(width, size_unit),
       heights = ggplot2::unit(height, size_unit)
     )
   }
 
   plotit_class(gg = p, meta = meta)
 }
-
-
