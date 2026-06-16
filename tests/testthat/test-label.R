@@ -1,5 +1,5 @@
 # ============================================================
-# label_* 函数族测试 — 四态协议、meta 同步、边界情况
+# label_* function family — four-state protocol, meta sync, edge cases
 # ============================================================
 library(plotit)
 

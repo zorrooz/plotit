@@ -1,5 +1,5 @@
 # ============================================================
-# mark_* 函数族测试 — 图层添加、dodge 自动注入、栅格化
+# mark_* function family — layer addition, auto-dodge, rasterization
 # ============================================================
 library(plotit)
 

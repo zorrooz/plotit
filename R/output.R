@@ -9,8 +9,6 @@ NULL
 #' @return The plotit object (invisibly)
 #' @noRd
 S7::method(print, plotit_class) <- function(x, ...) {
-  # Fallback: inject default theme if plotit_theme_managed flag is missing
-  # (e.g. S7 object constructed without calling plotit())
   if (is.null(attr(x@meta, "plotit_theme_managed", exact = TRUE))) {
     x@gg <- x@gg + .theme_default()
     attr(x@meta, "plotit_theme_managed") <- TRUE
@@ -31,7 +29,6 @@ S7::method(print, plotit_class) <- function(x, ...) {
       )
       grDevices::dev.new(width = pw, height = ph, noRStudioGD = TRUE)
     } else {
-      # No patchwork: open device using meta dimensions converted to inches
       units_per_inch <- switch(x@meta@unit %||% "in",
         "in" = 1,
         "cm" = 2.54,

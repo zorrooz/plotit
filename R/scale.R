@@ -3,7 +3,6 @@ NULL
 
 # ---- Internal helpers ----
 
-# Undo default_color I() injection and guides(colour = "none") from plotit()
 .reset_default_color <- function(plot) {
   if (is.null(plot@meta@default_color)) {
     return(plot)
@@ -14,7 +13,6 @@ NULL
   plot
 }
 
-# Auto-detect whether an aesthetic is discrete.
 .detect_discrete_aes <- function(plot, aes_name) {
   var <- plot@gg$mapping[[aes_name]]
   if (!is.null(var)) {
@@ -238,7 +236,6 @@ NULL
     }
   }
   args <- list(name = name, limits = limits, breaks = breaks, labels = labels)
-  # range is meaningless for position scales (ggplot2 has no pixel-range concept); warn and skip
   if (!is.null(range)) {
     cli::cli_warn("{.arg range} is not meaningful for position scales and will be ignored.")
   }

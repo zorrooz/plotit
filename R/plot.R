@@ -35,7 +35,6 @@ plotit <- function(
     )
   }
 
-  # Always validate size_unit (package-level constraint, independent of autofit)
   valid_units <- c("in", "cm", "mm")
   if (!(size_unit %in% valid_units)) {
     cli::cli_abort("{.arg size_unit} must be one of {.val {valid_units}}.")
@@ -50,7 +49,7 @@ plotit <- function(
   has_color <- "colour" %in% names(mapping)
   has_fill <- "fill" %in% names(mapping)
 
-  # Default-color injection: if no colour/fill mapping, inject I(default_color) and suppress legend
+  # Inject I(default_color) to suppress legend when no colour/fill mapping exists
   use_default <- !is.null(default_color) && !has_color && !has_fill
   if (use_default) {
     mapping$colour <- I(default_color)
@@ -73,10 +72,9 @@ plotit <- function(
 
   p <- p + .theme_default()
 
-  # Mark theme as managed (stored on meta, not gg$theme, since patchwork wrapping shadows $theme)
+  # Stored on meta, not gg$theme — patchwork wrapping would shadow $theme
   attr(meta, "plotit_theme_managed") <- TRUE
 
-  # If patchwork is available and autofit is off, fix panel dimensions
   if (!autofit && requireNamespace("patchwork", quietly = TRUE)) {
     p <- p + patchwork::plot_layout(
       widths  = ggplot2::unit(width, size_unit),
