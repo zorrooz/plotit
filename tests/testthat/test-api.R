@@ -385,14 +385,70 @@ test_that("scale_y 使用连续尺度", {
 
 test_that("scale_x 显式 discrete=TRUE 使用离散尺度", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
-  p <- scale_x(p, discrete = TRUE)
+  p <- scale_x(p, trans = "discrete")
   expect_s3_class(p, "plotit::plotit")
 })
 
 test_that("scale_y 显式 discrete=FALSE 强制定量尺度", {
   p <- plotit(iris, encode(x = Species, y = Sepal.Length))
-  p <- scale_y(p, discrete = FALSE)
+  p <- scale_y(p, trans = "identity")
   expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- scale_size / scale_alpha / scale_shape / scale_linetype ----
+test_that("scale_size 连续变量不报错", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg, size = hp)) |> mark_point()
+  expect_no_error(scale_size(p, trans = "identity", range = c(1, 10)))
+})
+
+test_that("scale_size 离散变量不报错", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, size = Species)) |>
+    mark_point()
+  expect_no_error(suppressWarnings(scale_size(p, trans = "discrete")))
+})
+
+test_that("scale_alpha 不报错", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg, alpha = hp)) |> mark_point()
+  expect_no_error(scale_alpha(p, trans = "identity", range = c(0.1, 0.8)))
+})
+
+test_that("scale_shape 不报错", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, shape = Species)) |>
+    mark_point()
+  expect_no_error(scale_shape(p, range = c(1, 3)))
+})
+
+test_that("scale_linetype 不报错", {
+  p <- plotit(ggplot2::economics, encode(x = date, y = unemploy)) |> mark_line()
+  expect_no_error(scale_linetype(p))
+})
+
+test_that("scale_color range=viridis 不报错", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+    mark_point() |> scale_color(range = "viridis")
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("scale_color range=c(blue,red) 渐变不报错", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg, colour = hp)) |>
+    mark_point() |> scale_color(range = c("blue", "red"))
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("scale_x trans=log10 不报错", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg)) |> mark_point()
+  expect_no_error(scale_x(p, trans = "log10"))
+})
+
+test_that("scale_color trans=reverse 不报错", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+    mark_point() |> scale_color(trans = "reverse")
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("scale_size trans=binned 不报错", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg, size = hp)) |> mark_point()
+  expect_no_error(scale_size(p, trans = "binned"))
 })
 
 # ---- project_cartesian / project_flip ----
