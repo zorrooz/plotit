@@ -56,8 +56,7 @@ test_that("plotit() 拒绝非法 unit（不受 autofit 影响）", {
 })
 
 # ---- patchwork 集成 ----
-test_that("plotit() 在 patchwork 可用时添加 plot_layout 固定尺寸", {
-  skip_if_not_installed("patchwork")
+test_that("plotit() 始终添加 plot_layout 固定面板尺寸", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
     width = 6, height = 4, size_unit = "in"
   )
@@ -65,21 +64,10 @@ test_that("plotit() 在 patchwork 可用时添加 plot_layout 固定尺寸", {
 })
 
 test_that("plotit() autofit=TRUE 时不添加 patchwork 布局", {
-  skip_if_not_installed("patchwork")
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
     autofit = TRUE
   )
-  # autofit 时不包装 patchwork，gg 直接是 ggplot 对象
   expect_false(inherits(p@gg, "patchwork"))
-})
-
-test_that("plotit() 无 patchwork 时正常降级", {
-  # 无法在不安装 patchwork 的环境中测试降级路径，
-  # 但至少验证不会因为 patchwork 缺失而报错
-  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
-    width = 6, height = 4
-  )
-  expect_s3_class(p, "plotit::plotit")
 })
 
 # ---- plotit() 基本构造与守卫 ----

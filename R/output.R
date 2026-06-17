@@ -14,32 +14,17 @@ S7::method(print, plotit_class) <- function(x, ...) {
     attr(x@meta, "plotit_theme_managed") <- TRUE
   }
 
-  has_patchwork <- inherits(x@gg, "patchwork")
-
   if (interactive() && !is.null(x@meta@width) && !is.null(x@meta@height)) {
-    if (has_patchwork) {
-      gt <- patchwork::patchworkGrob(x@gg)
-      pw <- grid::convertWidth(
-        sum(gt$widths) + ggplot2::unit(1, "mm"), "inches",
-        valueOnly = TRUE
-      )
-      ph <- grid::convertHeight(
-        sum(gt$heights) + ggplot2::unit(1, "mm"), "inches",
-        valueOnly = TRUE
-      )
-      grDevices::dev.new(width = pw, height = ph, noRStudioGD = TRUE)
-    } else {
-      units_per_inch <- switch(x@meta@unit %||% "in",
-        "in" = 1,
-        "cm" = 2.54,
-        "mm" = 25.4
-      )
-      grDevices::dev.new(
-        width = x@meta@width / units_per_inch,
-        height = x@meta@height / units_per_inch,
-        noRStudioGD = TRUE
-      )
-    }
+    gt <- patchwork::patchworkGrob(x@gg)
+    pw <- grid::convertWidth(
+      sum(gt$widths) + ggplot2::unit(1, "mm"), "inches",
+      valueOnly = TRUE
+    )
+    ph <- grid::convertHeight(
+      sum(gt$heights) + ggplot2::unit(1, "mm"), "inches",
+      valueOnly = TRUE
+    )
+    grDevices::dev.new(width = pw, height = ph, noRStudioGD = TRUE)
   }
   print(x@gg)
   invisible(x)
@@ -89,18 +74,9 @@ S7::method(export, plotit_class) <- function(
 
   meta_unit <- plot@meta@unit %||% getOption("plotit.default_unit", "in")
 
-  # 若 patchwork 可用，从 gtable 测量总尺寸（面板+装饰+1mm）
-  # 这比 meta 面板尺寸更精确——避免裁切；用户显式参数可覆盖
-  has_patchwork <- requireNamespace("patchwork", quietly = TRUE) &&
-    inherits(plot@gg, "patchwork")
-  if (has_patchwork) {
-    gt <- patchwork::patchworkGrob(plot@gg)
-    # 用户显式参数优先，未传则用 gtable 测量值（已是英寸）
+  if (isTRUE(plot@meta@autofit)) {
     final_width <- if (is.null(width)) {
-      grid::convertWidth(
-        sum(gt$widths) + ggplot2::unit(1, "mm"), "in",
-        valueOnly = TRUE
-      )
+      NA
     } else {
       width / switch(meta_unit,
         "in" = 1,
@@ -109,10 +85,7 @@ S7::method(export, plotit_class) <- function(
       )
     }
     final_height <- if (is.null(height)) {
-      grid::convertHeight(
-        sum(gt$heights) + ggplot2::unit(1, "mm"), "in",
-        valueOnly = TRUE
-      )
+      NA
     } else {
       height / switch(meta_unit,
         "in" = 1,
@@ -121,26 +94,24 @@ S7::method(export, plotit_class) <- function(
       )
     }
   } else {
-    # 无 patchwork：按 meta 面板尺寸 + 用户回退
-    final_width <- width %||%
-      plot@meta@width %||%
-      getOption("plotit.default_width", 7)
-    final_height <- height %||%
-      plot@meta@height %||%
-      getOption("plotit.default_height", 5)
-
-    if (isTRUE(plot@meta@autofit)) {
-      if (is.null(width)) final_width <- NA
-      if (is.null(height)) final_height <- NA
-    }
-    if (!is.na(final_width) && !is.na(final_height)) {
-      units_per_inch <- switch(meta_unit,
+    gt <- patchwork::patchworkGrob(plot@gg)
+    final_width <- if (is.null(width)) {
+      grid::convertWidth(sum(gt$widths) + ggplot2::unit(1, "mm"), "in", valueOnly = TRUE)
+    } else {
+      width / switch(meta_unit,
         "in" = 1,
         "cm" = 2.54,
         "mm" = 25.4
       )
-      final_width <- final_width / units_per_inch
-      final_height <- final_height / units_per_inch
+    }
+    final_height <- if (is.null(height)) {
+      grid::convertHeight(sum(gt$heights) + ggplot2::unit(1, "mm"), "in", valueOnly = TRUE)
+    } else {
+      height / switch(meta_unit,
+        "in" = 1,
+        "cm" = 2.54,
+        "mm" = 25.4
+      )
     }
   }
 

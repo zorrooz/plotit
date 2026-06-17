@@ -197,7 +197,7 @@ plotit(data, mapping = encode(), autofit = FALSE,
 - `dodge`：全局默认躲避宽度。若未提供，实施启发式判断（离散 X/Y 则设置躲避，连续则无躲避）。各 `mark_*` 函数自动将该值注入 `position_dodge()`，用户可通过显式 `position` 参数覆盖。
 - `default_color`：若提供且映射中无 `colour`/`fill`，则自动生成单色映射并隐藏对应图例；一旦后续添加颜色/填充比例尺，该单色映射自动失效。
 
-  实现方式：`default_color` 非 `NULL` 且映射中无 `colour`/`fill` 时，包内通过注入初始 `scale_colour_manual(values = default_color, guide = "none")` 及对应 `scale_fill_manual` 实现单色无图例。当用户后续调用 `scale_colour()` 或 `scale_fill()` 时，新标度将覆盖该单色标度，自然实现"失效"。
+  实现方式：将 `I(default_color)` 注入 `mapping$colour`（`I()` 阻止 ggplot2 将其视作映射变量），并追加 `guides(colour = "none")` 隐藏图例。后续任一 `scale_color()` 或 `scale_fill()` 调用均会通过 `.reset_default_color()` 清除注入，自然失效。
 
 **行为**：
 1. 验证 `mapping` 的类（本包自约束，按 1.3 分域原则）。

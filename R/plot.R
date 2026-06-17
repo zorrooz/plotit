@@ -75,7 +75,7 @@ plotit <- function(
   # Stored on meta, not gg$theme — patchwork wrapping would shadow $theme
   attr(meta, "plotit_theme_managed") <- TRUE
 
-  if (!autofit && requireNamespace("patchwork", quietly = TRUE)) {
+  if (!autofit) {
     p <- p + patchwork::plot_layout(
       widths  = ggplot2::unit(width, size_unit),
       heights = ggplot2::unit(height, size_unit)
