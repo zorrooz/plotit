@@ -210,7 +210,6 @@ S7::method(label_legend, plotit_class) <- function(plot, text = NULL, aes = NULL
   if (is.null(aes)) {
     plot@meta@labels@legend[["default"]] <-
       if (.label_hide(text) || .label_default(text)) NULL else text
-    # 收集全局映射和所有图层局部映射中的美学名称
     aes_names <- .collect_aes_names(
       plot@gg,
       c("colour", "fill", "shape", "linetype", "size", "alpha")
@@ -222,7 +221,6 @@ S7::method(label_legend, plotit_class) <- function(plot, text = NULL, aes = NULL
     plot@meta@labels@legend[[aes]] <-
       if (.label_hide(text) || .label_default(text)) NULL else text
     plot@gg <- .label_set_aes(plot@gg, aes, text)
-    # 若 aes 不在当前映射中，给出友好提示
     aes_all <- .collect_aes_names(
       plot@gg,
       c("colour", "fill", "shape", "linetype", "size", "alpha")

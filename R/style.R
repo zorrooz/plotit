@@ -8,7 +8,6 @@ NULL
     base_size = base_size %||% 11,
     base_family = base_family %||% ""
   ) + ggplot2::theme(
-    # 透明背景（固定面板尺寸时多余区域透明）
     plot.background = ggplot2::element_rect(fill = NA, colour = NA),
     panel.background = ggplot2::element_rect(fill = NA, colour = NA),
     legend.background = ggplot2::element_rect(fill = NA, colour = NA),
@@ -16,20 +15,15 @@ NULL
     legend.box.background = ggplot2::element_rect(fill = NA, colour = NA),
     legend.box.spacing = ggplot2::unit(0, "cm"),
     strip.background = ggplot2::element_rect(fill = NA, colour = NA),
-    # 仅保留主要网格线
     panel.grid.minor = ggplot2::element_blank(),
     panel.grid.major = ggplot2::element_line(
       colour = "grey92", linewidth = 0.3
     ),
-    # 轴线可见
     axis.line = ggplot2::element_line(colour = "grey50", linewidth = 0.3),
     axis.ticks = ggplot2::element_line(colour = "grey50", linewidth = 0.3),
-    # 图例右侧
     legend.position = "right",
-    # 标题加粗
     plot.title = ggplot2::element_text(face = "bold", hjust = 0),
     plot.subtitle = ggplot2::element_text(hjust = 0),
-    # 坐标轴标题略大
     axis.title = ggplot2::element_text(size = ggplot2::rel(0.9)),
     axis.text = ggplot2::element_text(size = ggplot2::rel(0.8))
   )
