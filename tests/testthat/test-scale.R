@@ -395,7 +395,7 @@ test_that("scale_x breaks + labels", {
 test_that("scale_x range 发出警告", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
     mark_point()
-  expect_warning(scale_x(p, range = c(0, 10)), "range.*not meaningful")
+  expect_warning(scale_x(p, range = c(0, 10)), "range.*experimental")
 })
 
 test_that("scale_x 非法 trans 报错", {
@@ -431,7 +431,7 @@ test_that("scale_y trans=log2", {
 test_that("scale_y range 发出警告", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
     mark_point()
-  expect_warning(scale_y(p, range = c(0, 30)), "range.*not meaningful")
+  expect_warning(scale_y(p, range = c(0, 30)), "range.*experimental")
 })
 
 # ============================================================

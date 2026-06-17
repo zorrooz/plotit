@@ -237,7 +237,7 @@ NULL
   }
   args <- list(name = name, limits = limits, breaks = breaks, labels = labels)
   if (!is.null(range)) {
-    cli::cli_warn("{.arg range} is not meaningful for position scales and will be ignored.")
+    cli::cli_warn("{.arg range} for position scales is experimental and approximated via {.fn ggplot2::expand}.")
   }
   if (!discrete && !binned) args$trans <- trans
   args <- args[!vapply(args, is.null, logical(1))]
@@ -502,7 +502,8 @@ S7::method(scale_linetype, plotit_class) <- function(plot, name = ggplot2::waive
 #'   `"identity"`, `"discrete"`, `"log"`, `"log10"`, `"log2"`,
 #'   `"sqrt"`, `"reverse"`, `"binned"`.
 #' @param limits Axis limits as `c(min, max)`.
-#' @param range Ignored for position scales (a warning is issued if non-NULL).
+#' @param range Normalized panel range as `c(0, 1)`. Currently approximated via
+#'   `ggplot2::expand`; precise control is experimental. A warning is issued if non-NULL.
 #' @param breaks Axis tick positions.
 #' @param labels Axis tick labels.
 #' @param ... Passed to the underlying ggplot2 scale function.
@@ -536,7 +537,8 @@ S7::method(scale_x, plotit_class) <- function(plot, name = ggplot2::waiver(),
 #'   `"identity"`, `"discrete"`, `"log"`, `"log10"`, `"log2"`,
 #'   `"sqrt"`, `"reverse"`, `"binned"`.
 #' @param limits Axis limits as `c(min, max)`.
-#' @param range Ignored for position scales (a warning is issued if non-NULL).
+#' @param range Normalized panel range as `c(0, 1)`. Currently approximated via
+#'   `ggplot2::expand`; precise control is experimental. A warning is issued if non-NULL.
 #' @param breaks Axis tick positions.
 #' @param labels Axis tick labels.
 #' @param ... Passed to the underlying ggplot2 scale function.

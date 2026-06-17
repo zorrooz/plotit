@@ -8,7 +8,8 @@
 #' @param size_unit Unit for width/height: `"in"`, `"cm"`, `"mm"`.
 #' @param dodge Numeric; global default dodge width. If `NULL`, heuristically set.
 #' @param default_color Single color string. Applied as default color mapping if no
-#'   color/fill aesthetic is present in `mapping`.
+#'   color/fill aesthetic is present in `mapping`. Adding any `scale_color()` or
+#'   `scale_fill()` later will automatically disable this single-color mapping.
 #' @return A `plotit` object.
 #' @export
 plotit <- function(
