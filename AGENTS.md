@@ -13,6 +13,8 @@
 - 标签类函数（`label_*`）**同步更新 `meta` 和 `gg` 对象**：先将文本写入 `meta$labels`，随后立即通过 `ggplot2::labs()` 应用到 `gg`，确保打印、预览时所见即所得。任何之前已有的同级设置将被本次调用覆盖。
 - `meta$labels` 始终作为标签的权威记录，可供导出或其他后处理使用，但不再承担延迟注入的角色。
 
+  > **警告**：`meta$labels` 仅在通过 `label_*` 函数修改时保持同步。如果用户直接操作 `plot@gg <- plot@gg + ggplot2::labs(...)` 绕过 label 函数，`meta$labels` 将过时且不会自动修复。
+
 ### 1.3 分域验证原则
 - **本包 API 设计决定的约束** → 主动验证，使用 `cli::cli_abort` 提供结构化错误信息。包括但不限于：
   - `encode()` 结果类检查（`plotit()` 入口守卫）
@@ -28,14 +30,13 @@
   - 返回类型：所有操作均返回 `plotit` 对象，支持管道链式调用
   - 后端实现可在不破坏上述契约的前提下任意替换、优化或扩展
 
-- **以下为可实验区域**，应在实践中反复迭代寻找最佳路径，不必追求一次到位：
-  - 默认主题细节（base_size、字体家族、网格线颜色、间距等）
-  - 启发式算法（如 dodge 宽度的默认值计算逻辑）
-  - 默认调色板选型（viridis 系列 vs ColorBrewer 系列 vs 自定义）
-  - 默认尺寸与比例（宽度、高度、DPI、单位）
-  - `print()` 的设备创建策略（当前直接使用 `meta` 尺寸经 `dev.new()` 打开设备）
-  - 内部工具函数（`is_discrete` 的实现、`%||%` 等）
-  - 测试策略与覆盖范围
+- 以下方面的具体实现可在不破坏 API 契约的前提下迭代优化：
+  - 默认主题参数（base_size、字体、网格线颜色）
+  - 启发式算法（dodge 宽度默认值计算等）
+  - 默认调色板选择
+  - `print()` 的设备创建策略
+  - 内部工具函数实现（`%||%`、`is_discrete` 等）
+  - 测试用例组织方式
 
 ### 1.5 可自动生成的内容绝不手动维护
 - **自动管理清单**：
@@ -106,23 +107,23 @@
 
 ### 3.1 函数族总览
 
-| 函数族 | 职责 | 对应 ggplot2 机制 | 状态 |
-|---|---|---|---|
-| `plotit()` | 初始化图表对象 | `ggplot()` | ✅ 已实现 |
-| `encode()` | 构造美学映射 | `aes()` | ✅ 已实现 |
-| `mark_*` | 添加几何图层 | `geom_*` | ✅ 部分实现 |
-| `scale_*` | 数据→视觉映射 + 显示 | `scale_*` | ✅ 已全部实现 |
-| `project_*` | 坐标系变换 | `coord_*` | ✅ 部分实现 |
-| `split_*` | 分面布局 | `facet_*` | ✅ 部分实现 |
-| `label_*` | 文本标签 | `labs()` | ✅ 已全部实现 |
-| `style()` | 主题设置 | `theme()` / 预设主题 | ✅ 已实现 |
-| `export()` | 图表导出 | `ggsave()` | ✅ 已实现 |
-| `compose_*` | 图形组合 | patchwork / `gridExtra` | 📋 规划中 |
-| `transform_*` | 数据计算/统计变换 | 数据预处理 | 📋 规划中 |
+| 函数族 | 职责 | 对应 ggplot2 机制 |
+|---|---|---|
+| `plotit()` | 初始化图表对象 | `ggplot()` |
+| `encode()` | 构造美学映射 | `aes()` |
+| `mark_*` | 添加几何图层 | `geom_*` |
+| `scale_*` | 数据→视觉映射 + 显示 | `scale_*` |
+| `project_*` | 坐标系变换 | `coord_*` |
+| `split_*` | 分面布局 | `facet_*` |
+| `label_*` | 文本标签 | `labs()` |
+| `style()` | 主题设置 | `theme()` / 预设主题 |
+| `export()` | 图表导出 | `ggsave()` |
+| `compose_*` | 图形组合 | patchwork / `gridExtra` |
+| `transform_*` | 数据计算/统计变换 | 数据预处理 |
 
 ### 3.2 `mark_*` 类型完整目录
 
-按视觉语义归类。**粗体**为已实现，其余（含 📋 标记）为规划中，签名与行为可能调整。
+按视觉语义归类。当前已实现的函数作为参考，未实现函数的签名与行为可能在开发中调整。
 
 #### 3.2.1 基础几何
 
@@ -195,9 +196,7 @@ plotit(data, mapping = encode(), autofit = FALSE,
 - `autofit`：逻辑值，是否采用自适应尺寸。
 - `width`、`height`、`size_unit`：定义后续导出与预览的默认尺寸及单位。`autofit = TRUE` 时 `width`/`height` 置为 `NULL` 交由设备自适应，但 `size_unit` 始终存储于 `meta` 中，供 `export()` 按用户声明的单位进行换算。`size_unit` 始终验证合法性（不受 `autofit` 影响）。
 - `dodge`：全局默认躲避宽度。若未提供，实施启发式判断（离散 X/Y 则设置躲避，连续则无躲避）。各 `mark_*` 函数自动将该值注入 `position_dodge()`，用户可通过显式 `position` 参数覆盖。
-- `default_color`：若提供且映射中无 `colour`/`fill`，则自动生成单色映射并隐藏对应图例；一旦后续添加颜色/填充比例尺，该单色映射自动失效。
-
-  实现方式：将 `I(default_color)` 注入 `mapping$colour`（`I()` 阻止 ggplot2 将其视作映射变量），并追加 `guides(colour = "none")` 隐藏图例。后续任一 `scale_color()` 或 `scale_fill()` 调用均会通过 `.reset_default_color()` 清除注入，自然失效。
+- `default_color`：若提供且映射中无 `colour`/`fill`，则自动生成单色映射并隐藏对应图例；一旦后续添加任何颜色或填充比例尺，该单色映射自动失效。
 
 **行为**：
 1. 验证 `mapping` 的类（本包自约束，按 1.3 分域原则）。
@@ -226,14 +225,8 @@ plotit(data, mapping = encode(), autofit = FALSE,
 - 通过 `...` 接收并透明传递给对应的 `ggplot2::geom_*` 函数。
 - 所有 `mark_*` 函数支持 `rasterize`、`rasterize_dpi` 和 `rasterize_dev` 参数（需安装 `ggrastr` 包），用于大数据点图层的栅格化。`rasterize_dev` 默认为 `"cairo"`（通过 `grDevices` 内置支持），可设为 `"ragg"` 等（需对应设备包已安装）。
 
-**当前已实现**：
-- `mark_point` → `geom_point`
-- `mark_line` → `geom_line`
-- `mark_bar` → `geom_bar` / `geom_col`
-- `mark_boxplot` → `geom_boxplot`
-
-**规划中实现原则**：
-- 每个 `mark_*` 函数命名与上表（3.2）一致。
+**实现原则**：
+- 每个 `mark_*` 函数命名与 §3.2 目录一致。
 - 非 ggplot2 原生几何（如 network、sankey）需封装外部包接口，确保返回 `plotit` 对象。
 - `mark_text` 可选项支持 `ggrepel` 自动防重叠。
 
@@ -323,15 +316,15 @@ label_axis(text = "花萼宽") → label 层最终覆盖 (优先级最高, 四�
 
 **约定**：接收 `plotit` 对象，返回该对象。
 
-**当前已实现**：
+**已定义**：
 - `project_polar` → `coord_polar`
 - `project_cartesian` → `coord_cartesian`（支持 `xlim`/`ylim`、`expand`、`clip`）
 - `project_flip` → `coord_flip`（坐标轴翻转）
 
-**规划中**：
-- `project_trans` → `coord_trans`（对数、平方根等坐标变换）
-- `project_fixed` → `coord_fixed`（固定纵横比）
-- `project_map` → `coord_map` / `coord_sf`（地理投影）
+**待定义**：
+- `project_trans` → `coord_trans`
+- `project_fixed` → `coord_fixed`
+- `project_map` → `coord_map` / `coord_sf`
 
 #### 3.3.6 分面函数族 `split_*`
 
@@ -339,12 +332,12 @@ label_axis(text = "花萼宽") → label 层最终覆盖 (优先级最高, 四�
 
 **约定**：接收 `plotit` 对象，返回该对象。
 
-**当前已实现**：
+**已定义**：
 - `split_wrap` → `facet_wrap`
 - `split_grid` → `facet_grid`（支持 `rows`、`cols`、`scales`、`space`；`...` 可作为 `rows` 的简写，同时使用 `...` 和 `rows` 时以 `...` 为准并报警告）
 
-**规划中**：
-- `split_matrix` → 自定义矩阵分面布局（规划中）
+**待定义**：
+- `split_matrix` → 自定义矩阵分面布局
 
 #### 3.3.7 标签函数族 `label_*`
 
@@ -372,14 +365,14 @@ label_axis(text = "花萼宽") → label 层最终覆盖 (优先级最高, 四�
 | `label_axis` | `text`, `aes` | `text` = 标题文本，`aes` = `"x"` 或 `"y"`（必填） |
 | `label_legend` | `text`, `aes` | 设定图例标题；`aes` = `"colour"`/`"fill"` 等（`NULL` = 影响所有已映射美学） |
 
-**当前已实现**：`label_title`、`label_subtitle`、`label_caption`、`label_axis`、`label_legend`
 
-**规划中**：（无）
 
 **`label_*` 与 `scale_*(name=)` 的关系**：
 - `scale_*(name=)` 负责该 scale 的默认名称（仅 `waiver()` / `"str"` 两种状态）。
 - `label_axis` / `label_legend` 负责最终显示文本（四态协议: `NULL`/`FALSE`/`TRUE`/`"str"`）。
 - 两者同时设置时 `label_*` 优先级更高。
+
+  > **注意**：`label_axis(text = TRUE)` 会**重置**轴标题为变量名，即使此前已通过 `scale_x(name = "Width")` 设置了自定义标题。这是因为 `TRUE` 的语义是"恢复默认（变量名）"，而非"保持当前不变"。如果需要保留已有标题，请使用 `text = NULL`（跳过）。
 
 **缺省值定义**：
 - 标题、副标题、脚注：缺省为空字符串（`""`），`TRUE` 表示不显示自定义文字（但保留元素以维持布局）。
@@ -403,7 +396,7 @@ label_axis(text = "花萼宽") → label 层最终覆盖 (优先级最高, 四�
 **包级默认主题约定**：
 - 基于 `theme_minimal` 调整
 - **背景透明**（`fill = NA`），配合 `patchwork::plot_layout()` 固定面板尺寸时多余区域透明
-- 无网格线（仅保留主要网格线浅灰色，无次要网格线）
+- 仅保留主要网格线（浅灰色），无次要网格线
 - 无衬线字体（Arial / Helvetica / 系统默认）
 - 字体大小层次分明（标题加粗、轴标签略大）
 - 图例默认右侧，背景透明
@@ -475,6 +468,42 @@ label_axis(text = "花萼宽") → label 层最终覆盖 (优先级最高, 四�
 **PDF 背景**：通过 `ggsave(bg = "white")` 参数统一设定，避免跨调用 `mode(bg) differs` 警告。
 
 **参考**：[tidyplots](https://github.com/jbengler/tidyplots) 的 `adjust_size()` + `get_layout_size()` 策略；[ggplot2](https://github.com/tidyverse/ggplot2) 的 gtable 渲染机制。
+
+---
+
+### 3.4 补充约定
+
+#### 3.4.1 空数据与缺失值
+- `plotit()` 接受非空 data.frame。空数据框的行为由 ggplot2 自然决定，包层不做额外验证。
+- 因子水平：scale 的 `limits` 参数可强制包含未出现的因子水平，具体行为由底层 ggplot2 scale 决定。
+- 缺失值（`NA`）：ggplot2 默认静默移除，包层不改变此行为。
+
+#### 3.4.2 `export()` 完整参数
+
+```r
+export(plot, filename, width = NULL, height = NULL, dpi = 300, device = NULL, ...)
+```
+
+| 参数 | 默认 | 说明 |
+|---|---|---|
+| `plot` | 必填 | plotit 对象 |
+| `filename` | 必填 | 输出路径，扩展名决定设备 |
+| `width` | `NULL` | 输出宽度（meta 单位）；`NULL` = 自动 |
+| `height` | `NULL` | 输出高度（meta 单位）；`NULL` = 自动 |
+| `dpi` | `300` | 栅格格式分辨率 |
+| `device` | `NULL` | 图形设备；`NULL` = 从扩展名推断 |
+| `...` | — | 透传给 `ggplot2::ggsave()` |
+
+#### 3.4.3 S7 类定义槽位
+
+- `plotit_labels`：`title`、`subtitle`、`caption`（均为 `character | NULL`）；`x`、`y`（`character | logical | NULL`）；`legend`（`list | NULL`）
+- `plotit_metadata`：`autofit`（`logical`）；`width`、`height`、`dodge`（`numeric | NULL`）；`unit`、`default_color`（`character | NULL`）；`labels`（`plotit_labels`）
+- `plotit`：`gg`（`ggplot` 或 patchwork 包装对象）；`meta`（`plotit_metadata`）
+
+#### 3.4.4 打印与设备策略
+- `print()` 在交互模式下通过 `grDevices::dev.new(noRStudioGD = TRUE)` 打开新设备。
+- 导出时通过 `ggsave()` 指定设备；未指定时从文件名扩展名推断。
+- 默认使用 Cairo 图形设备（通过 `grDevices` 内置支持）。跨平台一致性由 ggplot2/grDevices 保证。
 
 ---
 
@@ -584,8 +613,8 @@ label_axis(text = "花萼宽") → label 层最终覆盖 (优先级最高, 四�
 
 ### 4.10 函数体内注释
 
-- **函数体内部尽量不出现注释**；若必须，使用英文。
-- 文件顶部的 section 分隔注释（`# ---- name ----`）和 roxygen 文档块（`#'`）不受此限制。
+- 函数体内部避免重复代码的注释；对非显而易见的算法或设计决策必须注释，使用英文。
+- 文件顶部的 section 分隔注释（`# ---- name ----`）和 roxygen 文档块（`#'`）不受上述限制。
 
 ---
 
@@ -719,6 +748,3 @@ export(p, "output.pdf", dpi = 300)
 
 包层参数名和底层参数名可能同名但语义不同。如 `trans = "binned"` 是包层的"映射算法选择"，不应透传给 ggplot2 的 `trans`/`transform` 参数——底层期待坐标变换名。选择了 `scale_*_binned()` 后不应再传 `trans = "binned"`。
 
-### 原则 7：包括但不限于以上
-
-以上原则是已暴露缺陷的抽象总结。审查中发现的任何新的可复用缺陷模式，应在修复后抽象为原则追加到此列表。原则之间允许重叠——同一条代码可能被多个原则同时捕获。新原则不必完美，但必须抽象（不绑定具体函数名/变量名）且可操作（提供判断标准或反例/正例）。
