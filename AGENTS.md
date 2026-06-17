@@ -19,12 +19,15 @@
 - **本包 API 设计决定的约束** → 主动验证，使用 `cli::cli_abort` 提供结构化错误信息。包括但不限于：
   - `encode()` 结果类检查（`plotit()` 入口守卫）
   - `unit` 合法性（包层自定义的单位参数，ggplot2 无同等校验）
-  - `autofit` 与 `width`/`height` 的关联约束（包层 API 设计引入的依赖关系）
+  - `autofit` 与 `width`/`height` 的关联约束：`autofit = FALSE` 时要求两者均非 `NULL`（报错）；`autofit = TRUE` 时静默忽略 `width`/`height` 并将其置为 `NULL`
   - 其他包层自定义参数或行为约束
 - **透传给底层库的通用参数**（类型、范围、有效性）→ 交由底层库（ggplot2、grDevices 等）自然报错，包层绝不添加冗余验证。
 
 ### 1.4 不可变契约与可实验的边界
-- **以下为不可变 API 契约**，一旦发布，任何版本更新都不得修改：
+
+> **注意**：当前版本为 0.x，API 仍在演进中。以下"不可变"契约面向 1.0 发布后生效。在 1.0 之前，函数名和参数签名仍可基于实际使用反馈调整。
+
+- **以下为不可变 API 契约**，1.0 发布后任何版本更新都不得修改：
   - 函数名（`mark_*`、`scale_*`、`project_*`、`split_*`、`label_*`、`plotit()`、`encode()`、`style()`、`export()`）
   - 每个函数的参数名及其语义（如 `mark_*` 的 `mapping`、`data`、`...`；`label_*` 的同步 `meta`+`gg` 行为）
   - 返回类型：所有操作均返回 `plotit` 对象，支持管道链式调用
@@ -274,7 +277,9 @@ scale_y       (p, name, trans="identity", limits, range, breaks, labels, ...)
 | `NULL` | 自动检测 (`is_discrete()`) | ✅ 默认 | — | — |
 | `"identity"` | 连续线性 | ✅ | ❌ | ✅ 默认 |
 | `"discrete"` | 离散查找表 | ✅ | ✅ 默认 | ✅ |
-| `"log"` | 对数 | — | — | ✅ |
+| `"log"` | 对数 (自然) | — | — | ✅ |
+| `"log10"` | 以 10 为底对数 | — | — | ✅ |
+| `"log2"` | 以 2 为底对数 | — | — | ✅ |
 | `"sqrt"` | 平方根 | — | — | ✅ |
 | `"reverse"` | 翻转 | ✅ | — | ✅ |
 | `"binned"` | 分箱离散化 | ✅ | ✅ | ✅ |
@@ -467,6 +472,8 @@ label_axis(text = "花萼宽") → label 层最终覆盖 (优先级最高, 四�
 
 **PDF 背景**：通过 `ggsave(bg = "white")` 参数统一设定，避免跨调用 `mode(bg) differs` 警告。
 
+> **实验性声明**：上述尺寸算法深度依赖 `patchwork::plot_layout()` 和 `patchwork::patchworkGrob()` 的内部实现细节。patchwork 的 gtable 结构变更或 ggplot2 升级可能导致测量偏差。"1mm 边距" 为当前经验值，不同设备/字体/主题下可能需要调整。此算法是当前最佳实践，但属于可替代的实现路径——若未来出现更可靠的面板尺寸控制方案，应在不破坏 API 契约的前提下切换。
+
 **参考**：[tidyplots](https://github.com/jbengler/tidyplots) 的 `adjust_size()` + `get_layout_size()` 策略；[ggplot2](https://github.com/tidyverse/ggplot2) 的 gtable 渲染机制。
 
 ---
@@ -619,6 +626,8 @@ export(plot, filename, width = NULL, height = NULL, dpi = 300, device = NULL, ..
 ---
 
 ## 5. 默认美观要求
+
+> 本章描述当前版本的默认主题规格。这些规格属于 §1.4 的可迭代优化范围——在不破坏 API 契约的前提下，具体参数值（字号、颜色、间距等）可随版本调整。
 
 ### 5.1 主题基础
 - 默认主题应基于 **简洁、无冗余元素** 的 ggplot2 内置主题（如 `theme_minimal`）进行优化，保证背景干净、网格线淡雅。
