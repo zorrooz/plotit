@@ -34,6 +34,9 @@ NULL
 # Set legend scale name + labels for a single aesthetic.
 .label_set_aes <- function(gg, a, text, hide) {
   if (hide) {
+    labs <- gg$labels
+    labs[a] <- NULL
+    gg$labels <- labs
     final_name <- NULL
   } else if (is.null(text)) {
     labs <- gg$labels
