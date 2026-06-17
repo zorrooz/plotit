@@ -81,9 +81,16 @@ S7::method(label_title, plotit_class) <- function(plot, text = NULL, ...) {
   if (.label_skip(text)) {
     return(plot)
   }
-  final <- if (.label_hide(text) || .label_default(text)) NULL else text
-  plot@meta@labels@title <- final
-  plot@gg <- plot@gg + ggplot2::labs(title = final)
+  if (.label_hide(text)) {
+    plot@meta@labels@title <- NULL
+    plot@gg <- plot@gg + ggplot2::labs(title = NULL)
+  } else if (.label_default(text)) {
+    plot@meta@labels@title <- ""
+    plot@gg <- plot@gg + ggplot2::labs(title = "")
+  } else {
+    plot@meta@labels@title <- text
+    plot@gg <- plot@gg + ggplot2::labs(title = text)
+  }
   plot
 }
 
@@ -107,9 +114,16 @@ S7::method(label_subtitle, plotit_class) <- function(plot, text = NULL, ...) {
   if (.label_skip(text)) {
     return(plot)
   }
-  final <- if (.label_hide(text) || .label_default(text)) NULL else text
-  plot@meta@labels@subtitle <- final
-  plot@gg <- plot@gg + ggplot2::labs(subtitle = final)
+  if (.label_hide(text)) {
+    plot@meta@labels@subtitle <- NULL
+    plot@gg <- plot@gg + ggplot2::labs(subtitle = NULL)
+  } else if (.label_default(text)) {
+    plot@meta@labels@subtitle <- ""
+    plot@gg <- plot@gg + ggplot2::labs(subtitle = "")
+  } else {
+    plot@meta@labels@subtitle <- text
+    plot@gg <- plot@gg + ggplot2::labs(subtitle = text)
+  }
   plot
 }
 
@@ -133,9 +147,16 @@ S7::method(label_caption, plotit_class) <- function(plot, text = NULL, ...) {
   if (.label_skip(text)) {
     return(plot)
   }
-  final <- if (.label_hide(text) || .label_default(text)) NULL else text
-  plot@meta@labels@caption <- final
-  plot@gg <- plot@gg + ggplot2::labs(caption = final)
+  if (.label_hide(text)) {
+    plot@meta@labels@caption <- NULL
+    plot@gg <- plot@gg + ggplot2::labs(caption = NULL)
+  } else if (.label_default(text)) {
+    plot@meta@labels@caption <- ""
+    plot@gg <- plot@gg + ggplot2::labs(caption = "")
+  } else {
+    plot@meta@labels@caption <- text
+    plot@gg <- plot@gg + ggplot2::labs(caption = text)
+  }
   plot
 }
 

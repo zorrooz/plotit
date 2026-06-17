@@ -24,10 +24,11 @@ test_that("label_title FALSE 隐藏标题", {
   expect_null(p1@gg$labels$title)
 })
 
-test_that("label_title TRUE 清空（title 无默认变量名）", {
+test_that("label_title TRUE 设为空字符串保留布局", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
   p2 <- p |> label_title(TRUE)
-  expect_null(p2@gg$labels$title)
+  expect_equal(p2@gg$labels$title, "")
+  expect_equal(p2@meta@labels@title, "")
 })
 
 # ---- label_subtitle ----

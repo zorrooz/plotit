@@ -76,7 +76,7 @@ S7::method(export, plotit_class) <- function(
 
   if (isTRUE(plot@meta@autofit)) {
     final_width <- if (is.null(width)) {
-      NA
+      getOption("plotit.default_width", NA)
     } else {
       width / switch(meta_unit,
         "in" = 1,
@@ -85,7 +85,7 @@ S7::method(export, plotit_class) <- function(
       )
     }
     final_height <- if (is.null(height)) {
-      NA
+      getOption("plotit.default_height", NA)
     } else {
       height / switch(meta_unit,
         "in" = 1,
