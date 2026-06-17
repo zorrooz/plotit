@@ -350,41 +350,44 @@ label_axis(text = "花萼宽") → label 层最终覆盖 (优先级最高, 四�
 
 **统一行为**：
 1. 将用户指定的文本更新到 `plot@meta@labels` 的对应字段；
-2. 立即调用 `ggplot2::labs()` 将相同的标签应用到 `plot@gg`，覆盖任何已有同级设置。
+2. 立即将相同的标签应用到 `plot@gg`，覆盖任何已有同级设置。
 
-**三态协议**（所有函数的 `text` 参数通用）：
-- `NULL` = **不做修改**（参数默认值）
-- `FALSE` = **隐藏**
-- `TRUE` = **显示缺省值**（轴/图例 = 变量名，标题/副标题/脚注 = 空）
-- `"str"` = **显示自定义文本**
+**`text` + `hide` 双参数协议**（所有函数通用）：
 
-**限制**：`meta@labels` 各字段类型：`title`/`subtitle`/`caption` 为 `character | NULL`；`x`/`y` 为 `character | logical | NULL`（`FALSE` = 隐藏，`NULL` = 未设置/使用默认）；`legend` 为 `list | NULL`。文本参数不支持 `expression()` 对象。若需数学表达式轴标签，可直接调用 `ggplot2::labs()` 操作 `plot@gg` 对象。
+| 调用 | 行为 |
+|---|---|
+| `label_*(text = "str")` | 显示自定义文本 |
+| `label_*(text = NULL)` | **重置**：轴/图例恢复为变量名，标题/副标题/脚注移除 |
+| `label_*(hide = TRUE)` | **隐藏**：从布局中彻底移除（`element_blank()`） |
+| 不调用该函数 | **跳过**：保留现有状态 |
+
+- `text` 始终为 `NULL`（重置）或字符串（自定义）；`hide` 始终为逻辑值。
+- `text = NULL` 与 R 惯例一致（`ggplot2::labs(x = NULL)` 即恢复默认变量名）。
+- `hide = TRUE` 与 `text = NULL` 不同：前者移除元素及其占位空间，后者仅重置文本内容。
+
+**限制**：`meta@labels` 各字段类型：`title`/`subtitle`/`caption` 为 `character | NULL`；`x`/`y` 为 `character | logical | NULL`（`FALSE` = 隐藏，`NULL` = 未设置/使用默认）；`legend` 为 `list | NULL`。文本参数不支持 `expression()` 对象。
 
 **具体函数**：
 
 | 函数 | 参数 | 用途 |
 |---|---|---|
-| `label_title` | `text` | 设置主标题 |
-| `label_subtitle` | `text` | 设置副标题 |
-| `label_caption` | `text` | 设置脚注 |
-| `label_axis` | `text`, `aes` | `text` = 标题文本，`aes` = `"x"` 或 `"y"`（必填） |
-| `label_legend` | `text`, `aes` | 设定图例标题；`aes` = `"colour"`/`"fill"` 等（`NULL` = 影响所有已映射美学） |
-
-
+| `label_title` | `text`, `hide` | 设置主标题 |
+| `label_subtitle` | `text`, `hide` | 设置副标题 |
+| `label_caption` | `text`, `hide` | 设置脚注 |
+| `label_axis` | `text`, `aes`, `hide` | `aes` = `"x"` 或 `"y"`（必填） |
+| `label_legend` | `text`, `aes`, `hide` | `aes` = `"colour"`/`"fill"` 等（`NULL` = 所有已映射美学） |
 
 **`label_*` 与 `scale_*(name=)` 的关系**：
 - `scale_*(name=)` 负责该 scale 的默认名称（仅 `waiver()` / `"str"` 两种状态）。
-- `label_axis` / `label_legend` 负责最终显示文本（四态协议: `NULL`/`FALSE`/`TRUE`/`"str"`）。
+- `label_axis` / `label_legend` 负责最终显示文本（`text` + `hide` 协议）。
 - 两者同时设置时 `label_*` 优先级更高。
 
-  > **注意**：`label_axis(text = TRUE)` 会**重置**轴标题为变量名，即使此前已通过 `scale_x(name = "Width")` 设置了自定义标题。这是因为 `TRUE` 的语义是"恢复默认（变量名）"，而非"保持当前不变"。如果需要保留已有标题，请使用 `text = NULL`（跳过）。
+  > **注意**：`label_axis(text = NULL)` 会**重置**轴标题为变量名，覆盖此前 `scale_x(name = "Width")` 的设置。这是因为 `NULL` 的语义是"恢复默认"。如需保留已有标题，不调用该函数即可。
 
 **缺省值定义**：
-- 标题、副标题、脚注：缺省为空字符串（`""`），`TRUE` 表示不显示自定义文字（但保留元素以维持布局）。
-- 轴标题：缺省为对应映射中的变量名。
-- 图例标题：缺省为对应美学的变量名。
-
-这些缺省与 ggplot2 默认行为一致，`TRUE` 即显式要求恢复该默认。
+- 标题、副标题、脚注：无默认值（不调用时不存在）。`label_title(text = "")` 可设空字符串保留布局占位。
+- 轴标题：缺省为对应映射中的变量名。`label_axis(text = NULL)` 恢复此默认。
+- 图例标题：缺省为对应美学的变量名。`label_legend(text = NULL)` 恢复此默认。
 
 #### 3.3.8 主题函数 `style()`
 
