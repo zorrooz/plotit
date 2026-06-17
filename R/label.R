@@ -241,13 +241,14 @@ S7::method(label_legend, plotit_class) <- function(plot, text = NULL, aes = NULL
   } else {
     plot@meta@labels@legend[[aes]] <-
       if (.label_hide(text) || .label_default(text)) NULL else text
-    plot@gg <- .label_set_aes(plot@gg, aes, text)
     aes_all <- .collect_aes_names(
       plot@gg,
       c("colour", "fill", "shape", "linetype", "size", "alpha")
     )
     if (!(aes %in% aes_all)) {
       cli::cli_warn("Aesthetic {.val {aes}} is not present in the plot mapping.")
+    } else {
+      plot@gg <- .label_set_aes(plot@gg, aes, text)
     }
   }
   plot
