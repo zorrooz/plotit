@@ -62,6 +62,9 @@ S7::method(mark_point, plotit_class) <- function(plot, mapping = NULL, data = NU
 #' @param mapping Optional new aesthetics
 #' @param data Optional data for this layer
 #' @param position Position adjustment; if `NULL` and global dodge is set, auto-applies `position_dodge()`.
+#' @param rasterize If `TRUE`, rasterize the layer via `ggrastr::rasterise()` (requires \pkg{ggrastr}).
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_line`
 #' @return Modified plotit object
 #' @export
@@ -100,6 +103,9 @@ S7::method(mark_line, plotit_class) <- function(plot, mapping = NULL, data = NUL
 #' @param mapping Optional new aesthetics
 #' @param data Optional data for this layer
 #' @param position Position adjustment; if `NULL` and global dodge is set, auto-applies `position_dodge()`. Overrides `geom_bar`/`geom_col` default.
+#' @param rasterize If `TRUE`, rasterize the layer via `ggrastr::rasterise()` (requires \pkg{ggrastr}).
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_bar` or `geom_col`
 #' @return Modified plotit object
 #' @export

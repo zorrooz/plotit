@@ -146,9 +146,9 @@ NULL
           ggplot2::scale_fill_brewer(direction = dir, ...)
         },
         grey = if (aes == "colour") {
-          ggplot2::scale_colour_grey(...)
+          ggplot2::scale_colour_grey(..., start = if (reverse) 0.8 else 0.2, end = if (reverse) 0.2 else 0.8)
         } else {
-          ggplot2::scale_fill_grey(...)
+          ggplot2::scale_fill_grey(..., start = if (reverse) 0.8 else 0.2, end = if (reverse) 0.2 else 0.8)
         },
         hue = if (aes == "colour") {
           ggplot2::scale_colour_discrete(direction = dir, ...)
