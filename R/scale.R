@@ -9,7 +9,7 @@ NULL
   }
   plot@gg$mapping$colour <- NULL
   plot@gg <- plot@gg + ggplot2::guides(colour = ggplot2::waiver())
-  plot@meta@default_color <- NULL
+  S7::prop(plot@meta, "default_color") <- NULL
   plot
 }
 

@@ -12,13 +12,15 @@ NULL
 
 # Check if a variable (from data) is discrete (factor, character, or logical).
 # `var` is expected to be a quosure (as produced by aes()/encode()).
+# Uses rlang::eval_tidy for proper data-masking (avoids clashes when column
+# names shadow base R functions like 'mean' or 'list').
 is_discrete <- function(data, var) {
   if (is.null(data) || is.null(var)) {
     return(FALSE)
   }
   tryCatch(
     {
-      col <- eval(rlang::quo_get_expr(var), data, baseenv())
+      col <- rlang::eval_tidy(var, data)
       is.factor(col) || is.character(col) || is.logical(col)
     },
     error = function(e) {
