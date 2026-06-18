@@ -77,20 +77,8 @@ S7::method(mark_point, plotit_class) <- function(plot, mapping = NULL, data = NU
                                                  position = NULL, ...,
                                                  rasterize = FALSE, rasterize_dpi = 300,
                                                  rasterize_dev = "cairo") {
-  plot <- ._auto_reset_default_color(plot, mapping)
-  pos <- position
-  if (is.null(pos) && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
-    pos <- ggplot2::position_dodge(plot@meta@dodge)
-  }
-  if (is.null(pos)) {
-    geom <- ggplot2::geom_point(mapping = mapping, data = data, ...)
-  } else {
-    geom <- ggplot2::geom_point(mapping = mapping, data = data, position = pos, ...)
-  }
-  .add_geom(plot, geom,
-    rasterize = rasterize, rasterize_dpi = rasterize_dpi,
-    rasterize_dev = rasterize_dev
-  )
+  ._mark_impl(plot, mapping, data, position, ggplot2::geom_point,
+              rasterize, rasterize_dpi, rasterize_dev, ...)
 }
 
 #' Generic for adding a line layer
@@ -119,20 +107,8 @@ S7::method(mark_line, plotit_class) <- function(plot, mapping = NULL, data = NUL
                                                 position = NULL, ...,
                                                 rasterize = FALSE, rasterize_dpi = 300,
                                                 rasterize_dev = "cairo") {
-  plot <- ._auto_reset_default_color(plot, mapping)
-  pos <- position
-  if (is.null(pos) && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
-    pos <- ggplot2::position_dodge(plot@meta@dodge)
-  }
-  if (is.null(pos)) {
-    geom <- ggplot2::geom_line(mapping = mapping, data = data, ...)
-  } else {
-    geom <- ggplot2::geom_line(mapping = mapping, data = data, position = pos, ...)
-  }
-  .add_geom(plot, geom,
-    rasterize = rasterize, rasterize_dpi = rasterize_dpi,
-    rasterize_dev = rasterize_dev
-  )
+  ._mark_impl(plot, mapping, data, position, ggplot2::geom_line,
+              rasterize, rasterize_dpi, rasterize_dev, ...)
 }
 
 #' Generic for adding a bar layer
@@ -194,18 +170,6 @@ S7::method(mark_boxplot, plotit_class) <- function(plot, mapping = NULL, data = 
                                                    position = NULL, ...,
                                                    rasterize = FALSE, rasterize_dpi = 300,
                                                    rasterize_dev = "cairo") {
-  plot <- ._auto_reset_default_color(plot, mapping)
-  pos <- position
-  if (is.null(pos) && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
-    pos <- ggplot2::position_dodge(plot@meta@dodge)
-  }
-  if (is.null(pos)) {
-    geom <- ggplot2::geom_boxplot(mapping = mapping, data = data, ...)
-  } else {
-    geom <- ggplot2::geom_boxplot(mapping = mapping, data = data, position = pos, ...)
-  }
-  .add_geom(plot, geom,
-    rasterize = rasterize, rasterize_dpi = rasterize_dpi,
-    rasterize_dev = rasterize_dev
-  )
+  ._mark_impl(plot, mapping, data, position, ggplot2::geom_boxplot,
+              rasterize, rasterize_dpi, rasterize_dev, ...)
 }
