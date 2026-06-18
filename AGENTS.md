@@ -304,9 +304,9 @@ scale_y       (p, name, trans="identity", limits, range, breaks, labels, ...)
 
 | 调用 | 错误信息 |
 |---|---|
-| `scale_color(trans = "log")` | `"color 是视觉属性，不支持对数变换。如需对数值取对数，请使用 scale_x / scale_y。trans 对视觉标度支持：'identity', 'discrete', 'binned', 'reverse'。"` |
-| `scale_shape(trans = "identity")` | `"shape 是离散视觉属性，不支持连续映射 (trans = 'identity')。请使用 'discrete'、'reverse' 或默认值。"` |
-| `scale_size(trans = "log")` | `"size 是视觉属性，不支持对数变换。如需对数值取对数，请使用 scale_x / scale_y。trans 对视觉标度支持：'identity', 'discrete', 'binned', 'reverse'。"` |
+| `scale_color(trans = "log")` | `"colour is a visual aesthetic; log/sqrt transformations are not applicable. Use scale_x() / scale_y() for positional log transforms. trans for visual scales supports: 'identity', 'discrete', 'binned', 'reverse'."` |
+| `scale_shape(trans = "identity")` | `"shape is a discrete visual aesthetic; continuous mapping (trans = 'identity') is not supported. Use 'discrete' or 'reverse'."` |
+| `scale_size(trans = "log")` | `"size is a visual aesthetic; log/sqrt transformations are not applicable. Use scale_x() / scale_y() for positional log transforms. trans for visual scales supports: 'identity', 'discrete', 'binned', 'reverse'."` |
 
 **实现**：每个 scale 方法入口处根据一张 `trans` × aesthetic 合法性矩阵做校验。矩阵定义如下：
 
@@ -653,9 +653,8 @@ export(plot, filename, width = NULL, height = NULL, dpi = 300, device = NULL, ..
 - **`color`/`colour` 等价**：包层 API 同时接受美式拼写 `color` 和英式拼写 `colour`，例如 `encode(color = Species)` 与 `encode(colour = Species)` 等效。函数命名及参数默认值统一采用美式拼写（`scale_color`、`default_color`）。内部通过 ggplot2 的自动归一化保证一致性，包层不做二次处理。
 - 代码缩进为 **2 个空格**，行宽度控制在 **80 字符**以内（注释可适当放宽）。
 
-### 4.3 注释语言
-- **所有注释（包括 roxygen 文档、函数体内注释）均使用英文**。提交信息等外部文本可酌情使用中文，但代码中注释一律英文。
-- 注释应清晰说明意图，而非重复代码。
+### 4.3 语言统一使用英文
+- **全部文本一律使用英文**：包括代码注释、roxygen 文档、函数体内注释、提交信息、错误消息、警告信息等。
 
 ### 4.4 管道与可读性
 - 所有对象修改函数均返回对象自身，以支持 `%>%` 或 `|>` 管道链式调用。

@@ -45,23 +45,23 @@ NULL
   # log / sqrt on visual aesthetics
   if (aes_name %in% visual_aes && trans %in% c("log", "log10", "log2", "sqrt")) {
     cli::cli_abort(c(
-      "{.val {aes_name}} 是视觉属性，不支持对数/平方根变换。",
-      "i" = "如需对数值取对数，请使用 {.fn scale_x} / {.fn scale_y}。",
-      "i" = "{.arg trans} 对视觉标度支持：{.val {allowed}}。"
+      "{.val {aes_name}} is a visual aesthetic; log/sqrt transformations are not applicable.",
+      "i" = "Use {.fn scale_x} / {.fn scale_y} for positional log transforms.",
+      "i" = "{.arg trans} for visual scales supports: {.val {allowed}}."
     ))
   }
   # identity on shape/linetype
   if (aes_name %in% c("shape", "linetype") && trans == "identity") {
     cli::cli_abort(c(
-      "{.val {aes_name}} 是离散视觉属性，不支持连续映射 ({.code trans = \"identity\"})。",
-      "i" = "请使用 {.val 'discrete'}、{.val 'reverse'} 或默认值。"
+      "{.val {aes_name}} is a discrete visual aesthetic; continuous mapping ({.code trans = \"identity\"}) is not supported.",
+      "i" = "Use {.val 'discrete'} or {.val 'reverse'}."
     ))
   }
   # binned on shape/linetype
   if (aes_name %in% c("shape", "linetype") && trans == "binned") {
     cli::cli_abort(c(
-      "{.val {aes_name}} 是离散视觉属性，不支持分箱映射 ({.code trans = \"binned\"})。",
-      "i" = "{.arg trans} 对 shape/linetype 支持：{.val {allowed}}。"
+      "{.val {aes_name}} is a discrete visual aesthetic; binned mapping ({.code trans = \"binned\"}) is not supported.",
+      "i" = "{.arg trans} for shape/linetype supports: {.val {allowed}}."
     ))
   }
 }

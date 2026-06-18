@@ -135,7 +135,7 @@ test_that("scale_color 非法 trans 报错", {
     mark_point()
   expect_error(
     scale_color(p, trans = "log"),
-    "不支持对数"
+    "log/sqrt transformations are not applicable"
   )
 })
 
@@ -287,7 +287,7 @@ test_that("scale_shape trans=binned 报错（离散视觉属性不支持分箱�
     mark_point()
   expect_error(
     scale_shape(p, trans = "binned"),
-    "不支持分箱映射"
+    "binned mapping"
   )
 })
 
@@ -296,7 +296,7 @@ test_that("scale_shape trans=identity 报错（连续变量不能映射到 shape
     mark_point()
   expect_error(
     scale_shape(p, trans = "identity"),
-    "不支持连续映射"
+    "continuous mapping"
   )
 })
 
@@ -316,7 +316,7 @@ test_that("scale_linetype trans=binned 报错（离散视觉属性不支持分�
     mark_line()
   expect_error(
     scale_linetype(p, trans = "binned"),
-    "不支持分箱映射"
+    "binned mapping"
   )
 })
 
@@ -325,7 +325,7 @@ test_that("scale_linetype trans=identity 报错", {
     mark_line()
   expect_error(
     scale_linetype(p, trans = "identity"),
-    "不支持连续映射"
+    "continuous mapping"
   )
 })
 
