@@ -49,7 +49,7 @@
 | `man/*.Rd`（roxygen2） | `tests/` |
 | `DESCRIPTION` Collate（`@include`） | `DESCRIPTION` 元信息 |
 
-每次增删 `.R` 文件后执行 `roxygen2::roxygenize()`。新建文件头部必须用 `@include` 声明内部依赖。
+每次增删 `.R` 文件或修改 roxygen 注释（`@param`、`@description`、`@return` 等）后，必须执行 `roxygen2::roxygenize()` 同步 `.Rd` 文件，且 `.Rd` 变更与源码在同一 commit 中提交。新建文件头部必须用 `@include` 声明内部依赖。
 
 ### 1.6 约定文档动态更新
 
