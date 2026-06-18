@@ -1,9 +1,10 @@
-# plotit <a href="https://github.com/zorrooz/plotit"><img src="man/figures/logo.png" align="right" height="139" alt="plotit website" /></a>
+# plotit
 
 <!-- badges: start -->
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![R-CMD-check](https://github.com/zorrooz/plotit/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/zorrooz/plotit/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
+
+> [中文版本](#chinese)
 
 ## Overview
 
@@ -227,4 +228,60 @@ export(p, "plot.svg")
 
 Please note that the plotit project is released with a [Contributor Code of
 Conduct](https://contributor-covenant.org/version/2/1/CODE_OF_CONDUCT.html).
+By contributing to this project, you agree to abide by its terms.
+
+---
+
+## Chinese
+
+### 概述
+
+plotit 是一个基于 [ggplot2](https://ggplot2.tidyverse.org) 的**声明式、管道友好**的 R 绘图包。通过统一的动词前缀 API（`mark_*`、`scale_*`、`label_*` 等），只需一条管道即可从数据到出版级图表——预设美观主题，无需样板代码。
+
+```r
+library(plotit)
+
+iris |>
+  plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+  mark_point(size = 2, alpha = 0.7) |>
+  scale_color(range = "viridis") |>
+  label_title("Iris Sepal Dimensions") |>
+  export("iris_plot.pdf")
+```
+
+### 安装
+
+```r
+# install.packages("pak")
+pak::pak("zorrooz/plotit")
+```
+
+### 核心工作流
+
+每一步都返回 `plotit` 对象，天然支持管道 `|>`：
+
+```
+encode() → plotit() → mark_*() → scale_*() → label_*() → style() → export()
+```
+
+### 函数族速览
+
+| 函数族 | 职责 | 示例 |
+|--------|------|------|
+| `plotit()` | 初始化图表 | `plotit(mpg, encode(x = displ, y = hwy, colour = class))` |
+| `mark_*` | 几何图层 | `mark_point()`, `mark_line()`, `mark_bar()`, `mark_boxplot()` |
+| `scale_*` | 视觉映射 | `scale_x(trans = "log10")`, `scale_color(range = "viridis")` |
+| `label_*` | 文本标签 | `label_title("标题")`, `label_axis(text = "X轴", aes = "x")` |
+| `project_*` | 坐标系 | `project_flip()`, `project_polar()`, `project_cartesian()` |
+| `split_*` | 分面 | `split_wrap(Species)`, `split_grid(rows = vars(cyl))` |
+| `style()` | 主题 | `style(theme_minimal(base_size = 14))` |
+| `export()` | 导出 | `export("plot.pdf", dpi = 300)` |
+
+### 设计理念
+
+- **动词前缀命名** — 看函数名就知道做什么：`mark_*` 添加图层，`scale_*` 控制映射，`label_*` 设置标签。
+- **管道原生** — 每个函数都返回 `plotit` 对象，整个绘图流程是一条 `|>` 链。
+- **开箱即美观** — Viridis 配色、简洁主题、合理的默认尺寸，无需手动调整即可用于报告和出版。
+- **ggplot2 完全透明** — `...` 直接透传给底层 `geom_*()` 和 `scale_*()`，随时可以使用 ggplot2 的全部能力。
+- **提前验证，延迟委托** — 包层自定义约束（单位合法性、`trans` × aesthetic 兼容性）主动报错；通用参数校验交由 ggplot2 自然处理。
 By contributing to this project, you agree to abide by its terms.
