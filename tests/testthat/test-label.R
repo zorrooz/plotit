@@ -270,3 +270,15 @@ test_that("label_title text+reset mutual exclusion errors", {
     "mutually exclusive"
   )
 })
+
+test_that("label_legend reset=TRUE without aes resets all mapped aesthetics", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species, fill = Species)) |>
+    mark_point() |>
+    scale_color() |>
+    scale_fill() |>
+    label_legend(text = "Custom", aes = "colour") |>
+    label_legend(text = "Custom", aes = "fill") |>
+    label_legend(reset = TRUE)
+  expect_true(inherits(p@gg$scales$scales[[1]]$name, "waiver"))
+  expect_true(inherits(p@gg$scales$scales[[2]]$name, "waiver"))
+})

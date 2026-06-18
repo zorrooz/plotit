@@ -408,7 +408,7 @@ test_that("scale_x range+limits together warns", {
     mark_point()
   expect_warning(
     scale_x(p, range = c(0, 10), limits = c(5, 8)),
-    "range.*overrides.*limits"
+    "range.*takes precedence"
   )
 })
 
@@ -468,7 +468,7 @@ test_that("scale_y range+limits together warns", {
     mark_point()
   expect_warning(
     scale_y(p, range = c(0, 30), limits = c(10, 25)),
-    "range.*overrides.*limits"
+    "range.*takes precedence"
   )
 })
 

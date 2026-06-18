@@ -250,7 +250,7 @@ NULL
     if (!is.null(limits)) {
       cli::cli_warn(c(
         "Both {.arg range} and {.arg limits} are set for the {.val {aes}} axis.",
-        "i" = "{.arg range} overrides {.arg limits} (latter wins)."
+        "i" = "{.arg range} takes precedence; {.arg limits} is ignored."
       ))
     }
     limits <- range

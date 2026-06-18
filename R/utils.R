@@ -1,5 +1,6 @@
 #' Internal utility functions for plotit
 #'
+#' @include class.R
 #' @noRd
 #' @keywords internal
 NULL

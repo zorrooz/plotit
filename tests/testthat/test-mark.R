@@ -162,6 +162,12 @@ test_that("rasterize default FALSE does not trigger ggrastr check", {
   expect_no_error(mark_point(p))
 })
 
+test_that("rasterize=TRUE triggers ggrastr and renders without error", {
+  skip_if_not_installed("ggrastr")
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
+  expect_no_error(mark_point(p, rasterize = TRUE, rasterize_dpi = 72))
+})
+
 # ---- pipeline with mark ----
 test_that("pipeline mark_point + scale + label does not crash", {
   p <- iris |>
