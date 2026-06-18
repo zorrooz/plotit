@@ -4,12 +4,16 @@
 \alias{label_caption}
 \title{Generic for setting plot caption}
 \usage{
-label_caption(plot, text = NULL, ...)
+label_caption(plot, text = NULL, hide = FALSE, reset = FALSE, ...)
 }
 \arguments{
 \item{plot}{A plotit object}
 
-\item{text}{Caption text. \code{NULL} = skip, \code{FALSE} = hide, \code{TRUE} = default, \code{"str"} = custom}
+\item{text}{Caption text. \code{NULL} = don't modify. \code{"str"} = custom caption.}
+
+\item{hide}{If \code{TRUE}, remove caption element from layout entirely.}
+
+\item{reset}{If \code{TRUE}, remove the caption text (restore to no caption).}
 
 \item{...}{Currently unused}
 }

@@ -135,7 +135,7 @@ test_that("scale_color 非法 trans 报错", {
     mark_point()
   expect_error(
     scale_color(p, trans = "log"),
-    "must be one of"
+    "不支持对数"
   )
 })
 
@@ -282,11 +282,13 @@ test_that("scale_shape 默认 trans=discrete", {
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_shape trans=binned", {
+test_that("scale_shape trans=binned 报错（离散视觉属性不支持分箱）", {
   p <- plotit(mtcars, encode(x = wt, y = mpg, shape = hp)) |>
-    mark_point() |>
-    scale_shape(trans = "binned")
-  expect_s3_class(p, "plotit::plotit")
+    mark_point()
+  expect_error(
+    scale_shape(p, trans = "binned"),
+    "不支持分箱映射"
+  )
 })
 
 test_that("scale_shape trans=identity 报错（连续变量不能映射到 shape）", {
@@ -294,7 +296,7 @@ test_that("scale_shape trans=identity 报错（连续变量不能映射到 shape
     mark_point()
   expect_error(
     scale_shape(p, trans = "identity"),
-    "continuous variable cannot be mapped to shape"
+    "不支持连续映射"
   )
 })
 
@@ -309,11 +311,13 @@ test_that("scale_linetype 基础不报错", {
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_linetype trans=binned", {
+test_that("scale_linetype trans=binned 报错（离散视觉属性不支持分箱）", {
   p <- plotit(mtcars, encode(x = wt, y = mpg, linetype = hp)) |>
-    mark_line() |>
-    scale_linetype(trans = "binned")
-  expect_s3_class(p, "plotit::plotit")
+    mark_line()
+  expect_error(
+    scale_linetype(p, trans = "binned"),
+    "不支持分箱映射"
+  )
 })
 
 test_that("scale_linetype trans=identity 报错", {
@@ -321,7 +325,7 @@ test_that("scale_linetype trans=identity 报错", {
     mark_line()
   expect_error(
     scale_linetype(p, trans = "identity"),
-    "continuous variable cannot be mapped to linetype"
+    "不支持连续映射"
   )
 })
 
@@ -392,10 +396,20 @@ test_that("scale_x breaks + labels", {
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_x range 发出警告", {
+test_that("scale_x range 作为数据值域（不再发出警告）", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
     mark_point()
-  expect_warning(scale_x(p, range = c(0, 10)), "range.*experimental")
+  expect_no_warning(p2 <- scale_x(p, range = c(0, 10)))
+  expect_s3_class(p2, "plotit::plotit")
+})
+
+test_that("scale_x range+limits 同时设置发出警告", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
+    mark_point()
+  expect_warning(
+    scale_x(p, range = c(0, 10), limits = c(5, 8)),
+    "range.*overrides.*limits"
+  )
 })
 
 test_that("scale_x 非法 trans 报错", {
@@ -428,10 +442,20 @@ test_that("scale_y trans=log2", {
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_y range 发出警告", {
+test_that("scale_y range 作为数据值域（不再发出警告）", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
     mark_point()
-  expect_warning(scale_y(p, range = c(0, 30)), "range.*experimental")
+  expect_no_warning(p2 <- scale_y(p, range = c(0, 30)))
+  expect_s3_class(p2, "plotit::plotit")
+})
+
+test_that("scale_y range+limits 同时设置发出警告", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
+    mark_point()
+  expect_warning(
+    scale_y(p, range = c(0, 30), limits = c(10, 25)),
+    "range.*overrides.*limits"
+  )
 })
 
 # ============================================================

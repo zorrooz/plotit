@@ -11,11 +11,20 @@ test_that("label_title 同步更新 meta 和 gg", {
   expect_equal(p@gg$labels$title, "Custom Title")
 })
 
-test_that("label_title text=NULL 移除标题", {
+test_that("label_title text=NULL 不修改已有标题", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     label_title("Old") |>
     label_title(text = NULL)
+  expect_equal(p@gg$labels$title, "Old")
+  expect_equal(p@meta@labels@title, "Old")
+})
+
+test_that("label_title reset=TRUE 移除标题", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |>
+    label_title("Old") |>
+    label_title(reset = TRUE)
   expect_null(p@gg$labels$title)
   expect_null(p@meta@labels@title)
 })
@@ -42,10 +51,18 @@ test_that("label_subtitle 同步更新 meta 和 gg", {
   expect_equal(p@gg$labels$subtitle, "Sub")
 })
 
-test_that("label_subtitle text=NULL 移除副标题", {
+test_that("label_subtitle text=NULL 不修改已有副标题", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     label_subtitle("Old") |>
     label_subtitle(text = NULL)
+  expect_equal(p@gg$labels$subtitle, "Old")
+  expect_equal(p@meta@labels@subtitle, "Old")
+})
+
+test_that("label_subtitle reset=TRUE 移除副标题", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    label_subtitle("Old") |>
+    label_subtitle(reset = TRUE)
   expect_null(p@gg$labels$subtitle)
   expect_null(p@meta@labels@subtitle)
 })
@@ -64,10 +81,18 @@ test_that("label_caption 同步更新 meta 和 gg", {
   expect_equal(p@gg$labels$caption, "Cap")
 })
 
-test_that("label_caption text=NULL 移除脚注", {
+test_that("label_caption text=NULL 不修改已有脚注", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     label_caption("Old") |>
     label_caption(text = NULL)
+  expect_equal(p@gg$labels$caption, "Old")
+  expect_equal(p@meta@labels@caption, "Old")
+})
+
+test_that("label_caption reset=TRUE 移除脚注", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    label_caption("Old") |>
+    label_caption(reset = TRUE)
   expect_null(p@gg$labels$caption)
   expect_null(p@meta@labels@caption)
 })
@@ -117,18 +142,28 @@ test_that("label_axis hide=TRUE：隐藏并存储 FALSE 到 meta", {
   expect_false(p@meta@labels@x)
 })
 
-test_that("label_axis text=NULL：恢复为变量名，meta 存 NULL", {
+test_that("label_axis text=NULL：不修改当前标签", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
+  # Set a custom label first, then call with text=NULL (should be no-op)
+  p <- label_axis(p, text = "Custom", aes = "x")
   p <- label_axis(p, text = NULL, aes = "x")
+  expect_equal(p@gg$labels$x, "Custom")
+  expect_equal(p@meta@labels@x, "Custom")
+})
+
+test_that("label_axis reset=TRUE：恢复为变量名，meta 存 NULL", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
+  p <- label_axis(p, text = "Custom", aes = "x")
+  p <- label_axis(p, reset = TRUE, aes = "x")
   expect_false("x" %in% names(p@gg$labels))
   expect_null(p@meta@labels@x)
 })
 
-test_that("label_axis text=NULL 覆盖之前自定义", {
+test_that("label_axis reset=TRUE 覆盖之前自定义", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
   p <- p |>
     label_axis(text = "Old", aes = "x") |>
-    label_axis(text = NULL, aes = "x")
+    label_axis(reset = TRUE, aes = "x")
   expect_false("x" %in% names(p@gg$labels))
 })
 
@@ -167,11 +202,11 @@ test_that("label_legend hide=TRUE 隐藏图例标题", {
   expect_null(p@gg$scales$scales[[1]]$name)
 })
 
-test_that("label_legend text=NULL 恢复默认图例标题（waiver）", {
+test_that("label_legend reset=TRUE 恢复默认图例标题（waiver）", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
     scale_color() |>
     label_legend(text = "Custom", aes = "colour") |>
-    label_legend(text = NULL, aes = "colour")
+    label_legend(reset = TRUE, aes = "colour")
   expect_true(inherits(p@gg$scales$scales[[1]]$name, "waiver"))
 })
 
@@ -210,11 +245,28 @@ test_that("管道链多个 label 不冲突", {
   expect_equal(p@meta@labels@y, "Y")
 })
 
-# ---- hide + text combo ----
-test_that("label_axis hide=TRUE then text=NULL restores", {
+# ---- hide + reset combo ----
+test_that("label_axis hide=TRUE then reset=TRUE restores", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
   p <- label_axis(p, hide = TRUE, aes = "x")
   expect_false(p@meta@labels@x)
-  p <- label_axis(p, text = NULL, aes = "x")
+  p <- label_axis(p, reset = TRUE, aes = "x")
   expect_null(p@meta@labels@x)
+})
+
+# ---- text/reset mutual exclusion ----
+test_that("label_axis text+reset 互斥报错", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
+  expect_error(
+    label_axis(p, text = "X", reset = TRUE, aes = "x"),
+    "mutually exclusive"
+  )
+})
+
+test_that("label_title text+reset 互斥报错", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
+  expect_error(
+    label_title(p, text = "T", reset = TRUE),
+    "mutually exclusive"
+  )
 })

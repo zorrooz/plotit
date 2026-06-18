@@ -32,16 +32,47 @@ NULL
 }
 
 # Per-aesthetic trans validation sets
-.trans_cf <- c("identity", "discrete", "reverse", "binned") # colour/fill
-.trans_n <- c("identity", "discrete", "reverse", "binned") # size/alpha (numeric)
-.trans_sl <- c("identity", "discrete", "binned") # shape/linetype
-.trans_xy <- c("identity", "discrete", "log", "log10", "log2", "sqrt", "reverse", "binned")
+.trans_cf <- c("identity", "discrete", "reverse", "binned") # colour/fill (visual_cont)
+.trans_n <- c("identity", "discrete", "reverse", "binned") # size/alpha (visual_cont)
+.trans_sl <- c("discrete", "reverse") # shape/linetype (visual_disc)
+.trans_xy <- c("identity", "discrete", "log", "log10", "log2", "sqrt", "reverse", "binned") # positional
+
+# Friendly error messages for known-bad trans x aesthetic combinations.
+# Called before the generic allowed-set check so the user gets a targeted
+# explanation instead of a generic "must be one of …" message.
+._validate_trans <- function(aes_name, trans, allowed) {
+  visual_aes <- c("colour", "fill", "size", "alpha", "shape", "linetype")
+  # log / sqrt on visual aesthetics
+  if (aes_name %in% visual_aes && trans %in% c("log", "log10", "log2", "sqrt")) {
+    cli::cli_abort(c(
+      "{.val {aes_name}} 是视觉属性，不支持对数/平方根变换。",
+      "i" = "如需对数值取对数，请使用 {.fn scale_x} / {.fn scale_y}。",
+      "i" = "{.arg trans} 对视觉标度支持：{.val {allowed}}。"
+    ))
+  }
+  # identity on shape/linetype
+  if (aes_name %in% c("shape", "linetype") && trans == "identity") {
+    cli::cli_abort(c(
+      "{.val {aes_name}} 是离散视觉属性，不支持连续映射 ({.code trans = \"identity\"})。",
+      "i" = "请使用 {.val 'discrete'}、{.val 'reverse'} 或默认值。"
+    ))
+  }
+  # binned on shape/linetype
+  if (aes_name %in% c("shape", "linetype") && trans == "binned") {
+    cli::cli_abort(c(
+      "{.val {aes_name}} 是离散视觉属性，不支持分箱映射 ({.code trans = \"binned\"})。",
+      "i" = "{.arg trans} 对 shape/linetype 支持：{.val {allowed}}。"
+    ))
+  }
+}
 
 # Resolve trans=NULL: auto-detect; otherwise validate and return
 .resolve_trans <- function(plot, aes_name, trans, allowed) {
   if (is.null(trans)) {
     return(if (.detect_discrete_aes(plot, aes_name)) "discrete" else "identity")
   }
+  # Friendly error for known-bad combos (before generic allowed-set check)
+  ._validate_trans(aes_name, trans, allowed)
   if (!(trans %in% allowed)) {
     cli::cli_abort(c(
       "{.arg trans} must be one of {.val {allowed}} for this scale.",
@@ -188,29 +219,16 @@ NULL
 
 # Pick shape/linetype scale function
 .scale_discrete_fun <- function(aes, trans, range, ...) {
-  binned <- trans == "binned"
-  if (binned) {
-    fun <- switch(aes,
-      shape    = ggplot2::scale_shape_binned,
-      linetype = ggplot2::scale_linetype_binned
-    )
-  } else {
-    fun <- switch(aes,
-      shape    = ggplot2::scale_shape_discrete,
-      linetype = ggplot2::scale_linetype_discrete
-    )
-  }
+  reverse <- trans == "reverse"
   args <- list(...)
-  if (!is.null(range) && !binned) {
-    if (aes == "shape") {
-      # shape range routes to scale_shape_manual(values = range); non-binned only
-      args$values <- range
-      fun <- ggplot2::scale_shape_manual
-    } else {
-      args$values <- range
-      fun <- ggplot2::scale_linetype_manual
-    }
+  if (reverse && !is.null(range)) range <- rev(range)
+  if (!is.null(range)) {
+    args$values <- range
+    fun <- if (aes == "shape") ggplot2::scale_shape_manual else ggplot2::scale_linetype_manual
+  } else {
+    fun <- if (aes == "shape") ggplot2::scale_shape_discrete else ggplot2::scale_linetype_discrete
   }
+  if (reverse) args$guide <- ggplot2::guide_legend(reverse = TRUE)
   do.call(fun, args)
 }
 
@@ -218,6 +236,18 @@ NULL
 .scale_xy_impl <- function(plot, aes, name, trans, limits, range, breaks, labels, ...) {
   discrete <- trans == "discrete"
   binned <- trans == "binned"
+
+  # range = data value domain (AGENTS.md §3.3.4)
+  if (!is.null(range)) {
+    if (!is.null(limits)) {
+      cli::cli_warn(c(
+        "Both {.arg range} and {.arg limits} are set for the {.val {aes}} axis.",
+        "i" = "{.arg range} overrides {.arg limits} (latter wins)."
+      ))
+    }
+    limits <- range
+  }
+
   scale_fun <- if (aes == "x") {
     if (binned) {
       ggplot2::scale_x_binned
@@ -236,8 +266,10 @@ NULL
     }
   }
   args <- list(name = name, limits = limits, breaks = breaks, labels = labels)
-  if (!is.null(range)) {
-    cli::cli_warn("{.arg range} for position scales is experimental and approximated via {.fn ggplot2::expand}.")
+  # When range is provided for continuous axes, tighten expand so the data
+  # range maps directly to the panel edges (no padding).
+  if (!is.null(range) && !discrete && !binned) {
+    args$expand <- c(0, 0)
   }
   if (!discrete && !binned) args$trans <- trans
   args <- args[!vapply(args, is.null, logical(1))]
@@ -255,6 +287,7 @@ NULL
 #' @param name Scale title (legend name). `ggplot2::waiver()` = use variable name.
 #' @param trans Scale transformation. `NULL` auto-detects, otherwise one of:
 #'   `"identity"`, `"discrete"`, `"reverse"`, `"binned"`.
+#'   Unsupported values (e.g. `"log"`) produce a targeted error message.
 #' @param limits Data domain. `c(min, max)` for continuous; character vector for discrete limits.
 #' @param range Output range. `NULL` = auto (discrete→hue, continuous→viridis).
 #'   A colour vector (`c("blue","red")`) for manual colours, or a scheme name:
@@ -298,6 +331,7 @@ S7::method(scale_color, plotit_class) <- function(plot, name = ggplot2::waiver()
 #' @param name Scale title (legend name). `ggplot2::waiver()` = use variable name.
 #' @param trans Scale transformation. `NULL` auto-detects, otherwise one of:
 #'   `"identity"`, `"discrete"`, `"reverse"`, `"binned"`.
+#'   Unsupported values (e.g. `"log"`) produce a targeted error message.
 #' @param limits Data domain.
 #' @param range Output range. Same as [scale_color()]: colour vector, or `"viridis"`,
 #'   `"brewer"`, `"grey"`, `"hue"`.
@@ -337,6 +371,7 @@ S7::method(scale_fill, plotit_class) <- function(plot, name = ggplot2::waiver(),
 #' @param name Scale title (legend name).
 #' @param trans Scale transformation. `NULL` auto-detects, otherwise one of:
 #'   `"identity"`, `"discrete"`, `"reverse"`, `"binned"`.
+#'   Unsupported values (e.g. `"log"`) produce a targeted error message.
 #' @param limits Data domain.
 #' @param range Output size range as `c(min, max)`. `NULL` = default `c(1, 6)`.
 #'   Only meaningful for continuous scales (ignored for discrete/binned).
@@ -375,6 +410,7 @@ S7::method(scale_size, plotit_class) <- function(plot, name = ggplot2::waiver(),
 #' @param name Scale title (legend name).
 #' @param trans Scale transformation. `NULL` auto-detects, otherwise one of:
 #'   `"identity"`, `"discrete"`, `"reverse"`, `"binned"`.
+#'   Unsupported values (e.g. `"log"`) produce a targeted error message.
 #' @param limits Data domain.
 #' @param range Output alpha range as `c(min, max)`. `NULL` = default `c(0.1, 1)`.
 #'   Only meaningful for continuous scales.
@@ -413,7 +449,8 @@ S7::method(scale_alpha, plotit_class) <- function(plot, name = ggplot2::waiver()
 #' @param plot A plotit object.
 #' @param name Scale title (legend name).
 #' @param trans Scale transformation. Default `"discrete"`. Allowed:
-#'   `"discrete"`, `"binned"`. `"identity"` is rejected with a helpful error.
+#'   `"discrete"`, `"reverse"`. `"identity"` and `"binned"` are rejected
+#'   with targeted error messages.
 #' @param limits Data domain.
 #' @param range Shape numbers as `c(from, to)`. `NULL` = ggplot2 default shapes.
 #' @param breaks Legend key positions.
@@ -435,12 +472,6 @@ S7::method(scale_shape, plotit_class) <- function(plot, name = ggplot2::waiver()
                                                   range = NULL, breaks = NULL,
                                                   labels = NULL, ...) {
   trans <- .resolve_trans(plot, "shape", trans, .trans_sl)
-  if (trans == "identity") {
-    cli::cli_abort(c(
-      "A continuous variable cannot be mapped to shape.",
-      "i" = "Use {.code trans = \"binned\"} to discretize a continuous variable."
-    ))
-  }
   plot@gg <- plot@gg +
     .scale_discrete_fun("shape", trans, range,
       name = name, limits = limits, breaks = breaks, labels = labels, ...
@@ -456,7 +487,8 @@ S7::method(scale_shape, plotit_class) <- function(plot, name = ggplot2::waiver()
 #' @param plot A plotit object.
 #' @param name Scale title (legend name).
 #' @param trans Scale transformation. Default `"discrete"`. Allowed:
-#'   `"discrete"`, `"binned"`. `"identity"` is rejected with a helpful error.
+#'   `"discrete"`, `"reverse"`. `"identity"` and `"binned"` are rejected
+#'   with targeted error messages.
 #' @param limits Data domain.
 #' @param range Linetype names or codes (`c("solid","dashed")`). `NULL` = ggplot2 defaults.
 #' @param breaks Legend key positions.
@@ -478,12 +510,6 @@ S7::method(scale_linetype, plotit_class) <- function(plot, name = ggplot2::waive
                                                      range = NULL, breaks = NULL,
                                                      labels = NULL, ...) {
   trans <- .resolve_trans(plot, "linetype", trans, .trans_sl)
-  if (trans == "identity") {
-    cli::cli_abort(c(
-      "A continuous variable cannot be mapped to linetype.",
-      "i" = "Use {.code trans = \"binned\"} to discretize a continuous variable."
-    ))
-  }
   plot@gg <- plot@gg +
     .scale_discrete_fun("linetype", trans, range,
       name = name, limits = limits, breaks = breaks, labels = labels, ...
@@ -502,8 +528,9 @@ S7::method(scale_linetype, plotit_class) <- function(plot, name = ggplot2::waive
 #'   `"identity"`, `"discrete"`, `"log"`, `"log10"`, `"log2"`,
 #'   `"sqrt"`, `"reverse"`, `"binned"`.
 #' @param limits Axis limits as `c(min, max)`.
-#' @param range Normalized panel range as `c(0, 1)`. Currently approximated via
-#'   `ggplot2::expand`; precise control is experimental. A warning is issued if non-NULL.
+#' @param range Data value domain as `c(min, max)`. Maps the given data values to the
+#'   panel edges (sets `limits` and `expand = c(0, 0)`). For panel padding control,
+#'   use [project_cartesian()] with the `expand` argument.
 #' @param breaks Axis tick positions.
 #' @param labels Axis tick labels.
 #' @param ... Passed to the underlying ggplot2 scale function.
@@ -537,8 +564,9 @@ S7::method(scale_x, plotit_class) <- function(plot, name = ggplot2::waiver(),
 #'   `"identity"`, `"discrete"`, `"log"`, `"log10"`, `"log2"`,
 #'   `"sqrt"`, `"reverse"`, `"binned"`.
 #' @param limits Axis limits as `c(min, max)`.
-#' @param range Normalized panel range as `c(0, 1)`. Currently approximated via
-#'   `ggplot2::expand`; precise control is experimental. A warning is issued if non-NULL.
+#' @param range Data value domain as `c(min, max)`. Maps the given data values to the
+#'   panel edges (sets `limits` and `expand = c(0, 0)`). For panel padding control,
+#'   use [project_cartesian()] with the `expand` argument.
 #' @param breaks Axis tick positions.
 #' @param labels Axis tick labels.
 #' @param ... Passed to the underlying ggplot2 scale function.

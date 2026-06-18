@@ -4,14 +4,18 @@
 \alias{label_axis}
 \title{Generic for setting axis titles}
 \usage{
-label_axis(plot, text = NULL, aes = NULL, ...)
+label_axis(plot, text = NULL, aes = NULL, hide = FALSE, reset = FALSE, ...)
 }
 \arguments{
 \item{plot}{A plotit object}
 
-\item{text}{Axis title text. \code{NULL} = skip, \code{FALSE} = hide, \code{TRUE} = variable name, \code{"str"} = custom}
+\item{text}{Axis title text. \code{NULL} = don't modify. \code{"str"} = custom title.}
 
 \item{aes}{Which axis to apply to: \code{"x"} or \code{"y"} (required).}
+
+\item{hide}{If \code{TRUE}, hide the axis title entirely (\code{element_blank()}).}
+
+\item{reset}{If \code{TRUE}, restore the axis title to the variable name.}
 
 \item{...}{Currently unused}
 }

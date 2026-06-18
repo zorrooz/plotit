@@ -29,7 +29,8 @@ plotit(
 \item{dodge}{Numeric; global default dodge width. If \code{NULL}, heuristically set.}
 
 \item{default_color}{Single color string. Applied as default color mapping if no
-color/fill aesthetic is present in \code{mapping}.}
+color/fill aesthetic is present in \code{mapping}. Adding any \code{scale_color()} or
+\code{scale_fill()} later will automatically disable this single-color mapping.}
 }
 \value{
 A \code{plotit} object.

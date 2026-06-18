@@ -2,7 +2,22 @@
 NULL
 
 # ---- Internal helpers for label family ----
-# text + hide protocol: NULL=reset, "str"=custom, hide=TRUE=element_blank
+# Three-parameter protocol (AGENTS.md §3.3.7):
+#   text  = NULL     → no-op (don't change current label)
+#   text  = "str"    → set custom text
+#   hide  = TRUE     → remove element from layout (element_blank())
+#   reset = TRUE     → restore variable name (axis/legend) or remove (title/subtitle/caption)
+#   text + reset     → mutually exclusive; error if both are set
+
+# Check text/reset mutual exclusion
+._check_text_reset <- function(text, reset, fun_name) {
+  if (!is.null(text) && isTRUE(reset)) {
+    cli::cli_abort(c(
+      "{.arg text} and {.arg reset} are mutually exclusive in {.fn {fun_name}}.",
+      "i" = "Use {.arg text} to set a custom label, or {.arg reset = TRUE} to restore the default."
+    ))
+  }
+}
 
 # Helper: construct a single-element theme() call with dynamic name
 .theme_el <- function(el, val) {
@@ -59,28 +74,31 @@ NULL
 # ---- label_title ----
 #' Generic for setting plot title
 #' @param plot A plotit object
-#' @param text Title text. `NULL` = remove title, `"str"` = custom title.
+#' @param text Title text. `NULL` = don't modify. `"str"` = custom title.
 #' @param hide If `TRUE`, remove title element from layout entirely.
+#' @param reset If `TRUE`, remove the title text (restore to no title).
 #' @param ... Currently unused
 #' @return Modified plotit object
 #' @export
 label_title <- S7::new_generic(
   "label_title",
   "plot",
-  function(plot, text = NULL, hide = FALSE, ...) {
+  function(plot, text = NULL, hide = FALSE, reset = FALSE, ...) {
     S7::S7_dispatch()
   }
 )
 
 #' @export
-S7::method(label_title, plotit_class) <- function(plot, text = NULL, hide = FALSE, ...) {
+S7::method(label_title, plotit_class) <- function(plot, text = NULL, hide = FALSE,
+                                                  reset = FALSE, ...) {
+  ._check_text_reset(text, reset, "label_title")
   if (hide) {
     plot@meta@labels@title <- NULL
     plot@gg <- plot@gg + ggplot2::theme(plot.title = ggplot2::element_blank())
-  } else if (is.null(text)) {
+  } else if (isTRUE(reset)) {
     plot@meta@labels@title <- NULL
     plot@gg <- plot@gg + ggplot2::labs(title = NULL)
-  } else {
+  } else if (!is.null(text)) {
     plot@meta@labels@title <- text
     plot@gg <- plot@gg + ggplot2::labs(title = text)
   }
@@ -90,28 +108,31 @@ S7::method(label_title, plotit_class) <- function(plot, text = NULL, hide = FALS
 # ---- label_subtitle ----
 #' Generic for setting plot subtitle
 #' @param plot A plotit object
-#' @param text Subtitle text. `NULL` = remove subtitle, `"str"` = custom subtitle.
+#' @param text Subtitle text. `NULL` = don't modify. `"str"` = custom subtitle.
 #' @param hide If `TRUE`, remove subtitle element from layout entirely.
+#' @param reset If `TRUE`, remove the subtitle text (restore to no subtitle).
 #' @param ... Currently unused
 #' @return Modified plotit object
 #' @export
 label_subtitle <- S7::new_generic(
   "label_subtitle",
   "plot",
-  function(plot, text = NULL, hide = FALSE, ...) {
+  function(plot, text = NULL, hide = FALSE, reset = FALSE, ...) {
     S7::S7_dispatch()
   }
 )
 
 #' @export
-S7::method(label_subtitle, plotit_class) <- function(plot, text = NULL, hide = FALSE, ...) {
+S7::method(label_subtitle, plotit_class) <- function(plot, text = NULL, hide = FALSE,
+                                                     reset = FALSE, ...) {
+  ._check_text_reset(text, reset, "label_subtitle")
   if (hide) {
     plot@meta@labels@subtitle <- NULL
     plot@gg <- plot@gg + ggplot2::theme(plot.subtitle = ggplot2::element_blank())
-  } else if (is.null(text)) {
+  } else if (isTRUE(reset)) {
     plot@meta@labels@subtitle <- NULL
     plot@gg <- plot@gg + ggplot2::labs(subtitle = NULL)
-  } else {
+  } else if (!is.null(text)) {
     plot@meta@labels@subtitle <- text
     plot@gg <- plot@gg + ggplot2::labs(subtitle = text)
   }
@@ -121,28 +142,31 @@ S7::method(label_subtitle, plotit_class) <- function(plot, text = NULL, hide = F
 # ---- label_caption ----
 #' Generic for setting plot caption
 #' @param plot A plotit object
-#' @param text Caption text. `NULL` = remove caption, `"str"` = custom caption.
+#' @param text Caption text. `NULL` = don't modify. `"str"` = custom caption.
 #' @param hide If `TRUE`, remove caption element from layout entirely.
+#' @param reset If `TRUE`, remove the caption text (restore to no caption).
 #' @param ... Currently unused
 #' @return Modified plotit object
 #' @export
 label_caption <- S7::new_generic(
   "label_caption",
   "plot",
-  function(plot, text = NULL, hide = FALSE, ...) {
+  function(plot, text = NULL, hide = FALSE, reset = FALSE, ...) {
     S7::S7_dispatch()
   }
 )
 
 #' @export
-S7::method(label_caption, plotit_class) <- function(plot, text = NULL, hide = FALSE, ...) {
+S7::method(label_caption, plotit_class) <- function(plot, text = NULL, hide = FALSE,
+                                                    reset = FALSE, ...) {
+  ._check_text_reset(text, reset, "label_caption")
   if (hide) {
     plot@meta@labels@caption <- NULL
     plot@gg <- plot@gg + ggplot2::theme(plot.caption = ggplot2::element_blank())
-  } else if (is.null(text)) {
+  } else if (isTRUE(reset)) {
     plot@meta@labels@caption <- NULL
     plot@gg <- plot@gg + ggplot2::labs(caption = NULL)
-  } else {
+  } else if (!is.null(text)) {
     plot@meta@labels@caption <- text
     plot@gg <- plot@gg + ggplot2::labs(caption = text)
   }
@@ -152,40 +176,42 @@ S7::method(label_caption, plotit_class) <- function(plot, text = NULL, hide = FA
 # ---- label_axis ----
 #' Generic for setting axis titles
 #' @param plot A plotit object
-#' @param text Axis title text. `NULL` = restore variable name, `"str"` = custom title.
+#' @param text Axis title text. `NULL` = don't modify. `"str"` = custom title.
 #' @param aes Which axis to apply to: `"x"` or `"y"` (required).
 #' @param hide If `TRUE`, hide the axis title entirely (`element_blank()`).
+#' @param reset If `TRUE`, restore the axis title to the variable name.
 #' @param ... Currently unused
 #' @return Modified plotit object
 #' @export
 label_axis <- S7::new_generic(
   "label_axis",
   "plot",
-  function(plot, text = NULL, aes = NULL, hide = FALSE, ...) {
+  function(plot, text = NULL, aes = NULL, hide = FALSE, reset = FALSE, ...) {
     S7::S7_dispatch()
   }
 )
 
 #' @export
 S7::method(label_axis, plotit_class) <- function(plot, text = NULL, aes = NULL,
-                                                 hide = FALSE, ...) {
+                                                 hide = FALSE, reset = FALSE, ...) {
   if (is.null(aes)) {
     cli::cli_abort("{.arg aes} must be specified: {.code aes = \"x\"} or {.code aes = \"y\"}.")
   }
   if (!(aes %in% c("x", "y"))) {
     cli::cli_abort("{.arg aes} must be one of {.val c('x', 'y')}, not {.val {aes}}.")
   }
+  ._check_text_reset(text, reset, "label_axis")
 
   if (hide) {
     S7::prop(plot@meta@labels, aes) <- FALSE
     plot@gg <- plot@gg + .theme_el(paste0("axis.title.", aes), ggplot2::element_blank())
-  } else if (is.null(text)) {
+  } else if (isTRUE(reset)) {
     S7::prop(plot@meta@labels, aes) <- NULL
     plot@gg <- plot@gg + .theme_el(paste0("axis.title.", aes), NULL)
     labs <- plot@gg$labels
     labs[aes] <- NULL
     plot@gg$labels <- labs
-  } else {
+  } else if (!is.null(text)) {
     S7::prop(plot@meta@labels, aes) <- text
     plot@gg <- plot@gg + .theme_el(paste0("axis.title.", aes), NULL)
     plot@gg <- plot@gg + .labs_el(aes, text)
@@ -196,34 +222,40 @@ S7::method(label_axis, plotit_class) <- function(plot, text = NULL, aes = NULL,
 # ---- label_legend ----
 #' Generic for setting legend title(s)
 #' @param plot A plotit object
-#' @param text Legend title text. `NULL` = restore variable name, `"str"` = custom title.
+#' @param text Legend title text. `NULL` = don't modify. `"str"` = custom title.
 #' @param aes Aesthetic to apply to (e.g. `"colour"`, `"fill"`). `NULL` = all mapped aesthetics.
 #' @param hide If `TRUE`, hide the legend title.
+#' @param reset If `TRUE`, restore the legend title to the variable name.
 #' @param ... Currently unused
 #' @return Modified plotit object
 #' @export
 label_legend <- S7::new_generic(
   "label_legend",
   "plot",
-  function(plot, text = NULL, aes = NULL, hide = FALSE, ...) {
+  function(plot, text = NULL, aes = NULL, hide = FALSE, reset = FALSE, ...) {
     S7::S7_dispatch()
   }
 )
 
 #' @export
 S7::method(label_legend, plotit_class) <- function(plot, text = NULL, aes = NULL,
-                                                   hide = FALSE, ...) {
+                                                   hide = FALSE, reset = FALSE, ...) {
+  ._check_text_reset(text, reset, "label_legend")
+  # Determine the effective text: NULL=skip, reset=waiver, otherwise custom
+  eff_text <- if (isTRUE(reset)) ggplot2::waiver() else text
+  # Skip if nothing to do (all defaults)
+  if (is.null(eff_text) && !isTRUE(hide)) return(plot)
   if (is.null(aes)) {
-    plot@meta@labels@legend[["default"]] <- if (hide) NULL else text
+    plot@meta@labels@legend[["default"]] <- if (hide) NULL else eff_text
     aes_names <- .collect_aes_names(
       plot@gg,
       c("colour", "fill", "shape", "linetype", "size", "alpha")
     )
     for (a in aes_names) {
-      plot@gg <- .label_set_aes(plot@gg, a, text, hide)
+      plot@gg <- .label_set_aes(plot@gg, a, eff_text, hide)
     }
   } else {
-    plot@meta@labels@legend[[aes]] <- if (hide) NULL else text
+    plot@meta@labels@legend[[aes]] <- if (hide) NULL else eff_text
     aes_all <- .collect_aes_names(
       plot@gg,
       c("colour", "fill", "shape", "linetype", "size", "alpha")
@@ -231,7 +263,7 @@ S7::method(label_legend, plotit_class) <- function(plot, text = NULL, aes = NULL
     if (!(aes %in% aes_all)) {
       cli::cli_warn("Aesthetic {.val {aes}} is not present in the plot mapping.")
     } else {
-      plot@gg <- .label_set_aes(plot@gg, aes, text, hide)
+      plot@gg <- .label_set_aes(plot@gg, aes, eff_text, hide)
     }
   }
   plot

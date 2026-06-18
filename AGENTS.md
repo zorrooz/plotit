@@ -210,6 +210,16 @@ plotit(data, mapping = encode(), autofit = FALSE,
 6. 若 `patchwork` 包可用且非 `autofit` 模式，调用 `patchwork::plot_layout()` 固定面板尺寸。完整的尺寸算法（面板 vs 总尺寸、阶段 1-3）详见 §3.3.10。
 7. 返回 `plotit` 对象。
 
+**尺寸优先级链**：
+
+当多个来源同时指定尺寸时，优先级如下（从高到低）：
+
+1. **用户显式传参** — `export(p, width = 10)` 中的 `width`/`height` 直接使用，忽略 `meta` 存储值和 `autofit` 标志。导出是最终动作，用户此刻的意图最明确。
+2. **meta 存储值** — `plotit()` 时设置的 `width`/`height`，在 `autofit = FALSE` 时生效。
+3. **autofit 自适应** — `autofit = TRUE` 时交由设备自适应，`width`/`height` 置为 `NULL`。
+
+简单记忆：**显式传参 > meta 存储 > autofit 自适应**。
+
 #### 3.3.2 美学映射构造函数 `encode()`
 
 **职责**：生成带特定类的美学映射对象。
@@ -237,6 +247,8 @@ plotit(data, mapping = encode(), autofit = FALSE,
 
 **职责**：数据→视觉映射 + 显示控制（参考 Vega 的 `type`/`domain`/`range` 四维模型）。
 
+**核心理念**：`scale_*` 的所有参数围绕两个问题——**"怎么映射"**（`trans`）和 **"映射到哪"**（`range`），再加上辅助的显示控制（`limits`、`breaks`、`labels`、`name`）。
+
 **统一签名** (8 函数, 8 参数):
 
 ```r
@@ -248,9 +260,9 @@ scale_<aes>(p, name = waiver(), trans = <默认>,
 | 参数 | 作用层 | 对应 Vega | 描述 |
 |---|---|---|---|
 | `name` | 命名 | axis.title | 该 scale 的名称, `waiver()` 沿用变量名, `"str"` 覆盖 |
-| `trans` | 映射算法 | `type` | 选择变换方式, 各 scale 默认值不同 |
+| `trans` | 映射算法 | `type` | 数据变换方式，所有 scale 接受同一套值，不支持的组合主动报错 |
 | `limits` | 数据边界 | `domain` | 裁剪输入数据范围 |
-| `range` | 视觉边界 | `range` + `scheme` | 输出视觉值范围, color/size/alpha 由类型自适应 |
+| `range` | 视觉输出值域 | `range` + `scheme` | 输出视觉值的具体范围——颜色、尺寸、坐标区间等；格式由包层自动推断 |
 | `breaks` | 显示-刻度位 | axis.tickValues | 刻度/图例键位置 |
 | `labels` | 显示-刻度字 | axis.tickLabels | 刻度/图例键文字 |
 | `...` | 后端 | — | 透传底层 ggplot2 scale 专属参数 |
@@ -270,47 +282,110 @@ scale_y       (p, name, trans="identity", limits, range, breaks, labels, ...)
 
 仅 `trans` 默认值不同——反映各 scale 的自然语义, 不破坏 API 一致性。
 
-**`trans` — 映射算法**:
+---
 
-| `trans` | 算法 | color/fill/size/alpha | shape/linetype | x/y |
+**`trans` — 数据变换方式（统一语义）**
+
+`trans` 在所有 scale 中的含义完全一致：**"如何变换数据再映射到视觉属性"**。包层内部根据 aesthetic 类型自动调度到正确的底层机制——用户不需要区分"坐标变换"和"标度类型"。
+
+| `trans` | 含义（用户视角） | x/y | color/fill/size/alpha | shape/linetype |
 |---|---|---|---|---|
-| `NULL` | 自动检测 (`is_discrete()`) | ✅ 默认 | — | — |
-| `"identity"` | 连续线性 | ✅ | ❌ | ✅ 默认 |
-| `"discrete"` | 离散查找表 | ✅ | ✅ 默认 | ✅ |
-| `"log"` | 对数 (自然) | — | — | ✅ |
-| `"log10"` | 以 10 为底对数 | — | — | ✅ |
-| `"log2"` | 以 2 为底对数 | — | — | ✅ |
-| `"sqrt"` | 平方根 | — | — | ✅ |
-| `"reverse"` | 翻转 | ✅ | — | ✅ |
-| `"binned"` | 分箱离散化 | ✅ | ✅ | ✅ |
+| `NULL` | 自动选择 | → `"identity"` | → 自动检测（连续→identity, 离散→discrete） | → `"discrete"`（默认） |
+| `"identity"` | 不做变换，直接线性映射 | ✅ 默认 | ✅ 默认（连续标度） | ❌ 报错（shape/linetype 无法连续映射） |
+| `"log"` | 取自然对数后映射 | ✅ | ❌ 报错 | ❌ 报错 |
+| `"log10"` | 取以 10 为底对数后映射 | ✅ | ❌ 报错 | ❌ 报错 |
+| `"log2"` | 取以 2 为底对数后映射 | ✅ | ❌ 报错 | ❌ 报错 |
+| `"sqrt"` | 取平方根后映射 | ✅ | ❌ 报错 | ❌ 报错 |
+| `"reverse"` | 翻转映射顺序 | ✅ (翻转坐标) | ✅ (反转颜色梯度/尺寸范围) | ✅ (反转图例顺序) |
+| `"discrete"` | 当作分类变量处理 | ✅ (离散坐标轴) | ✅ (离散颜色/填充/尺寸) | ✅ 默认 |
+| `"binned"` | 数据分箱后按箱映射 | ✅ (分箱坐标) | ✅ (连续变量分箱着色) | ❌ 报错（shape/linetype 本身无"分箱"概念） |
 
-`trans` 在包中统一表示"对输入数据的变换"，但其具体形式取决于标度的性质：
-- **位置标度 (x/y)**：`trans` 对应数值变换函数（如 `"log"`、`"sqrt"`、`"reverse"`），直接传递给 ggplot2 的坐标变换机制。
-- **视觉标度 (color/fill/size/alpha/shape/linetype)**：`trans` 表示数据类型的离散化策略（`"identity"`、`"discrete"`、`"binned"`），实质选择连续、离散或分箱标度。
+**不支持的组合主动报错**（包层验证，不依赖底层）：
 
-这种设计保持 API 表面统一：`trans` 回答"如何将数据映射为视觉属性"——位置靠坐标变换，视觉靠离散化策略。
+| 调用 | 错误信息 |
+|---|---|
+| `scale_color(trans = "log")` | `"color 是视觉属性，不支持对数变换。如需对数值取对数，请使用 scale_x / scale_y。trans 对视觉标度支持：'identity', 'discrete', 'binned', 'reverse'。"` |
+| `scale_shape(trans = "identity")` | `"shape 是离散视觉属性，不支持连续映射 (trans = 'identity')。请使用 'discrete'、'reverse' 或默认值。"` |
+| `scale_size(trans = "log")` | `"size 是视觉属性，不支持对数变换。如需对数值取对数，请使用 scale_x / scale_y。trans 对视觉标度支持：'identity', 'discrete', 'binned', 'reverse'。"` |
 
-**`range` — 视觉输出边界**:
+**实现**：每个 scale 方法入口处根据一张 `trans` × aesthetic 合法性矩阵做校验。矩阵定义如下：
 
-| aesthetic | `range=NULL` 默认 | `range="scheme"` | `range=c(a,b)` |
+```r
+# 内部矩阵：行 = trans 值, 列 = aesthetic 类别
+trans_legal <- list(
+  positional   = c("identity", "log", "log10", "log2", "sqrt", "reverse", "discrete", "binned"),
+  visual_cont  = c("identity", "discrete", "binned", "reverse"),
+  visual_disc  = c("discrete", "reverse")
+)
+# aesthetic 分类：
+#   positional  → x, y
+#   visual_cont → color, fill, size, alpha
+#   visual_disc → shape, linetype
+# NULL 自动选择对应的默认值，不在矩阵中校验
+```
+
+---
+
+**`range` — 视觉输出值域（统一语义）**
+
+`range` 在所有 scale 中的含义完全一致：**"数据映射到的视觉输出值是什么"**。对颜色来说输出值是颜色，对尺寸来说输出值是半径范围，对坐标轴来说输出值是坐标区间。不再有"归一化比例"这种例外。
+
+| aesthetic | `range = NULL`（默认） | `range = "name"`（字符串 → 调色板方案） | `range = c(a, b)`（向量 → 视觉值域） |
 |---|---|---|---|
-| colour/fill | hue(离散)/viridis(连续) | `"viridis"` `"brewer"` `"grey"` `"hue"` | `c("blue","red")` |
-| size | `c(1,6)` | — | `c(0.5,10)` |
-| alpha | `c(0.1,1)` | — | `c(0,0.8)` |
-| shape | 默认形状集 | — | `c(1,16)` |
-| linetype | 默认线型集 | — | `c("solid","dashed")` |
-| x/y | `c(0,1)` | — | 归一化比例 (0–1) |
+| colour / fill | 自动：离散→hue，连续→viridis | `"viridis"`, `"brewer"`, `"grey"`, `"hue"` | 颜色向量如 `c("blue", "red")` 或 `c("#E41A1C", "#377EB8")` |
+| size | `c(1, 6)` | —（不适用） | 数值范围如 `c(0.5, 10)` |
+| alpha | `c(0.1, 1)` | —（不适用） | 数值范围如 `c(0, 0.8)` |
+| shape | 默认形状集（1 开始的连续编号） | —（不适用） | 形状编号向量如 `c(1, 16)` 或 `c(16, 17, 18)` |
+| linetype | 默认线型集 | —（不适用） | 线型名称向量如 `c("solid", "dashed", "dotted")` |
+| x / y | `NULL`（数据自身范围，无额外裁剪） | —（不适用） | 数据值范围如 `c(0, 100)` |
 
-`range` 统一了 color 的调色板、size 的尺寸范围、alpha 的透明度范围——语义一致："输出到什么视觉值上"。
+> **重要语义变更（相对于旧版约定）**：x/y 的 `range` 现在表示**数据值域**而非"面板占用比例"。
+>
+> - `scale_x(range = c(0, 100))` 等价于 `limits = c(0, 100)` + `expand = c(0, 0)`，即数据值 0 映射到面板左边界，100 映射到面板右边界。
+> - 这与颜色 `range = c("blue", "red")` 的语义完全一致——`range` 始终是"输出值域"。
+> - 如需控制面板周围的空白留白，使用 `project_cartesian(expand = ...)`。
 
-**位置标度 (x/y) 的 `range`**：归一化的面板视觉区间，`c(0, 1)` 表示数据铺满面板，`c(0.1, 0.9)` 表示数据占据面板中间 80%。与 `limits`（数据裁剪）和 `project_cartesian(xlim/ylim)`（视口平移）正交。初始版本可转化为 `ggplot2::scale_*_continuous(expand = ...)` 近似实现，精确控制属于可实验区域。
+**`range` 与 `limits` 的交互**：两者在 x/y 上语义重叠（都指定数据值范围）。当同时非 NULL 时，遵循"后执行者胜"——后设置的覆盖先设置的。实现上检测到冲突时发出警告。
+
+**`range` 输入格式自动推断**：包层根据 aesthetic 类型和输入值格式自动判断用户意图，无需用户指定"这是调色板方案还是颜色向量"：
+
+| 输入 | 推断逻辑 | 适用 aesthetic |
+|---|---|---|
+| 单个字符串如 `"viridis"` | 查已知调色板方案列表；在列表中 → 方案名；不在 → 报错提示已知方案 | colour, fill |
+| 颜色字符串向量如 `c("blue", "red")` | 元素均为可识别的颜色 → 自定义颜色渐变 | colour, fill |
+| 数值向量如 `c(1, 6)`（两个数值） | 连续值域 | size, alpha, x, y |
+| 整数向量如 `c(1, 16)` | 形状编号 | shape |
+| 字符串向量如 `c("solid", "dashed")` | 非颜色字符串 → 线型名称 | linetype |
+
+---
+
+**`trans` × `range` 协同调度**：
+
+包层根据 `trans` 和 `range` 的组合自动选择正确的底层 ggplot2 scale 函数，用户无需关心：
+
+| `trans` | `range` 格式 | 底层调度（以 colour 为例） |
+|---|---|---|
+| `"identity"` | `NULL` | `scale_colour_continuous()`（自动选择 viridis） |
+| `"identity"` | `"viridis"` | `scale_colour_viridis_c()` |
+| `"identity"` | `c("blue", "red")` | `scale_colour_gradient(low = "blue", high = "red")` |
+| `"discrete"` | `NULL` | `scale_colour_discrete()`（自动 hue） |
+| `"discrete"` | `"viridis"` | `scale_colour_viridis_d()` |
+| `"discrete"` | `c("blue", "red")` | `scale_colour_manual(values = c("blue", "red"))` |
+| `"binned"` | `NULL` | `scale_colour_binned()`（自动 viridis） |
+| `"binned"` | `"viridis"` | `scale_colour_viridis_b()` |
+| `"binned"` | `c("blue", "red")` | `scale_colour_steps(low = "blue", high = "red")` |
+| `"reverse"` | 任意 | 与对应非 reverse 版本相同，追加 `trans = "reverse"` 或 `guide = guide_legend(reverse = TRUE)` |
+
+shape/linetype 类比：`"discrete"` + `range = c(...)` → `scale_shape_manual(values = ...)` / `scale_linetype_manual(values = ...)`。
+
+---
 
 **双层命名: `name` vs `label_*`**:
 
 ```
 encode(x = Sepal.Width)     → 变量名
 scale_x(name = "Width")     → scale 层覆盖
-label_axis(text = "花萼宽") → label 层最终覆盖 (优先级最高, 四态协议)
+label_axis(text = "花萼宽") → label 层最终覆盖 (优先级最高)
 ```
 
 **覆盖机制**: 添加颜色/填充 scale 时自动取消 `plotit()` 中 `default_color` 注入的单色映射。
@@ -352,18 +427,27 @@ label_axis(text = "花萼宽") → label 层最终覆盖 (优先级最高, 四�
 1. 将用户指定的文本更新到 `plot@meta@labels` 的对应字段；
 2. 立即将相同的标签应用到 `plot@gg`，覆盖任何已有同级设置。
 
-**`text` + `hide` 双参数协议**（所有函数通用）：
+**三参数协议**（`text` + `hide` + `reset`，所有函数通用）：
 
 | 调用 | 行为 |
 |---|---|
 | `label_*(text = "str")` | 显示自定义文本 |
-| `label_*(text = NULL)` | **重置**：轴/图例恢复为变量名，标题/副标题/脚注移除 |
 | `label_*(hide = TRUE)` | **隐藏**：从布局中彻底移除（`element_blank()`） |
-| 不调用该函数 | **跳过**：保留现有状态 |
+| `label_*(reset = TRUE)` | **重置**：轴/图例恢复为变量名，标题/副标题/脚注移除 |
+| 不调用该函数，或所有参数均为默认值 | **跳过**：保留现有状态 |
 
-- `text` 始终为 `NULL`（重置）或字符串（自定义）；`hide` 始终为逻辑值。
-- `text = NULL` 与 R 惯例一致（`ggplot2::labs(x = NULL)` 即恢复默认变量名）。
-- `hide = TRUE` 与 `text = NULL` 不同：前者移除元素及其占位空间，后者仅重置文本内容。
+- `text`：`NULL`（默认，表示**不修改当前标签**）或字符串（自定义文本）。
+- `hide`：逻辑值，`TRUE` 时移除元素及其占位空间。
+- `reset`：逻辑值，`TRUE` 时恢复到变量名（轴/图例）或移除文本内容（标题/副标题/脚注），但布局空间保留。
+
+> **重要语义变更（相对于旧版约定）**：`text = NULL` 不再表示"重置为变量名"，而是**"不改变当前标签"**。这与用户直觉一致——"我没提供 text，就别动我的标题"。如需恢复变量名，请显式使用 `reset = TRUE`。
+
+**`hide` 与 `reset` 的区别**：
+- `hide = TRUE`：移除元素及其占位空间（调用 `element_blank()`）。
+- `reset = TRUE`：恢复标签内容为变量名（轴/图例）或移除文本内容（标题/副标题/脚注），但布局空间保留。
+- 两者可同时使用：`label_axis(hide = TRUE, reset = TRUE, aes = "x")` 先重置再隐藏。
+
+**`text` 与 `reset` 互斥**：同时提供 `text`（非 NULL）和 `reset = TRUE` 时，包层应报错提示冲突。
 
 **限制**：`meta@labels` 各字段类型：`title`/`subtitle`/`caption` 为 `character | NULL`；`x`/`y` 为 `character | logical | NULL`（`FALSE` = 隐藏，`NULL` = 未设置/使用默认）；`legend` 为 `list | NULL`。文本参数不支持 `expression()` 对象。
 
@@ -371,23 +455,23 @@ label_axis(text = "花萼宽") → label 层最终覆盖 (优先级最高, 四�
 
 | 函数 | 参数 | 用途 |
 |---|---|---|
-| `label_title` | `text`, `hide` | 设置主标题 |
-| `label_subtitle` | `text`, `hide` | 设置副标题 |
-| `label_caption` | `text`, `hide` | 设置脚注 |
-| `label_axis` | `text`, `aes`, `hide` | `aes` = `"x"` 或 `"y"`（必填） |
-| `label_legend` | `text`, `aes`, `hide` | `aes` = `"colour"`/`"fill"` 等（`NULL` = 所有已映射美学） |
+| `label_title` | `text`, `hide`, `reset` | 设置主标题 |
+| `label_subtitle` | `text`, `hide`, `reset` | 设置副标题 |
+| `label_caption` | `text`, `hide`, `reset` | 设置脚注 |
+| `label_axis` | `text`, `aes`, `hide`, `reset` | `aes` = `"x"` 或 `"y"`（必填） |
+| `label_legend` | `text`, `aes`, `hide`, `reset` | `aes` = `"colour"`/`"fill"` 等（`NULL` = 所有已映射美学） |
 
 **`label_*` 与 `scale_*(name=)` 的关系**：
 - `scale_*(name=)` 负责该 scale 的默认名称（仅 `waiver()` / `"str"` 两种状态）。
-- `label_axis` / `label_legend` 负责最终显示文本（`text` + `hide` 协议）。
+- `label_axis` / `label_legend` 负责最终显示文本（`text` + `hide` + `reset` 协议）。
 - 两者同时设置时 `label_*` 优先级更高。
 
-  > **注意**：`label_axis(text = NULL)` 会**重置**轴标题为变量名，覆盖此前 `scale_x(name = "Width")` 的设置。这是因为 `NULL` 的语义是"恢复默认"。如需保留已有标题，不调用该函数即可。
+  > **注意**：调用 `label_axis(aes = "x")`（所有参数为默认值）是安全的——`text = NULL` 表示"不修改"，不会覆盖 `scale_x(name = "Width")` 的设置。如需重置为变量名，请使用 `label_axis(reset = TRUE, aes = "x")`。
 
 **缺省值定义**：
 - 标题、副标题、脚注：无默认值（不调用时不存在）。`label_title(text = "")` 可设空字符串保留布局占位。
-- 轴标题：缺省为对应映射中的变量名。`label_axis(text = NULL)` 恢复此默认。
-- 图例标题：缺省为对应美学的变量名。`label_legend(text = NULL)` 恢复此默认。
+- 轴标题：缺省为对应映射中的变量名。`label_axis(reset = TRUE, aes = "x")` 恢复此默认。
+- 图例标题：缺省为对应美学的变量名。`label_legend(reset = TRUE, aes = "colour")` 恢复此默认。
 
 #### 3.3.8 主题函数 `style()`
 
@@ -415,6 +499,8 @@ label_axis(text = "花萼宽") → label 层最终覆盖 (优先级最高, 四�
 
 **关键参数**：
 - `plotit` 对象、文件名、输出尺寸（`width`/`height`）、分辨率、设备类型
+
+**尺寸优先级**：`export()` 中用户显式传入的 `width`/`height` 直接使用，忽略 `meta` 中的存储值和 `autofit` 标志。未传入时回退到 meta 存储值（若 `autofit = FALSE`）或全局选项（`getOption("plotit.default_*")`）。详见 §3.3.1 尺寸优先级链。
 
 **全局选项**：`export()` 在 `width`/`height` 为 `NULL` 且 `meta` 中无存储值时，回退到以下 `getOption()` 键：
 - `getOption("plotit.default_width", 7)` — 默认宽度（英寸）

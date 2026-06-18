@@ -8,6 +8,7 @@ mark_boxplot(
   plot,
   mapping = NULL,
   data = NULL,
+  position = NULL,
   ...,
   rasterize = FALSE,
   rasterize_dpi = 300,
@@ -20,6 +21,8 @@ mark_boxplot(
 \item{mapping}{Optional new aesthetics}
 
 \item{data}{Optional data for this layer}
+
+\item{position}{Position adjustment; if \code{NULL} and global dodge is set, auto-applies \code{position_dodge()}. Overrides \code{geom_boxplot} default (\code{"dodge2"}).}
 
 \item{...}{Other arguments passed to \code{geom_boxplot}}
 }

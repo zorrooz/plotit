@@ -4,12 +4,16 @@
 \alias{label_subtitle}
 \title{Generic for setting plot subtitle}
 \usage{
-label_subtitle(plot, text = NULL, ...)
+label_subtitle(plot, text = NULL, hide = FALSE, reset = FALSE, ...)
 }
 \arguments{
 \item{plot}{A plotit object}
 
-\item{text}{Subtitle text. \code{NULL} = skip, \code{FALSE} = hide, \code{TRUE} = default, \code{"str"} = custom}
+\item{text}{Subtitle text. \code{NULL} = don't modify. \code{"str"} = custom subtitle.}
+
+\item{hide}{If \code{TRUE}, remove subtitle element from layout entirely.}
+
+\item{reset}{If \code{TRUE}, remove the subtitle text (restore to no subtitle).}
 
 \item{...}{Currently unused}
 }
