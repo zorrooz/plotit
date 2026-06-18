@@ -132,15 +132,15 @@ export(p, "fuel_economy.pdf", dpi = 300)
 八个函数，参数签名完全一致。用 `range` 设定**输出成什么样子**，用 `trans` 设定**数据如何变换**。
 
 ```r
-# 八个函数共享同样的参数：
-scale_color(   p, name, trans, limits, range, breaks, labels, ...)
-scale_fill(    p, name, trans, limits, range, breaks, labels, ...)
-scale_size(    p, name, trans, limits, range, breaks, labels, ...)
-scale_alpha(   p, name, trans, limits, range, breaks, labels, ...)
-scale_shape(   p, name, trans = "discrete", limits, range, breaks, labels, ...)
+# All eight share the same parameters:
+scale_color   (p, name, trans = NULL,       limits, range, breaks, labels, ...)
+scale_fill    (p, name, trans = NULL,       limits, range, breaks, labels, ...)
+scale_size    (p, name, trans = NULL,       limits, range, breaks, labels, ...)
+scale_alpha   (p, name, trans = NULL,       limits, range, breaks, labels, ...)
+scale_shape   (p, name, trans = "discrete", limits, range, breaks, labels, ...)
 scale_linetype(p, name, trans = "discrete", limits, range, breaks, labels, ...)
-scale_x(       p, name, trans = "identity", limits, range, breaks, labels, ...)
-scale_y(       p, name, trans = "identity", limits, range, breaks, labels, ...)
+scale_x       (p, name, trans = "identity", limits, range, breaks, labels, ...)
+scale_y       (p, name, trans = "identity", limits, range, breaks, labels, ...)
 ```
 
 | 参数 | 回答的问题 | 示例 |
@@ -149,8 +149,8 @@ scale_y(       p, name, trans = "identity", limits, range, breaks, labels, ...)
 | `trans` | **如何**变换数据？ | `"log"`, `"reverse"`, `"binned"` |
 | `limits` | 包含哪些数据范围？ | `c(0, 100)` |
 | `breaks` | 刻度/图例键放在哪里？ | `c(2, 4, 6)` |
-| `labels` | 刻度/图例键叫什么？ | `c("低", "中", "高")` |
-| `name` | 标度/坐标轴叫什么？ | `"引擎排量"` |
+| `labels` | 刻度/图例键叫什么？ | `c("low", "mid", "high")` |
+| `name` | 标度/坐标轴叫什么？ | `"Engine Size"` |
 
 **`range` 速查：**
 

@@ -144,14 +144,14 @@ looks like** with `range`, **how the data is transformed** with `trans`.
 
 ```r
 # All eight share the same parameters:
-scale_color(   p, name, trans, limits, range, breaks, labels, ...)
-scale_fill(    p, name, trans, limits, range, breaks, labels, ...)
-scale_size(    p, name, trans, limits, range, breaks, labels, ...)
-scale_alpha(   p, name, trans, limits, range, breaks, labels, ...)
-scale_shape(   p, name, trans = "discrete", limits, range, breaks, labels, ...)
+scale_color   (p, name, trans = NULL,       limits, range, breaks, labels, ...)
+scale_fill    (p, name, trans = NULL,       limits, range, breaks, labels, ...)
+scale_size    (p, name, trans = NULL,       limits, range, breaks, labels, ...)
+scale_alpha   (p, name, trans = NULL,       limits, range, breaks, labels, ...)
+scale_shape   (p, name, trans = "discrete", limits, range, breaks, labels, ...)
 scale_linetype(p, name, trans = "discrete", limits, range, breaks, labels, ...)
-scale_x(       p, name, trans = "identity", limits, range, breaks, labels, ...)
-scale_y(       p, name, trans = "identity", limits, range, breaks, labels, ...)
+scale_x       (p, name, trans = "identity", limits, range, breaks, labels, ...)
+scale_y       (p, name, trans = "identity", limits, range, breaks, labels, ...)
 ```
 
 | Parameter | Answers | Example |
