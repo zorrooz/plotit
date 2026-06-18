@@ -254,6 +254,8 @@ trans_legal <- list(
 
 **与 `scale_*(name=)` 的关系**：`label_*` 优先级更高。`label_axis(aes="x")`（全默认）不覆盖 `scale_x(name="Width")`。缺省值：轴/图例标题缺省为变量名；标题/副标题/脚注无默认。
 
+**`label_legend` 的 `aes = NULL` 全局模式**：当不指定 `aes` 时影响所有已映射美学。若后续对单个 aes 调用 `label_legend(aes = "colour")`，后者覆盖全局设置（后执行者胜）。`meta$legend` 中 `"default"` 条目与具体 aes 条目共存但后者优先生效。
+
 #### 3.3.8 `style()` — 主题
 
 - `style_default(plot, base_size, base_family)`：包级默认主题（基于 `theme_minimal`，背景透明，仅主网格线，无衬线字体，图例右侧）。`plotit()` 构造时自动调用。
