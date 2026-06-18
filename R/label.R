@@ -218,7 +218,7 @@ S7::method(label_legend, plotit_class) <- function(plot, text = NULL, aes = NULL
   # Skip if nothing to do (all defaults)
   if (is.null(eff_text) && !isTRUE(hide)) return(plot)
   if (is.null(aes)) {
-    plot@meta@labels@legend[["default"]] <- if (hide) NULL else eff_text
+    plot@meta@labels@legend[["default"]] <- if (hide) FALSE else eff_text
     aes_names <- .collect_aes_names(
       plot@gg,
       c("colour", "fill", "shape", "linetype", "size", "alpha")
@@ -227,7 +227,7 @@ S7::method(label_legend, plotit_class) <- function(plot, text = NULL, aes = NULL
       plot@gg <- .label_set_aes(plot@gg, a, eff_text, hide)
     }
   } else {
-    plot@meta@labels@legend[[aes]] <- if (hide) NULL else eff_text
+    plot@meta@labels@legend[[aes]] <- if (hide) FALSE else eff_text
     aes_all <- .collect_aes_names(
       plot@gg,
       c("colour", "fill", "shape", "linetype", "size", "alpha")

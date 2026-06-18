@@ -344,7 +344,7 @@ tests/testthat/
 
 使用 `pkg::fun()` 显式调用外部函数。内部用 `%||%` 处理 NULL 默认值。
 
-**禁止直接访问 ggplot2 内部结构**：不得操作 `gg$labels`、`gg$scales$scales`、`gg$theme` 等槽位。所有修改必须通过 `+ labs()`、`+ guides()`、`+ theme()` 等公开 API。内部结构在 ggplot2 小版本升级时无兼容保证。
+**禁止直接访问 ggplot2 内部结构**：不得操作 `gg$labels`、`gg$scales$scales`、`gg$theme` 等未在 ggplot2 文档中公开的内部槽位。所有视觉修改必须通过 `+ labs()`、`+ guides()`、`+ theme()` 等公开 API。`gg$mapping` 是 ggplot2 的公开槽位，读取和修改其元素属于合法操作。内部结构在 ggplot2 小版本升级时无兼容保证。
 
 **非标准求值只用 rlang**：数据掩码场景（列名查找）必须使用 `rlang::eval_tidy()`，禁止 `eval()` + `baseenv()` 组合。
 

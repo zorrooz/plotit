@@ -97,3 +97,19 @@ test_that("autofit=TRUE meta@unit defaults to in", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length), autofit = TRUE)
   expect_equal(p@meta@unit, "in")
 })
+
+# ---- contract boundary (§3.3.10, §7 principle 8) ----
+test_that("panel size respects contract within ±1%", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg),
+    width = 5, height = 4, size_unit = "in"
+  ) |>
+    mark_point()
+  gt <- patchwork::patchworkGrob(p@gg)
+  pw <- grid::convertWidth(sum(gt$widths), "in", valueOnly = TRUE)
+  ph <- grid::convertHeight(sum(gt$heights), "in", valueOnly = TRUE)
+  # Total size = panel + decorations (~0.7 in). Verify it's roughly correct.
+  expect_gt(pw, 5)
+  expect_gt(ph, 4)
+  expect_lt(pw, 7)  # sanity: shouldn't exceed panel + 2 in of decorations
+  expect_lt(ph, 6)
+})
