@@ -141,6 +141,9 @@ S7::method(mark_bar, plotit_class) <- function(plot, mapping = NULL, data = NULL
 #' @param mapping Optional new aesthetics
 #' @param data Optional data for this layer
 #' @param position Position adjustment; if `NULL` and global dodge is set, auto-applies `position_dodge()`. Overrides `geom_boxplot` default (`"dodge2"`).
+#' @param rasterize If `TRUE`, rasterize the layer via `ggrastr::rasterise()` (requires \pkg{ggrastr}).
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_boxplot`
 #' @return Modified plotit object
 #' @export

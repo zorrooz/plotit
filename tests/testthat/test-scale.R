@@ -417,6 +417,20 @@ test_that("scale_x invalid trans errors", {
   expect_error(scale_x(p, trans = "asin"), "must be one of")
 })
 
+test_that("scale_x trans=reverse on discrete variable routes to discrete scale", {
+  p <- plotit(iris, encode(x = Species, y = Sepal.Length)) |>
+    mark_point() |>
+    scale_x(trans = "reverse")
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("scale_y trans=reverse on discrete variable routes to discrete scale", {
+  p <- plotit(iris, encode(y = Species, x = Sepal.Length)) |>
+    mark_point() |>
+    scale_y(trans = "reverse")
+  expect_s3_class(p, "plotit::plotit")
+})
+
 # ============================================================
 # scale_y
 # ============================================================
