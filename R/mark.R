@@ -17,6 +17,26 @@ NULL
   plot
 }
 
+# Shared mark logic: resolve position (auto-dodge or explicit), build geom,
+# auto-reset default_color if the layer provides colour/fill, rasterize.
+._mark_impl <- function(plot, mapping, data, position, geom_fun,
+                        rasterize, rasterize_dpi, rasterize_dev, ...) {
+  plot <- ._auto_reset_default_color(plot, mapping)
+  pos <- position
+  if (is.null(pos) && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
+    pos <- ggplot2::position_dodge(plot@meta@dodge)
+  }
+  geom <- if (is.null(pos)) {
+    geom_fun(mapping = mapping, data = data, ...)
+  } else {
+    geom_fun(mapping = mapping, data = data, position = pos, ...)
+  }
+  .add_geom(plot, geom,
+    rasterize = rasterize, rasterize_dpi = rasterize_dpi,
+    rasterize_dev = rasterize_dev
+  )
+}
+
 # ---- Rasterization helper ----
 # Wraps a geom call with ggrastr::rasterise() when rasterize = TRUE
 .add_geom <- function(plot, geom_call, rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
@@ -141,23 +161,11 @@ S7::method(mark_bar, plotit_class) <- function(plot, mapping = NULL, data = NULL
                                                position = NULL, ...,
                                                rasterize = FALSE, rasterize_dpi = 300,
                                                rasterize_dev = "cairo") {
-  plot <- ._auto_reset_default_color(plot, mapping)
-  pos <- position
-  if (is.null(pos) && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
-    pos <- ggplot2::position_dodge(plot@meta@dodge)
-  }
   has_y <- (!is.null(mapping) && !is.null(mapping$y)) ||
     (!is.null(plot@gg$mapping$y))
   geom_fun <- if (has_y) ggplot2::geom_col else ggplot2::geom_bar
-  if (is.null(pos)) {
-    geom <- geom_fun(mapping = mapping, data = data, ...)
-  } else {
-    geom <- geom_fun(mapping = mapping, data = data, position = pos, ...)
-  }
-  .add_geom(plot, geom,
-    rasterize = rasterize, rasterize_dpi = rasterize_dpi,
-    rasterize_dev = rasterize_dev
-  )
+  ._mark_impl(plot, mapping, data, position, geom_fun,
+              rasterize, rasterize_dpi, rasterize_dev, ...)
 }
 
 #' Generic for adding a boxplot layer
