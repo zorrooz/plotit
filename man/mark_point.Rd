@@ -25,6 +25,12 @@ mark_point(
 \item{position}{Position adjustment; if \code{NULL} and global dodge is set, auto-applies \code{position_dodge()}.}
 
 \item{...}{Other arguments passed to \code{geom_point}}
+
+\item{rasterize}{If \code{TRUE}, rasterize the layer via \code{ggrastr::rasterise()} (requires \pkg{ggrastr}).}
+
+\item{rasterize_dpi}{DPI for rasterization (default 300).}
+
+\item{rasterize_dev}{Graphics device for rasterization (default \code{"cairo"}).}
 }
 \value{
 Modified plotit object
