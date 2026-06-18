@@ -82,6 +82,60 @@ NULL
   trans
 }
 
+# Pick colour or fill variant of a scale function (eliminates aes branching)
+._cf <- function(aes, fun_c, fun_f) {
+  if (aes == "colour") fun_c else fun_f
+}
+
+# Scheme-based dispatch: viridis, brewer, grey, hue
+._scale_scheme <- function(aes, scheme, discrete, binned, reverse, ...) {
+  dir <- if (reverse) -1 else 1
+  if (discrete) {
+    switch(scheme,
+      viridis = ._cf(aes, ggplot2::scale_colour_viridis_d, ggplot2::scale_fill_viridis_d)(direction = dir, ...),
+      brewer  = ._cf(aes, ggplot2::scale_colour_brewer,      ggplot2::scale_fill_brewer)(direction = dir, ...),
+      grey    = ._cf(aes, ggplot2::scale_colour_grey,        ggplot2::scale_fill_grey)(start = if (reverse) 0.8 else 0.2, end = if (reverse) 0.2 else 0.8, ...),
+      hue     = ._cf(aes, ggplot2::scale_colour_discrete,    ggplot2::scale_fill_discrete)(direction = dir, ...),
+      cli::cli_abort("Unknown colour scheme: {.val {scheme}}.")
+    )
+  } else if (binned) {
+    switch(scheme,
+      viridis = ._cf(aes, ggplot2::scale_colour_viridis_b, ggplot2::scale_fill_viridis_b)(direction = dir, ...),
+      brewer  = ._cf(aes, ggplot2::scale_colour_fermenter,  ggplot2::scale_fill_fermenter)(direction = dir, ...),
+      cli::cli_abort("Unknown colour scheme for binned: {.val {scheme}}.")
+    )
+  } else {
+    switch(scheme,
+      viridis = ._cf(aes, ggplot2::scale_colour_viridis_c, ggplot2::scale_fill_viridis_c)(direction = dir, ...),
+      brewer  = ._cf(aes, ggplot2::scale_colour_distiller,  ggplot2::scale_fill_distiller)(direction = dir, ...),
+      cli::cli_abort("Unknown colour scheme for continuous: {.val {scheme}}.")
+    )
+  }
+}
+
+# Custom colour vector dispatch: manual, gradient, steps
+._scale_custom <- function(aes, range, discrete, binned, reverse, ...) {
+  if (discrete) {
+    ._cf(aes, ggplot2::scale_colour_manual, ggplot2::scale_fill_manual)(values = range, ...)
+  } else {
+    lo <- if (reverse) range[length(range)] else range[1]
+    hi <- if (reverse) range[1] else range[length(range)]
+    if (binned) {
+      if (length(range) == 2) {
+        ._cf(aes, ggplot2::scale_colour_steps, ggplot2::scale_fill_steps)(low = lo, high = hi, ...)
+      } else {
+        ._cf(aes, ggplot2::scale_colour_steps2, ggplot2::scale_fill_steps2)(low = lo, mid = range[2], high = hi, ...)
+      }
+    } else {
+      if (length(range) == 2) {
+        ._cf(aes, ggplot2::scale_colour_gradient, ggplot2::scale_fill_gradient)(low = lo, high = hi, ...)
+      } else {
+        ._cf(aes, ggplot2::scale_colour_gradient2, ggplot2::scale_fill_gradient2)(low = lo, mid = range[2], high = hi, ...)
+      }
+    }
+  }
+}
+
 # Pick the right scale function for colour/fill given trans + range
 .scale_colour_fun <- function(aes, trans, range, ..., force_reverse = FALSE) {
   discrete <- trans == "discrete"
@@ -89,103 +143,10 @@ NULL
   reverse <- trans == "reverse" || force_reverse
 
   if (is.character(range) && length(range) >= 2) {
-    # Discrete + colour vector → manual; continuous/binned + colour vector → gradient
-    if (discrete) {
-      if (aes == "colour") {
-        ggplot2::scale_colour_manual(values = range, ...)
-      } else {
-        ggplot2::scale_fill_manual(values = range, ...)
-      }
-    } else {
-      lo <- if (reverse) range[length(range)] else range[1]
-      hi <- if (reverse) range[1] else range[length(range)]
-      if (binned) {
-        if (length(range) == 2) {
-          if (aes == "colour") {
-            ggplot2::scale_colour_steps(low = lo, high = hi, ...)
-          } else {
-            ggplot2::scale_fill_steps(low = lo, high = hi, ...)
-          }
-        } else {
-          if (aes == "colour") {
-            ggplot2::scale_colour_steps2(low = lo, mid = range[2], high = hi, ...)
-          } else {
-            ggplot2::scale_fill_steps2(low = lo, mid = range[2], high = hi, ...)
-          }
-        }
-      } else {
-        if (length(range) == 2) {
-          if (aes == "colour") {
-            ggplot2::scale_colour_gradient(low = lo, high = hi, ...)
-          } else {
-            ggplot2::scale_fill_gradient(low = lo, high = hi, ...)
-          }
-        } else {
-          if (aes == "colour") {
-            ggplot2::scale_colour_gradient2(low = lo, mid = range[2], high = hi, ...)
-          } else {
-            ggplot2::scale_fill_gradient2(low = lo, mid = range[2], high = hi, ...)
-          }
-        }
-      }
-    }
+    ._scale_custom(aes, range, discrete, binned, reverse, ...)
   } else {
-    # scheme name or NULL default
     scheme <- range %||% if (binned) "viridis" else if (discrete) "hue" else "viridis"
-    dir <- if (reverse) -1 else 1
-    if (discrete) {
-      switch(scheme,
-        viridis = if (aes == "colour") {
-          ggplot2::scale_colour_viridis_d(direction = dir, ...)
-        } else {
-          ggplot2::scale_fill_viridis_d(direction = dir, ...)
-        },
-        brewer = if (aes == "colour") {
-          ggplot2::scale_colour_brewer(direction = dir, ...)
-        } else {
-          ggplot2::scale_fill_brewer(direction = dir, ...)
-        },
-        grey = if (aes == "colour") {
-          ggplot2::scale_colour_grey(..., start = if (reverse) 0.8 else 0.2, end = if (reverse) 0.2 else 0.8)
-        } else {
-          ggplot2::scale_fill_grey(..., start = if (reverse) 0.8 else 0.2, end = if (reverse) 0.2 else 0.8)
-        },
-        hue = if (aes == "colour") {
-          ggplot2::scale_colour_discrete(direction = dir, ...)
-        } else {
-          ggplot2::scale_fill_discrete(direction = dir, ...)
-        },
-        cli::cli_abort("Unknown colour scheme: {.val {scheme}}.")
-      )
-    } else if (binned) {
-      switch(scheme,
-        viridis = if (aes == "colour") {
-          ggplot2::scale_colour_viridis_b(direction = dir, ...)
-        } else {
-          ggplot2::scale_fill_viridis_b(direction = dir, ...)
-        },
-        brewer = if (aes == "colour") {
-          ggplot2::scale_colour_fermenter(direction = dir, ...)
-        } else {
-          ggplot2::scale_fill_fermenter(direction = dir, ...)
-        },
-        cli::cli_abort("Unknown colour scheme for binned: {.val {scheme}}.")
-      )
-    } else {
-      switch(scheme,
-        viridis = if (aes == "colour") {
-          ggplot2::scale_colour_viridis_c(direction = dir, ...)
-        } else {
-          ggplot2::scale_fill_viridis_c(direction = dir, ...)
-        },
-        brewer = if (aes == "colour") {
-          ggplot2::scale_colour_distiller(direction = dir, ...)
-        } else {
-          ggplot2::scale_fill_distiller(direction = dir, ...)
-        },
-        cli::cli_abort("Unknown colour scheme for continuous: {.val {scheme}}.")
-      )
-    }
+    ._scale_scheme(aes, scheme, discrete, binned, reverse, ...)
   }
 }
 
