@@ -91,7 +91,7 @@
 |---|---|---|
 | `mark_point` | `geom_point` | 散点 |
 | `mark_line` | `geom_line` | 折线 / 趋势 |
-| `mark_bar` | `geom_bar` / `geom_col` | 柱状图 |
+| `mark_bar` | `geom_bar` / `geom_col` | 柱状图（有 y 映射→`geom_col`，无 y→`geom_bar`） |
 | `mark_boxplot` | `geom_boxplot` | 箱线图 |
 
 **规划中**（签名与行为在开发中确定）：
@@ -188,7 +188,9 @@ trans_legal <- list(
 
 | aesthetic | `range = NULL` | `range = "name"` | `range = c(a, b)` |
 |---|---|---|---|
-| colour/fill | 离散→hue，连续→viridis | `"viridis"` `"brewer"` `"grey"` `"hue"` | 颜色向量 |
+| colour/fill | 离散→hue，连续→viridis | `"viridis"` `"brewer"` `"grey"`(仅离散) `"hue"` | 颜色向量 |
+
+> `"grey"` 仅适用于离散变量。`"brewer"` 对 binned 不可用（binned 仅支持 `"viridis"`）。
 | size | `c(1, 6)` | — | 数值范围 |
 | alpha | `c(0.1, 1)` | — | 数值范围 |
 | shape | 默认形状集 | — | 形状编号 |
@@ -210,7 +212,7 @@ trans_legal <- list(
 
 | 函数 | 底层 | 关键参数 |
 |---|---|---|
-| `project_cartesian` | `coord_cartesian` | `xlim`, `ylim`, `expand`, `clip` |
+| `project_cartesian` | `coord_cartesian` | `xlim`, `ylim`, `expand`, `clip`, `...` |
 | `project_flip` | `coord_flip` | `xlim`, `ylim` |
 | `project_polar` | `coord_polar` | `theta`, `start`, `direction` |
 
@@ -263,7 +265,12 @@ trans_legal <- list(
 export(plot, filename, width = NULL, height = NULL, dpi = 300, device = NULL, ...)
 ```
 
-尺寸优先级：显式传参 > meta 存储值 > autofit 自适应。未传入时回退 meta 或 `getOption("plotit.default_width", 7)` / `getOption("plotit.default_height", 5)`。单位统一为英寸后传给 `ggsave()`。
+尺寸优先级：显式传参 > meta 存储值 > autofit 自适应。
+
+- `autofit = FALSE` + 未传尺寸：通过 gtable 测量获得总尺寸（面板尺寸来自 meta，已在构造时由 `plot_layout()` 固定；轴/标签/图例由当前主题决定）。
+- `autofit = TRUE` + 未传尺寸：回退 `getOption("plotit.default_width", 7)` / `getOption("plotit.default_height", 5)`（meta 中无面板尺寸）。
+
+单位统一为英寸后传给 `ggsave()`。
 
 #### 3.3.10 图片尺寸算法
 
@@ -280,7 +287,7 @@ export(plot, filename, width = NULL, height = NULL, dpi = 300, device = NULL, ..
 
 - **空数据与缺失值**：空 data.frame 行为由 ggplot2 决定。`NA` 由 ggplot2 默认静默移除。
 - **S7 槽位**：`plotit_labels`（`title`/`subtitle`/`caption`/`x`/`y`/`legend`）、`plotit_metadata`（`autofit`/`width`/`height`/`dodge`/`unit`/`default_color`/`labels`）、`plotit`（`gg`/`meta`）。
-- **打印与设备**：`print()` 交互模式下通过 `grDevices::dev.new()` 打开新设备，默认 Cairo。`export()` 从文件名推断设备。
+- **打印与设备**：`print()` 交互模式下通过 `grDevices::dev.new()` 打开新设备，使用系统默认交互设备。`export()` 从文件名推断设备。
 
 ---
 
