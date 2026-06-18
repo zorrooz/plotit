@@ -7,65 +7,65 @@ library(plotit)
 # scale_color
 # ============================================================
 
-test_that("scale_color 对连续变量自动使用连续尺度", {
+test_that("scale_color auto-detects continuous variable", {
   p <- plotit(mtcars, encode(x = wt, y = mpg, colour = hp)) |>
     mark_point() |>
-    scale_color(name = "马力")
+    scale_color(name = "power")
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_color 对离散变量自动使用离散尺度", {
+test_that("scale_color auto-detects discrete variable", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
     mark_point() |>
-    scale_color(name = "物种")
+    scale_color(name = "species")
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_color 清除 default_color 注入", {
+test_that("scale_color clears default_color injection", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
     default_color = "steelblue"
   )
-  p <- scale_color(p, name = "测试")
+  p <- scale_color(p, name = "test")
   expect_null(p@gg$mapping$colour)
   expect_null(p@meta@default_color)
 })
 
-test_that("scale_color range=viridis（离散）", {
+test_that("scale_color range=viridis (discrete)", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
     mark_point() |>
     scale_color(range = "viridis")
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_color range=brewer（离散）", {
+test_that("scale_color range=brewer (discrete)", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
     mark_point() |>
     scale_color(range = "brewer")
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_color range=grey（离散）", {
+test_that("scale_color range=grey (discrete)", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
     mark_point() |>
     scale_color(range = "grey")
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_color range=hue（离散，显式默认）", {
+test_that("scale_color range=hue (discrete, explicit default)", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
     mark_point() |>
     scale_color(range = "hue")
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_color range=c(blue,red) 连续渐变", {
+test_that("scale_color range=c(blue,red) continuous gradient", {
   p <- plotit(mtcars, encode(x = wt, y = mpg, colour = hp)) |>
     mark_point() |>
     scale_color(range = c("blue", "red"))
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_color range=c(blue,white,red) 三色渐变", {
+test_that("scale_color range=c(blue,white,red) three-color gradient", {
   p <- plotit(mtcars, encode(x = wt, y = mpg, colour = hp)) |>
     mark_point() |>
     scale_color(range = c("blue", "white", "red"))
@@ -79,7 +79,7 @@ test_that("scale_color trans=reverse", {
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_color trans=reverse + range=c(blue,red) 连续渐变翻转", {
+test_that("scale_color trans=reverse + range=c(blue,red) reversed gradient", {
   p <- plotit(mtcars, encode(x = wt, y = mpg, colour = hp)) |>
     mark_point() |>
     scale_color(trans = "reverse", range = c("blue", "red"))
@@ -93,35 +93,35 @@ test_that("scale_color trans=binned + range=viridis", {
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_color trans=binned + range=c(blue,red) 两步渐变", {
+test_that("scale_color trans=binned + range=c(blue,red) two-step gradient", {
   p <- plotit(mtcars, encode(x = wt, y = mpg, colour = hp)) |>
     mark_point() |>
     scale_color(trans = "binned", range = c("blue", "red"))
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_color 连续变量 + limits 参数", {
+test_that("scale_color continuous + limits", {
   p <- plotit(mtcars, encode(x = wt, y = mpg, colour = hp)) |>
     mark_point() |>
     scale_color(limits = c(50, 300))
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_color 离散变量 + breaks 参数", {
+test_that("scale_color discrete + breaks", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
     mark_point() |>
     scale_color(breaks = c("setosa", "virginica"))
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_color trans=identity 显式连续", {
+test_that("scale_color trans=identity explicit continuous", {
   p <- plotit(mtcars, encode(x = wt, y = mpg, colour = hp)) |>
     mark_point() |>
     scale_color(trans = "identity")
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_color 未知 scheme 报错", {
+test_that("scale_color unknown scheme errors", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
     mark_point()
   expect_error(
@@ -130,7 +130,7 @@ test_that("scale_color 未知 scheme 报错", {
   )
 })
 
-test_that("scale_color 非法 trans 报错", {
+test_that("scale_color invalid trans errors", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
     mark_point()
   expect_error(
@@ -143,44 +143,44 @@ test_that("scale_color 非法 trans 报错", {
 # scale_fill
 # ============================================================
 
-test_that("scale_fill 对连续变量自动使用连续尺度", {
+test_that("scale_fill auto-detects continuous variable", {
   p <- plotit(mtcars, encode(x = factor(cyl), fill = hp)) |>
     mark_bar() |>
-    scale_fill(name = "马力")
+    scale_fill(name = "power")
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_fill 对离散变量自动使用离散尺度", {
+test_that("scale_fill auto-detects discrete variable", {
   p <- plotit(iris, encode(x = Species, fill = Species)) |>
     mark_bar() |>
-    scale_fill(name = "物种")
+    scale_fill(name = "species")
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_fill 清除 default_color 注入", {
+test_that("scale_fill clears default_color injection", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
     default_color = "steelblue"
   )
-  p <- scale_fill(p, name = "测试")
+  p <- scale_fill(p, name = "test")
   expect_null(p@gg$mapping$colour)
   expect_null(p@meta@default_color)
 })
 
-test_that("scale_fill range=viridis（离散）", {
+test_that("scale_fill range=viridis (discrete)", {
   p <- plotit(iris, encode(x = Species, fill = Species)) |>
     mark_bar() |>
     scale_fill(range = "viridis")
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_fill range=brewer（离散）", {
+test_that("scale_fill range=brewer (discrete)", {
   p <- plotit(iris, encode(x = Species, fill = Species)) |>
     mark_bar() |>
     scale_fill(range = "brewer")
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_fill range=c(blue,red) 连续渐变", {
+test_that("scale_fill range=c(blue,red) continuous gradient", {
   p <- plotit(mtcars, encode(x = factor(cyl), fill = hp)) |>
     mark_bar() |>
     scale_fill(range = c("blue", "red"))
@@ -205,14 +205,14 @@ test_that("scale_fill trans=binned + range=brewer", {
 # scale_size
 # ============================================================
 
-test_that("scale_size 连续变量", {
+test_that("scale_size continuous variable", {
   p <- plotit(mtcars, encode(x = wt, y = mpg, size = hp)) |>
     mark_point() |>
     scale_size(trans = "identity", range = c(1, 10))
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_size 离散变量", {
+test_that("scale_size discrete variable", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, size = Species)) |>
     mark_point()
   expect_no_error(suppressWarnings(scale_size(p, trans = "discrete")))
@@ -225,7 +225,7 @@ test_that("scale_size trans=binned", {
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_size auto-detect 连续变量（trans=NULL）", {
+test_that("scale_size auto-detect continuous (trans=NULL)", {
   p <- plotit(mtcars, encode(x = wt, y = mpg, size = hp)) |>
     mark_point() |>
     scale_size()
@@ -243,7 +243,7 @@ test_that("scale_size trans=reverse", {
 # scale_alpha
 # ============================================================
 
-test_that("scale_alpha 连续变量", {
+test_that("scale_alpha continuous variable", {
   p <- plotit(mtcars, encode(x = wt, y = mpg, alpha = hp)) |>
     mark_point() |>
     scale_alpha(trans = "identity", range = c(0.1, 0.8))
@@ -268,21 +268,21 @@ test_that("scale_alpha trans=binned", {
 # scale_shape
 # ============================================================
 
-test_that("scale_shape 离散变量", {
+test_that("scale_shape discrete variable", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, shape = Species)) |>
     mark_point() |>
     scale_shape(range = c(1, 3))
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_shape 默认 trans=discrete", {
+test_that("scale_shape default trans=discrete", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, shape = Species)) |>
     mark_point() |>
     scale_shape()
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_shape trans=binned 报错（离散视觉属性不支持分箱）", {
+test_that("scale_shape trans=binned errors (discrete aesthetic)", {
   p <- plotit(mtcars, encode(x = wt, y = mpg, shape = hp)) |>
     mark_point()
   expect_error(
@@ -291,7 +291,7 @@ test_that("scale_shape trans=binned 报错（离散视觉属性不支持分箱�
   )
 })
 
-test_that("scale_shape trans=identity 报错（连续变量不能映射到 shape）", {
+test_that("scale_shape trans=identity errors (continuous cannot map to shape)", {
   p <- plotit(mtcars, encode(x = wt, y = mpg, shape = hp)) |>
     mark_point()
   expect_error(
@@ -304,14 +304,14 @@ test_that("scale_shape trans=identity 报错（连续变量不能映射到 shape
 # scale_linetype
 # ============================================================
 
-test_that("scale_linetype 基础不报错", {
+test_that("scale_linetype basic no error", {
   p <- plotit(ggplot2::economics, encode(x = date, y = unemploy)) |>
     mark_line() |>
     scale_linetype()
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_linetype trans=binned 报错（离散视觉属性不支持分箱）", {
+test_that("scale_linetype trans=binned errors (discrete aesthetic)", {
   p <- plotit(mtcars, encode(x = wt, y = mpg, linetype = hp)) |>
     mark_line()
   expect_error(
@@ -320,7 +320,7 @@ test_that("scale_linetype trans=binned 报错（离散视觉属性不支持分�
   )
 })
 
-test_that("scale_linetype trans=identity 报错", {
+test_that("scale_linetype trans=identity errors", {
   p <- plotit(mtcars, encode(x = wt, y = mpg, linetype = hp)) |>
     mark_line()
   expect_error(
@@ -333,21 +333,21 @@ test_that("scale_linetype trans=identity 报错", {
 # scale_x
 # ============================================================
 
-test_that("scale_x 连续尺度", {
+test_that("scale_x continuous", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
-    scale_x(name = "宽度", trans = "log10")
+    scale_x(name = "width", trans = "log10")
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_x 自动检测离散", {
+test_that("scale_x auto-detect discrete", {
   p <- plotit(iris, encode(x = Species, y = Sepal.Length)) |>
     mark_point() |>
     scale_x()
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_x 显式 discrete", {
+test_that("scale_x explicit discrete", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     scale_x(trans = "discrete")
@@ -392,18 +392,18 @@ test_that("scale_x limits", {
 test_that("scale_x breaks + labels", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
     mark_point() |>
-    scale_x(breaks = c(2, 4, 6), labels = c("轻", "中", "重"))
+    scale_x(breaks = c(2, 4, 6), labels = c("light", "medium", "heavy"))
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_x range 作为数据值域（不再发出警告）", {
+test_that("scale_x range as data value domain (no warning)", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
     mark_point()
   expect_no_warning(p2 <- scale_x(p, range = c(0, 10)))
   expect_s3_class(p2, "plotit::plotit")
 })
 
-test_that("scale_x range+limits 同时设置发出警告", {
+test_that("scale_x range+limits together warns", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
     mark_point()
   expect_warning(
@@ -412,7 +412,7 @@ test_that("scale_x range+limits 同时设置发出警告", {
   )
 })
 
-test_that("scale_x 非法 trans 报错", {
+test_that("scale_x invalid trans errors", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |> mark_point()
   expect_error(scale_x(p, trans = "asin"), "must be one of")
 })
@@ -421,14 +421,14 @@ test_that("scale_x 非法 trans 报错", {
 # scale_y
 # ============================================================
 
-test_that("scale_y 连续尺度 + limits", {
+test_that("scale_y continuous + limits", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     scale_y(limits = c(0, 10))
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_y 强制定量尺度", {
+test_that("scale_y forced continuous", {
   p <- plotit(iris, encode(x = Species, y = Sepal.Length)) |>
     mark_point() |>
     scale_y(trans = "identity")
@@ -442,14 +442,14 @@ test_that("scale_y trans=log2", {
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_y range 作为数据值域（不再发出警告）", {
+test_that("scale_y range as data value domain (no warning)", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
     mark_point()
   expect_no_warning(p2 <- scale_y(p, range = c(0, 30)))
   expect_s3_class(p2, "plotit::plotit")
 })
 
-test_that("scale_y range+limits 同时设置发出警告", {
+test_that("scale_y range+limits together warns", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
     mark_point()
   expect_warning(
@@ -459,13 +459,13 @@ test_that("scale_y range+limits 同时设置发出警告", {
 })
 
 # ============================================================
-# cross-scale: 多层 scale 覆盖
+# cross-scale: multiple scale layers
 # ============================================================
 
-test_that("同一 plot 连续调用 scale_color 和 scale_size 不冲突", {
+test_that("same plot chained scale_color + scale_size no conflict", {
   p <- plotit(mtcars, encode(x = wt, y = mpg, colour = hp, size = qsec)) |>
     mark_point() |>
-    scale_color(name = "马力", range = "viridis") |>
+    scale_color(name = "power", range = "viridis") |>
     scale_size(range = c(1, 8))
   expect_s3_class(p, "plotit::plotit")
 })

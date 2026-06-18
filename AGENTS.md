@@ -300,7 +300,7 @@ scale_y       (p, name, trans="identity", limits, range, breaks, labels, ...)
 | `"discrete"` | 当作分类变量处理 | ✅ (离散坐标轴) | ✅ (离散颜色/填充/尺寸) | ✅ 默认 |
 | `"binned"` | 数据分箱后按箱映射 | ✅ (分箱坐标) | ✅ (连续变量分箱着色) | ❌ 报错（shape/linetype 本身无"分箱"概念） |
 
-**不支持的组合主动报错**（包层验证，不依赖底层）：
+**Unsupported combinations produce targeted errors** (validated at the package level, not delegated to the backend):
 
 | 调用 | 错误信息 |
 |---|---|
@@ -653,7 +653,7 @@ export(plot, filename, width = NULL, height = NULL, dpi = 300, device = NULL, ..
 - **`color`/`colour` 等价**：包层 API 同时接受美式拼写 `color` 和英式拼写 `colour`，例如 `encode(color = Species)` 与 `encode(colour = Species)` 等效。函数命名及参数默认值统一采用美式拼写（`scale_color`、`default_color`）。内部通过 ggplot2 的自动归一化保证一致性，包层不做二次处理。
 - 代码缩进为 **2 个空格**，行宽度控制在 **80 字符**以内（注释可适当放宽）。
 
-### 4.3 语言统一使用英文
+### 4.3 All text must be English
 - **全部文本一律使用英文**：包括代码注释、roxygen 文档、函数体内注释、提交信息、错误消息、警告信息等。
 
 ### 4.4 管道与可读性
