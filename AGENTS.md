@@ -555,7 +555,7 @@ label_axis(text = "花萼宽") → label 层最终覆盖 (优先级最高)
 | 条件 | 算法 |
 |---|---|
 | 尺寸非 NULL | `patchworkGrob()` 测量总尺寸（英寸）→ 若用户未传 `width`/`height` 则用测量值；用户传了则用用户值换算为英寸 |
-| autofit = TRUE | `NA`（交由 `ggsave()` 自动决定）。若用户显式传入 `width`/`height`，以用户值为准（autofit 不覆盖显式尺寸）。 |
+| autofit = TRUE | 回退到 `getOption("plotit.default_width", 7)` / `getOption("plotit.default_height", 5)`。若用户显式传入 `width`/`height`，以用户值为准（autofit 不覆盖显式尺寸）。 |
 
 **单位统一为英寸**：所有路径最终传给 `ggsave(units = "in")`。`svglite` 等设备不接受 `units` 参数，统一换算避免了兼容性问题。
 

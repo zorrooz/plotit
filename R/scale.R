@@ -83,10 +83,10 @@ NULL
 }
 
 # Pick the right scale function for colour/fill given trans + range
-.scale_colour_fun <- function(aes, trans, range, ...) {
+.scale_colour_fun <- function(aes, trans, range, ..., force_reverse = FALSE) {
   discrete <- trans == "discrete"
   binned <- trans == "binned"
-  reverse <- trans == "reverse"
+  reverse <- trans == "reverse" || force_reverse
 
   if (is.character(range) && length(range) >= 2) {
     # Discrete + colour vector → manual; continuous/binned + colour vector → gradient
@@ -190,10 +190,10 @@ NULL
 }
 
 # Pick size/alpha scale function
-.scale_numeric_fun <- function(aes, trans, range, ...) {
+.scale_numeric_fun <- function(aes, trans, range, ..., force_reverse = FALSE) {
   discrete <- trans == "discrete"
   binned <- trans == "binned"
-  reverse <- trans == "reverse"
+  reverse <- trans == "reverse" || force_reverse
 
   if (binned) {
     fun <- switch(aes,
@@ -326,9 +326,14 @@ S7::method(scale_color, plotit_class) <- function(plot, name = ggplot2::waiver()
                                                   labels = NULL, ...) {
   plot <- .reset_default_color(plot)
   trans <- .resolve_trans(plot, "colour", trans, .trans_cf)
+  # When trans="reverse" and the mapped variable is discrete, route to
+  # the discrete scale instead of continuous (symmetry with .scale_xy_impl)
+  force_rev <- trans == "reverse" && .detect_discrete_aes(plot, "colour")
+  if (force_rev) trans <- "discrete"
   plot@gg <- plot@gg +
     .scale_colour_fun("colour", trans, range,
-      name = name, limits = limits, breaks = breaks, labels = labels, ...
+      name = name, limits = limits, breaks = breaks, labels = labels,
+      force_reverse = force_rev, ...
     )
   plot
 }
@@ -367,9 +372,14 @@ S7::method(scale_fill, plotit_class) <- function(plot, name = ggplot2::waiver(),
                                                  labels = NULL, ...) {
   plot <- .reset_default_color(plot)
   trans <- .resolve_trans(plot, "fill", trans, .trans_cf)
+  # When trans="reverse" and the mapped variable is discrete, route to
+  # the discrete scale instead of continuous (symmetry with .scale_xy_impl)
+  force_rev <- trans == "reverse" && .detect_discrete_aes(plot, "fill")
+  if (force_rev) trans <- "discrete"
   plot@gg <- plot@gg +
     .scale_colour_fun("fill", trans, range,
-      name = name, limits = limits, breaks = breaks, labels = labels, ...
+      name = name, limits = limits, breaks = breaks, labels = labels,
+      force_reverse = force_rev, ...
     )
   plot
 }
@@ -406,9 +416,14 @@ S7::method(scale_size, plotit_class) <- function(plot, name = ggplot2::waiver(),
                                                  range = NULL, breaks = NULL,
                                                  labels = NULL, ...) {
   trans <- .resolve_trans(plot, "size", trans, .trans_n)
+  # When trans="reverse" and the mapped variable is discrete, route to
+  # the discrete scale instead of continuous (symmetry with .scale_xy_impl)
+  force_rev <- trans == "reverse" && .detect_discrete_aes(plot, "size")
+  if (force_rev) trans <- "discrete"
   plot@gg <- plot@gg +
     .scale_numeric_fun("size", trans, range,
-      name = name, limits = limits, breaks = breaks, labels = labels, ...
+      name = name, limits = limits, breaks = breaks, labels = labels,
+      force_reverse = force_rev, ...
     )
   plot
 }
@@ -445,9 +460,14 @@ S7::method(scale_alpha, plotit_class) <- function(plot, name = ggplot2::waiver()
                                                   range = NULL, breaks = NULL,
                                                   labels = NULL, ...) {
   trans <- .resolve_trans(plot, "alpha", trans, .trans_n)
+  # When trans="reverse" and the mapped variable is discrete, route to
+  # the discrete scale instead of continuous (symmetry with .scale_xy_impl)
+  force_rev <- trans == "reverse" && .detect_discrete_aes(plot, "alpha")
+  if (force_rev) trans <- "discrete"
   plot@gg <- plot@gg +
     .scale_numeric_fun("alpha", trans, range,
-      name = name, limits = limits, breaks = breaks, labels = labels, ...
+      name = name, limits = limits, breaks = breaks, labels = labels,
+      force_reverse = force_rev, ...
     )
   plot
 }
