@@ -89,7 +89,13 @@
 | `mark_boxplot` | `geom_boxplot` | 箱线图 |
 
 **规划中**（签名与行为在开发中确定）：
-面积图 (`mark_area`)、路径图 (`mark_path`)、直方图 (`mark_histogram`)、提琴图 (`mark_violin`)、文本标注 (`mark_text`，支持 ggrepel)、参考线 (`mark_rule`)、瓦片热力图 (`mark_tile`)、蜂群图 (`mark_beeswarm`)、网络图 (`mark_network`)、树形图 (`mark_tree`)、桑基图 (`mark_sankey`)、矩形树图 (`mark_treemap`)、旭日图 (`mark_sunburst`)、韦恩图 (`mark_venn`)、地图 (`mark_map`)。
+
+| 类别 | 函数 | 对应机制 |
+|---|---|---|
+| 基础几何 | `mark_area`, `mark_path`, `mark_rect`, `mark_tile`, `mark_polygon`, `mark_text`, `mark_rule` | geom_* / ggrepel |
+| 分布展示 | `mark_histogram`, `mark_violin`, `mark_beeswarm` | geom_* / ggbeeswarm |
+| 关系与层次 | `mark_network`, `mark_tree`, `mark_sankey`, `mark_chord`, `mark_treemap`, `mark_sunburst`, `mark_circlepacking`, `mark_venn` | igraph / ggtree / ggsankey / treemapify 等 |
+| 地理空间 | `mark_map`, `mark_link` | sf / geom_segment |
 
 ---
 
@@ -264,6 +270,8 @@ export(plot, filename, width = NULL, height = NULL, dpi = 300, device = NULL, ..
 - `autofit = FALSE`：通过 `patchwork::plot_layout()` 固定面板为绝对单位。
 - 预览（`print()`）：非 NULL 时通过 `patchworkGrob()` 测量总尺寸后打开匹配设备。
 - 导出（`export()`）：同上逻辑，用户显式尺寸优先。
+
+> **实验性声明**：面板尺寸控制深度依赖 patchwork 内部 gtable 结构。patchwork 或 ggplot2 升级可能导致测量偏差。当前算法是最佳实践，属于可替代的实现路径——若出现更可靠的方案，应在不破坏 API 的前提下切换。
 
 ---
 
