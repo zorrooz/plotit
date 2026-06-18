@@ -102,96 +102,127 @@ export(p, "fuel_economy.pdf", dpi = 300)
 
 ## 函数族速览
 
-### 几何图层 `mark_*`
+| 函数族 | 前缀 | 职责 | 示例 |
+|--------|------|------|------|
+| 图层 | `mark_*` | 添加几何图层 | `mark_point()`, `mark_line()`, `mark_bar()`, `mark_boxplot()` |
+| 标度 | `scale_*` | 数据 → 视觉映射 | `scale_x(trans = "log")`, `scale_color(range = "viridis")` |
+| 标签 | `label_*` | 标题、轴名、图例名 | `label_title("标题")`, `label_axis("X轴", aes = "x")` |
+| 坐标系 | `project_*` | 坐标变换 | `project_flip()`, `project_polar()`, `project_cartesian()` |
+| 分面 | `split_*` | 分面布局 | `split_wrap(Species)`, `split_grid(rows = vars(cyl))` |
+| 主题 | `style()` | 应用 ggplot2 主题 | `style(theme_minimal(base_size = 14))` |
+| 导出 | `export()` | 渲染为文件 | `export("plot.pdf", dpi = 300)` |
 
-| 函数 | ggplot2 对应 | 说明 |
-|------|-------------|------|
+---
+
+### `mark_*` — 几何图层
+
+目前实现四个 mark 函数，共享统一签名（`mapping`、`data`、`position`、`rasterize`、`...`）。`plotit()` 设置的全局 dodge 自动注入，可通过显式 `position` 覆盖。
+
+| 函数 | ggplot2 | 用途 |
+|------|---------|------|
 | `mark_point()` | `geom_point()` | 散点图 |
-| `mark_line()` | `geom_line()` | 折线 / 趋势线 |
+| `mark_line()` | `geom_line()` | 折线、趋势线、时间序列 |
 | `mark_bar()` | `geom_bar()` / `geom_col()` | 柱状图 |
-| `mark_boxplot()` | `geom_boxplot()` | 箱线图 |
+| `mark_boxplot()` | `geom_boxplot()` | 分组分布展示 |
 
-### 标度函数 `scale_*`
+---
 
-八个标度函数共享完全相同的参数签名，仅 `trans` 默认值不同：
+### `scale_*` — 数据到视觉的映射
+
+八个函数，参数签名完全一致。用 `range` 设定**输出成什么样子**，用 `trans` 设定**数据如何变换**。
 
 ```r
-scale_color(p,   name, trans, limits, range, breaks, labels, ...)
-scale_fill(p,    name, trans, limits, range, breaks, labels, ...)
-scale_size(p,    name, trans, limits, range, breaks, labels, ...)
-scale_alpha(p,   name, trans, limits, range, breaks, labels, ...)
-scale_shape(p,      name, trans = "discrete", limits, range, breaks, labels, ...)
-scale_linetype(p,   name, trans = "discrete", limits, range, breaks, labels, ...)
-scale_x(p,          name, trans = "identity", limits, range, breaks, labels, ...)
-scale_y(p,          name, trans = "identity", limits, range, breaks, labels, ...)
+# 八个函数共享同样的参数：
+scale_color(   p, name, trans, limits, range, breaks, labels, ...)
+scale_fill(    p, name, trans, limits, range, breaks, labels, ...)
+scale_size(    p, name, trans, limits, range, breaks, labels, ...)
+scale_alpha(   p, name, trans, limits, range, breaks, labels, ...)
+scale_shape(   p, name, trans = "discrete", limits, range, breaks, labels, ...)
+scale_linetype(p, name, trans = "discrete", limits, range, breaks, labels, ...)
+scale_x(       p, name, trans = "identity", limits, range, breaks, labels, ...)
+scale_y(       p, name, trans = "identity", limits, range, breaks, labels, ...)
 ```
 
-#### 配色方案 (`range`)
+| 参数 | 回答的问题 | 示例 |
+|------|-----------|------|
+| `range` | 映射到**什么**视觉值？ | `"viridis"`, `c("blue","red")`, `c(0, 100)` |
+| `trans` | **如何**变换数据？ | `"log"`, `"reverse"`, `"binned"` |
+| `limits` | 包含哪些数据范围？ | `c(0, 100)` |
+| `breaks` | 刻度/图例键放在哪里？ | `c(2, 4, 6)` |
+| `labels` | 刻度/图例键叫什么？ | `c("低", "中", "高")` |
+| `name` | 标度/坐标轴叫什么？ | `"引擎排量"` |
 
-| `range` 值 | 说明 |
-|------------|------|
-| `"viridis"` | 色盲友好，感知均匀（连续变量默认） |
-| `"brewer"` | ColorBrewer 定性调色板 |
-| `"grey"` | 灰度 |
-| `"hue"` | ggplot2 默认色相环（离散变量默认） |
-| `c("blue", "red")` | 自定义颜色渐变或手动颜色向量 |
+**`range` 速查：**
 
-#### 变换方式 (`trans`)
+| 美学属性 | `range = NULL`（默认） | `range = "name"` | `range = c(a, b)` |
+|----------|----------------------|-------------------|--------------------|
+| colour, fill | 自动：离散→hue，连续→viridis | `"viridis"`, `"brewer"`, `"grey"`, `"hue"` | `c("blue", "red")` |
+| size | `c(1, 6)` | — | `c(0.5, 10)` |
+| alpha | `c(0.1, 1)` | — | `c(0, 0.8)` |
+| shape | 默认形状集 | — | `c(1, 16)` |
+| linetype | 默认线型集 | — | `c("solid", "dashed")` |
+| x, y | 数据自身范围（无裁剪） | — | `c(0, 100)`（设 `limits` + `expand = c(0, 0)`） |
 
-| `trans` | 效果 | 适用标度 |
+**`trans` 速查：**
+
+| `trans` | 效果 | 适用范围 |
 |---------|------|----------|
-| `"identity"` | 线性映射（默认） | 全部 |
-| `"log"` / `"log10"` / `"log2"` | 对数变换 | 仅 x, y |
-| `"sqrt"` | 平方根变换 | 仅 x, y |
+| `"identity"` | 线性（默认） | 全部 |
+| `"log"`, `"log10"`, `"log2"` | 对数 | x, y |
+| `"sqrt"` | 平方根 | x, y |
 | `"reverse"` | 翻转顺序 | 全部 |
 | `"discrete"` | 按分类处理 | 全部 |
-| `"binned"` | 分箱离散化 | 除 shape, linetype 外全部 |
+| `"binned"` | 分箱后离散化 | 除 shape, linetype 外全部 |
 
-无效组合（如 `scale_color(trans = "log")`）会给出明确的中文错误提示。
+无效组合如 `scale_color(trans = "log")` 会给出明确的中文错误提示，而非晦涩的底层报错。
 
-### 标签函数 `label_*`
+---
 
-三参数协议（`text`、`hide`、`reset`）：
+### `label_*` — 文本标签
 
-```r
-label_title(p, "自定义标题")                # 设置
-label_axis(p, hide = TRUE, aes = "x")       # 隐藏
-label_axis(p, reset = TRUE, aes = "x")      # 恢复为变量名
-```
+五个函数，三参数协议：
+
+| 调用方式 | 行为 |
+|----------|------|
+| `label_*(text = "字符串")` | 设置自定义文本 |
+| `label_*(hide = TRUE)` | 移除元素及占位空间 |
+| `label_*(reset = TRUE)` | 恢复为变量名（轴/图例）或移除（标题） |
+| 不调用 | 保持当前状态 |
 
 | 函数 | 作用范围 |
 |------|----------|
 | `label_title()` | 主标题 |
 | `label_subtitle()` | 副标题 |
 | `label_caption()` | 脚注 |
-| `label_axis()` | 轴标题（需指定 `aes = "x"` 或 `"y"`） |
-| `label_legend()` | 图例标题（`aes = "colour"`、`"fill"` 等） |
+| `label_axis()` | 轴标题 — 必须指定 `aes = "x"` 或 `"y"` |
+| `label_legend()` | 图例标题 — `aes = "colour"`, `"fill"` 等 |
 
-标签函数优先于 `scale_*(name = …)`：后执行者胜。
+标签函数覆盖 `scale_*(name = …)`：后执行者胜。
+`text = NULL` 是安全的空操作——**不会**覆盖已有标签。
 
-### 坐标系与分面
+---
+
+### `project_*` — 坐标系 & `split_*` — 分面
 
 ```r
-# 坐标系
-project_cartesian(p, xlim = c(0, 100), expand = FALSE)
+# 翻转、缩放、极坐标
 project_flip(p)
-project_polar(p)
+project_cartesian(p, xlim = c(0, 100), expand = FALSE)
+project_polar(p, start = pi / 2)
 
-# 分面
+# wrap 和 grid 分面
 split_wrap(p, Species, ncol = 3, scales = "free")
-split_grid(p, rows = ggplot2::vars(Species))
+split_grid(p, rows = ggplot2::vars(Species), cols = ggplot2::vars(cyl))
 ```
 
-### 主题与导出
+### `style()` — 主题 & `export()` — 导出
 
 ```r
-# 应用主题
 style(p, ggplot2::theme_minimal(base_size = 14))
 style(p, ggplot2::theme_bw(), plot.title = ggplot2::element_text(face = "bold"))
 
-# 导出文件（设备由扩展名自动推断）
 export(p, "plot.pdf",  width = 8, height = 6, dpi = 300)
-export(p, "plot.png",  width = 8, height = 6, dpi = 150)
+export(p, "plot.png",  dpi = 150)
 export(p, "plot.svg")
 ```
 
