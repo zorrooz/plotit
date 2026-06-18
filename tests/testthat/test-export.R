@@ -4,25 +4,25 @@
 library(plotit)
 
 # ---- export ----
-test_that("export() 可导出 PNG", {
+test_that("export() can export PNG", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point()
   expect_no_error(export(p, tempfile(fileext = ".png"), dpi = 72))
 })
 
-test_that("export() 可导出 PDF", {
+test_that("export() can export PDF", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point()
   expect_no_error(export(p, tempfile(fileext = ".pdf")))
 })
 
-test_that("export() 非法 filename 报错", {
+test_that("export() invalid filename errors", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
   expect_error(export(p, NULL), "filename")
   expect_error(export(p, ""), "filename")
 })
 
-test_that("export() 用户显式 width/height 覆盖 meta", {
+test_that("export() explicit width/height overrides meta", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
     width = 6, height = 4, size_unit = "in"
   ) |>
@@ -33,7 +33,7 @@ test_that("export() 用户显式 width/height 覆盖 meta", {
 })
 
 # ---- export autofit ----
-test_that("export() autofit=TRUE 基础导出", {
+test_that("export() autofit=TRUE basic export", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
     autofit = TRUE
   ) |>
@@ -41,7 +41,7 @@ test_that("export() autofit=TRUE 基础导出", {
   expect_no_error(export(p, tempfile(fileext = ".png"), dpi = 72))
 })
 
-test_that("export() autofit + 用户显式 width/height", {
+test_that("export() autofit + explicit width/height", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
     autofit = TRUE
   ) |>
@@ -50,7 +50,7 @@ test_that("export() autofit + 用户显式 width/height", {
   expect_no_error(export(p, f, width = 10, height = 8, dpi = 72))
 })
 
-test_that("export() autofit + 用户只传 width", {
+test_that("export() autofit + explicit width only", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
     autofit = TRUE
   ) |>
@@ -59,7 +59,7 @@ test_that("export() autofit + 用户只传 width", {
   expect_no_error(export(p, f, width = 10, dpi = 72))
 })
 
-test_that("export() autofit + size_unit=cm 保留单位", {
+test_that("export() autofit + size_unit=cm preserves unit", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
     autofit = TRUE, size_unit = "cm"
   ) |>
@@ -71,13 +71,13 @@ test_that("export() autofit + size_unit=cm 保留单位", {
 })
 
 # ---- print ----
-test_that("print() 返回 plotit 对象（不可见）", {
+test_that("print() returns plotit object (invisibly)", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
   expect_s3_class(print(p), "plotit::plotit")
 })
 
-# ---- meta 尺寸字段 ----
-test_that("plotit() 正确设置 meta 尺寸字段", {
+# ---- meta size fields ----
+test_that("plotit() correctly sets meta size fields", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
     width = 10, height = 8, size_unit = "cm"
   )
@@ -86,14 +86,14 @@ test_that("plotit() 正确设置 meta 尺寸字段", {
   expect_equal(p@meta@unit, "cm")
 })
 
-test_that("autofit=TRUE 时 meta@unit 保留", {
+test_that("autofit=TRUE preserves meta@unit", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
     autofit = TRUE, size_unit = "cm"
   )
   expect_equal(p@meta@unit, "cm")
 })
 
-test_that("autofit=TRUE 时 meta@unit 默认为 in", {
+test_that("autofit=TRUE meta@unit defaults to in", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length), autofit = TRUE)
   expect_equal(p@meta@unit, "in")
 })

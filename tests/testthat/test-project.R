@@ -4,7 +4,7 @@
 library(plotit)
 
 # ---- project_polar ----
-test_that("project_polar 基础不崩溃", {
+test_that("project_polar basic no crash", {
   p <- plotit(mtcars, encode(x = factor(cyl))) |>
     mark_bar() |>
     project_polar()
@@ -26,7 +26,7 @@ test_that("project_polar start + direction", {
 })
 
 # ---- project_cartesian ----
-test_that("project_cartesian 基础不崩溃", {
+test_that("project_cartesian basic no crash", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
     mark_point() |>
     project_cartesian()
@@ -55,7 +55,7 @@ test_that("project_cartesian clip=\"off\"", {
 })
 
 # ---- project_flip ----
-test_that("project_flip 翻转坐标轴", {
+test_that("project_flip flips coordinates", {
   p <- plotit(mtcars, encode(x = factor(cyl), y = mpg)) |>
     mark_boxplot() |>
     project_flip()

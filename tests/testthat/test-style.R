@@ -4,7 +4,7 @@
 library(plotit)
 
 # ---- style_default ----
-test_that("style_default() 应用默认主题", {
+test_that("style_default() applies default theme", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     style_default()
@@ -12,21 +12,21 @@ test_that("style_default() 应用默认主题", {
   expect_true(attr(p@meta, "plotit_theme_managed"))
 })
 
-test_that("style_default(base_size) 不报错", {
+test_that("style_default(base_size) no error", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     style_default(base_size = 14)
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("style_default(base_family) 不报错", {
+test_that("style_default(base_family) no error", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     style_default(base_family = "serif")
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("style_default 多次调用不叠加默认主题", {
+test_that("style_default multiple calls do not stack default theme", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     style_default() |>
@@ -35,7 +35,7 @@ test_that("style_default 多次调用不叠加默认主题", {
 })
 
 # ---- style ----
-test_that("style() 接受自定义 theme 对象", {
+test_that("style() accepts custom theme object", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     style(ggplot2::theme_minimal())
@@ -43,7 +43,7 @@ test_that("style() 接受自定义 theme 对象", {
   expect_true(attr(p@meta, "plotit_theme_managed"))
 })
 
-test_that("style() 支持 ... 传递 theme() 微调", {
+test_that("style() supports ... for theme() tweaks", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     style(ggplot2::theme_minimal(),
@@ -52,14 +52,14 @@ test_that("style() 支持 ... 传递 theme() 微调", {
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("style() 接受 theme_bw", {
+test_that("style() accepts theme_bw", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     style(ggplot2::theme_bw())
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("plotit() 构造时自动应用默认主题并设置标记", {
+test_that("plotit() auto-applies default theme during construction", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
   expect_s3_class(p, "plotit::plotit")
   expect_true(attr(p@meta, "plotit_theme_managed"))

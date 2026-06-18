@@ -1,12 +1,12 @@
 library(plotit)
 
-test_that("plotit() 初始化应用默认主题并设置 plotit_theme_managed 标记", {
+test_that("plotit() initializes with default theme and sets managed flag", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
   expect_s3_class(p, "plotit::plotit")
   expect_true(attr(p@meta, "plotit_theme_managed"))
 })
 
-test_that("plotit() default_color 在无 color/fill 映射时存入 meta", {
+test_that("plotit() default_color stored in meta when no color/fill mapping", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
     default_color = "steelblue"
   )
@@ -14,17 +14,17 @@ test_that("plotit() default_color 在无 color/fill 映射时存入 meta", {
   expect_true(inherits(p@gg$mapping$colour, "AsIs"))
 })
 
-test_that("plotit() default_color 在有 colour 映射时不在 meta 中存储", {
+test_that("plotit() default_color not stored when colour mapping present", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species),
     default_color = "steelblue"
   )
-  # 有 colour 映射 -> default_color 不被注入
+  # colour mapping present -> default_color not injected
   expect_null(p@meta@default_color)
   expect_true(is.call(p@gg$mapping$colour))
   expect_false(inherits(p@gg$mapping$colour, "AsIs"))
 })
 
-test_that("plotit() default_color 在有 fill 映射时不在 meta 中存储", {
+test_that("plotit() default_color not stored when fill mapping present", {
   p <- plotit(iris, encode(x = Species, y = Sepal.Length, fill = Species),
     default_color = "steelblue"
   )
@@ -32,7 +32,7 @@ test_that("plotit() default_color 在有 fill 映射时不在 meta 中存储", {
   expect_true(is.call(p@gg$mapping$fill))
 })
 
-test_that("plotit() default_color = NULL 时不注入", {
+test_that("plotit() default_color = NULL does not inject", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
     default_color = NULL
   )
@@ -40,7 +40,7 @@ test_that("plotit() default_color = NULL 时不注入", {
   expect_null(p@gg$mapping$colour)
 })
 
-test_that("plotit() 拒绝非法 unit（不受 autofit 影响）", {
+test_that("plotit() rejects invalid unit (regardless of autofit)", {
   expect_error(
     plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
       size_unit = "ft"
@@ -55,37 +55,37 @@ test_that("plotit() 拒绝非法 unit（不受 autofit 影响）", {
   )
 })
 
-# ---- patchwork 集成 ----
-test_that("plotit() 始终添加 plot_layout 固定面板尺寸", {
+# ---- patchwork integration ----
+test_that("plotit() always adds plot_layout to fix panel size", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
     width = 6, height = 4, size_unit = "in"
   )
   expect_true(inherits(p@gg, "patchwork"))
 })
 
-test_that("plotit() autofit=TRUE 时不添加 patchwork 布局", {
+test_that("plotit() autofit=TRUE does not add patchwork layout", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
     autofit = TRUE
   )
   expect_false(inherits(p@gg, "patchwork"))
 })
 
-# ---- plotit() 基本构造与守卫 ----
-test_that("plotit() 和 encode() 协作创建 plotit 对象", {
+# ---- plotit() basic construction and guards ----
+test_that("plotit() and encode() cooperate to create plotit object", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
   expect_s3_class(p, "plotit::plotit")
   expect_true(inherits(p@gg, "ggplot"))
   expect_true(inherits(p@meta, "plotit::plotit_metadata"))
 })
 
-test_that("plotit() 拒绝非 encode() 映射", {
+test_that("plotit() rejects non-encode() mapping", {
   expect_error(
     plotit(iris, ggplot2::aes(x = Sepal.Width, y = Sepal.Length)),
     "must be created with"
   )
 })
 
-test_that("plotit() autofit=FALSE 时要求 width 和 height", {
+test_that("plotit() autofit=FALSE requires width and height", {
   expect_error(
     plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
       autofit = FALSE, width = NULL, height = 5
@@ -100,7 +100,7 @@ test_that("plotit() autofit=FALSE 时要求 width 和 height", {
   )
 })
 
-test_that("plotit() autofit=TRUE 时忽略 width/height 但保留 unit", {
+test_that("plotit() autofit=TRUE ignores width/height but retains unit", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
     autofit = TRUE, width = 100, height = 100
   )
@@ -109,7 +109,7 @@ test_that("plotit() autofit=TRUE 时忽略 width/height 但保留 unit", {
   expect_equal(p@meta@unit, "in")
 })
 
-test_that("plotit() size_unit 不受 autofit 影响始终验证", {
+test_that("plotit() size_unit validated regardless of autofit", {
   expect_error(
     plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
       autofit = TRUE, size_unit = "ft"
