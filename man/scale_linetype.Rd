@@ -38,5 +38,6 @@ with targeted error messages.}
 A modified plotit object.
 }
 \description{
-Maps data values to line types. Only discrete and binned scales are supported.
+Maps data values to line types. Supports discrete and reverse scales;
+continuous variables are not supported.
 }

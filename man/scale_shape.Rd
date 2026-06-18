@@ -38,6 +38,6 @@ with targeted error messages.}
 A modified plotit object.
 }
 \description{
-Maps data values to point shapes. Only discrete and binned scales are supported;
-continuous variables must be binned first.
+Maps data values to point shapes. Supports discrete and reverse scales;
+continuous variables are not supported (use binned via scale_colour instead).
 }

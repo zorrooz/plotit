@@ -436,8 +436,8 @@ S7::method(scale_alpha, plotit_class) <- function(plot, name = ggplot2::waiver()
 # ---- scale_shape ----
 #' Shape scale
 #'
-#' Maps data values to point shapes. Only discrete and binned scales are supported;
-#' continuous variables must be binned first.
+#' Maps data values to point shapes. Supports discrete and reverse scales;
+#' continuous variables are not supported (use binned via scale_colour instead).
 #'
 #' @param plot A plotit object.
 #' @param name Scale title (legend name).
@@ -475,7 +475,8 @@ S7::method(scale_shape, plotit_class) <- function(plot, name = ggplot2::waiver()
 # ---- scale_linetype ----
 #' Linetype scale
 #'
-#' Maps data values to line types. Only discrete and binned scales are supported.
+#' Maps data values to line types. Supports discrete and reverse scales;
+#' continuous variables are not supported.
 #'
 #' @param plot A plotit object.
 #' @param name Scale title (legend name).
