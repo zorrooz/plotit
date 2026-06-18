@@ -21,6 +21,9 @@ NULL
 #' @param mapping Optional new aesthetics
 #' @param data Optional data for this layer
 #' @param position Position adjustment; if `NULL` and global dodge is set, auto-applies `position_dodge()`.
+#' @param rasterize If `TRUE`, rasterize the layer via `ggrastr::rasterise()` (requires \pkg{ggrastr}).
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_point`
 #' @return Modified plotit object
 #' @export

@@ -235,7 +235,15 @@ NULL
 # Build args list for scale_x/y
 .scale_xy_impl <- function(plot, aes, name, trans, limits, range, breaks, labels, ...) {
   discrete <- trans == "discrete"
+  reverse <- trans == "reverse"
   binned <- trans == "binned"
+
+  # When trans="reverse" and the mapped variable is discrete, route to
+  # the discrete scale with reversed level order instead of attempting
+  # scale_x_continuous(trans="reverse") which breaks on factors.
+  if (reverse && .detect_discrete_aes(plot, aes)) {
+    discrete <- TRUE
+  }
 
   # range = data value domain (AGENTS.md §3.3.4)
   if (!is.null(range)) {
@@ -272,6 +280,10 @@ NULL
     args$expand <- c(0, 0)
   }
   if (!discrete && !binned) args$trans <- trans
+  # For discrete + reverse, reverse the level order in limits
+  if (discrete && reverse && is.null(limits)) {
+    args$limits <- rev
+  }
   args <- args[!vapply(args, is.null, logical(1))]
   plot@gg <- plot@gg + do.call(scale_fun, c(args, list(...)))
   plot

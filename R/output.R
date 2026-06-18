@@ -1,6 +1,15 @@
 #' @include class.R utils.R style.R
 NULL
 
+# Convert user-specified size unit to inches
+.unit_to_inches <- function(x, unit) {
+  x / switch(unit,
+    "in" = 1,
+    "cm" = 2.54,
+    "mm" = 25.4
+  )
+}
+
 # ---- print ----
 #' Print a plotit object (automatically render the plot)
 #'
@@ -76,42 +85,26 @@ S7::method(export, plotit_class) <- function(
 
   if (isTRUE(plot@meta@autofit)) {
     final_width <- if (is.null(width)) {
-      getOption("plotit.default_width", NA)
+      getOption("plotit.default_width", 7)
     } else {
-      width / switch(meta_unit,
-        "in" = 1,
-        "cm" = 2.54,
-        "mm" = 25.4
-      )
+      .unit_to_inches(width, meta_unit)
     }
     final_height <- if (is.null(height)) {
-      getOption("plotit.default_height", NA)
+      getOption("plotit.default_height", 5)
     } else {
-      height / switch(meta_unit,
-        "in" = 1,
-        "cm" = 2.54,
-        "mm" = 25.4
-      )
+      .unit_to_inches(height, meta_unit)
     }
   } else {
     gt <- patchwork::patchworkGrob(plot@gg)
     final_width <- if (is.null(width)) {
       grid::convertWidth(sum(gt$widths) + ggplot2::unit(1, "mm"), "in", valueOnly = TRUE)
     } else {
-      width / switch(meta_unit,
-        "in" = 1,
-        "cm" = 2.54,
-        "mm" = 25.4
-      )
+      .unit_to_inches(width, meta_unit)
     }
     final_height <- if (is.null(height)) {
       grid::convertHeight(sum(gt$heights) + ggplot2::unit(1, "mm"), "in", valueOnly = TRUE)
     } else {
-      height / switch(meta_unit,
-        "in" = 1,
-        "cm" = 2.54,
-        "mm" = 25.4
-      )
+      .unit_to_inches(height, meta_unit)
     }
   }
 
