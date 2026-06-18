@@ -32,6 +32,16 @@ test_that("plotit() default_color not stored when fill mapping present", {
   expect_true(is.call(p@gg$mapping$fill))
 })
 
+test_that("default_color auto-resets when layer provides colour mapping", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
+    default_color = "steelblue"
+  )
+  expect_equal(p@meta@default_color, "steelblue")
+  p <- mark_point(p, mapping = encode(colour = Species))
+  expect_null(p@meta@default_color)
+  expect_null(p@gg$mapping$colour)
+})
+
 test_that("plotit() default_color = NULL does not inject", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
     default_color = NULL

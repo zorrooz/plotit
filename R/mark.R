@@ -1,6 +1,22 @@
 #' @include class.R
 NULL
 
+# ---- Internal helpers ----
+
+# If the layer mapping introduces colour or fill, cancel the global
+# default_color so the legend appears (AGENTS.md §3.3.4).  Without this,
+# guides(colour="none") injected by plotit() would suppress legends even
+# when a layer has its own colour/fill mapping.
+._auto_reset_default_color <- function(plot, mapping) {
+  if (is.null(plot@meta@default_color)) return(plot)
+  if (!is.null(mapping$colour) || !is.null(mapping$fill)) {
+    plot@gg$mapping$colour <- NULL
+    plot@gg <- plot@gg + ggplot2::guides(colour = ggplot2::waiver())
+    plot@meta@default_color <- NULL
+  }
+  plot
+}
+
 # ---- Rasterization helper ----
 # Wraps a geom call with ggrastr::rasterise() when rasterize = TRUE
 .add_geom <- function(plot, geom_call, rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
@@ -41,6 +57,7 @@ S7::method(mark_point, plotit_class) <- function(plot, mapping = NULL, data = NU
                                                  position = NULL, ...,
                                                  rasterize = FALSE, rasterize_dpi = 300,
                                                  rasterize_dev = "cairo") {
+  plot <- ._auto_reset_default_color(plot, mapping)
   pos <- position
   if (is.null(pos) && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
     pos <- ggplot2::position_dodge(plot@meta@dodge)
@@ -82,6 +99,7 @@ S7::method(mark_line, plotit_class) <- function(plot, mapping = NULL, data = NUL
                                                 position = NULL, ...,
                                                 rasterize = FALSE, rasterize_dpi = 300,
                                                 rasterize_dev = "cairo") {
+  plot <- ._auto_reset_default_color(plot, mapping)
   pos <- position
   if (is.null(pos) && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
     pos <- ggplot2::position_dodge(plot@meta@dodge)
@@ -123,6 +141,7 @@ S7::method(mark_bar, plotit_class) <- function(plot, mapping = NULL, data = NULL
                                                position = NULL, ...,
                                                rasterize = FALSE, rasterize_dpi = 300,
                                                rasterize_dev = "cairo") {
+  plot <- ._auto_reset_default_color(plot, mapping)
   pos <- position
   if (is.null(pos) && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
     pos <- ggplot2::position_dodge(plot@meta@dodge)
@@ -167,6 +186,7 @@ S7::method(mark_boxplot, plotit_class) <- function(plot, mapping = NULL, data = 
                                                    position = NULL, ...,
                                                    rasterize = FALSE, rasterize_dpi = 300,
                                                    rasterize_dev = "cairo") {
+  plot <- ._auto_reset_default_color(plot, mapping)
   pos <- position
   if (is.null(pos) && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
     pos <- ggplot2::position_dodge(plot@meta@dodge)

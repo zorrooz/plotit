@@ -19,6 +19,24 @@ NULL
   }
 }
 
+# Shared implementation for label_title / label_subtitle / label_caption.
+# These three differ only in the meta slot name, theme element, and labs key.
+._set_text_label <- function(plot, slot_name, theme_el_name,
+                             text, hide, reset, fun_name) {
+  ._check_text_reset(text, reset, fun_name)
+  if (hide) {
+    S7::prop(plot@meta@labels, slot_name) <- NULL
+    plot@gg <- plot@gg + .theme_el(theme_el_name, ggplot2::element_blank())
+  } else if (isTRUE(reset)) {
+    S7::prop(plot@meta@labels, slot_name) <- NULL
+    plot@gg <- plot@gg + .labs_el(slot_name, NULL)
+  } else if (!is.null(text)) {
+    S7::prop(plot@meta@labels, slot_name) <- text
+    plot@gg <- plot@gg + .labs_el(slot_name, text)
+  }
+  plot
+}
+
 # Helper: construct a single-element theme() call with dynamic name
 .theme_el <- function(el, val) {
   args <- list(val)
@@ -91,18 +109,7 @@ label_title <- S7::new_generic(
 #' @export
 S7::method(label_title, plotit_class) <- function(plot, text = NULL, hide = FALSE,
                                                   reset = FALSE, ...) {
-  ._check_text_reset(text, reset, "label_title")
-  if (hide) {
-    plot@meta@labels@title <- NULL
-    plot@gg <- plot@gg + ggplot2::theme(plot.title = ggplot2::element_blank())
-  } else if (isTRUE(reset)) {
-    plot@meta@labels@title <- NULL
-    plot@gg <- plot@gg + ggplot2::labs(title = NULL)
-  } else if (!is.null(text)) {
-    plot@meta@labels@title <- text
-    plot@gg <- plot@gg + ggplot2::labs(title = text)
-  }
-  plot
+  ._set_text_label(plot, "title", "plot.title", text, hide, reset, "label_title")
 }
 
 # ---- label_subtitle ----
@@ -125,18 +132,7 @@ label_subtitle <- S7::new_generic(
 #' @export
 S7::method(label_subtitle, plotit_class) <- function(plot, text = NULL, hide = FALSE,
                                                      reset = FALSE, ...) {
-  ._check_text_reset(text, reset, "label_subtitle")
-  if (hide) {
-    plot@meta@labels@subtitle <- NULL
-    plot@gg <- plot@gg + ggplot2::theme(plot.subtitle = ggplot2::element_blank())
-  } else if (isTRUE(reset)) {
-    plot@meta@labels@subtitle <- NULL
-    plot@gg <- plot@gg + ggplot2::labs(subtitle = NULL)
-  } else if (!is.null(text)) {
-    plot@meta@labels@subtitle <- text
-    plot@gg <- plot@gg + ggplot2::labs(subtitle = text)
-  }
-  plot
+  ._set_text_label(plot, "subtitle", "plot.subtitle", text, hide, reset, "label_subtitle")
 }
 
 # ---- label_caption ----
@@ -159,18 +155,7 @@ label_caption <- S7::new_generic(
 #' @export
 S7::method(label_caption, plotit_class) <- function(plot, text = NULL, hide = FALSE,
                                                     reset = FALSE, ...) {
-  ._check_text_reset(text, reset, "label_caption")
-  if (hide) {
-    plot@meta@labels@caption <- NULL
-    plot@gg <- plot@gg + ggplot2::theme(plot.caption = ggplot2::element_blank())
-  } else if (isTRUE(reset)) {
-    plot@meta@labels@caption <- NULL
-    plot@gg <- plot@gg + ggplot2::labs(caption = NULL)
-  } else if (!is.null(text)) {
-    plot@meta@labels@caption <- text
-    plot@gg <- plot@gg + ggplot2::labs(caption = text)
-  }
-  plot
+  ._set_text_label(plot, "caption", "plot.caption", text, hide, reset, "label_caption")
 }
 
 # ---- label_axis ----
