@@ -64,27 +64,16 @@ NULL
   ))
 }
 
-# Set legend scale name + labels for a single aesthetic.
+# Set legend title for a single aesthetic (public ggplot2 API only).
 .label_set_aes <- function(gg, a, text, hide) {
   if (hide) {
-    labs <- gg$labels
-    labs[a] <- NULL
-    gg$labels <- labs
-    final_name <- NULL
+    args <- list(ggplot2::guide_legend(title = NULL))
+    names(args) <- a
+    gg <- gg + do.call(ggplot2::guides, args)
   } else if (is.null(text)) {
-    labs <- gg$labels
-    labs[a] <- NULL
-    gg$labels <- labs
-    final_name <- ggplot2::waiver()
+    gg <- gg + .labs_el(a, NULL)
   } else {
     gg <- gg + .labs_el(a, text)
-    final_name <- text
-  }
-  for (s in gg$scales$scales) {
-    if (any(s$aesthetics == a)) {
-      s$name <- final_name
-      break
-    }
   }
   gg
 }
@@ -193,9 +182,7 @@ S7::method(label_axis, plotit_class) <- function(plot, text = NULL, aes = NULL,
   } else if (isTRUE(reset)) {
     S7::prop(plot@meta@labels, aes) <- NULL
     plot@gg <- plot@gg + .theme_el(paste0("axis.title.", aes), NULL)
-    labs <- plot@gg$labels
-    labs[aes] <- NULL
-    plot@gg$labels <- labs
+    plot@gg <- plot@gg + .labs_el(aes, NULL)
   } else if (!is.null(text)) {
     S7::prop(plot@meta@labels, aes) <- text
     plot@gg <- plot@gg + .theme_el(paste0("axis.title.", aes), NULL)

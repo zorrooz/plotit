@@ -283,7 +283,7 @@ export(plot, filename, width = NULL, height = NULL, dpi = 300, device = NULL, ..
 
 > 当前实现基于 patchwork gtable 测量。此为已知耦合点——patchwork 或 ggplot2 升级可能影响测量精度。替换方案允许，只要面板尺寸契约不被破坏。
 
-> **已知技术债**：`label.R` 中 `.label_set_aes` 直接操作了 `gg$labels` 和 `gg$scales$scales` 内部结构，而非通过 `+ labs()` 和 `+ scale_*` 公开 API。这是为了同步 scale name 与 label 文本所做的必要妥协，但依赖于 ggplot2 内部实现细节。若 ggplot2 小版本升级改变这些内部结构，此处可能断裂。1.0 前应考虑迁移到公开 API。
+
 
 ---
 
