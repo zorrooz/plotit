@@ -13,9 +13,9 @@
 
 所有图表配置（尺寸、autofit、单位、dodge 宽度、default_color、标签文本等）统一存储于 `meta` 组件中。
 
-标签类函数（`label_*`）**同步更新 `meta` 和 `gg`**：先将文本写入 `meta$labels`，随后立即通过 `ggplot2::labs()` 应用到 `gg`。任何已有同级设置被本次调用覆盖。
+标签类函数（`label_*`）**同步更新 `meta` 和 `gg`**：先将文本写入 `meta$labels`，随后立即通过 `ggplot2::labs()` 应用到 `gg`。
 
-> **注意**：`meta$labels` 仅在通过 `label_*` 修改时保持同步。直接操作 `plot@gg` 绕过 label 函数会导致 `meta$labels` 过时。
+> 直接操作 `plot@gg` 绕过 label 函数会导致 `meta$labels` 过时。
 
 ### 1.3 分域验证
 
@@ -31,16 +31,15 @@
 - 返回类型：所有操作返回 `plotit`，支持管道
 - `plotit()` 的 `data` 和 `mapping` 参数
 
-**扩展契约**（1.0 后稳定，2.0 可基于实际使用反馈调整）：
-- 各 `scale_*` 的 `trans` 合法值集合（可增加，不删除）
+**扩展契约**（1.0 后稳定，2.0 可调整）：
+- `scale_*` 的 `trans` 合法值集合（可增加，不删除）
 - `label_*` 的参数协议（`text`/`hide`/`reset`）
 - `project_*`/`split_*` 的参数签名
 
-**可迭代**（不破坏上述两层契约的前提下）：
-- 默认主题参数、启发式算法（dodge 默认值等）、默认调色板
-- `print()` 设备策略、内部工具函数实现
+**可迭代**（不破坏上述两层契约）：
+- 默认主题参数、启发式算法、默认调色板、内部工具函数实现
 
-分层目的：避免 1.0 前夜"最后一次机会"式的集中大改——核心契约在 0.x 期间充分验证后锁定，扩展契约允许在 2.0 中基于实际使用反馈调整。
+> **例外**：若 1.x 期间发现扩展契约中的设计缺陷导致不可逆的错误输出，允许经由弃用→警告→移除的标准周期（跨至少一个次版本）修正。此种修正不视为破坏性变更。
 
 ### 1.5 自动生成的内容绝不手动维护
 
@@ -54,9 +53,9 @@
 
 ### 1.6 约定文档动态更新
 
-以下情况必须同步更新 AGENTS.md：新增/删除/修改导出函数、修改参数签名或默认值、修改返回类型或管道行为、修改不可变契约、引入新设计原则或废止旧原则。
+以下情况必须同步更新 AGENTS.md：新增/删除/修改导出函数、修改参数签名或默认值、修改返回类型或管道行为、修改契约分层、引入新设计原则或废止旧原则。
 
-约定与实现偏离时：首先判断偏离方向——实现是改进还是退化？若为改进，修约定以匹配实现；若为退化，修实现以匹配约定。这要求约定不是预设为正确的权威文本，而是当前最佳理解的快照——实现可以反过来修正约定。
+约定与实现偏离时：首先判断偏离方向——实现是改进还是退化？若为改进，修约定以匹配实现；若为退化，修实现以匹配约定。约定是当前最佳理解的快照，实现可以反过来修正约定。
 
 ---
 
@@ -128,15 +127,12 @@ plotit(data, mapping = encode(), autofit = FALSE,
 
 **尺寸优先级链**：显式传参 > meta 存储 > autofit 自适应。
 
-**行为**：验证 mapping → 检查 autofit → 构造 ggplot → 初始化 meta → 应用默认主题 → patchwork 固定面板（非 autofit）→ 返回。
-
 #### 3.3.2 `encode()` — 美学映射
 
 `encode(...)` 全部透传给 `ggplot2::aes()`，返回带 `"plotit_encode"` 类的对象。
 
 #### 3.3.3 `mark_*` — 几何图层
 
-**统一契约**：
 - 第一参数 `plotit`，返回 `plotit`
 - `mapping`、`data`、`position`：`data=NULL` 继承全局数据；`position=NULL` 自动读取全局 dodge
 - `...` 透传给底层 `geom_*`
@@ -144,7 +140,7 @@ plotit(data, mapping = encode(), autofit = FALSE,
 
 #### 3.3.4 `scale_*` — 比例尺
 
-**统一签名**（8 函数，8 参数，仅 `trans` 默认值不同）：
+8 函数，8 参数，仅 `trans` 默认值不同：
 
 ```r
 scale_<aes>(p, name = waiver(), trans = <默认>,
@@ -157,25 +153,25 @@ scale_<aes>(p, name = waiver(), trans = <默认>,
 | `name` | scale 名称，`waiver()` = 沿用变量名 |
 | `trans` | 数据变换方式，不支持的组合主动报错 |
 | `limits` | 数据边界（裁剪输入范围） |
-| `range` | 视觉输出值域（颜色/尺寸/坐标区间），格式由包层推断 |
+| `range` | 视觉输出值域，x/y 为语法糖（见下） |
 | `breaks` | 刻度/图例键位置 |
 | `labels` | 刻度/图例键文字 |
 | `...` | 透传底层 ggplot2 scale 参数 |
 
 **`trans` 合法值**：
 
-> **设计权衡**：8 个 scale 函数共享同一个 `trans` 参数名，但允许的值取决于 aesthetic 类别。这不是"统一语义"——它是**签名统一、语义分类**。用户代价：需要知道 `log` 对颜色无效；收益：学会一个参数名即可在所有 scale 中使用它，包层在非法组合时给出定向错误而非静默失败。
+> **决策**：选择统一参数名 `trans` 而非拆分为 `trans_pos` / `trans_vis`——减少 API 表面积，一个词学会全部。代价：用户需知道 `log` 对颜色无效。若使用反馈显示用户频繁困惑，考虑在 2.0 中拆分。
 
 | `trans` | x/y（位置标度） | colour/fill/size/alpha（视觉连续） | shape/linetype（视觉离散） |
 |---|---|---|---|
 | `NULL` | → identity | auto-detect | → discrete |
-| `"identity"` | ✅ 默认 | ✅ 默认（连续） | ❌ |
+| `"identity"` | ✅ 默认 | ✅ 默认 | ❌ |
 | `"log"` / `"log10"` / `"log2"` / `"sqrt"` | ✅ | ❌ | ❌ |
 | `"reverse"` | ✅ | ✅ | ✅ |
 | `"discrete"` | ✅ | ✅ | ✅ 默认 |
 | `"binned"` | ✅ | ✅ | ❌ |
 
-不支持的组合给出 `cli::cli_abort` 错误（如 `scale_color(trans="log")` → "visual aesthetic; log not applicable"）。
+不支持的组合给出 `cli::cli_abort` 定向错误。
 
 内部校验矩阵：
 ```r
@@ -188,7 +184,7 @@ trans_legal <- list(
 
 **`range` 合法值**：
 
-> **设计权衡**：对 colour/fill/size/alpha/shape/linetype，`range` 是真正的"输出值域"（映射到的颜色/尺寸/形状）。对 x/y，`range` 语义退化为数据值域——等价于同时设置 `limits` 和 `expand=c(0,0)`。这是为了保持 8 函数签名整齐而做的妥协：位置标度没有一个天然对应"输出值域"的概念（面板像素位置不直接暴露给用户）。面板留白控制应使用 `project_cartesian(expand=...)`。
+> **决策**：保留 x/y 的 `range` 参数以维持 8 函数签名一致。对颜色/尺寸/形状，`range` 是真正的视觉输出值域；对 x/y，`range` 是语法糖——等价于同时设置 `limits` 和 `expand=c(0,0)`。面板留白应使用 `project_cartesian(expand=...)`。
 
 | aesthetic | `range = NULL` | `range = "name"` | `range = c(a, b)` |
 |---|---|---|---|
@@ -197,11 +193,9 @@ trans_legal <- list(
 | alpha | `c(0.1, 1)` | — | 数值范围 |
 | shape | 默认形状集 | — | 形状编号 |
 | linetype | 默认线型集 | — | 线型名称 |
-| x/y | `NULL`（无裁剪） | — | 数据值域（= `limits` + `expand=c(0,0)`） |
+| x/y | `NULL` | — | 数据值域（= `limits` + `expand=c(0,0)`） |
 
-与 `limits` 同时非 NULL 时后设置者胜，冲突时警告。
-
-**`range` 格式推断**：包层根据输入格式自动判断意图——单字符串 → 调色板方案，颜色向量 → 渐变，数值向量 → 连续值域，整数向量 → 形状编号，非颜色字符向量 → 线型。
+**格式推断**：包层根据输入格式自动判断意图——单字符串→调色板方案，颜色向量→渐变，数值向量→值域，整数向量→形状编号，非颜色字符向量→线型。
 
 **`trans` × `range` 协同**：包层根据组合选择底层 scale 函数。核心规则：
 - `trans="identity"/"binned"` + `range="viridis"` → `scale_colour_viridis_c/b()`
@@ -214,15 +208,11 @@ trans_legal <- list(
 
 #### 3.3.5 `project_*` — 坐标系
 
-接收 `plotit`，返回 `plotit`。
-
 | 函数 | 底层 | 关键参数 |
 |---|---|---|
 | `project_cartesian` | `coord_cartesian` | `xlim`, `ylim`, `expand`, `clip` |
 | `project_flip` | `coord_flip` | `xlim`, `ylim` |
 | `project_polar` | `coord_polar` | `theta`, `start`, `direction` |
-
-与 `scale_x/y(range=)` 的交互：`project_cartesian(expand=)` 后执行时覆盖 scale 设置的 `expand=c(0,0)`。
 
 #### 3.3.6 `split_*` — 分面
 
@@ -235,20 +225,22 @@ trans_legal <- list(
 
 #### 3.3.7 `label_*` — 文本标签
 
-**统一行为**：写入 `meta$labels` 并立即应用到 `gg`。
+**统一行为**：写入 `meta$labels` 并立即应用到 `gg`。`label_*` 是标签修改的唯一入口。
 
 **三参数协议**（`text` + `hide` + `reset`）：
 
-> **设计权衡**：旧版 `text=NULL` 重置变量名——简洁但反直觉（"我没传 text 为什么要改我的标题？"）。新版 `text=NULL` 是空操作——直觉正确但引入了 `reset` 参数。代价是标签的最终状态现在由 `text`/`hide`/`reset` + `scale_*(name=)` 的调用顺序共同决定。用户需要理解：`reset` 恢复变量名，`hide` 隐藏元素，`text` 设置自定义文本，三者互不覆盖但可组合。
+> **决策**：旧版 `text=NULL` 重置变量名——简洁但反直觉（空参数产生副作用）。新版 `text=NULL` 是空操作，引入 `reset` 显式控制。代价是引入了第三个参数；通过优先级规则（见下）消除了调用顺序依赖。
 
-| 调用 | 行为 |
-|---|---|
-| `text = "str"` | 设置自定义文本 |
-| `hide = TRUE` | 移除元素及占位空间（`element_blank()`） |
-| `reset = TRUE` | 恢复变量名（轴/图例）或移除（标题/副标题/脚注） |
-| 不调用 / 全默认 | 保持现状 |
+**优先级规则**（调用顺序不影响结果）：
 
-`text=NULL` 不修改当前标签。`text`（非 NULL）与 `reset=TRUE` 互斥，同时提供时报错。
+| 优先级 | 参数 | 效果 |
+|---|---|---|
+| 1（最高） | `reset = TRUE` | 恢复变量名（轴/图例）或移除文本（标题/副标题/脚注）。**无视** `text` 和 `hide`。 |
+| 2 | `hide = TRUE` | 移除元素及占位空间（`element_blank()`）。无视 `text`。 |
+| 3（最低） | `text = "str"` | 设置自定义文本。仅在前两者均为 FALSE 时生效。 |
+| — | 所有默认 | 保持现状。 |
+
+`text`（非 NULL）与 `reset=TRUE` 同时提供时报错（与优先级规则一致——reset 最高，text 不应该被提供）。
 
 | 函数 | 参数 | 用途 |
 |---|---|---|
@@ -258,16 +250,12 @@ trans_legal <- list(
 | `label_axis` | `text`, `aes`, `hide`, `reset` | `aes = "x"` 或 `"y"`（必填） |
 | `label_legend` | `text`, `aes`, `hide`, `reset` | `aes = "colour"`/`"fill"` 等 |
 
-**与 `scale_*(name=)` 的关系**：`label_*` 优先级更高。调用 `label_axis(aes="x")`（全默认）不会覆盖 `scale_x(name="Width")`。
-
-**缺省值**：标题/副标题/脚注无默认（不调用时不存在）；轴标题缺省为变量名，`reset=TRUE` 恢复。
+**与 `scale_*(name=)` 的关系**：`label_*` 优先级更高。`label_axis(aes="x")`（全默认）不覆盖 `scale_x(name="Width")`。缺省值：轴/图例标题缺省为变量名；标题/副标题/脚注无默认。
 
 #### 3.3.8 `style()` — 主题
 
-- `style_default(plot, base_size, base_family)`：包级默认主题（基于 `theme_minimal`，背景透明，保留主网格线，无衬线字体，图例右侧）。`plotit()` 构造时自动调用。
-- `style(plot, theme, ...)`：应用任意 ggplot2 主题对象，`...` 传递额外 `theme()` 微调。`theme` 为必填参数。
-
-两个函数都更新 `plotit_theme_managed` 标记，防止 `print()` 重复注入。
+- `style_default(plot, base_size, base_family)`：包级默认主题（基于 `theme_minimal`，背景透明，仅主网格线，无衬线字体，图例右侧）。`plotit()` 构造时自动调用。
+- `style(plot, theme, ...)`：应用任意 ggplot2 主题对象。`theme` 为必填参数。
 
 #### 3.3.9 `export()` — 导出
 
@@ -281,18 +269,18 @@ export(plot, filename, width = NULL, height = NULL, dpi = 300, device = NULL, ..
 
 - `plotit()` 的 `width`/`height` 指**面板尺寸**（非总尺寸）。
 - `autofit = FALSE`：通过 `patchwork::plot_layout()` 固定面板为绝对单位。
-- 预览（`print()`）：非 NULL 时通过 `patchworkGrob()` 测量总尺寸后打开匹配设备。
-- 导出（`export()`）：同上逻辑，用户显式尺寸优先。
 
-> **实验性声明与契约边界**：面板尺寸算法深度依赖 patchwork 内部 gtable 结构。API 契约保证的是**面板尺寸的意图**（`width=6` 表示用户想要 6 英寸宽的面板），而非像素级精确输出（总尺寸 = 面板 + 轴 + 标签 + 图例 + 边距，后者随主题/字体/设备浮动）。因此实现路径可替换——只要替换方案在合理容差内（±5%）还原用户的尺寸意图，即不视为 API 破坏。
+**契约边界**：当 `autofit = FALSE` 时，面板尺寸将得到遵守（允许因设备精度导致的 ±1% 浮点误差）。总尺寸（面板 + 轴 + 标签 + 图例 + 边距）是衍生值，不在 API 契约内，可能随主题/字体/设备版本微小变化。替换实现只需遵守面板尺寸契约，不视为破坏性变更。
+
+> 当前实现基于 patchwork gtable 测量。此为已知耦合点——patchwork 或 ggplot2 升级可能影响测量精度。替换方案允许，只要面板尺寸契约不被破坏。
 
 ---
 
 ### 3.4 补充约定
 
-- **空数据与缺失值**：空 data.frame 行为由 ggplot2 决定，包层不做额外验证。`NA` 由 ggplot2 默认静默移除。
+- **空数据与缺失值**：空 data.frame 行为由 ggplot2 决定。`NA` 由 ggplot2 默认静默移除。
 - **S7 槽位**：`plotit_labels`（`title`/`subtitle`/`caption`/`x`/`y`/`legend`）、`plotit_metadata`（`autofit`/`width`/`height`/`dodge`/`unit`/`default_color`/`labels`）、`plotit`（`gg`/`meta`）。
-- **打印与设备**：`print()` 在交互模式下通过 `grDevices::dev.new()` 打开新设备，默认使用 Cairo。`export()` 从文件名推断设备。
+- **打印与设备**：`print()` 交互模式下通过 `grDevices::dev.new()` 打开新设备，默认 Cairo。`export()` 从文件名推断设备。
 
 ---
 
@@ -303,8 +291,8 @@ export(plot, filename, width = NULL, height = NULL, dpi = 300, device = NULL, ..
 ```
 R/
 ├── class.R      # S7 类定义
-├── encode.R     # encode() 泛型 + 方法
-├── utils.R      # 工具函数（%||%, is_discrete 等）
+├── encode.R     # encode()
+├── utils.R      # 工具函数
 ├── plot.R       # plotit()
 ├── mark.R       # 所有 mark_*
 ├── scale.R      # 所有 scale_*
@@ -315,37 +303,29 @@ R/
 ├── output.R     # print() + export()
 
 tests/testthat/
-├── test-encode.R
-├── test-plot.R
-├── test-mark.R
-├── test-scale.R
-├── test-label.R
-├── test-project.R
-├── test-split.R
-├── test-style.R
-└── test-export.R
+├── test-encode.R  test-plot.R    test-mark.R
+├── test-scale.R   test-label.R   test-project.R
+├── test-split.R   test-style.R   test-export.R
 ```
 
-文件名 `snake_case.R`。`R/` 下只放包源码。`playground.R` 用于临时手动测试，不纳入版本管理；有价值的用例移入 `tests/testthat/`。
+文件名 `snake_case.R`。`R/` 下只放包源码。`playground.R` 用于临时手动测试，不纳入版本管理。
 
 ### 4.2 命名与格式
 
-- 函数名和参数名 `snake_case`。动词前缀统一（`mark_`、`scale_` 等）。
-- `color`/`colour` 等价接受，函数命名统一美式拼写。
-- 缩进 2 空格，行宽 80 字符。
-- Push 前执行 `styler::style_pkg()`。
+- `snake_case`，动词前缀统一。`color`/`colour` 等价接受，函数命名统一美式拼写。
+- 缩进 2 空格，行宽 80 字符。Push 前执行 `styler::style_pkg()`。
 
 ### 4.3 代码文本一律使用英文
 
-所有代码注释、roxygen 文档、函数体内注释、错误消息、警告信息、提交信息一律使用英文。（AGENTS.md 本身以中文撰写，面向中文开发者。）
+代码注释、roxygen 文档、错误消息、警告信息、提交信息一律使用英文。（AGENTS.md 本身以中文撰写，面向中文开发者。）
 
 ### 4.4 管道
 
-所有对象修改函数返回 `plotit`，支持 `|>` 链式调用。每个管道步骤独立一行。
+所有对象修改函数返回 `plotit`，支持 `|>`。每个管道步骤独立一行。
 
 ### 4.5 错误信息
 
-主动验证点使用 `cli::cli_abort()` 提供结构化错误。其他位置由底层 API 自然抛出。
+主动验证点使用 `cli::cli_abort()`。其他位置由底层 API 自然抛出。
 
 ### 4.6 命名空间
 
@@ -357,18 +337,18 @@ tests/testthat/
 
 ### 4.8 测试
 
-按函数族分文件（见 §4.1）。覆盖合法值及关键组合、非法输入的错误路径、管道链集成场景。
+按函数族分文件。覆盖合法值及关键组合、非法输入的错误路径、管道链集成场景。
 
 ---
 
 ## 5. 默认美观要求
 
-属于 §1.4 的可迭代范围，具体参数可随版本调整。
+属于 §1.4 可迭代范围，具体参数可随版本调整。
 
 - **主题**：基于 `theme_minimal`，背景透明，仅保留主网格线（浅灰），无衬线字体，层级分明的字号。
 - **颜色**：无映射时单色 + 隐藏图例。有映射时默认 viridis（色盲友好）。
 - **图例**：右侧，背景透明，边框简洁。
-- **尺寸**：自适应关闭时默认适合学术单栏排版（约 7×5 英寸），导出 300 dpi。
+- **尺寸**：自适应关闭时默认约 7×5 英寸，导出 300 dpi。
 
 ---
 
@@ -377,39 +357,20 @@ tests/testthat/
 ```r
 library(plotit)
 
-# 1. 构造映射
 mapping <- encode(x = displ, y = hwy, colour = class)
 
-# 2. 创建图表
 p <- plotit(mpg, mapping, autofit = FALSE, width = 6, height = 4, size_unit = "in")
 
-# 3. 添加图层
 p <- p |>
   mark_point(size = 2, alpha = 0.7) |>
-  mark_boxplot()
-
-# 4. 调整比例尺
-p <- p |>
   scale_x(trans = "log10") |>
-  scale_color(range = "viridis")
-
-# 5. 变换坐标系
-p <- p |>
-  project_cartesian(xlim = c(0, 100))
-
-# 6. 分面
-p <- split_wrap(p, cyl, ncol = 2)
-
-# 7. 设置标签
-p <- p |>
+  scale_color(range = "viridis") |>
   label_title("Fuel Economy") |>
   label_axis(text = "Displacement", aes = "x") |>
   label_axis(text = "Highway MPG", aes = "y")
 
-# 8. 应用主题
 p <- style(p, ggplot2::theme_minimal(base_size = 12))
 
-# 9. 导出
 export(p, "output.pdf", dpi = 300)
 ```
 
@@ -417,11 +378,9 @@ export(p, "output.pdf", dpi = 300)
 
 ## 7. Bug 审查原则
 
-审查时按以下清单系统排查：
-
 | # | 原则 | 检查点 |
 |---|------|--------|
-| 0 | 区分特性与 Bug | 静默忽略可能是设计意图；参数传入不生效才是 Bug |
+| 0 | 区分特性与 Bug | 静默忽略若无注释或测试说明意图→视为 Bug。参数传入不生效是 Bug 的充分条件。 |
 | 1 | 参数全链路追踪 | 每个中转节点：直接转发 / 转换 / 被丢弃？ |
 | 2 | 枚举值分支穷举 | N 个合法值 → N 条路径全部显式存在 |
 | 3 | 对称抽象一致性 | color↔fill, size↔alpha, shape↔linetype, x↔y |
