@@ -188,7 +188,7 @@ test_that("pipeline mark_boxplot + scale_fill + label + project does not crash",
     label_subtitle("by Iris species") |>
     label_axis(text = "Species", aes = "x") |>
     label_axis(text = "Sepal Length", aes = "y") |>
-    project_flip() |>
+    project_cartesian(flip = TRUE) |>
     style_default()
   expect_s3_class(p, "plotit::plotit")
 })

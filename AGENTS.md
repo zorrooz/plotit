@@ -210,12 +210,9 @@ trans_legal <- list(
 
 #### 3.3.5 `project_*` — 坐标系
 
-`project_cartesian` 是主入口，通过参数切换子类型。`project_flip` 保留为便捷别名。
-
 | 函数 | 底层 | 关键参数 |
 |---|---|---|
 | `project_cartesian` | `coord_cartesian` / `coord_flip` / `coord_fixed` / `coord_trans` | `xlim`, `ylim`, `expand`, `clip`, `flip`, `fixed`, `trans`, `...` |
-| `project_flip` | → `project_cartesian(flip=TRUE)` | `xlim`, `ylim`, `expand`, `clip`, `...` |
 | `project_polar` | `coord_polar` | `theta`, `start`, `direction`, `clip`, `...` |
 | `project_parallel` | 数据重塑 + `geom_line` / `geom_point` | `columns`, `group`, `scale`, `alpha`, `size`, `...` |
 | `project_map` | `coord_sf` / `coord_map` | `projection`, `xlim`, `ylim`, `clip`, `...` |

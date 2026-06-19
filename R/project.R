@@ -14,7 +14,7 @@ NULL
 #' @param expand If `TRUE`, add default expansion padding; `FALSE` or
 #'   `c(0, 0)` to remove.
 #' @param clip Should drawing be clipped to the panel? `"on"` or `"off"`.
-#' @param flip If `TRUE`, swap the x and y axes (replaces `project_flip()`).
+#' @param flip If `TRUE`, swap the x and y axes.
 #' @param fixed Aspect ratio (`y / x`). `NULL` = free; `1` = square.
 #' @param trans Transformer for coordinate system (e.g. `"log10"`, `"sqrt"`,
 #'   `scales::exp_trans()`). `NULL` = identity.
@@ -64,40 +64,6 @@ S7::method(project_cartesian, plotit_class) <- function(
                                expand = expand, clip = clip, ...)
   }
   plot
-}
-
-# ---- project_flip ----
-
-#' Flipped Cartesian coordinates (convenience)
-#'
-#' Convenience wrapper for `project_cartesian(flip = TRUE)`.
-#'
-#' @param plot A plotit object.
-#' @param xlim,ylim Axis limits.
-#' @param expand Expansion padding.
-#' @param clip Clipping mode.
-#' @param ... Passed to `coord_flip`.
-#' @return Modified plotit object.
-#' @export
-project_flip <- S7::new_generic(
-  "project_flip",
-  "plot",
-  function(plot, xlim = NULL, ylim = NULL, expand = TRUE, clip = "on", ...) {
-    S7::S7_dispatch()
-  }
-)
-
-#' @export
-S7::method(project_flip, plotit_class) <- function(
-  plot,
-  xlim = NULL,
-  ylim = NULL,
-  expand = TRUE,
-  clip = "on",
-  ...
-) {
-  project_cartesian(plot, xlim = xlim, ylim = ylim, expand = expand,
-                    clip = clip, flip = TRUE, ...)
 }
 
 # ---- project_polar ----

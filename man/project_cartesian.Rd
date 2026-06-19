@@ -26,7 +26,7 @@ project_cartesian(
 
 \item{clip}{Should drawing be clipped to the panel? \code{"on"} or \code{"off"}.}
 
-\item{flip}{If \code{TRUE}, swap the x and y axes (replaces \code{project_flip()}).}
+\item{flip}{If \code{TRUE}, swap the x and y axes.}
 
 \item{fixed}{Aspect ratio (\code{y / x}). \code{NULL} = free; \code{1} = square.}
 

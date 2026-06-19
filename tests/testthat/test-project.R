@@ -54,21 +54,6 @@ test_that("project_cartesian clip=\"off\"", {
   expect_s3_class(p, "plotit::plotit")
 })
 
-# ---- project_flip ----
-test_that("project_flip flips coordinates", {
-  p <- plotit(mtcars, encode(x = factor(cyl), y = mpg)) |>
-    mark_boxplot() |>
-    project_flip()
-  expect_s3_class(p, "plotit::plotit")
-})
-
-test_that("project_flip xlim", {
-  p <- plotit(mtcars, encode(x = factor(cyl), y = mpg)) |>
-    mark_boxplot() |>
-    project_flip(xlim = c(5, 40))
-  expect_s3_class(p, "plotit::plotit")
-})
-
 # ---- project_cartesian extended ----
 test_that("project_cartesian flip=TRUE swaps axes", {
   p <- plotit(mtcars, encode(x = factor(cyl), y = mpg)) |>
