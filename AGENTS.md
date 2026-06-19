@@ -276,7 +276,7 @@ export(plot, filename, width = NULL, height = NULL, dpi = 300, device = NULL, ..
 尺寸优先级：显式传参 > meta 存储值 > autofit 自适应。
 
 - `autofit = FALSE` + 未传尺寸：通过 gtable 测量获得总尺寸（面板尺寸来自 meta，已在构造时由 `plot_layout()` 固定；轴/标签/图例由当前主题决定）。
-- `autofit = TRUE` + 未传尺寸：回退 `getOption("plotit.default_width", 7)` / `getOption("plotit.default_height", 5)`（meta 中无面板尺寸）。
+- `autofit = TRUE` + 未传尺寸：回退 `getOption("plotit.default_width", 7)` / `getOption("plotit.default_height", 5)`（单位始终为英寸，与 `size_unit` 无关——`size_unit` 仅在显式传参时用于换算）。
 
 单位统一为英寸后传给 `ggsave()`。
 
