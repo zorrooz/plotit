@@ -2,7 +2,7 @@
 % Please edit documentation in R/project.R
 \name{project_cartesian}
 \alias{project_cartesian}
-\title{Generic for Cartesian coordinate projection}
+\title{Cartesian coordinate system}
 \usage{
 project_cartesian(
   plot,
@@ -10,23 +10,36 @@ project_cartesian(
   ylim = NULL,
   expand = TRUE,
   clip = "on",
+  flip = FALSE,
+  fixed = NULL,
+  trans = NULL,
   ...
 )
 }
 \arguments{
-\item{plot}{A plotit object}
+\item{plot}{A plotit object.}
 
-\item{xlim, ylim}{Axis limits for the Cartesian coordinate system}
+\item{xlim, ylim}{Axis limits (zoom). \code{NULL} = auto.}
 
-\item{expand}{If \code{TRUE}, add expansion; if \code{FALSE}, no expansion}
+\item{expand}{If \code{TRUE}, add default expansion padding; \code{FALSE} or
+\code{c(0, 0)} to remove.}
 
-\item{clip}{Should drawing be clipped to the panel? ("on" or "off")}
+\item{clip}{Should drawing be clipped to the panel? \code{"on"} or \code{"off"}.}
 
-\item{...}{Other arguments passed to \code{coord_cartesian}}
+\item{flip}{If \code{TRUE}, swap the x and y axes (replaces \code{project_flip()}).}
+
+\item{fixed}{Aspect ratio (\code{y / x}). \code{NULL} = free; \code{1} = square.}
+
+\item{trans}{Transformer for coordinate system (e.g. \code{"log10"}, \code{"sqrt"},
+\code{scales::exp_trans()}). \code{NULL} = identity.}
+
+\item{...}{Passed to the underlying \verb{coord_*} function.}
 }
 \value{
-Modified plotit object
+Modified plotit object.
 }
 \description{
-Generic for Cartesian coordinate projection
+The primary coordinate function. Supports zooming, flipping, fixed aspect
+ratio, and coordinate transformations — all through parameters rather than
+separate functions.
 }

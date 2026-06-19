@@ -68,3 +68,56 @@ test_that("project_flip xlim", {
     project_flip(xlim = c(5, 40))
   expect_s3_class(p, "plotit::plotit")
 })
+
+# ---- project_cartesian extended ----
+test_that("project_cartesian flip=TRUE swaps axes", {
+  p <- plotit(mtcars, encode(x = factor(cyl), y = mpg)) |>
+    mark_boxplot() |>
+    project_cartesian(flip = TRUE)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("project_cartesian fixed=1 locks aspect ratio", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
+    mark_point() |>
+    project_cartesian(fixed = 1)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("project_cartesian trans applies coordinate transform", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
+    mark_point() |>
+    project_cartesian(trans = "log10")
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- project_parallel ----
+test_that("project_parallel basic parallel coordinates", {
+  p <- plotit(iris, encode()) |>
+    project_parallel(columns = c("Sepal.Width", "Sepal.Length",
+                                  "Petal.Width", "Petal.Length"))
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("project_parallel with group coloring", {
+  p <- plotit(iris, encode()) |>
+    project_parallel(
+      columns = c("Sepal.Width", "Sepal.Length"),
+      group = "Species"
+    )
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("project_parallel scale=\"global\"", {
+  p <- plotit(mtcars, encode()) |>
+    project_parallel(columns = c("wt", "qsec"), scale = "global")
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("project_parallel errors on missing column", {
+  p <- plotit(iris, encode())
+  expect_error(
+    project_parallel(p, columns = c("not_a_column")),
+    "not found"
+  )
+})

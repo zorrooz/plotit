@@ -2,24 +2,24 @@
 % Please edit documentation in R/project.R
 \name{project_flip}
 \alias{project_flip}
-\title{Generic for flipped Cartesian coordinates}
+\title{Flipped Cartesian coordinates (convenience)}
 \usage{
 project_flip(plot, xlim = NULL, ylim = NULL, expand = TRUE, clip = "on", ...)
 }
 \arguments{
-\item{plot}{A plotit object}
+\item{plot}{A plotit object.}
 
-\item{xlim, ylim}{Axis limits}
+\item{xlim, ylim}{Axis limits.}
 
-\item{expand}{If \code{TRUE}, add expansion; if \code{FALSE}, no expansion}
+\item{expand}{Expansion padding.}
 
-\item{clip}{Should drawing be clipped to the panel? ("on" or "off")}
+\item{clip}{Clipping mode.}
 
-\item{...}{Other arguments passed to \code{coord_flip}}
+\item{...}{Passed to \code{coord_flip}.}
 }
 \value{
-Modified plotit object
+Modified plotit object.
 }
 \description{
-Generic for flipped Cartesian coordinates
+Convenience wrapper for \code{project_cartesian(flip = TRUE)}.
 }

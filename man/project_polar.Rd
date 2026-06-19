@@ -2,26 +2,26 @@
 % Please edit documentation in R/project.R
 \name{project_polar}
 \alias{project_polar}
-\title{Generic for polar coordinate projection}
+\title{Polar coordinate system}
 \usage{
 project_polar(plot, theta = "x", start = 0, direction = 1, clip = "on", ...)
 }
 \arguments{
-\item{plot}{A plotit object}
+\item{plot}{A plotit object.}
 
-\item{theta}{Variable to map to angle ("x" or "y")}
+\item{theta}{Variable to map to angle (\code{"x"} or \code{"y"}).}
 
-\item{start}{Starting angle in radians}
+\item{start}{Starting angle in radians (default 0 = 12 o'clock).}
 
-\item{direction}{1 for clockwise, -1 for anti-clockwise}
+\item{direction}{\code{1} = clockwise, \code{-1} = anti-clockwise.}
 
-\item{clip}{Should drawing be clipped to the panel? ("on" or "off")}
+\item{clip}{Should drawing be clipped? \code{"on"} or \code{"off"}.}
 
-\item{...}{Other arguments passed to \code{coord_polar}}
+\item{...}{Passed to \code{ggplot2::coord_polar}.}
 }
 \value{
-Modified plotit object
+Modified plotit object.
 }
 \description{
-Generic for polar coordinate projection
+Polar coordinate system
 }
