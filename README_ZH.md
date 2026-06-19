@@ -130,19 +130,20 @@ export(p, "fuel_economy.pdf", dpi = 300)
 
 ### `scale_*` — 数据到视觉的映射
 
-八个函数，参数签名完全一致。用 `range` 设定**输出成什么样子**，用 `trans` 设定**数据如何变换**。
+八个函数，参数完全一致——仅 `trans` 默认值不同。用 `range` 设定**输出成什么样子**，用 `trans` 设定**数据如何变换**。
 
-```r
-# All eight share the same parameters:
-scale_color   (p, name, trans = NULL,       limits, range, breaks, labels, ...)
-scale_fill    (p, name, trans = NULL,       limits, range, breaks, labels, ...)
-scale_size    (p, name, trans = NULL,       limits, range, breaks, labels, ...)
-scale_alpha   (p, name, trans = NULL,       limits, range, breaks, labels, ...)
-scale_shape   (p, name, trans = "discrete", limits, range, breaks, labels, ...)
-scale_linetype(p, name, trans = "discrete", limits, range, breaks, labels, ...)
-scale_x       (p, name, trans = "identity", limits, range, breaks, labels, ...)
-scale_y       (p, name, trans = "identity", limits, range, breaks, labels, ...)
-```
+| 函数 | 美学属性 | `trans` 默认值 |
+|------|----------|---------------|
+| `scale_color()` | colour | `NULL`（自动检测） |
+| `scale_fill()` | fill | `NULL`（自动检测） |
+| `scale_size()` | size | `NULL`（自动检测） |
+| `scale_alpha()` | alpha | `NULL`（自动检测） |
+| `scale_shape()` | shape | `"discrete"` |
+| `scale_linetype()` | linetype | `"discrete"` |
+| `scale_x()` | x | `"identity"` |
+| `scale_y()` | y | `"identity"` |
+
+均接受 `name`, `limits`, `range`, `breaks`, `labels`, `...`。
 
 | 参数 | 回答的问题 | 示例 |
 |------|-----------|------|
@@ -203,28 +204,28 @@ scale_y       (p, name, trans = "identity", limits, range, breaks, labels, ...)
 
 ---
 
-### `project_*` — 坐标系 & `split_*` — 分面
+### `project_*` — 坐标系
 
-```r
-# 翻转、缩放、极坐标
-project_cartesian(p, flip = TRUE)
-project_cartesian(p, xlim = c(0, 100), expand = FALSE)
-project_polar(p, start = pi / 2)
+| 函数 | 说明 | 关键参数 |
+|------|------|----------|
+| `project_cartesian()` | 笛卡尔（缩放/翻转/固定比例/坐标变换） | `xlim`, `ylim`, `expand`, `flip`, `fixed`, `trans`, `clip` |
+| `project_polar()` | 极坐标 | `theta`, `start`, `direction`, `clip` |
+| `project_parallel()` | 平行坐标 | `columns`, `group`, `scale`, `alpha`, `size` |
+| `project_map()` | 地理投影 | `projection`, `xlim`, `ylim`, `clip` |
+| `project_radial()` | 径向坐标（ggplot2 ≥ 3.5） | `theta`, `start`, `direction`, `r_axis_inside`, `inner_radius` |
 
-# wrap 和 grid 分面
-split_wrap(p, Species, ncol = 3, scales = "free")
-split_grid(p, rows = ggplot2::vars(Species), cols = ggplot2::vars(cyl))
-```
+### `split_*` — 分面
+
+| 函数 | 说明 | 关键参数 |
+|------|------|----------|
+| `split_wrap()` | 环绕分面 | `...`（分面变量）, `ncol`, `nrow`, `scales` |
+| `split_grid()` | 网格分面 | `rows`, `cols`, `scales`, `space` |
 
 ### `style()` — 主题 & `export()` — 导出
 
-```r
-style(p, ggplot2::theme_minimal(base_size = 14))
-style(p, ggplot2::theme_bw(), plot.title = ggplot2::element_text(face = "bold"))
-
-export(p, "plot.pdf",  width = 8, height = 6, dpi = 300)
-export(p, "plot.png",  dpi = 150)
-export(p, "plot.svg")
-```
+| 函数 | 说明 | 关键参数 |
+|------|------|----------|
+| `style()` | 应用 ggplot2 主题 | `theme`, `...` |
+| `export()` | 渲染为文件 | `filename`, `width`, `height`, `dpi`, `device` |
 
 

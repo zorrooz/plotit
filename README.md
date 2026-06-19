@@ -163,20 +163,22 @@ Four mark functions are currently implemented, sharing a unified signature
 
 ### `scale_*` — Data-to-visual mapping
 
-Eight functions with identical parameter signatures. Set **what the output
-looks like** with `range`, **how the data is transformed** with `trans`.
+Eight functions with identical parameters — only the `trans` default varies.
+Set **what the output looks like** with `range`, **how the data is
+transformed** with `trans`.
 
-```r
-# All eight share the same parameters:
-scale_color   (p, name, trans = NULL,       limits, range, breaks, labels, ...)
-scale_fill    (p, name, trans = NULL,       limits, range, breaks, labels, ...)
-scale_size    (p, name, trans = NULL,       limits, range, breaks, labels, ...)
-scale_alpha   (p, name, trans = NULL,       limits, range, breaks, labels, ...)
-scale_shape   (p, name, trans = "discrete", limits, range, breaks, labels, ...)
-scale_linetype(p, name, trans = "discrete", limits, range, breaks, labels, ...)
-scale_x       (p, name, trans = "identity", limits, range, breaks, labels, ...)
-scale_y       (p, name, trans = "identity", limits, range, breaks, labels, ...)
-```
+| Function | Aesthetic | `trans` default |
+|----------|-----------|-----------------|
+| `scale_color()` | colour | `NULL` (auto-detect) |
+| `scale_fill()` | fill | `NULL` (auto-detect) |
+| `scale_size()` | size | `NULL` (auto-detect) |
+| `scale_alpha()` | alpha | `NULL` (auto-detect) |
+| `scale_shape()` | shape | `"discrete"` |
+| `scale_linetype()` | linetype | `"discrete"` |
+| `scale_x()` | x | `"identity"` |
+| `scale_y()` | y | `"identity"` |
+
+All accept `name`, `limits`, `range`, `breaks`, `labels`, `...`.
 
 | Parameter | Answers | Example |
 |-----------|---------|---------|
@@ -238,28 +240,28 @@ Label functions override `scale_*(name = …)`: the last one set wins.
 
 ---
 
-### `project_*` — Coordinate systems & `split_*` — Facets
+### `project_*` — Coordinate systems
 
-```r
-# Flip, zoom, polar
-project_cartesian(p, flip = TRUE)
-project_cartesian(p, xlim = c(0, 100), expand = FALSE)
-project_polar(p, start = pi / 2)
+| Function | Description | Key parameters |
+|----------|-------------|----------------|
+| `project_cartesian()` | Cartesian (zoom, flip, fixed ratio, transform) | `xlim`, `ylim`, `expand`, `flip`, `fixed`, `trans`, `clip` |
+| `project_polar()` | Polar | `theta`, `start`, `direction`, `clip` |
+| `project_parallel()` | Parallel coordinates | `columns`, `group`, `scale`, `alpha`, `size` |
+| `project_map()` | Geographic projection | `projection`, `xlim`, `ylim`, `clip` |
+| `project_radial()` | Radial (ggplot2 ≥ 3.5) | `theta`, `start`, `direction`, `r_axis_inside`, `inner_radius` |
 
-# Wrap and grid faceting
-split_wrap(p, Species, ncol = 3, scales = "free")
-split_grid(p, rows = ggplot2::vars(Species), cols = ggplot2::vars(cyl))
-```
+### `split_*` — Facets
 
-### `style()` — Themes & `export()` — Output
+| Function | Description | Key parameters |
+|----------|-------------|----------------|
+| `split_wrap()` | Wrapped facets | `...` (variables), `ncol`, `nrow`, `scales` |
+| `split_grid()` | Grid facets | `rows`, `cols`, `scales`, `space` |
 
-```r
-style(p, ggplot2::theme_minimal(base_size = 14))
-style(p, ggplot2::theme_bw(), plot.title = ggplot2::element_text(face = "bold"))
+### `style()` — Theme & `export()` — Output
 
-export(p, "plot.pdf",  width = 8, height = 6, dpi = 300)
-export(p, "plot.png",  dpi = 150)
-export(p, "plot.svg")
-```
+| Function | Description | Key parameters |
+|----------|-------------|----------------|
+| `style()` | Apply ggplot2 theme | `theme`, `...` |
+| `export()` | Render to file | `filename`, `width`, `height`, `dpi`, `device` |
 
 
