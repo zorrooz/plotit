@@ -41,6 +41,13 @@ S7::method(project_cartesian, plotit_class) <- function(
   clip = "on",
   ...
 ) {
+  modes <- sum(flip, !is.null(fixed), !is.null(trans))
+  if (modes > 1) {
+    cli::cli_warn(c(
+      "Multiple coordinate modes set: {.arg flip}={flip}, {.arg fixed}={fixed}, {.arg trans}={trans}.",
+      "i" = "Only {.arg flip} will be used."
+    ))
+  }
   if (flip) {
     plot@gg <- plot@gg +
       ggplot2::coord_flip(xlim = xlim, ylim = ylim, expand = expand, clip = clip, ...)
@@ -149,8 +156,8 @@ S7::method(project_parallel, plotit_class) <- function(
   scale <- match.arg(scale)
   data <- plot@gg$data
 
-  if (is.null(data)) {
-    cli::cli_abort("No data found in plot. Call plotit() with a data frame first.")
+  if (is.null(data) || nrow(data) == 0) {
+    cli::cli_abort("No data found in plot. Call plotit() with a non-empty data frame.")
   }
 
   missing_cols <- setdiff(columns, names(data))
@@ -159,6 +166,14 @@ S7::method(project_parallel, plotit_class) <- function(
   }
 
   id_col <- ".plotit_id"
+  val_col <- ".plotit_val"
+  var_col <- ".plotit_var"
+  if (any(c(id_col, val_col, var_col) %in% names(data))) {
+    cli::cli_abort(c(
+      "Data contains reserved column names.",
+      "i" = "Columns {.val {c(id_col, val_col, var_col)}} are used internally."
+    ))
+  }
   data[[id_col]] <- seq_len(nrow(data))
   keep_cols <- c(id_col, columns)
   if (!is.null(group)) {
@@ -168,29 +183,29 @@ S7::method(project_parallel, plotit_class) <- function(
   long <- stats::reshape(
     data[, keep_cols, drop = FALSE],
     varying   = list(columns),
-    v.names   = ".plotit_val",
+    v.names   = val_col,
     times     = columns,
-    timevar   = ".plotit_var",
+    timevar   = var_col,
     direction = "long"
   )
-  long[[".plotit_var"]] <- factor(long[[".plotit_var"]], levels = columns)
+  long[[var_col]] <- factor(long[[var_col]], levels = columns)
 
   if (scale == "std") {
     for (v in columns) {
-      rows <- long[[".plotit_var"]] == v
-      vals <- long[[".plotit_val"]][rows]
+      rows <- long[[var_col]] == v
+      vals <- long[[val_col]][rows]
       rng <- range(vals, na.rm = TRUE)
       if (rng[2] > rng[1]) {
-        long[[".plotit_val"]][rows] <- (vals - rng[1]) / (rng[2] - rng[1])
+        long[[val_col]][rows] <- (vals - rng[1]) / (rng[2] - rng[1])
       } else {
-        long[[".plotit_val"]][rows] <- 0.5
+        long[[val_col]][rows] <- 0.5
       }
     }
   }
 
   aes_args <- list(
-    x     = as.name(".plotit_var"),
-    y     = as.name(".plotit_val"),
+    x     = as.name(var_col),
+    y     = as.name(val_col),
     group = as.name(id_col)
   )
   if (!is.null(group)) {

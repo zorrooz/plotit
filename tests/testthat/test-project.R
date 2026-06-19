@@ -126,3 +126,79 @@ test_that("project_radial basic no crash", {
     project_radial()
   expect_s3_class(p, "plotit::plotit")
 })
+
+# ---- edge cases & warnings ----
+test_that("project_cartesian warns on multiple modes (flip + fixed)", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
+    mark_point()
+  expect_warning(
+    project_cartesian(p, flip = TRUE, fixed = 1),
+    "Multiple coordinate modes"
+  )
+})
+
+test_that("project_cartesian warns on multiple modes (flip + trans)", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
+    mark_point()
+  expect_warning(
+    project_cartesian(p, flip = TRUE, trans = "log10"),
+    "Multiple coordinate modes"
+  )
+})
+
+test_that("project_parallel scale=\"none\" skips normalisation", {
+  p <- plotit(iris, encode()) |>
+    project_parallel(
+      columns = c("Sepal.Width", "Sepal.Length"),
+      scale = "none"
+    )
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("project_parallel handles NA values without crash", {
+  df <- iris
+  df$Sepal.Width[1] <- NA
+  p <- plotit(df, encode()) |>
+    project_parallel(columns = c("Sepal.Width", "Sepal.Length"))
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("project_parallel errors on reserved column names", {
+  df <- iris
+  df$.plotit_id <- 1:nrow(df)
+  p <- plotit(df, encode())
+  expect_error(
+    project_parallel(p, columns = c("Sepal.Width")),
+    "reserved column"
+  )
+})
+
+test_that("project_parallel errors on empty data", {
+  p <- plotit(iris[0, ], encode())
+  expect_error(
+    project_parallel(p, columns = c("Sepal.Width")),
+    "No data found"
+  )
+})
+
+test_that("project_parallel adds exactly two layers", {
+  p <- plotit(iris, encode()) |>
+    project_parallel(columns = c("Sepal.Width", "Sepal.Length"))
+  n <- length(p@gg$layers)
+  expect_equal(n, 2)
+})
+
+test_that("project_polar clip=\"off\" works", {
+  p <- plotit(mtcars, encode(x = factor(cyl))) |>
+    mark_bar() |>
+    project_polar(clip = "off")
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("project_radial custom r_axis_inside and inner_radius", {
+  skip_if(utils::packageVersion("ggplot2") < "3.5.0")
+  p <- plotit(mtcars, encode(x = factor(cyl))) |>
+    mark_bar() |>
+    project_radial(r_axis_inside = TRUE, inner_radius = 0.3)
+  expect_s3_class(p, "plotit::plotit")
+})
