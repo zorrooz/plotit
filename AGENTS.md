@@ -262,6 +262,8 @@ trans_legal <- list(
 
 **`label_legend` 的 `aes = NULL` 全局模式**：当不指定 `aes` 时影响所有已映射美学。若后续对单个 aes 调用 `label_legend(aes = "colour")`，后者覆盖全局设置（后执行者胜）。`meta$legend` 中 `"default"` 条目与具体 aes 条目共存但后者优先生效。
 
+> **待优化**：`default` 与具体 aes 的优先级目前散落在代码逻辑中。建议改为动态解析（渲染时检查是否存在具体键，若无则回退 `default`），而非静态存储叠加。
+
 #### 3.3.8 `style()` — 主题
 
 - `style_default(plot, base_size, base_family)`：包级默认主题（基于 `theme_minimal`，背景透明，仅主网格线，无衬线字体，图例右侧）。`plotit()` 构造时自动调用。
@@ -288,6 +290,8 @@ export(plot, filename, width = NULL, height = NULL, dpi = 300, device = NULL, ..
 **契约边界**：当 `autofit = FALSE` 时，面板尺寸将得到遵守（允许因设备精度导致的 ±1% 浮点误差）。总尺寸（面板 + 轴 + 标签 + 图例 + 边距）是衍生值，不在 API 契约内，可能随主题/字体/设备版本微小变化。替换实现只需遵守面板尺寸契约，不视为破坏性变更。
 
 > 当前实现基于 patchwork gtable 测量。此为已知耦合点——patchwork 或 ggplot2 升级可能影响测量精度。替换方案允许，只要面板尺寸契约不被破坏。
+>
+> **1.0 前待办**：移除 patchwork 依赖，改用 `ggplot2::ggplot_build()` + `grid` 手动修改 gtable 面板尺寸。当前 patchwork 方案使 `@gg` 存储的是 `patchwork` 对象而非纯 `ggplot`，违背"完全基于 ggplot2 构造"的声明。
 
 
 
@@ -364,6 +368,8 @@ tests/testthat/
 
 **断言行为而非内部状态**：测试应验证用户可见结果（标签内容、图例是否显示），而非 `gg$labels` 的键存在性或 `scales$scales[[1]]$name` 的值。内部状态会因实现路径变更而合法改变，不应进入测试契约。
 
+> **1.0 前待办**：重写测试套件，改用 `ggplot2::ggplot_build(p@gg)` 提取最终渲染数据（面板范围、图例标签、颜色值）进行断言。当前大量测试直接检查 `@gg$theme`、`@gg$labels` 等内部槽位。
+
 ---
 
 ## 5. 默认美观要求
@@ -412,5 +418,5 @@ export(p, "output.pdf", dpi = 300)
 | 4 | 默认值分叉 | 新增条件分支 → 同步更新默认值逻辑 |
 | 5 | 底层接口兼容性 | 透传前确认底层接受该参数；不接受时切换函数 |
 | 6 | 内部概念不泄漏 | 包层参数名可能与底层同名但语义不同（如 `trans="binned"`） |
-| 7 | 有状态默认值对称清除 | `default_color` 注入 `guides(colour="none")` 后，任何图层级 `colour`/`fill` 映射也必须触发清除，不能仅依赖 `scale_*`。 |
+| 7 | 有状态默认值对称清除 | `default_color` 注入 `guides(colour="none")` 后，任何图层级 `colour`/`fill` 映射也必须触发清除，不能仅依赖 `scale_*`。清除逻辑当前分散在 `scale_*` / `mark_*` / `project_parallel` 三处，待统一收归为单一内部函数。 |
 | 8 | 契约边界可验证 | 契约必须用用户可见的指标定义（如面板尺寸 ±1%），不能用"±5% 容差"等无法验证的免责声明。 |
