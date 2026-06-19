@@ -10,9 +10,15 @@
 
 plotit is a **declarative, pipeline-friendly plotting package** built on top of
 [ggplot2](https://ggplot2.tidyverse.org). It provides a simplified, consistent
-verb-prefix API (`mark_*`, `scale_*`, `label_*`, …) that makes creating
-publication-ready visualizations fast and intuitive — sensible defaults,
-no boilerplate.
+verb-prefix API that makes creating publication-ready visualizations fast and
+intuitive — sensible defaults, no boilerplate.
+
+**Why plotit?**  plotit is not a ggplot2 replacement — it is a structured layer
+on top.  Every function maps directly to a ggplot2 counterpart, and `...`
+passes through to the underlying `geom_*()` / `scale_*()` calls.  The value is
+in the **pipeline-native API**, **sensible defaults** (viridis colours,
+publication-ready sizing), and **unified signatures** (8 scale functions share
+identical parameters).
 
 ```r
 library(plotit)
@@ -27,6 +33,25 @@ iris |>
   style(ggplot2::theme_minimal(base_size = 14)) |>
   export("iris_plot.pdf")
 ```
+
+<details>
+<summary>vs base ggplot2</summary>
+
+```r
+# plotit
+iris |>
+  plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+  mark_point(size = 2, alpha = 0.7) |>
+  scale_color(range = "viridis") |>
+  label_title("Iris Sepal Dimensions")
+
+# base ggplot2
+ggplot(iris, aes(x = Sepal.Width, y = Sepal.Length, colour = Species)) +
+  geom_point(size = 2, alpha = 0.7) +
+  scale_colour_viridis_d() +
+  labs(title = "Iris Sepal Dimensions")
+```
+</details>"}
 
 ## Installation
 
@@ -237,25 +262,8 @@ export(p, "plot.png",  dpi = 150)
 export(p, "plot.svg")
 ```
 
-## Design principles
+## Getting help
 
-- **Verb-prefix naming** — Every function family has a distinct prefix: `mark_*`,
-  `scale_*`, `project_*`, `split_*`, `label_*`. You always know what a function does
-  from its name.
-- **Pipeline-native** — Every function returns the `plotit` object, so the entire
-  plot is a single `|>` chain from data to file.
-- **Sensible defaults** — Viridis colours, clean minimal theme, publication-ready
-  sizing. You get a good-looking plot without configuration.
-- **Transparent to ggplot2** — plotit is not a wrapper that hides ggplot2; it
-  adds structure. `...` is passed directly to the underlying `geom_*()` and
-  `scale_*()` calls. Use full ggplot2 power when you need it.
-- **Validate early, delegate late** — Package-level constraints (unit validity,
-  `trans` × aesthetic compatibility) are checked with structured errors via
-  [cli](https://cli.r-lib.org). Generic ggplot2 parameter validation is left to
-  ggplot2.
-
-## Code of Conduct
-
-Please note that the plotit project is released with a [Contributor Code of
-Conduct](https://contributor-covenant.org/version/2/1/CODE_OF_CONDUCT.html).
-By contributing to this project, you agree to abide by its terms.
+- [Full API reference](https://zorrooz.github.io/plotit/reference/)
+- [Bug reports & feature requests](https://github.com/zorrooz/plotit/issues)
+- [Chinese documentation (中文文档)](README_ZH.md)

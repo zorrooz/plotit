@@ -8,7 +8,9 @@
 
 ## 概述
 
-plotit 是一个基于 [ggplot2](https://ggplot2.tidyverse.org) 的**声明式、管道友好**的 R 绘图包。通过统一的动词前缀 API（`mark_*`、`scale_*`、`label_*` 等），只需一条管道即可从数据到出版级图表——预设美观主题，无需样板代码。
+plotit 是一个基于 [ggplot2](https://ggplot2.tidyverse.org) 的**声明式、管道友好**的 R 绘图包。通过统一的动词前缀 API，只需一条管道即可从数据到出版级图表——预设美观主题，无需样板代码。
+
+**为什么选择 plotit？** 不是 ggplot2 的替代品，而是其结构化封装。每个函数都有直接对应的 ggplot2 底层，`...` 透传确保灵活性不受限制。核心价值在于**管道原生 API**、**开箱即美观的默认值**（viridis 配色、出版级尺寸）和**统一的函数签名**（8 个 scale 共享 8 个参数）。
 
 ```r
 library(plotit)
@@ -225,10 +227,8 @@ export(p, "plot.png",  dpi = 150)
 export(p, "plot.svg")
 ```
 
-## 设计理念
+## 获取帮助
 
-- **动词前缀命名** — 每个函数族有独特的前缀：`mark_*`、`scale_*`、`project_*`、`split_*`、`label_*`。看函数名就知道它做什么。
-- **管道原生** — 每个函数都返回 `plotit` 对象，整个绘图流程是一条 `|>` 链，从数据直达文件。
-- **开箱即美观** — Viridis 配色、简洁主题、出版级尺寸。无需手动调整即可直接使用。
-- **ggplot2 完全透明** — plotit 不是隐藏 ggplot2 的封装，而是为其增加结构。`...` 直接透传给底层的 `geom_*()` 和 `scale_*()`，随时可以使用 ggplot2 的全部能力。
-- **提前验证，延迟委托** — 包层自定义约束（单位合法性、`trans` × aesthetic 兼容性）通过 [cli](https://cli.r-lib.org) 提供结构化错误。通用参数校验交由 ggplot2 自然处理。
+- [完整 API 参考](https://zorrooz.github.io/plotit/reference/)
+- [Bug 报告 & 功能请求](https://github.com/zorrooz/plotit/issues)
+- [English documentation](README.md)
