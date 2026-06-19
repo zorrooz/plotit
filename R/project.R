@@ -128,7 +128,7 @@ S7::method(project_polar, plotit_class) <- function(
 #' @param columns Character vector of column names to use as parallel axes.
 #'   Order matters: the first column is the leftmost axis.
 #' @param group Column name for colouring lines. `NULL` = no grouping.
-#' @param scale `"std"` (default): min-max normalise each column to [0,1].
+#' @param scale `"std"` (default): min-max normalise each column to 0–1.
 #'   `"global"`: use raw values. `"none"`: no scaling.
 #' @param alpha,size Passed to `geom_line()` / `geom_point()`.
 #' @param clip Currently unused (parallel coordinates do not apply a
@@ -170,6 +170,15 @@ S7::method(project_parallel, plotit_class) <- function(
   missing_cols <- setdiff(columns, names(data))
   if (length(missing_cols) > 0) {
     cli::cli_abort("Column(s) not found in data: {.val {missing_cols}}.")
+  }
+
+  if (!is.null(group)) {
+    if (!(group %in% names(data))) {
+      cli::cli_abort("{.arg group} column {.val {group}} not found in data.")
+    }
+    if (group %in% columns) {
+      cli::cli_abort("{.arg group} column {.val {group}} is also in {.arg columns}. Use a different grouping variable.")
+    }
   }
 
   id_col <- ".plotit_id"
@@ -225,7 +234,7 @@ S7::method(project_parallel, plotit_class) <- function(
   if (!is.null(group) && !is.null(plot@meta@default_color)) {
     plot@gg$mapping$colour <- NULL
     plot@gg <- plot@gg + ggplot2::guides(colour = ggplot2::waiver())
-    plot@meta@default_color <- NULL
+    S7::prop(plot@meta, "default_color") <- NULL
   }
 
   plot@gg <- plot@gg +
@@ -326,11 +335,16 @@ S7::method(project_radial, plotit_class) <- function(
       "i" = "You have ggplot2 {utils::packageVersion('ggplot2')}."
     ))
   }
-  plot@gg <- plot@gg +
-    ggplot2::coord_radial(
-      theta = theta, start = start, direction = direction,
-      r.axis.inside = r_axis_inside, inner.radius = inner_radius,
-      clip = clip, ...
-    )
+  args <- list(
+    theta = theta, start = start,
+    r.axis.inside = r_axis_inside, inner.radius = inner_radius,
+    clip = clip
+  )
+  if (utils::packageVersion("ggplot2") >= "4.0") {
+    if (direction == -1) args$reverse <- "theta"
+  } else {
+    args$direction <- direction
+  }
+  plot@gg <- plot@gg + do.call(ggplot2::coord_radial, c(args, list(...)))
   plot
 }

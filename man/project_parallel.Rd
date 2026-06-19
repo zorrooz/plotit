@@ -23,7 +23,7 @@ Order matters: the first column is the leftmost axis.}
 
 \item{group}{Column name for colouring lines. \code{NULL} = no grouping.}
 
-\item{scale}{\code{"std"} (default): min-max normalise each column to \link{0,1}.
+\item{scale}{\code{"std"} (default): min-max normalise each column to 0–1.
 \code{"global"}: use raw values. \code{"none"}: no scaling.}
 
 \item{alpha, size}{Passed to \code{geom_line()} / \code{geom_point()}.}

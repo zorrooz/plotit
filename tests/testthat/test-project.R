@@ -206,6 +206,23 @@ test_that("project_parallel clears default_color when group provides colour", {
   expect_null(p@gg$mapping$colour)
 })
 
+test_that("project_parallel errors on non-existent group column", {
+  p <- plotit(iris, encode())
+  expect_error(
+    project_parallel(p, columns = c("Sepal.Width"), group = "not_a_column"),
+    "not found"
+  )
+})
+
+test_that("project_parallel errors when group is also a parallel column", {
+  p <- plotit(iris, encode())
+  expect_error(
+    project_parallel(p, columns = c("Sepal.Width", "Sepal.Length"),
+                     group = "Sepal.Width"),
+    "also in"
+  )
+})
+
 test_that("project_parallel errors on empty columns vector", {
   p <- plotit(iris, encode())
   expect_error(
