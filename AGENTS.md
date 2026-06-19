@@ -297,7 +297,7 @@ export(plot, filename, width = NULL, height = NULL, dpi = 300, device = NULL, ..
 
 - **空数据与缺失值**：空 data.frame 行为由 ggplot2 决定。`NA` 由 ggplot2 默认静默移除。
 - **S7 槽位**：`plotit_labels`（`title`/`subtitle`/`caption`/`x`/`y`/`legend`）、`plotit_metadata`（`autofit`/`width`/`height`/`dodge`/`unit`/`default_color`/`labels`）、`plotit`（`gg`/`meta`）。
-- **打印与设备**：`print()` 交互模式下通过 `grDevices::dev.new()` 打开新设备，使用系统默认交互设备。`export()` 从文件名推断设备。
+- **打印与设备**：`print()` 在交互模式下通过 `grDevices::dev.new(noRStudioGD = TRUE)` 打开独立设备窗口（而非 RStudio 内置 Plots 面板），以保证 `plotit()` 设定的面板尺寸物理呈现。`export()` 从文件名推断设备。
 
 ---
 
