@@ -4,7 +4,9 @@ NULL
 #' Generic for wrapping facets
 #'
 #' @param plot A plotit object.
-#' @param ... Variables to facet by (passed directly, e.g., `Species`).
+#' @param ... Unnamed arguments are faceting variables (e.g. `Species`);
+#'   named arguments (`labeller`, `strip.position`, `dir`, `drop`, ...)
+#'   are passed through to [ggplot2::facet_wrap()].
 #' @param nrow Number of rows in the facet grid (optional).
 #' @param ncol Number of columns in the facet grid (optional).
 #' @param scales Should scales be fixed ("fixed"), free ("free"), or free in
@@ -27,21 +29,29 @@ S7::method(split_wrap, plotit_class) <- function(
   ncol = NULL,
   scales = "fixed"
 ) {
-  plot@gg <- plot@gg +
-    ggplot2::facet_wrap(
-      ggplot2::vars(...),
-      nrow = nrow,
-      ncol = ncol,
-      scales = scales
-    )
+  dots <- rlang::enquos(...)
+  dot_names <- names(dots) %||% character(length(dots))
+  is_named <- nzchar(dot_names)
+  # Unnamed args → facet variables (quosures, passed to vars())
+  facet_quos <- dots[!is_named]
+  # Named args → evaluated and passed through to facet_wrap()
+  passthrough <- lapply(dots[is_named], rlang::eval_tidy)
+
+  args <- c(
+    list(facets = ggplot2::vars(!!!facet_quos)),
+    list(nrow = nrow, ncol = ncol, scales = scales),
+    passthrough
+  )
+  plot@gg <- plot@gg + do.call(ggplot2::facet_wrap, args)
   plot
 }
 
 #' Generic for grid facets
 #'
 #' @param plot A plotit object.
-#' @param ... Variables passed to `ggplot2::vars()` for the rows.
-#'   Use `rows` and `cols` for explicit control.
+#' @param ... Unnamed arguments are shorthand for `rows` (e.g. `Species`
+#'   becomes `rows = vars(Species)`). Named arguments (`labeller`,
+#'   `switch`, ...) are passed through to [ggplot2::facet_grid()].
 #' @param rows,cols Variables to facet by, wrapped in `ggplot2::vars()`.
 #' @param scales Should scales be fixed ("fixed"), free ("free"), or free in
 #'   one dimension ("free_x", "free_y")?
@@ -67,18 +77,23 @@ S7::method(split_grid, plotit_class) <- function(
   scales = "fixed",
   space = "fixed"
 ) {
-  if (...length() > 0) {
+  dots <- rlang::enquos(...)
+  dot_names <- names(dots) %||% character(length(dots))
+  is_named <- nzchar(dot_names)
+  facet_quos <- dots[!is_named]
+  passthrough <- lapply(dots[is_named], rlang::eval_tidy)
+
+  if (length(facet_quos) > 0) {
     if (!is.null(rows)) {
       cli::cli_warn("Both {.code ...} and {.code rows} provided; {.code ...} will be used.")
     }
-    rows <- ggplot2::vars(...)
+    rows <- ggplot2::vars(!!!facet_quos)
   }
-  plot@gg <- plot@gg +
-    ggplot2::facet_grid(
-      rows = rows,
-      cols = cols,
-      scales = scales,
-      space = space
-    )
+
+  args <- c(
+    list(rows = rows, cols = cols, scales = scales, space = space),
+    passthrough
+  )
+  plot@gg <- plot@gg + do.call(ggplot2::facet_grid, args)
   plot
 }

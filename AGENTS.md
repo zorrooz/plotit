@@ -220,10 +220,10 @@ trans_legal <- list(
 
 | 函数 | 底层 | 关键参数 |
 |---|---|---|
-| `split_wrap` | `facet_wrap` | `...`（分面变量）, `ncol`, `nrow`, `scales` |
-| `split_grid` | `facet_grid` | `rows`, `cols`（需 `ggplot2::vars()` 包裹）, `scales`, `space` |
+| `split_wrap` | `facet_wrap` | `...`（无名参数=分面变量；命名参数透传如 `labeller`, `dir`）, `ncol`, `nrow`, `scales` |
+| `split_grid` | `facet_grid` | `...`（无名参数=`rows`简写；命名参数透传如 `labeller`, `switch`）, `rows`, `cols`, `scales`, `space` |
 
-`split_grid` 的 `...` 可作为 `rows` 的简写（单变量）。同时使用 `...` 和 `rows` 时以 `...` 为准并报警告。
+`split_grid` 的 `...` 无名参数可作为 `rows` 的简写（单变量）。同时使用 `...` 和 `rows` 时以 `...` 为准并报警告。命名参数（如 `labeller`）透传给底层 `facet_wrap()`/`facet_grid()`。
 
 #### 3.3.7 `label_*` — 文本标签
 

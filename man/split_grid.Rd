@@ -16,8 +16,9 @@ split_grid(
 \arguments{
 \item{plot}{A plotit object.}
 
-\item{...}{Variables passed to \code{ggplot2::vars()} for the rows.
-Use \code{rows} and \code{cols} for explicit control.}
+\item{...}{Unnamed arguments are shorthand for \code{rows} (e.g. \code{Species}
+becomes \code{rows = vars(Species)}). Named arguments (\code{labeller},
+\code{switch}, ...) are passed through to \code{\link[ggplot2:facet_grid]{ggplot2::facet_grid()}}.}
 
 \item{rows, cols}{Variables to facet by, wrapped in \code{ggplot2::vars()}.}
 

@@ -82,3 +82,19 @@ test_that("split_grid scales and space params", {
     )
   expect_s3_class(p, "plotit::plotit")
 })
+
+# ---- passthrough ----
+test_that("split_wrap passes named arguments through to facet_wrap", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |>
+    split_wrap(Species, ncol = 2, labeller = "label_both")
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("split_grid passes named arguments through to facet_grid", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
+    mark_point() |>
+    split_grid(rows = ggplot2::vars(vs), cols = ggplot2::vars(am),
+               labeller = "label_both")
+  expect_s3_class(p, "plotit::plotit")
+})
