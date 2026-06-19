@@ -195,6 +195,36 @@ test_that("project_polar clip=\"off\" works", {
   expect_s3_class(p, "plotit::plotit")
 })
 
+test_that("project_parallel clears default_color when group provides colour", {
+  p <- plotit(iris, encode(), default_color = "black") |>
+    mark_point() |>
+    project_parallel(columns = c("Sepal.Width", "Sepal.Length"),
+                     group = "Species")
+  expect_null(p@meta@default_color)
+  expect_null(p@gg$mapping$colour)
+})
+
+test_that("project_parallel errors on empty columns vector", {
+  p <- plotit(iris, encode())
+  expect_error(
+    project_parallel(p, columns = character(0)),
+    "at least one column"
+  )
+})
+
+test_that("project_cartesian multi-mode warning names correct active mode", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg)) |> mark_point()
+  expect_warning(
+    project_cartesian(p, fixed = 1, trans = "log10"),
+    "Only .*fixed.* will be used"
+  )
+  # flip wins when set
+  expect_warning(
+    project_cartesian(p, flip = TRUE, fixed = 1),
+    "Only .*flip.* will be used"
+  )
+})
+
 test_that("project_radial custom r_axis_inside and inner_radius", {
   skip_if(utils::packageVersion("ggplot2") < "3.5.0")
   p <- plotit(mtcars, encode(x = factor(cyl))) |>

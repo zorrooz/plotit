@@ -28,7 +28,8 @@ Order matters: the first column is the leftmost axis.}
 
 \item{alpha, size}{Passed to \code{geom_line()} / \code{geom_point()}.}
 
-\item{clip}{Should drawing be clipped? \code{"on"} or \code{"off"}.}
+\item{clip}{Currently unused (parallel coordinates do not apply a
+coordinate system). Accepted for signature consistency.}
 
 \item{...}{Passed to \code{geom_line()}.}
 }

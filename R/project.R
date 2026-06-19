@@ -43,9 +43,10 @@ S7::method(project_cartesian, plotit_class) <- function(
 ) {
   modes <- sum(flip, !is.null(fixed), !is.null(trans))
   if (modes > 1) {
+    active <- if (flip) "flip" else if (!is.null(fixed)) "fixed" else "trans"
     cli::cli_warn(c(
       "Multiple coordinate modes set: {.arg flip}={flip}, {.arg fixed}={fixed}, {.arg trans}={trans}.",
-      "i" = "Only {.arg flip} will be used."
+      "i" = "Only {.arg {active}} will be used."
     ))
   }
   if (flip) {
@@ -129,7 +130,8 @@ S7::method(project_polar, plotit_class) <- function(
 #' @param scale `"std"` (default): min-max normalise each column to [0,1].
 #'   `"global"`: use raw values. `"none"`: no scaling.
 #' @param alpha,size Passed to `geom_line()` / `geom_point()`.
-#' @param clip Should drawing be clipped? `"on"` or `"off"`.
+#' @param clip Currently unused (parallel coordinates do not apply a
+#'   coordinate system). Accepted for signature consistency.
 #' @param ... Passed to `geom_line()`.
 #' @return Modified plotit object.
 #' @export
@@ -158,6 +160,10 @@ S7::method(project_parallel, plotit_class) <- function(
 
   if (is.null(data) || nrow(data) == 0) {
     cli::cli_abort("No data found in plot. Call plotit() with a non-empty data frame.")
+  }
+
+  if (length(columns) == 0) {
+    cli::cli_abort("{.arg columns} must contain at least one column name.")
   }
 
   missing_cols <- setdiff(columns, names(data))
@@ -212,6 +218,13 @@ S7::method(project_parallel, plotit_class) <- function(
     aes_args$colour <- as.name(group)
   }
   pc_mapping <- do.call(ggplot2::aes, aes_args)
+
+  # Clear default_color if group introduces a colour mapping (§7 principle 7)
+  if (!is.null(group) && !is.null(plot@meta@default_color)) {
+    plot@gg$mapping$colour <- NULL
+    plot@gg <- plot@gg + ggplot2::guides(colour = ggplot2::waiver())
+    plot@meta@default_color <- NULL
+  }
 
   plot@gg <- plot@gg +
     ggplot2::geom_line(data = long, mapping = pc_mapping, alpha = alpha, ...) +
