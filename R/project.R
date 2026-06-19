@@ -242,3 +242,104 @@ S7::method(project_parallel, plotit_class) <- function(
 
   plot
 }
+
+# ---- project_map ----
+
+#' Map coordinate system
+#'
+#' Applies a geographic projection. Uses `ggplot2::coord_sf()` by default
+#' (for simple features), or `ggplot2::coord_map()` when a `projection`
+#' string is provided (requires \pkg{mapproj}).
+#'
+#' @param plot A plotit object.
+#' @param projection Map projection name (e.g. `"mercator"`, `"orthographic"`).
+#'   `NULL` uses the default `coord_sf()` projection.
+#' @param xlim,ylim Longitude/latitude limits.
+#' @param clip Should drawing be clipped? `"on"` or `"off"`.
+#' @param ... Passed to `coord_sf()` or `coord_map()`.
+#' @return Modified plotit object.
+#' @export
+project_map <- S7::new_generic(
+  "project_map",
+  "plot",
+  function(plot, projection = NULL, xlim = NULL, ylim = NULL,
+           clip = "on", ...) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(project_map, plotit_class) <- function(
+  plot,
+  projection = NULL,
+  xlim = NULL,
+  ylim = NULL,
+  clip = "on",
+  ...
+) {
+  if (!is.null(projection)) {
+    if (!requireNamespace("mapproj", quietly = TRUE)) {
+      cli::cli_abort("Map projections require the {.pkg mapproj} package.")
+    }
+    plot@gg <- plot@gg +
+      ggplot2::coord_map(projection = projection, xlim = xlim, ylim = ylim,
+                         clip = clip, ...)
+  } else {
+    plot@gg <- plot@gg +
+      ggplot2::coord_sf(xlim = xlim, ylim = ylim, clip = clip, ...)
+  }
+  plot
+}
+
+# ---- project_radial ----
+
+#' Radial coordinate system
+#'
+#' A radial coordinate system where one axis is mapped to angle and
+#' another to radius. Available in ggplot2 >= 3.5.0. Useful for
+#' Coxcomb plots, radial bar charts, and spiral visualisations.
+#'
+#' @param plot A plotit object.
+#' @param theta Variable mapped to angle (`"x"` or `"y"`, default `"x"`).
+#' @param start Starting angle in radians (default 0 = 12 o'clock).
+#' @param direction `1` = clockwise, `-1` = anti-clockwise.
+#' @param r.axis.inside If `TRUE`, place the radial axis inside the plot.
+#' @param inner.radius Inner radius as a fraction of the panel (0–1).
+#' @param clip Should drawing be clipped? `"on"` or `"off"`.
+#' @param ... Passed to `coord_radial()`.
+#' @return Modified plotit object.
+#' @export
+project_radial <- S7::new_generic(
+  "project_radial",
+  "plot",
+  function(plot, theta = "x", start = 0, direction = 1,
+           r.axis.inside = FALSE, inner.radius = 0, clip = "on", ...) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(project_radial, plotit_class) <- function(
+  plot,
+  theta = "x",
+  start = 0,
+  direction = 1,
+  r.axis.inside = FALSE,
+  inner.radius = 0,
+  clip = "on",
+  ...
+) {
+  if (utils::packageVersion("ggplot2") < "3.5.0") {
+    cli::cli_abort(c(
+      "Radial coordinates require ggplot2 >= 3.5.0.",
+      "i" = "You have ggplot2 {utils::packageVersion('ggplot2')}."
+    ))
+  }
+  plot@gg <- plot@gg +
+    suppressWarnings(ggplot2::coord_radial(
+      theta = theta, start = start, direction = direction,
+      r.axis.inside = r.axis.inside, inner.radius = inner.radius,
+      clip = clip, ...
+    ))
+  plot
+}

@@ -21,7 +21,7 @@ project_parallel(
 Order matters: the first column is the leftmost axis.}
 
 \item{group}{Optional grouping variable for colouring lines
-(unquoted column name).}
+(character, column name).}
 
 \item{scale}{If \code{"std"} (default), each column is min-max normalised to
 \link{0, 1} so axes share a common scale.  If \code{"global"}, raw values are

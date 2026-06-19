@@ -121,3 +121,23 @@ test_that("project_parallel errors on missing column", {
     "not found"
   )
 })
+
+# ---- project_map ----
+test_that("project_map default coord_sf works", {
+  skip_if_not_installed("sf")
+  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  p <- plotit(nc, encode(fill = AREA)) |>
+    mark_point() |>
+    project_map()
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- project_radial ----
+test_that("project_radial basic no crash", {
+  skip_if(utils::packageVersion("ggplot2") < "3.5.0",
+          "coord_radial requires ggplot2 >= 3.5.0")
+  p <- plotit(mtcars, encode(x = factor(cyl))) |>
+    mark_bar() |>
+    project_radial()
+  expect_s3_class(p, "plotit::plotit")
+})

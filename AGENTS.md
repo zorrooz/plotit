@@ -218,8 +218,10 @@ trans_legal <- list(
 | `project_flip` | → `project_cartesian(flip=TRUE)` | `xlim`, `ylim`, `expand`, `clip`, `...` |
 | `project_polar` | `coord_polar` | `theta`, `start`, `direction`, `clip`, `...` |
 | `project_parallel` | 数据重塑 + `geom_line` / `geom_point` | `columns`, `group`, `scale`, `alpha`, `size`, `...` |
+| `project_map` | `coord_sf` / `coord_map` | `projection`, `xlim`, `ylim`, `clip`, `...` |
+| `project_radial` | `coord_radial`（ggplot2 ≥ 3.5.0） | `theta`, `start`, `direction`, `r.axis.inside`, `inner.radius`, `clip`, `...` |
 
-`project_parallel` 将选定列重塑为长格式，绘制平行坐标折线。支持按列标准化 (`scale="std"`)、全局尺度 (`"global"`) 或无缩放 (`"none"`)。
+`project_parallel` 将选定列重塑为长格式，绘制平行坐标折线。支持按列标准化 (`scale="std"`)、全局尺度 (`"global"`) 或无缩放 (`"none"`)。`project_map` 默认使用 `coord_sf()`；传入 `projection` 参数时切换到 `coord_map()`（需 `mapproj`）。`project_radial` 需要 ggplot2 ≥ 3.5.0。
 
 #### 3.3.6 `split_*` — 分面
 
