@@ -58,7 +58,7 @@ S7::method(project_cartesian, plotit_class) <- function(
       ggplot2::coord_fixed(ratio = fixed, xlim = xlim, ylim = ylim,
                            expand = expand, clip = clip, ...)
   } else if (!is.null(coord_trans)) {
-    trans_fun <- if (utils::packageVersion("ggplot2") >= "4.0") {
+    trans_fun <- if (utils::packageVersion("ggplot2") >= "3.5.0") {
       ggplot2::coord_transform
     } else {
       ggplot2::coord_trans
@@ -193,6 +193,7 @@ S7::method(project_parallel, plotit_class) <- function(
     v.names   = val_col,
     times     = columns,
     timevar   = var_col,
+    idvar     = id_col,
     direction = "long"
   )
   long[[var_col]] <- factor(long[[var_col]], levels = columns)
@@ -326,10 +327,10 @@ S7::method(project_radial, plotit_class) <- function(
     ))
   }
   plot@gg <- plot@gg +
-    suppressWarnings(ggplot2::coord_radial(
+    ggplot2::coord_radial(
       theta = theta, start = start, direction = direction,
       r.axis.inside = r_axis_inside, inner.radius = inner_radius,
       clip = clip, ...
-    ))
+    )
   plot
 }
