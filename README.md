@@ -44,18 +44,17 @@ pak::pak("zorrooz/plotit")
 Every plotit pipeline follows the same pattern:
 
 ```
-encode() → plotit() → mark_*() → scale_*() → label_*() → style() → export()
+data |> plotit(encode(...)) |> mark_*() |> scale_*() |> label_*() |> style() |> export()
 ```
 
 | Step | Function | Purpose |
 |------|----------|---------|
-| 1. Map | `encode()` | Declare aesthetic mappings (`x`, `y`, `colour`, `fill`, …) |
-| 2. Create | `plotit()` | Initialize the plot object with data, defaults, and metadata |
-| 3. Layer | `mark_*()` | Add geometric layers (points, lines, bars, boxplots, …) |
-| 4. Scale | `scale_*()` | Control data-to-visual mapping (transformations, colour schemes, limits) |
-| 5. Label | `label_*()` | Set titles, axis labels, and legend titles |
-| 6. Theme | `style()` | Apply a ggplot2 theme and tweak details |
-| 7. Export | `export()` | Render to file (PDF, PNG, SVG, …) |
+| 1. Create | `plotit()` | Initialize the plot; pass aesthetic mappings via `encode()` |
+| 2. Layer | `mark_*()` | Add geometric layers (points, lines, bars, boxplots, …) |
+| 3. Scale | `scale_*()` | Control data-to-visual mapping (transformations, colour schemes, limits) |
+| 4. Label | `label_*()` | Set titles, axis labels, and legend titles |
+| 5. Theme | `style()` | Apply a ggplot2 theme and tweak details |
+| 6. Export | `export()` | Render to file (PDF, PNG, SVG, …) |
 
 ### Step-by-step
 
@@ -115,7 +114,7 @@ export(p, "fuel_economy.pdf", dpi = 300)
 | Layer | `mark_*` | Add geometric layers | `mark_point()`, `mark_line()`, `mark_bar()`, `mark_boxplot()` |
 | Scale | `scale_*` | Data → visual mapping | `scale_x(trans = "log")`, `scale_color(range = "viridis")` |
 | Label | `label_*` | Titles, axis & legend labels | `label_title("Title")`, `label_axis("X", aes = "x")` |
-| Project | `project_*` | Coordinate system | `project_flip()`, `project_polar()`, `project_cartesian()` |
+| Project | `project_*` | Coordinate system | `project_cartesian(flip=TRUE)`, `project_polar()`, `project_parallel()` |
 | Split | `split_*` | Facet layout | `split_wrap(Species)`, `split_grid(rows = vars(cyl))` |
 | Theme | `style()` | Apply ggplot2 theme | `style(theme_minimal(base_size = 14))` |
 | Export | `export()` | Render to file | `export("plot.pdf", dpi = 300)` |
@@ -218,7 +217,7 @@ Label functions override `scale_*(name = …)`: the last one set wins.
 
 ```r
 # Flip, zoom, polar
-project_flip(p)
+project_cartesian(p, flip = TRUE)
 project_cartesian(p, xlim = c(0, 100), expand = FALSE)
 project_polar(p, start = pi / 2)
 

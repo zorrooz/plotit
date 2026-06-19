@@ -36,18 +36,17 @@ pak::pak("zorrooz/plotit")
 每一步都返回 `plotit` 对象，天然支持管道 `|>`：
 
 ```
-encode() → plotit() → mark_*() → scale_*() → label_*() → style() → export()
+data |> plotit(encode(...)) |> mark_*() |> scale_*() |> label_*() |> style() |> export()
 ```
 
 | 步骤 | 函数 | 说明 |
 |------|------|------|
-| 1. 映射 | `encode()` | 声明美学映射（`x`、`y`、`colour`、`fill` 等） |
-| 2. 创建 | `plotit()` | 初始化图表对象，设置数据、尺寸、默认值 |
-| 3. 图层 | `mark_*()` | 添加几何图层（点、线、柱、箱线图等） |
-| 4. 标度 | `scale_*()` | 控制数据到视觉属性的映射（变换、配色、范围） |
-| 5. 标签 | `label_*()` | 设置标题、轴名、图例名 |
-| 6. 主题 | `style()` | 应用 ggplot2 主题并进行微调 |
-| 7. 导出 | `export()` | 渲染为文件（PDF、PNG、SVG 等） |
+| 1. 创建 | `plotit()` | 初始化图表对象；通过 `encode()` 传入美学映射 |
+| 2. 图层 | `mark_*()` | 添加几何图层（点、线、柱、箱线图等） |
+| 3. 标度 | `scale_*()` | 控制数据到视觉属性的映射（变换、配色、范围） |
+| 4. 标签 | `label_*()` | 设置标题、轴名、图例名 |
+| 5. 主题 | `style()` | 应用 ggplot2 主题并进行微调 |
+| 6. 导出 | `export()` | 渲染为文件（PDF、PNG、SVG 等） |
 
 ## 分步示例
 
@@ -107,7 +106,7 @@ export(p, "fuel_economy.pdf", dpi = 300)
 | 图层 | `mark_*` | 添加几何图层 | `mark_point()`, `mark_line()`, `mark_bar()`, `mark_boxplot()` |
 | 标度 | `scale_*` | 数据 → 视觉映射 | `scale_x(trans = "log")`, `scale_color(range = "viridis")` |
 | 标签 | `label_*` | 标题、轴名、图例名 | `label_title("标题")`, `label_axis("X轴", aes = "x")` |
-| 坐标系 | `project_*` | 坐标变换 | `project_flip()`, `project_polar()`, `project_cartesian()` |
+| 坐标系 | `project_*` | 坐标变换 | `project_cartesian(flip=TRUE)`, `project_polar()`, `project_parallel()` |
 | 分面 | `split_*` | 分面布局 | `split_wrap(Species)`, `split_grid(rows = vars(cyl))` |
 | 主题 | `style()` | 应用 ggplot2 主题 | `style(theme_minimal(base_size = 14))` |
 | 导出 | `export()` | 渲染为文件 | `export("plot.pdf", dpi = 300)` |
@@ -206,7 +205,7 @@ scale_y       (p, name, trans = "identity", limits, range, breaks, labels, ...)
 
 ```r
 # 翻转、缩放、极坐标
-project_flip(p)
+project_cartesian(p, flip = TRUE)
 project_cartesian(p, xlim = c(0, 100), expand = FALSE)
 project_polar(p, start = pi / 2)
 
