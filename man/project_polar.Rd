@@ -9,19 +9,20 @@ project_polar(plot, theta = "x", start = 0, direction = 1, clip = "on", ...)
 \arguments{
 \item{plot}{A plotit object.}
 
-\item{theta}{Variable to map to angle (\code{"x"} or \code{"y"}).}
+\item{theta}{Variable mapped to angle: \code{"x"} or \code{"y"}.}
 
-\item{start}{Starting angle in radians (default 0 = 12 o'clock).}
+\item{start}{Starting angle in radians (0 = 12 o'clock).}
 
 \item{direction}{\code{1} = clockwise, \code{-1} = anti-clockwise.}
 
 \item{clip}{Should drawing be clipped? \code{"on"} or \code{"off"}.}
 
-\item{...}{Passed to \code{ggplot2::coord_polar}.}
+\item{...}{Passed to \code{ggplot2::coord_polar()}.}
 }
 \value{
 Modified plotit object.
 }
 \description{
-Polar coordinate system
+Maps one axis to angle and the other to radius. Use for pie charts,
+Coxcomb plots, and circular visualisations.
 }

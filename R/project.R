@@ -6,26 +6,25 @@ NULL
 #' Cartesian coordinate system
 #'
 #' The primary coordinate function. Supports zooming, flipping, fixed aspect
-#' ratio, and coordinate transformations — all through parameters rather than
-#' separate functions.
+#' ratio, and coordinate transformations — all through parameters.
 #'
 #' @param plot A plotit object.
 #' @param xlim,ylim Axis limits (zoom). `NULL` = auto.
 #' @param expand If `TRUE`, add default expansion padding; `FALSE` or
 #'   `c(0, 0)` to remove.
-#' @param clip Should drawing be clipped to the panel? `"on"` or `"off"`.
 #' @param flip If `TRUE`, swap the x and y axes.
 #' @param fixed Aspect ratio (`y / x`). `NULL` = free; `1` = square.
 #' @param trans Transformer for coordinate system (e.g. `"log10"`, `"sqrt"`,
 #'   `scales::exp_trans()`). `NULL` = identity.
+#' @param clip Should drawing be clipped to the panel? `"on"` or `"off"`.
 #' @param ... Passed to the underlying `coord_*` function.
 #' @return Modified plotit object.
 #' @export
 project_cartesian <- S7::new_generic(
   "project_cartesian",
   "plot",
-  function(plot, xlim = NULL, ylim = NULL, expand = TRUE, clip = "on",
-           flip = FALSE, fixed = NULL, trans = NULL, ...) {
+  function(plot, xlim = NULL, ylim = NULL, expand = TRUE,
+           flip = FALSE, fixed = NULL, trans = NULL, clip = "on", ...) {
     S7::S7_dispatch()
   }
 )
@@ -36,10 +35,10 @@ S7::method(project_cartesian, plotit_class) <- function(
   xlim = NULL,
   ylim = NULL,
   expand = TRUE,
-  clip = "on",
   flip = FALSE,
   fixed = NULL,
   trans = NULL,
+  clip = "on",
   ...
 ) {
   if (flip) {
@@ -70,12 +69,15 @@ S7::method(project_cartesian, plotit_class) <- function(
 
 #' Polar coordinate system
 #'
+#' Maps one axis to angle and the other to radius. Use for pie charts,
+#' Coxcomb plots, and circular visualisations.
+#'
 #' @param plot A plotit object.
-#' @param theta Variable to map to angle (`"x"` or `"y"`).
-#' @param start Starting angle in radians (default 0 = 12 o'clock).
+#' @param theta Variable mapped to angle: `"x"` or `"y"`.
+#' @param start Starting angle in radians (0 = 12 o'clock).
 #' @param direction `1` = clockwise, `-1` = anti-clockwise.
 #' @param clip Should drawing be clipped? `"on"` or `"off"`.
-#' @param ... Passed to `ggplot2::coord_polar`.
+#' @param ... Passed to `ggplot2::coord_polar()`.
 #' @return Modified plotit object.
 #' @export
 project_polar <- S7::new_generic(
@@ -107,24 +109,20 @@ S7::method(project_polar, plotit_class) <- function(
 #'
 #' Reshapes the plot data so that the selected columns become parallel
 #' vertical axes. Each observation is drawn as a polyline connecting its
-#' values across all axes. Values are optionally min-max normalised per
-#' column so that axes share a common 0–1 scale.
+#' values across all axes. Values are optionally normalised per column
+#' to share a common 0–1 scale.
 #'
-#' Adds `geom_line()` and `geom_point()` layers to the plot.  Call
-#' `project_parallel()` *after* `mark_*` layers that should sit beneath
-#' the parallel-coordinate lines.
+#' Adds `geom_line()` and `geom_point()` layers. Call *after* any
+#' `mark_*` layers that should sit beneath the parallel-coordinate lines.
 #'
 #' @param plot A plotit object.
 #' @param columns Character vector of column names to use as parallel axes.
 #'   Order matters: the first column is the leftmost axis.
-#' @param group Optional grouping variable for colouring lines
-#'   (character, column name).
-#' @param scale If `"std"` (default), each column is min-max normalised to
-#'   [0, 1] so axes share a common scale.  If `"global"`, raw values are
-#'   used (useful when columns already share the same unit).  If `"none"`,
-#'   no scaling is applied.
-#' @param alpha Line transparency passed to `geom_line()`.
-#' @param size Point size passed to `geom_point()`.
+#' @param group Column name for colouring lines. `NULL` = no grouping.
+#' @param scale `"std"` (default): min-max normalise each column to [0,1].
+#'   `"global"`: use raw values. `"none"`: no scaling.
+#' @param alpha,size Passed to `geom_line()` / `geom_point()`.
+#' @param clip Should drawing be clipped? `"on"` or `"off"`.
 #' @param ... Passed to `geom_line()`.
 #' @return Modified plotit object.
 #' @export
@@ -132,7 +130,7 @@ project_parallel <- S7::new_generic(
   "project_parallel",
   "plot",
   function(plot, columns, group = NULL, scale = c("std", "global", "none"),
-           alpha = 0.5, size = 1, ...) {
+           alpha = 0.5, size = 1, clip = "on", ...) {
     S7::S7_dispatch()
   }
 )
@@ -145,6 +143,7 @@ S7::method(project_parallel, plotit_class) <- function(
   scale = c("std", "global", "none"),
   alpha = 0.5,
   size = 1,
+  clip = "on",
   ...
 ) {
   scale <- match.arg(scale)
@@ -159,7 +158,6 @@ S7::method(project_parallel, plotit_class) <- function(
     cli::cli_abort("Column(s) not found in data: {.val {missing_cols}}.")
   }
 
-  # Reshape selected columns to long format via base R reshape()
   id_col <- ".plotit_id"
   data[[id_col]] <- seq_len(nrow(data))
   keep_cols <- c(id_col, columns)
@@ -177,7 +175,6 @@ S7::method(project_parallel, plotit_class) <- function(
   )
   long[[".plotit_var"]] <- factor(long[[".plotit_var"]], levels = columns)
 
-  # Scale values per variable
   if (scale == "std") {
     for (v in columns) {
       rows <- long[[".plotit_var"]] == v
@@ -191,7 +188,6 @@ S7::method(project_parallel, plotit_class) <- function(
     }
   }
 
-  # Build mapping for the parallel-coordinate layers
   aes_args <- list(
     x     = as.name(".plotit_var"),
     y     = as.name(".plotit_val"),
@@ -219,8 +215,8 @@ S7::method(project_parallel, plotit_class) <- function(
 #'
 #' @param plot A plotit object.
 #' @param projection Map projection name (e.g. `"mercator"`, `"orthographic"`).
-#'   `NULL` uses the default `coord_sf()` projection.
-#' @param xlim,ylim Longitude/latitude limits.
+#'   `NULL` uses `coord_sf()` default.
+#' @param xlim,ylim Longitude/latitude limits. `NULL` = auto.
 #' @param clip Should drawing be clipped? `"on"` or `"off"`.
 #' @param ... Passed to `coord_sf()` or `coord_map()`.
 #' @return Modified plotit object.
@@ -261,16 +257,15 @@ S7::method(project_map, plotit_class) <- function(
 
 #' Radial coordinate system
 #'
-#' A radial coordinate system where one axis is mapped to angle and
-#' another to radius. Available in ggplot2 >= 3.5.0. Useful for
-#' Coxcomb plots, radial bar charts, and spiral visualisations.
+#' Maps one axis to angle and another to radius. Requires ggplot2 >= 3.5.0.
+#' Use for Coxcomb plots, radial bar charts, and spiral visualisations.
 #'
 #' @param plot A plotit object.
-#' @param theta Variable mapped to angle (`"x"` or `"y"`, default `"x"`).
-#' @param start Starting angle in radians (default 0 = 12 o'clock).
+#' @param theta Variable mapped to angle: `"x"` or `"y"`.
+#' @param start Starting angle in radians (0 = 12 o'clock).
 #' @param direction `1` = clockwise, `-1` = anti-clockwise.
-#' @param r.axis.inside If `TRUE`, place the radial axis inside the plot.
-#' @param inner.radius Inner radius as a fraction of the panel (0–1).
+#' @param r_axis_inside If `TRUE`, place the radial axis inside the panel.
+#' @param inner_radius Inner radius as a fraction of the panel (0–1).
 #' @param clip Should drawing be clipped? `"on"` or `"off"`.
 #' @param ... Passed to `coord_radial()`.
 #' @return Modified plotit object.
@@ -279,7 +274,7 @@ project_radial <- S7::new_generic(
   "project_radial",
   "plot",
   function(plot, theta = "x", start = 0, direction = 1,
-           r.axis.inside = FALSE, inner.radius = 0, clip = "on", ...) {
+           r_axis_inside = FALSE, inner_radius = 0, clip = "on", ...) {
     S7::S7_dispatch()
   }
 )
@@ -290,8 +285,8 @@ S7::method(project_radial, plotit_class) <- function(
   theta = "x",
   start = 0,
   direction = 1,
-  r.axis.inside = FALSE,
-  inner.radius = 0,
+  r_axis_inside = FALSE,
+  inner_radius = 0,
   clip = "on",
   ...
 ) {
@@ -304,7 +299,7 @@ S7::method(project_radial, plotit_class) <- function(
   plot@gg <- plot@gg +
     suppressWarnings(ggplot2::coord_radial(
       theta = theta, start = start, direction = direction,
-      r.axis.inside = r.axis.inside, inner.radius = inner.radius,
+      r.axis.inside = r_axis_inside, inner.radius = inner_radius,
       clip = clip, ...
     ))
   plot

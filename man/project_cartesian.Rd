@@ -9,10 +9,10 @@ project_cartesian(
   xlim = NULL,
   ylim = NULL,
   expand = TRUE,
-  clip = "on",
   flip = FALSE,
   fixed = NULL,
   trans = NULL,
+  clip = "on",
   ...
 )
 }
@@ -24,14 +24,14 @@ project_cartesian(
 \item{expand}{If \code{TRUE}, add default expansion padding; \code{FALSE} or
 \code{c(0, 0)} to remove.}
 
-\item{clip}{Should drawing be clipped to the panel? \code{"on"} or \code{"off"}.}
-
 \item{flip}{If \code{TRUE}, swap the x and y axes.}
 
 \item{fixed}{Aspect ratio (\code{y / x}). \code{NULL} = free; \code{1} = square.}
 
 \item{trans}{Transformer for coordinate system (e.g. \code{"log10"}, \code{"sqrt"},
 \code{scales::exp_trans()}). \code{NULL} = identity.}
+
+\item{clip}{Should drawing be clipped to the panel? \code{"on"} or \code{"off"}.}
 
 \item{...}{Passed to the underlying \verb{coord_*} function.}
 }
@@ -40,6 +40,5 @@ Modified plotit object.
 }
 \description{
 The primary coordinate function. Supports zooming, flipping, fixed aspect
-ratio, and coordinate transformations — all through parameters rather than
-separate functions.
+ratio, and coordinate transformations — all through parameters.
 }

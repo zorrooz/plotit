@@ -11,6 +11,7 @@ project_parallel(
   scale = c("std", "global", "none"),
   alpha = 0.5,
   size = 1,
+  clip = "on",
   ...
 )
 }
@@ -20,17 +21,14 @@ project_parallel(
 \item{columns}{Character vector of column names to use as parallel axes.
 Order matters: the first column is the leftmost axis.}
 
-\item{group}{Optional grouping variable for colouring lines
-(character, column name).}
+\item{group}{Column name for colouring lines. \code{NULL} = no grouping.}
 
-\item{scale}{If \code{"std"} (default), each column is min-max normalised to
-\link{0, 1} so axes share a common scale.  If \code{"global"}, raw values are
-used (useful when columns already share the same unit).  If \code{"none"},
-no scaling is applied.}
+\item{scale}{\code{"std"} (default): min-max normalise each column to \link{0,1}.
+\code{"global"}: use raw values. \code{"none"}: no scaling.}
 
-\item{alpha}{Line transparency passed to \code{geom_line()}.}
+\item{alpha, size}{Passed to \code{geom_line()} / \code{geom_point()}.}
 
-\item{size}{Point size passed to \code{geom_point()}.}
+\item{clip}{Should drawing be clipped? \code{"on"} or \code{"off"}.}
 
 \item{...}{Passed to \code{geom_line()}.}
 }
@@ -40,11 +38,10 @@ Modified plotit object.
 \description{
 Reshapes the plot data so that the selected columns become parallel
 vertical axes. Each observation is drawn as a polyline connecting its
-values across all axes. Values are optionally min-max normalised per
-column so that axes share a common 0–1 scale.
+values across all axes. Values are optionally normalised per column
+to share a common 0–1 scale.
 }
 \details{
-Adds \code{geom_line()} and \code{geom_point()} layers to the plot.  Call
-\code{project_parallel()} \emph{after} \verb{mark_*} layers that should sit beneath
-the parallel-coordinate lines.
+Adds \code{geom_line()} and \code{geom_point()} layers. Call \emph{after} any
+\verb{mark_*} layers that should sit beneath the parallel-coordinate lines.
 }

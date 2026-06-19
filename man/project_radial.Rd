@@ -9,8 +9,8 @@ project_radial(
   theta = "x",
   start = 0,
   direction = 1,
-  r.axis.inside = FALSE,
-  inner.radius = 0,
+  r_axis_inside = FALSE,
+  inner_radius = 0,
   clip = "on",
   ...
 )
@@ -18,15 +18,15 @@ project_radial(
 \arguments{
 \item{plot}{A plotit object.}
 
-\item{theta}{Variable mapped to angle (\code{"x"} or \code{"y"}, default \code{"x"}).}
+\item{theta}{Variable mapped to angle: \code{"x"} or \code{"y"}.}
 
-\item{start}{Starting angle in radians (default 0 = 12 o'clock).}
+\item{start}{Starting angle in radians (0 = 12 o'clock).}
 
 \item{direction}{\code{1} = clockwise, \code{-1} = anti-clockwise.}
 
-\item{r.axis.inside}{If \code{TRUE}, place the radial axis inside the plot.}
+\item{r_axis_inside}{If \code{TRUE}, place the radial axis inside the panel.}
 
-\item{inner.radius}{Inner radius as a fraction of the panel (0–1).}
+\item{inner_radius}{Inner radius as a fraction of the panel (0–1).}
 
 \item{clip}{Should drawing be clipped? \code{"on"} or \code{"off"}.}
 
@@ -36,7 +36,6 @@ project_radial(
 Modified plotit object.
 }
 \description{
-A radial coordinate system where one axis is mapped to angle and
-another to radius. Available in ggplot2 >= 3.5.0. Useful for
-Coxcomb plots, radial bar charts, and spiral visualisations.
+Maps one axis to angle and another to radius. Requires ggplot2 >= 3.5.0.
+Use for Coxcomb plots, radial bar charts, and spiral visualisations.
 }

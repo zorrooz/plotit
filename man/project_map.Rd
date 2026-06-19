@@ -17,9 +17,9 @@ project_map(
 \item{plot}{A plotit object.}
 
 \item{projection}{Map projection name (e.g. \code{"mercator"}, \code{"orthographic"}).
-\code{NULL} uses the default \code{coord_sf()} projection.}
+\code{NULL} uses \code{coord_sf()} default.}
 
-\item{xlim, ylim}{Longitude/latitude limits.}
+\item{xlim, ylim}{Longitude/latitude limits. \code{NULL} = auto.}
 
 \item{clip}{Should drawing be clipped? \code{"on"} or \code{"off"}.}
 
