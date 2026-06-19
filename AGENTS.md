@@ -220,6 +220,8 @@ trans_legal <- list(
 
 `project_parallel` 将选定列重塑为长格式，绘制平行坐标折线。支持按列标准化 (`scale="std"`)、全局尺度 (`"global"`) 或无缩放 (`"none"`)。`project_map` 默认使用 `coord_sf()`；传入 `projection` 参数时切换到 `coord_map()`（需 `mapproj`）。`project_radial` 需要 ggplot2 ≥ 3.5.0。
 
+> **注意**：`project_cartesian(trans=)` 与 `scale_*(trans=)` 同名但不同义。前者的 `trans` 是**坐标系变换**（如 `coord_trans(x="log10")`），改变的是坐标轴的物理缩放；后者的 `trans` 是**数据标度变换**（如对数刻度），改变的是数据到视觉属性的映射方式。两者互不替代——`scale_x(trans="log")` 修改的是 x 轴的标度，`project_cartesian(trans="log10")` 修改的是坐标系本身。
+
 #### 3.3.6 `split_*` — 分面
 
 | 函数 | 底层 | 关键参数 |
