@@ -212,7 +212,7 @@ trans_legal <- list(
 
 | 函数 | 底层 | 关键参数 |
 |---|---|---|
-| `project_cartesian` | `coord_cartesian` / `coord_flip` / `coord_fixed` / `coord_trans` | `xlim`, `ylim`, `expand`, `flip`, `fixed`, `trans`, `clip`, `...` |
+| `project_cartesian` | `coord_cartesian` / `coord_flip` / `coord_fixed` / `coord_trans` | `xlim`, `ylim`, `expand`, `flip`, `fixed`, `coord_trans`, `clip`, `...` |
 | `project_polar` | `coord_polar` | `theta`, `start`, `direction`, `clip`, `...` |
 | `project_parallel` | 数据重塑 + `geom_line` / `geom_point` | `columns`, `group`, `scale`, `alpha`, `size`, `clip`, `...` |
 | `project_map` | `coord_sf` / `coord_map` | `projection`, `xlim`, `ylim`, `clip`, `...` |
@@ -220,7 +220,7 @@ trans_legal <- list(
 
 `project_parallel` 将选定列重塑为长格式，绘制平行坐标折线。支持按列标准化 (`scale="std"`)、全局尺度 (`"global"`) 或无缩放 (`"none"`)。`project_map` 默认使用 `coord_sf()`；传入 `projection` 参数时切换到 `coord_map()`（需 `mapproj`）。`project_radial` 需要 ggplot2 ≥ 3.5.0。
 
-> **注意**：`project_cartesian(trans=)` 与 `scale_*(trans=)` 同名但不同义。前者的 `trans` 是**坐标系变换**（如 `coord_trans(x="log10")`），改变的是坐标轴的物理缩放；后者的 `trans` 是**数据标度变换**（如对数刻度），改变的是数据到视觉属性的映射方式。两者互不替代——`scale_x(trans="log")` 修改的是 x 轴的标度，`project_cartesian(trans="log10")` 修改的是坐标系本身。
+> **注意**：`project_cartesian(coord_trans=)` 与 `scale_*(trans=)` 含义不同。前者是**坐标系变换**（`coord_trans`），改变坐标轴物理缩放；后者是**数据标度变换**，改变数据到视觉属性的映射。`trans` 参数名已重命名为 `coord_trans` 以消除歧义——旧名 `trans` 触发弃用警告。
 
 #### 3.3.6 `split_*` — 分面
 
@@ -297,7 +297,7 @@ export(plot, filename, width = NULL, height = NULL, dpi = 300, device = NULL, ..
 
 - **空数据与缺失值**：空 data.frame 行为由 ggplot2 决定。`NA` 由 ggplot2 默认静默移除。
 - **S7 槽位**：`plotit_labels`（`title`/`subtitle`/`caption`/`x`/`y`/`legend`）、`plotit_metadata`（`autofit`/`width`/`height`/`dodge`/`unit`/`default_color`/`labels`）、`plotit`（`gg`/`meta`）。
-- **打印与设备**：`print()` 在交互模式下通过 `grDevices::dev.new(noRStudioGD = TRUE)` 打开独立设备窗口（而非 RStudio 内置 Plots 面板），以保证 `plotit()` 设定的面板尺寸物理呈现。`export()` 从文件名推断设备。
+- **打印与设备**：`print()` 在交互模式下通过 `grDevices::dev.new(noRStudioGD = TRUE)` 打开独立设备窗口以保证面板尺寸物理呈现。用户可设置 `options(plotit.device = "rstudio")` 强制使用 RStudio 内置 Plots 面板。`export()` 从文件名推断设备。
 
 ---
 

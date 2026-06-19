@@ -11,7 +11,7 @@ project_cartesian(
   expand = TRUE,
   flip = FALSE,
   fixed = NULL,
-  trans = NULL,
+  coord_trans = NULL,
   clip = "on",
   ...
 )
@@ -28,8 +28,8 @@ project_cartesian(
 
 \item{fixed}{Aspect ratio (\code{y / x}). \code{NULL} = free; \code{1} = square.}
 
-\item{trans}{Transformer for coordinate system (e.g. \code{"log10"}, \code{"sqrt"},
-\code{scales::exp_trans()}). \code{NULL} = identity.}
+\item{coord_trans}{Transformer for coordinate system (e.g. \code{"log10"},
+\code{"sqrt"}, \code{scales::exp_trans()}). \code{NULL} = identity.}
 
 \item{clip}{Should drawing be clipped to the panel? \code{"on"} or \code{"off"}.}
 

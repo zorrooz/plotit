@@ -33,7 +33,8 @@ S7::method(print, plotit_class) <- function(x, ...) {
       sum(gt$heights) + ggplot2::unit(1, "mm"), "inches",
       valueOnly = TRUE
     )
-    grDevices::dev.new(width = pw, height = ph, noRStudioGD = TRUE)
+    use_rstudio <- isTRUE(getOption("plotit.device") == "rstudio")
+    grDevices::dev.new(width = pw, height = ph, noRStudioGD = !use_rstudio)
   }
   print(x@gg)
   invisible(x)

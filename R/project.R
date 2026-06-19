@@ -14,8 +14,8 @@ NULL
 #'   `c(0, 0)` to remove.
 #' @param flip If `TRUE`, swap the x and y axes.
 #' @param fixed Aspect ratio (`y / x`). `NULL` = free; `1` = square.
-#' @param trans Transformer for coordinate system (e.g. `"log10"`, `"sqrt"`,
-#'   `scales::exp_trans()`). `NULL` = identity.
+#' @param coord_trans Transformer for coordinate system (e.g. `"log10"`,
+#'   `"sqrt"`, `scales::exp_trans()`). `NULL` = identity.
 #' @param clip Should drawing be clipped to the panel? `"on"` or `"off"`.
 #' @param ... Passed to the underlying `coord_*` function.
 #' @return Modified plotit object.
@@ -24,7 +24,8 @@ project_cartesian <- S7::new_generic(
   "project_cartesian",
   "plot",
   function(plot, xlim = NULL, ylim = NULL, expand = TRUE,
-           flip = FALSE, fixed = NULL, trans = NULL, clip = "on", ...) {
+           flip = FALSE, fixed = NULL, coord_trans = NULL,
+           clip = "on", ...) {
     S7::S7_dispatch()
   }
 )
@@ -37,15 +38,15 @@ S7::method(project_cartesian, plotit_class) <- function(
   expand = TRUE,
   flip = FALSE,
   fixed = NULL,
-  trans = NULL,
+  coord_trans = NULL,
   clip = "on",
   ...
 ) {
-  modes <- sum(flip, !is.null(fixed), !is.null(trans))
+  modes <- sum(flip, !is.null(fixed), !is.null(coord_trans))
   if (modes > 1) {
-    active <- if (flip) "flip" else if (!is.null(fixed)) "fixed" else "trans"
+    active <- if (flip) "flip" else if (!is.null(fixed)) "fixed" else "coord_trans"
     cli::cli_warn(c(
-      "Multiple coordinate modes set: {.arg flip}={flip}, {.arg fixed}={fixed}, {.arg trans}={trans}.",
+      "Multiple coordinate modes set: {.arg flip}={flip}, {.arg fixed}={fixed}, {.arg coord_trans}={coord_trans}.",
       "i" = "Only {.arg {active}} will be used."
     ))
   }
@@ -56,14 +57,14 @@ S7::method(project_cartesian, plotit_class) <- function(
     plot@gg <- plot@gg +
       ggplot2::coord_fixed(ratio = fixed, xlim = xlim, ylim = ylim,
                            expand = expand, clip = clip, ...)
-  } else if (!is.null(trans)) {
+  } else if (!is.null(coord_trans)) {
     trans_fun <- if (utils::packageVersion("ggplot2") >= "4.0") {
       ggplot2::coord_transform
     } else {
       ggplot2::coord_trans
     }
     plot@gg <- plot@gg +
-      trans_fun(x = trans, xlim = xlim, ylim = ylim,
+      trans_fun(x = coord_trans, xlim = xlim, ylim = ylim,
                 expand = expand, clip = clip, ...)
   } else {
     plot@gg <- plot@gg +

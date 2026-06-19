@@ -69,12 +69,14 @@ test_that("project_cartesian fixed=1 locks aspect ratio", {
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("project_cartesian trans applies coordinate transform", {
+test_that("project_cartesian coord_trans applies coordinate transform", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
     mark_point() |>
-    project_cartesian(trans = "log10")
+    project_cartesian(coord_trans = "log10")
   expect_s3_class(p, "plotit::plotit")
 })
+
+
 
 # ---- project_parallel ----
 test_that("project_parallel basic parallel coordinates", {
@@ -137,11 +139,11 @@ test_that("project_cartesian warns on multiple modes (flip + fixed)", {
   )
 })
 
-test_that("project_cartesian warns on multiple modes (flip + trans)", {
+test_that("project_cartesian warns on multiple modes (flip + coord_trans)", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
     mark_point()
   expect_warning(
-    project_cartesian(p, flip = TRUE, trans = "log10"),
+    project_cartesian(p, flip = TRUE, coord_trans = "log10"),
     "Multiple coordinate modes"
   )
 })
@@ -215,7 +217,7 @@ test_that("project_parallel errors on empty columns vector", {
 test_that("project_cartesian multi-mode warning names correct active mode", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |> mark_point()
   expect_warning(
-    project_cartesian(p, fixed = 1, trans = "log10"),
+    project_cartesian(p, fixed = 1, coord_trans = "log10"),
     "Only .*fixed.* will be used"
   )
   # flip wins when set
