@@ -262,8 +262,4 @@ export(p, "plot.png",  dpi = 150)
 export(p, "plot.svg")
 ```
 
-## Getting help
 
-- [Full API reference](https://zorrooz.github.io/plotit/reference/)
-- [Bug reports & feature requests](https://github.com/zorrooz/plotit/issues)
-- [Chinese documentation (中文文档)](README_ZH.md)
