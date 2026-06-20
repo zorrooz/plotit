@@ -76,23 +76,31 @@ S7::method(project_cartesian, plotit_class) <- function(
 
 # ---- project_polar ----
 
-#' Polar coordinate system
+#' Polar / radial coordinate system
 #'
-#' Maps one axis to angle and the other to radius. Use for pie charts,
-#' Coxcomb plots, and circular visualisations.
+#' Maps one axis to angle and the other to radius.  Default (full circle,
+#' zero inner radius) uses `coord_polar()`.  Set `inner_radius > 0` or
+#' `r_axis_inside = TRUE` to switch to the radial variant (requires
+#' ggplot2 >= 3.5.0).
 #'
 #' @param plot A plotit object.
 #' @param theta Variable mapped to angle: `"x"` or `"y"`.
 #' @param start Starting angle in radians (0 = 12 o'clock).
 #' @param direction `1` = clockwise, `-1` = anti-clockwise.
+#' @param inner_radius Inner radius as a fraction of the panel (0–1).
+#'   `0` = polar (full circle). `>0` = radial (hollow centre, needs
+#'   ggplot2 >= 3.5.0).
+#' @param r_axis_inside If `TRUE`, place the radial axis inside the panel
+#'   (radial mode only).
 #' @param clip Should drawing be clipped? `"on"` or `"off"`.
-#' @param ... Passed to `ggplot2::coord_polar()`.
+#' @param ... Passed to the underlying `coord_polar()` or `coord_radial()`.
 #' @return Modified plotit object.
 #' @export
 project_polar <- S7::new_generic(
   "project_polar",
   "plot",
-  function(plot, theta = "x", start = 0, direction = 1, clip = "on", ...) {
+  function(plot, theta = "x", start = 0, direction = 1,
+           inner_radius = 0, r_axis_inside = FALSE, clip = "on", ...) {
     S7::S7_dispatch()
   }
 )
@@ -103,12 +111,35 @@ S7::method(project_polar, plotit_class) <- function(
   theta = "x",
   start = 0,
   direction = 1,
+  inner_radius = 0,
+  r_axis_inside = FALSE,
   clip = "on",
   ...
 ) {
+  use_radial <- inner_radius > 0 || isTRUE(r_axis_inside)
+  if (use_radial && utils::packageVersion("ggplot2") < "3.5.0") {
+    cli::cli_abort(c(
+      "Radial coordinates (inner_radius > 0 or r_axis_inside = TRUE) require ggplot2 >= 3.5.0.",
+      "i" = "You have ggplot2 {utils::packageVersion('ggplot2')}."
+    ))
+  }
+  if (use_radial) {
+    args <- list(
+      theta = theta, start = start,
+      r.axis.inside = r_axis_inside, inner.radius = inner_radius, clip = clip
+    )
+    if (utils::packageVersion("ggplot2") >= "4.0") {
+      if (direction == -1) args$reverse <- "theta"
+    } else {
+      args$direction <- direction
+    }
+    plot@gg <- plot@gg + do.call(ggplot2::coord_radial, c(args, list(...)))
+  } else {
+    plot@gg <- plot@gg +
+      ggplot2::coord_polar(theta = theta, start = start,
+                           direction = direction, clip = clip, ...)
+  }
   plot@gg <- plot@gg +
-    ggplot2::coord_polar(theta = theta, start = start,
-                         direction = direction, clip = clip, ...) +
     ggplot2::theme(axis.line = ggplot2::element_blank(),
                    axis.ticks = ggplot2::element_blank())
   plot
@@ -296,61 +327,4 @@ S7::method(project_map, plotit_class) <- function(
   plot
 }
 
-# ---- project_radial ----
 
-#' Radial coordinate system
-#'
-#' Maps one axis to angle and another to radius. Requires ggplot2 >= 3.5.0.
-#' Use for Coxcomb plots, radial bar charts, and spiral visualisations.
-#'
-#' @param plot A plotit object.
-#' @param theta Variable mapped to angle: `"x"` or `"y"`.
-#' @param start Starting angle in radians (0 = 12 o'clock).
-#' @param direction `1` = clockwise, `-1` = anti-clockwise.
-#' @param r_axis_inside If `TRUE`, place the radial axis inside the panel.
-#' @param inner_radius Inner radius as a fraction of the panel (0–1).
-#' @param clip Should drawing be clipped? `"on"` or `"off"`.
-#' @param ... Passed to `coord_radial()`.
-#' @return Modified plotit object.
-#' @export
-project_radial <- S7::new_generic(
-  "project_radial",
-  "plot",
-  function(plot, theta = "x", start = 0, direction = 1,
-           r_axis_inside = FALSE, inner_radius = 0, clip = "on", ...) {
-    S7::S7_dispatch()
-  }
-)
-
-#' @export
-S7::method(project_radial, plotit_class) <- function(
-  plot,
-  theta = "x",
-  start = 0,
-  direction = 1,
-  r_axis_inside = FALSE,
-  inner_radius = 0,
-  clip = "on",
-  ...
-) {
-  if (utils::packageVersion("ggplot2") < "3.5.0") {
-    cli::cli_abort(c(
-      "Radial coordinates require ggplot2 >= 3.5.0.",
-      "i" = "You have ggplot2 {utils::packageVersion('ggplot2')}."
-    ))
-  }
-  args <- list(
-    theta = theta, start = start,
-    r.axis.inside = r_axis_inside, inner.radius = inner_radius,
-    clip = clip
-  )
-  if (utils::packageVersion("ggplot2") >= "4.0") {
-    if (direction == -1) args$reverse <- "theta"
-  } else {
-    args$direction <- direction
-  }
-  plot@gg <- plot@gg + do.call(ggplot2::coord_radial, c(args, list(...))) +
-    ggplot2::theme(axis.line = ggplot2::element_blank(),
-                   axis.ticks = ggplot2::element_blank())
-  plot
-}

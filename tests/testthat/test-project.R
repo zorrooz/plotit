@@ -119,13 +119,27 @@ test_that("project_map default coord_sf works", {
   expect_s3_class(p, "plotit::plotit")
 })
 
-# ---- project_radial ----
-test_that("project_radial basic no crash", {
-  skip_if(utils::packageVersion("ggplot2") < "3.5.0",
-          "coord_radial requires ggplot2 >= 3.5.0")
+# ---- project_polar radial mode ----
+test_that("project_polar basic no crash", {
   p <- plotit(mtcars, encode(x = factor(cyl))) |>
     mark_bar() |>
-    project_radial()
+    project_polar()
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("project_polar inner_radius > 0 switches to radial", {
+  skip_if(utils::packageVersion("ggplot2") < "3.5.0")
+  p <- plotit(mtcars, encode(x = factor(cyl))) |>
+    mark_bar() |>
+    project_polar(inner_radius = 0.3)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("project_polar r_axis_inside + inner_radius", {
+  skip_if(utils::packageVersion("ggplot2") < "3.5.0")
+  p <- plotit(mtcars, encode(x = factor(cyl))) |>
+    mark_bar() |>
+    project_polar(r_axis_inside = TRUE, inner_radius = 0.3)
   expect_s3_class(p, "plotit::plotit")
 })
 
@@ -244,10 +258,4 @@ test_that("project_cartesian multi-mode warning names correct active mode", {
   )
 })
 
-test_that("project_radial custom r_axis_inside and inner_radius", {
-  skip_if(utils::packageVersion("ggplot2") < "3.5.0")
-  p <- plotit(mtcars, encode(x = factor(cyl))) |>
-    mark_bar() |>
-    project_radial(r_axis_inside = TRUE, inner_radius = 0.3)
-  expect_s3_class(p, "plotit::plotit")
-})
+

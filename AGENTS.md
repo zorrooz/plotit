@@ -217,10 +217,9 @@ trans_legal <- list(
 | 函数 | 底层 | 关键参数 |
 |---|---|---|
 | `project_cartesian` | `coord_cartesian` / `coord_flip` / `coord_fixed` / `coord_trans` | `xlim`, `ylim`, `expand`, `flip`, `fixed`, `coord_trans`, `clip`, `...` |
-| `project_polar` | `coord_polar` | `theta`, `start`, `direction`, `clip`, `...` |
+| `project_polar` | `coord_polar` / `coord_radial` | `theta`, `start`, `direction`, `inner_radius`, `r_axis_inside`, `clip`, `...` |
 | `project_parallel` | 数据重塑 + `geom_line` / `geom_point` | `columns`, `group`, `scale`, `alpha`, `size`, `clip`, `...` |
 | `project_map` | `coord_sf` / `coord_map` | `projection`, `xlim`, `ylim`, `clip`, `...` |
-| `project_radial` | `coord_radial`（ggplot2 ≥ 3.5.0） | `theta`, `start`, `direction`, `r_axis_inside`, `inner_radius`, `clip`, `...` |
 
 `project_parallel` 将选定列重塑为长格式，绘制平行坐标折线。支持按列标准化 (`scale="std"`)、全局尺度 (`"global"`，当前实现与 `"none"` 相同——使用原始值) 或无缩放 (`"none"`)。`project_map` 默认使用 `coord_sf()`；传入 `projection` 参数时切换到 `coord_map()`（需 `mapproj`）。`project_radial` 需要 ggplot2 ≥ 3.5.0。
 

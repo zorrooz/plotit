@@ -2,9 +2,18 @@
 % Please edit documentation in R/project.R
 \name{project_polar}
 \alias{project_polar}
-\title{Polar coordinate system}
+\title{Polar / radial coordinate system}
 \usage{
-project_polar(plot, theta = "x", start = 0, direction = 1, clip = "on", ...)
+project_polar(
+  plot,
+  theta = "x",
+  start = 0,
+  direction = 1,
+  inner_radius = 0,
+  r_axis_inside = FALSE,
+  clip = "on",
+  ...
+)
 }
 \arguments{
 \item{plot}{A plotit object.}
@@ -15,14 +24,23 @@ project_polar(plot, theta = "x", start = 0, direction = 1, clip = "on", ...)
 
 \item{direction}{\code{1} = clockwise, \code{-1} = anti-clockwise.}
 
+\item{inner_radius}{Inner radius as a fraction of the panel (0–1).
+\code{0} = polar (full circle). \verb{>0} = radial (hollow centre, needs
+ggplot2 >= 3.5.0).}
+
+\item{r_axis_inside}{If \code{TRUE}, place the radial axis inside the panel
+(radial mode only).}
+
 \item{clip}{Should drawing be clipped? \code{"on"} or \code{"off"}.}
 
-\item{...}{Passed to \code{ggplot2::coord_polar()}.}
+\item{...}{Passed to the underlying \code{coord_polar()} or \code{coord_radial()}.}
 }
 \value{
 Modified plotit object.
 }
 \description{
-Maps one axis to angle and the other to radius. Use for pie charts,
-Coxcomb plots, and circular visualisations.
+Maps one axis to angle and the other to radius.  Default (full circle,
+zero inner radius) uses \code{coord_polar()}.  Set \code{inner_radius > 0} or
+\code{r_axis_inside = TRUE} to switch to the radial variant (requires
+ggplot2 >= 3.5.0).
 }
