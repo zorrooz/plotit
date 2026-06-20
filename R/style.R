@@ -19,8 +19,6 @@ NULL
     panel.grid.major = ggplot2::element_line(
       colour = "grey92", linewidth = 0.3
     ),
-    axis.line = ggplot2::element_line(colour = "grey50", linewidth = 0.3),
-    axis.ticks = ggplot2::element_line(colour = "grey50", linewidth = 0.3),
     legend.position = "right",
     plot.title = ggplot2::element_text(face = "bold", hjust = 0),
     plot.subtitle = ggplot2::element_text(hjust = 0),
