@@ -23,7 +23,9 @@ S7::method(print, plotit_class) <- function(x, ...) {
     attr(x@meta, "plotit_theme_managed") <- TRUE
   }
 
-  if (interactive() && !is.null(x@meta@width) && !is.null(x@meta@height)) {
+  dev_opt <- getOption("plotit.device", "default")
+  if (interactive() && !is.null(x@meta@width) && !is.null(x@meta@height) &&
+      !is.null(dev_opt)) {
     gt <- patchwork::patchworkGrob(x@gg)
     pw <- grid::convertWidth(
       sum(gt$widths) + ggplot2::unit(1, "mm"), "inches",
@@ -33,7 +35,7 @@ S7::method(print, plotit_class) <- function(x, ...) {
       sum(gt$heights) + ggplot2::unit(1, "mm"), "inches",
       valueOnly = TRUE
     )
-    use_rstudio <- isTRUE(getOption("plotit.device") == "rstudio")
+    use_rstudio <- isTRUE(dev_opt == "rstudio")
     grDevices::dev.new(width = pw, height = ph, noRStudioGD = !use_rstudio)
   }
   print(x@gg)

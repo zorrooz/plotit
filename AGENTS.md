@@ -7,7 +7,7 @@
 - **简化语法**：动词前缀命名（`mark_*`、`scale_*`、`project_*` 等），支持管道。
 - **默认美观**：预设主题、配色与尺寸，开箱即出版/报告可用。
 - **一致性**：统一的 API 风格、参数命名和错误处理策略。
-- **可扩展性**：完全基于 ggplot2 构造，通过 `...` 透传底层能力，不作过度封装。
+- **可扩展性**：基于 ggplot2 构造，通过 `...` 透传底层能力，不作过度封装。当前面板尺寸固定依赖 patchwork（已知耦合，1.0 前移除）。
 
 ### 1.2 元数据集中管理
 
@@ -61,7 +61,7 @@
 
 ## 2. 技术选型
 
-- **面向对象**：**S7** 包。核心类：`plotit_labels`（文本字段）、`plotit_metadata`（配置项）、`plotit`（持有 `gg` + `meta`）。
+- **面向对象**：**S7** 包。核心类：`plotit_labels`（文本字段）、`plotit_metadata`（配置项）、`plotit`（持有 `gg` + `meta`）。S7 作为较新的 OOP 系统，若未来发生不兼容变更，项目将锁定版本或评估迁移至 S3/R6。
 - **核心依赖**：ggplot2、S7、cli、patchwork。`ggrastr` 为可选增强依赖（图层栅格化）。
 - **未来扩展**（按需引入）：ggrepel、ggbeeswarm、treemapify、ggsankey、sf。
 
@@ -119,7 +119,7 @@ plotit(data, mapping = encode(), autofit = FALSE,
 |---|---|
 | `data` | 数据框（必填） |
 | `mapping` | `encode()` 产生的美学映射，包层做类检查 |
-| `autofit` | `TRUE` 时 `width`/`height` 置 `NULL` 交由设备自适应 |
+| `autofit` | `TRUE` 时 `width`/`height` 置 `NULL` 交由设备自适应（若同时提供尺寸值，静默忽略） |
 | `width`, `height` | 面板尺寸（非总尺寸）；`autofit=FALSE` 时两者均非 NULL 才有效 |
 | `size_unit` | `"in"` / `"cm"` / `"mm"`，始终验证合法性，不受 `autofit` 影响 |
 | `dodge` | 全局默认躲避宽度；`NULL` 时启发式判断（离散 X/Y → 设 dodge） |
@@ -195,7 +195,7 @@ trans_legal <- list(
 | alpha | `c(0.1, 1)` | — | 数值范围 |
 | shape | 默认形状集 | — | 形状编号 |
 | linetype | 默认线型集 | — | 线型名称 |
-| x/y | `NULL` | — | 数据值域（= `limits` + `expand=c(0,0)`） |
+| x/y | `NULL` | — | 数据值域（= `limits` + `expand=c(0,0)`，**会去除默认留白**） |
 
 **格式推断**：包层根据输入格式自动判断意图——单字符串→调色板方案，颜色向量→渐变，数值向量→值域，整数向量→形状编号，非颜色字符向量→线型。
 
@@ -206,7 +206,7 @@ trans_legal <- list(
 
 **`name` vs `label_*`**：`scale_*(name=)` 设置 scale 层默认名，`label_*` 设置最终显示名——后执行者胜。
 
-**default_color 覆盖**：添加任何 colour/fill scale 时自动取消 `plotit()` 注入的单色映射。
+**default_color 覆盖**：任何用户提供的 `colour`/`fill` 映射（无论是全局 `encode()`、图层级 `mark_*(mapping=...)`、还是 `project_parallel(group=...)`）都必须触发清除 `default_color` 注入的 `guides(colour="none")`。清除逻辑应统一调用单一内部函数（1.0 前待办）。
 
 #### 3.3.5 `project_*` — 坐标系
 
@@ -278,7 +278,9 @@ export(plot, filename, width = NULL, height = NULL, dpi = 300, device = NULL, ..
 尺寸优先级：显式传参 > meta 存储值 > autofit 自适应。
 
 - `autofit = FALSE` + 未传尺寸：通过 gtable 测量获得总尺寸（面板尺寸来自 meta，已在构造时由 `plot_layout()` 固定；轴/标签/图例由当前主题决定）。
-- `autofit = TRUE` + 未传尺寸：回退 `getOption("plotit.default_width", 7)` / `getOption("plotit.default_height", 5)`（单位始终为英寸，与 `size_unit` 无关——`size_unit` 仅在显式传参时用于换算）。
+- `autofit = TRUE` + 未传尺寸：回退 `getOption("plotit.default_width", 7)` / `getOption("plotit.default_height", 5)`（单位始终为英寸）。
+
+> **`size_unit` 与导出**：`export()` 显式传入的 `width`/`height` 遵循 `plotit()` 时设定的 `size_unit` 进行换算。未传入时，`autofit=FALSE` 使用 gtable 测量（英寸），`autofit=TRUE` 使用全局选项默认值（英寸）。
 
 单位统一为英寸后传给 `ggsave()`。
 
@@ -301,7 +303,7 @@ export(plot, filename, width = NULL, height = NULL, dpi = 300, device = NULL, ..
 
 - **空数据与缺失值**：空 data.frame 行为由 ggplot2 决定。`NA` 由 ggplot2 默认静默移除。
 - **S7 槽位**：`plotit_labels`（`title`/`subtitle`/`caption`/`x`/`y`/`legend`）、`plotit_metadata`（`autofit`/`width`/`height`/`dodge`/`unit`/`default_color`/`labels`）、`plotit`（`gg`/`meta`）。
-- **打印与设备**：`print()` 在交互模式下通过 `grDevices::dev.new(noRStudioGD = TRUE)` 打开独立设备窗口以保证面板尺寸物理呈现。用户可设置 `options(plotit.device = "rstudio")` 强制使用 RStudio 内置 Plots 面板。`export()` 从文件名推断设备。
+- **打印与设备**：`print()` 在交互模式下通过 `grDevices::dev.new(noRStudioGD = TRUE)` 打开独立设备窗口以保证面板尺寸物理呈现。用户可设置 `options(plotit.device = "rstudio")` 使用 RStudio 面板，或 `options(plotit.device = NULL)` 完全禁用自动设备打开。`export()` 从文件名推断设备。
 
 ---
 
@@ -366,7 +368,7 @@ tests/testthat/
 
 按函数族分文件。覆盖合法值及关键组合、非法输入的错误路径、管道链集成场景。
 
-**断言行为而非内部状态**：测试应验证用户可见结果（标签内容、图例是否显示），而非 `gg$labels` 的键存在性或 `scales$scales[[1]]$name` 的值。内部状态会因实现路径变更而合法改变，不应进入测试契约。
+**断言行为而非内部状态**：测试应验证用户可见结果（标签内容、图例是否显示），而非 `gg$labels` 的键存在性或 `scales$scales[[1]]$name` 的值。内部状态会因实现路径变更而合法改变，不应进入测试契约。当前测试套件仍以面向实现的断言为主，属于已知过渡状态——贡献者不应视其为稳定契约。
 
 > **1.0 前待办**：重写测试套件，改用 `ggplot2::ggplot_build(p@gg)` 提取最终渲染数据（面板范围、图例标签、颜色值）进行断言。当前大量测试直接检查 `@gg$theme`、`@gg$labels` 等内部槽位。
 
