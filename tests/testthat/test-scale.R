@@ -396,10 +396,10 @@ test_that("scale_x breaks + labels", {
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_x range as data value domain (no warning)", {
+test_that("scale_x range as normalized panel proportion (vega-aligned)", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
     mark_point()
-  expect_no_warning(p2 <- scale_x(p, range = c(0, 10)))
+  expect_no_warning(p2 <- scale_x(p, range = c(0.1, 0.9)))
   expect_s3_class(p2, "plotit::plotit")
 })
 
@@ -407,7 +407,7 @@ test_that("scale_x range+limits together warns", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
     mark_point()
   expect_warning(
-    scale_x(p, range = c(0, 10), limits = c(5, 8)),
+    scale_x(p, range = c(0.1, 0.9), limits = c(2, 5)),
     "range.*takes precedence"
   )
 })
@@ -456,10 +456,10 @@ test_that("scale_y trans=log2", {
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_y range as data value domain (no warning)", {
+test_that("scale_y range as normalized panel proportion (vega-aligned)", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
     mark_point()
-  expect_no_warning(p2 <- scale_y(p, range = c(0, 30)))
+  expect_no_warning(p2 <- scale_y(p, range = c(0.1, 0.9)))
   expect_s3_class(p2, "plotit::plotit")
 })
 
@@ -467,7 +467,7 @@ test_that("scale_y range+limits together warns", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
     mark_point()
   expect_warning(
-    scale_y(p, range = c(0, 30), limits = c(10, 25)),
+    scale_y(p, range = c(0.1, 0.9), limits = c(10, 30)),
     "range.*takes precedence"
   )
 })

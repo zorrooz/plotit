@@ -206,15 +206,30 @@ NULL
     discrete <- TRUE
   }
 
-  # range = data value domain (AGENTS.md §3.3.4)
-  if (!is.null(range)) {
+  # range = normalized panel proportion (Vega-aligned, AGENTS.md §3.3.4)
+  if (!is.null(range) && !discrete && !binned) {
     if (!is.null(limits)) {
       cli::cli_warn(c(
         "Both {.arg range} and {.arg limits} are set for the {.val {aes}} axis.",
         "i" = "{.arg range} takes precedence; {.arg limits} is ignored."
       ))
     }
-    limits <- range
+    # Compute expanded limits so the data occupies the specified panel proportion
+    data <- plot@gg$data
+    var <- plot@gg$mapping[[aes]]
+    if (!is.null(data) && !is.null(var)) {
+      vals <- rlang::eval_tidy(var, data)
+      rng <- range(vals, na.rm = TRUE, finite = TRUE)
+      dr <- rng[2] - rng[1]
+      if (dr > 0) {
+        p_left <- range[1]
+        p_right <- range[2]
+        d <- p_right - p_left
+        limits <- c(rng[1] - (p_left / d) * dr, rng[2] + ((1 - p_right) / d) * dr)
+      }
+    }
+  } else if (!is.null(range) && (discrete || binned)) {
+    cli::cli_warn("{.arg range} for discrete or binned x/y axes is not supported.")
   }
 
   scale_fun <- if (aes == "x") {

@@ -41,6 +41,12 @@ plotit <- function(
     cli::cli_abort("{.arg size_unit} must be one of {.val {valid_units}}.")
   }
 
+  if (autofit && (!missing(width) || !missing(height))) {
+    cli::cli_warn(
+      "{.arg autofit} is {.val TRUE}; {.arg width} and {.arg height} will be ignored."
+    )
+  }
+
   if (is.null(dodge)) {
     disc_x <- !is.null(mapping$x) && is_discrete(data, mapping$x)
     disc_y <- !is.null(mapping$y) && is_discrete(data, mapping$y)

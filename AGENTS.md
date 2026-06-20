@@ -7,7 +7,7 @@
 - **简化语法**：动词前缀命名（`mark_*`、`scale_*`、`project_*` 等），支持管道。
 - **默认美观**：预设主题、配色与尺寸，开箱即出版/报告可用。
 - **一致性**：统一的 API 风格、参数命名和错误处理策略。
-- **可扩展性**：基于 ggplot2 构造，通过 `...` 透传底层能力，不作过度封装。当前面板尺寸固定依赖 patchwork（已知耦合，1.0 前移除）。
+- **可扩展性**：基于 ggplot2 及其主流扩展包（patchwork、ggrastr、ggrepel 等）构造，通过 `...` 透传底层能力，不作过度封装。
 
 ### 1.2 元数据集中管理
 
@@ -119,7 +119,7 @@ plotit(data, mapping = encode(), autofit = FALSE,
 |---|---|
 | `data` | 数据框（必填） |
 | `mapping` | `encode()` 产生的美学映射，包层做类检查 |
-| `autofit` | `TRUE` 时 `width`/`height` 置 `NULL` 交由设备自适应（若同时提供尺寸值，静默忽略） |
+| `autofit` | `TRUE` 时 `width`/`height` 置 `NULL` 交由设备自适应（若同时提供尺寸值，警告并忽略） |
 | `width`, `height` | 面板尺寸（非总尺寸）；`autofit=FALSE` 时两者均非 NULL 才有效 |
 | `size_unit` | `"in"` / `"cm"` / `"mm"`，始终验证合法性，不受 `autofit` 影响 |
 | `dodge` | 全局默认躲避宽度；`NULL` 时启发式判断（离散 X/Y → 设 dodge） |
@@ -184,7 +184,7 @@ trans_legal <- list(
 
 **`range` 合法值**：
 
-> **决策**：保留 x/y 的 `range` 参数以维持 8 函数签名一致。对颜色/尺寸/形状，`range` 是真正的视觉输出值域；对 x/y，`range` 是语法糖——等价于同时设置 `limits` 和 `expand=c(0,0)`。面板留白应使用 `project_cartesian(expand=...)`。
+> **Vega 对齐**：所有 scale 的 `range` 语义统一为**视觉输出值域**——对标 Vega/D3 的 scale range 概念。对颜色，输出值是颜色向量；对坐标轴，输出值是面板占比（归一化比例 0–1）。这与 Vega 中 positional scale 的 `range: [0, width]` 设计一致。
 
 | aesthetic | `range = NULL` | `range = "name"` | `range = c(a, b)` |
 |---|---|---|---|
@@ -195,7 +195,9 @@ trans_legal <- list(
 | alpha | `c(0.1, 1)` | — | 数值范围 |
 | shape | 默认形状集 | — | 形状编号 |
 | linetype | 默认线型集 | — | 线型名称 |
-| x/y | `NULL` | — | 数据值域（= `limits` + `expand=c(0,0)`，**会去除默认留白**） |
+| x/y | `c(0, 1)`（铺满面板） | — | 归一化面板占比如 `c(0.1, 0.9)`（数据占据中间 80%） |
+
+**x/y 的 `range`**：表示数据在面板上的**视觉占比**，而非数据值。`range=c(0.1, 0.9)` 表示数据范围映射到面板的 10%–90% 区域。通过计算 `limits` + `expand=c(0,0)` 精确实现。与 `limits` 同时非 NULL 时后设置者胜，冲突时警告。
 
 **格式推断**：包层根据输入格式自动判断意图——单字符串→调色板方案，颜色向量→渐变，数值向量→值域，整数向量→形状编号，非颜色字符向量→线型。
 

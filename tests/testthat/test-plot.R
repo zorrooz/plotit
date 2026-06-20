@@ -111,8 +111,11 @@ test_that("plotit() autofit=FALSE requires width and height", {
 })
 
 test_that("plotit() autofit=TRUE ignores width/height but retains unit", {
-  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
-    autofit = TRUE, width = 100, height = 100
+  expect_warning(
+    p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
+      autofit = TRUE, width = 100, height = 100
+    ),
+    "ignored"
   )
   expect_null(p@meta@width)
   expect_null(p@meta@height)
