@@ -272,13 +272,12 @@ S7::method(project_parallel, plotit_class) <- function(
     S7::prop(plot@meta, "default_color") <- NULL
   }
 
+  # Parallel-coordinate-specific theme: show column names and ticks
+  # (each factor level is a visible axis), suppress the rectangular frame.
   plot@gg <- plot@gg +
     ggplot2::geom_line(data = long, mapping = pc_mapping, alpha = alpha, ...) +
     ggplot2::geom_point(data = long, mapping = pc_mapping, size = size) +
-    ggplot2::theme(axis.line = ggplot2::element_blank(),
-                   axis.ticks = ggplot2::element_blank(),
-                   axis.ticks.length = ggplot2::unit(0, "pt"),
-                   axis.text = ggplot2::element_blank())
+    ggplot2::theme(axis.line = ggplot2::element_blank())
 
   plot
 }
