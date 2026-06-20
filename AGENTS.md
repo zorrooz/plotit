@@ -222,7 +222,7 @@ trans_legal <- list(
 | `project_map` | `coord_sf` / `coord_map` | `projection`, `xlim`, `ylim`, `clip`, `...` |
 | `project_radial` | `coord_radial`（ggplot2 ≥ 3.5.0） | `theta`, `start`, `direction`, `r_axis_inside`, `inner_radius`, `clip`, `...` |
 
-`project_parallel` 将选定列重塑为长格式，绘制平行坐标折线。支持按列标准化 (`scale="std"`)、全局尺度 (`"global"`) 或无缩放 (`"none"`)。`project_map` 默认使用 `coord_sf()`；传入 `projection` 参数时切换到 `coord_map()`（需 `mapproj`）。`project_radial` 需要 ggplot2 ≥ 3.5.0。
+`project_parallel` 将选定列重塑为长格式，绘制平行坐标折线。支持按列标准化 (`scale="std"`)、全局尺度 (`"global"`，当前实现与 `"none"` 相同——使用原始值) 或无缩放 (`"none"`)。`project_map` 默认使用 `coord_sf()`；传入 `projection` 参数时切换到 `coord_map()`（需 `mapproj`）。`project_radial` 需要 ggplot2 ≥ 3.5.0。
 
 > **注意**：`project_cartesian(coord_trans=)` 与 `scale_*(trans=)` 含义不同。前者是**坐标系变换**（`coord_trans`），改变坐标轴物理缩放；后者是**数据标度变换**，改变数据到视觉属性的映射。`trans` 参数名已在 0.x 中重命名为 `coord_trans`——旧名不再接受，无弃用过渡（0.x 版本不保证 API 稳定）。
 

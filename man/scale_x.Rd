@@ -26,9 +26,8 @@ scale_x(
 
 \item{limits}{Axis limits as \code{c(min, max)}.}
 
-\item{range}{Data value domain as \code{c(min, max)}. Maps the given data values to the
-panel edges (sets \code{limits} and \code{expand = c(0, 0)}). For panel padding control,
-use \code{\link[=project_cartesian]{project_cartesian()}} with the \code{expand} argument.}
+\item{range}{Normalized panel proportion as \code{c(min, max)} in \link{0,1}.
+E.g. \code{c(0.1, 0.9)} maps data to the middle 80\% of the panel.}
 
 \item{breaks}{Axis tick positions.}
 

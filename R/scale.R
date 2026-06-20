@@ -537,9 +537,8 @@ S7::method(scale_linetype, plotit_class) <- function(plot, name = ggplot2::waive
 #'   `"identity"`, `"discrete"`, `"log"`, `"log10"`, `"log2"`,
 #'   `"sqrt"`, `"reverse"`, `"binned"`.
 #' @param limits Axis limits as `c(min, max)`.
-#' @param range Data value domain as `c(min, max)`. Maps the given data values to the
-#'   panel edges (sets `limits` and `expand = c(0, 0)`). For panel padding control,
-#'   use [project_cartesian()] with the `expand` argument.
+#' @param range Normalized panel proportion as `c(min, max)` in [0,1].
+#'   E.g. `c(0.1, 0.9)` maps data to the middle 80% of the panel.
 #' @param breaks Axis tick positions.
 #' @param labels Axis tick labels.
 #' @param ... Passed to the underlying ggplot2 scale function.
@@ -573,9 +572,8 @@ S7::method(scale_x, plotit_class) <- function(plot, name = ggplot2::waiver(),
 #'   `"identity"`, `"discrete"`, `"log"`, `"log10"`, `"log2"`,
 #'   `"sqrt"`, `"reverse"`, `"binned"`.
 #' @param limits Axis limits as `c(min, max)`.
-#' @param range Data value domain as `c(min, max)`. Maps the given data values to the
-#'   panel edges (sets `limits` and `expand = c(0, 0)`). For panel padding control,
-#'   use [project_cartesian()] with the `expand` argument.
+#' @param range Normalized panel proportion as `c(min, max)` in [0,1].
+#'   E.g. `c(0.1, 0.9)` maps data to the middle 80% of the panel.
 #' @param breaks Axis tick positions.
 #' @param labels Axis tick labels.
 #' @param ... Passed to the underlying ggplot2 scale function.
