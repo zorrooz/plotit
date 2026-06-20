@@ -143,8 +143,7 @@ S7::method(project_polar, plotit_class) <- function(
     ggplot2::theme(axis.line = ggplot2::element_blank(),
                    axis.ticks = ggplot2::element_blank(),
                    axis.ticks.length = ggplot2::unit(0, "pt"),
-                   axis.text = ggplot2::element_blank(),
-                   panel.grid = ggplot2::element_blank())
+                   axis.text = ggplot2::element_blank())
   plot
 }
 
@@ -279,8 +278,7 @@ S7::method(project_parallel, plotit_class) <- function(
     ggplot2::theme(axis.line = ggplot2::element_blank(),
                    axis.ticks = ggplot2::element_blank(),
                    axis.ticks.length = ggplot2::unit(0, "pt"),
-                   axis.text = ggplot2::element_blank(),
-                   panel.grid = ggplot2::element_blank())
+                   axis.text = ggplot2::element_blank())
 
   plot
 }

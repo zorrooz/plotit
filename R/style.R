@@ -19,6 +19,7 @@ NULL
     panel.grid.major = ggplot2::element_line(
       colour = "grey92", linewidth = 0.3
     ),
+    panel.grid = ggplot2::element_blank(),
     axis.line = ggplot2::element_line(colour = "grey50", linewidth = 0.3),
     axis.ticks = ggplot2::element_line(colour = "grey50", linewidth = 0.3),
     legend.position = "right",
