@@ -140,6 +140,8 @@ plotit(data, mapping = encode(), autofit = FALSE,
 
 #### 3.3.4 `scale_*` — 比例尺
 
+设计对标 **Vega/Vega-Lite** 的 scale 模型（`type`/`domain`/`range`/`scheme` 四要素）。`trans` 决定映射类型，`limits` 裁剪输入域，`range` 定义输出值域——三者构成完整的"数据→视觉"通道。`name`/`breaks`/`labels` 为显示层辅助，不属于 Vega scale 核心。positional `range` 语义对齐 Vega 的 `range: [0, width]`（归一化面板占比）。
+
 8 函数，8 参数，仅 `trans` 默认值不同：
 
 ```r
@@ -148,15 +150,15 @@ scale_<aes>(p, name = waiver(), trans = <默认>,
             breaks = NULL, labels = NULL, ...)
 ```
 
-| 参数 | 职责 |
+| 参数 | 对应 Vega | 职责 |
 |---|---|
-| `name` | scale 名称，`waiver()` = 沿用变量名 |
-| `trans` | 数据变换方式，不支持的组合主动报错 |
-| `limits` | 数据边界（裁剪输入范围） |
-| `range` | 视觉输出值域，x/y 为语法糖（见下） |
-| `breaks` | 刻度/图例键位置 |
-| `labels` | 刻度/图例键文字 |
-| `...` | 透传底层 ggplot2 scale 参数 |
+| `name` | — | 显示辅助：`waiver()` = 沿用变量名 |
+| `trans` | `type` | 映射算法：linear / log / band / ordinal / bin |
+| `limits` | `domain` | 数据边界，裁剪输入范围 |
+| `range` | `range` + `scheme` | 视觉输出值域 + 调色板方案名 |
+| `breaks` | — | 显示辅助：刻度/图例键位置 |
+| `labels` | — | 显示辅助：刻度/图例键文字 |
+| `...` | — | 透传底层 ggplot2 scale 参数 |
 
 **`trans` 合法值**：
 
