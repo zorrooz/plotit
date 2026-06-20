@@ -197,11 +197,11 @@ test_that("project_parallel errors on empty data", {
   )
 })
 
-test_that("project_parallel adds exactly two layers", {
+test_that("project_parallel adds data layers plus axis lines", {
   p <- plotit(iris, encode()) |>
     project_parallel(columns = c("Sepal.Width", "Sepal.Length"))
   n <- length(p@gg$layers)
-  expect_equal(n, 2)
+  expect_gt(n, 2)  # geom_line + geom_point + axis segments per column
 })
 
 test_that("project_polar clip=\"off\" works", {

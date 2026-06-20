@@ -272,12 +272,23 @@ S7::method(project_parallel, plotit_class) <- function(
     S7::prop(plot@meta, "default_color") <- NULL
   }
 
-  # Parallel-coordinate-specific theme: show column names and ticks
-  # (each factor level is a visible axis), suppress the rectangular frame.
+  # Axis lines: draw a vertical segment at each column position.
+  y_range <- range(long[[val_col]], na.rm = TRUE)
+  axis_lines <- lapply(columns, function(col_name) {
+    ggplot2::annotate("segment",
+      x = col_name, xend = col_name,
+      y = y_range[1], yend = y_range[2],
+      colour = "grey70", linewidth = 0.4
+    )
+  })
+
+  # Show column names and ticks; suppress rectangular frame.
   plot@gg <- plot@gg +
     ggplot2::geom_line(data = long, mapping = pc_mapping, alpha = alpha, ...) +
     ggplot2::geom_point(data = long, mapping = pc_mapping, size = size) +
-    ggplot2::theme(axis.line = ggplot2::element_blank())
+    axis_lines +
+    ggplot2::theme(axis.line = ggplot2::element_blank(),
+                   axis.ticks.length = ggplot2::unit(4, "pt"))
 
   plot
 }
