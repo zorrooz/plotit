@@ -272,23 +272,51 @@ S7::method(project_parallel, plotit_class) <- function(
     S7::prop(plot@meta, "default_color") <- NULL
   }
 
-  # Axis lines: draw a vertical segment at each column position.
-  y_range <- range(long[[val_col]], na.rm = TRUE)
-  axis_lines <- lapply(columns, function(col_name) {
-    ggplot2::annotate("segment",
-      x = col_name, xend = col_name,
-      y = y_range[1], yend = y_range[2],
-      colour = "grey70", linewidth = 0.4
-    )
-  })
+  # Build independent axes for each column: line, ticks, labels.
+  axis_parts <- list()
+  for (col_name in columns) {
+    col_pos <- match(col_name, columns)  # numeric position on factor x-axis
+    col_vals <- long[[val_col]][long[[var_col]] == col_name]
+    col_range <- range(col_vals, na.rm = TRUE)
+    # Axis line
+    axis_parts <- c(axis_parts, list(ggplot2::annotate("segment",
+      x = col_pos, xend = col_pos,
+      y = col_range[1], yend = col_range[2],
+      colour = "grey60", linewidth = 0.5
+    )))
+    # Tick marks: horizontal segments crossing the vertical axis.
+    tick_len <- 0.06
+    for (y_val in col_range) {
+      axis_parts <- c(axis_parts, list(ggplot2::annotate("segment",
+        x = col_pos - tick_len, xend = col_pos + tick_len,
+        y = y_val, yend = y_val,
+        colour = "grey60", linewidth = 1.5
+      )))
+      axis_parts <- c(axis_parts, list(ggplot2::annotate("text",
+        x = col_pos, y = y_val,
+        label = sprintf("%.1f", y_val),
+        hjust = -0.4, size = 2.5, colour = "grey40"
+      )))
+    }
+    # Column name label (top)
+    axis_parts <- c(axis_parts, list(ggplot2::annotate("text",
+      x = col_pos, y = col_range[2],
+      label = col_name,
+      vjust = -1, size = 3, fontface = "bold", colour = "grey30"
+    )))
+  }
 
-  # Show column names and ticks; suppress rectangular frame.
+  # Suppress all default axis chrome; keep only our custom axes + data.
   plot@gg <- plot@gg +
+    axis_parts +
     ggplot2::geom_line(data = long, mapping = pc_mapping, alpha = alpha, ...) +
     ggplot2::geom_point(data = long, mapping = pc_mapping, size = size) +
-    axis_lines +
-    ggplot2::theme(axis.line = ggplot2::element_blank(),
-                   axis.ticks.length = ggplot2::unit(4, "pt"))
+    ggplot2::theme(
+      axis.line = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank(),
+      axis.text = ggplot2::element_blank(),
+      axis.title = ggplot2::element_blank()
+    )
 
   plot
 }
