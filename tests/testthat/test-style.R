@@ -35,27 +35,33 @@ test_that("style_default multiple calls do not stack default theme", {
 })
 
 # ---- style ----
-test_that("style() accepts custom theme object", {
+test_that("style() with no args applies default theme", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
-    style(ggplot2::theme_minimal())
+    style()
   expect_s3_class(p, "plotit::plotit")
   expect_true(attr(p@meta, "plotit_theme_managed"))
 })
 
-test_that("style() supports ... for theme() tweaks", {
+test_that("style() supports ... for individual theme element overrides", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
-    style(ggplot2::theme_minimal(),
-      plot.title = ggplot2::element_text(face = "bold")
-    )
+    style(plot.title = ggplot2::element_text(face = "bold"))
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("style() accepts theme_bw", {
+test_that("style() accepts base_theme to switch base theme", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
-    style(ggplot2::theme_bw())
+    style(base_theme = ggplot2::theme_bw())
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("style() base_theme + overrides work together", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |>
+    style(base_theme = ggplot2::theme_bw(),
+          plot.title = ggplot2::element_text(face = "bold"))
   expect_s3_class(p, "plotit::plotit")
 })
 

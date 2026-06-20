@@ -270,8 +270,10 @@ trans_legal <- list(
 
 #### 3.3.8 `style()` — 主题
 
-- `style_default(plot, base_size, base_family)`：包级默认主题（基于 `theme_minimal`，背景透明，仅主网格线，无衬线字体，图例右侧）。`plotit()` 构造时自动调用。
-- `style(plot, theme, ...)`：应用任意 ggplot2 主题对象。`theme` 为必填参数。
+对齐 `ggplot2::theme()` 的调用方式。`style(p)` 应用默认主题，`style(p, plot.title = element_text(...))` 覆盖单个元素，`style(p, base_theme = theme_bw())` 切换基础主题。
+
+- `style(plot, ..., base_size, base_family, base_theme)`：先应用基础主题（默认 `theme_minimal` 定制版），再叠加 `ggplot2::theme(...)` 覆盖。
+- `style_default(plot, base_size, base_family)`：`style()` 的便捷别名，仅应用默认主题。
 
 #### 3.3.9 `export()` — 导出
 

@@ -29,8 +29,48 @@ NULL
   )
 }
 
+# ---- style ----
+#' Modify plot theme (aligns with ggplot2::theme)
+#'
+#' Applies plotit's default theme and overrides individual elements via `...`.
+#' Call `style(p)` without arguments to apply the default theme, or pass
+#' theme-element overrides like `style(p, plot.title = element_text(face="bold"))`.
+#' Use `base_theme` to switch to an entirely different base theme (e.g.,
+#' `style(p, base_theme = ggplot2::theme_bw())`).
+#'
+#' @param plot A plotit object.
+#' @param ... Theme element overrides, passed to `ggplot2::theme()`.
+#' @param base_size Base font size in pts (default 11).
+#' @param base_family Base font family (default `""` = system sans-serif).
+#' @param base_theme A complete ggplot2 theme object to use instead of the
+#'   default (e.g., `ggplot2::theme_bw()`). `NULL` = use plotit default.
+#' @return Modified plotit object.
+#' @export
+style <- S7::new_generic(
+  "style",
+  "plot",
+  function(plot, ..., base_size = NULL, base_family = NULL,
+           base_theme = NULL) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(style, plotit_class) <- function(
+  plot,
+  ...,
+  base_size = NULL,
+  base_family = NULL,
+  base_theme = NULL
+) {
+  thm <- base_theme %||% .theme_default(base_size, base_family)
+  plot@gg <- plot@gg + thm + ggplot2::theme(...)
+  attr(plot@meta, "plotit_theme_managed") <- TRUE
+  plot
+}
+
 # ---- style_default ----
-#' Apply the default plotit theme
+#' Apply the default plotit theme (convenience wrapper for style())
 #'
 #' @param plot A plotit object.
 #' @param base_size Base font size in pts (default 11).
@@ -51,34 +91,5 @@ S7::method(style_default, plotit_class) <- function(
   base_size = NULL,
   base_family = NULL
 ) {
-  plot@gg <- plot@gg + .theme_default(base_size, base_family)
-  attr(plot@meta, "plotit_theme_managed") <- TRUE
-  plot
-}
-
-# ---- style ----
-#' Apply an arbitrary ggplot2 theme
-#'
-#' @param plot A plotit object.
-#' @param theme A ggplot2 theme object (e.g., `theme_minimal()`).
-#' @param ... Additional arguments passed to `ggplot2::theme()`.
-#' @return Modified plotit object.
-#' @export
-style <- S7::new_generic(
-  "style",
-  "plot",
-  function(plot, theme, ...) {
-    S7::S7_dispatch()
-  }
-)
-
-#' @export
-S7::method(style, plotit_class) <- function(
-  plot,
-  theme,
-  ...
-) {
-  plot@gg <- plot@gg + theme + ggplot2::theme(...)
-  attr(plot@meta, "plotit_theme_managed") <- TRUE
-  plot
+  style(plot, base_size = base_size, base_family = base_family)
 }

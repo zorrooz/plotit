@@ -2,20 +2,29 @@
 % Please edit documentation in R/style.R
 \name{style}
 \alias{style}
-\title{Apply an arbitrary ggplot2 theme}
+\title{Modify plot theme (aligns with ggplot2::theme)}
 \usage{
-style(plot, theme, ...)
+style(plot, ..., base_size = NULL, base_family = NULL, base_theme = NULL)
 }
 \arguments{
 \item{plot}{A plotit object.}
 
-\item{theme}{A ggplot2 theme object (e.g., \code{theme_minimal()}).}
+\item{...}{Theme element overrides, passed to \code{ggplot2::theme()}.}
 
-\item{...}{Additional arguments passed to \code{ggplot2::theme()}.}
+\item{base_size}{Base font size in pts (default 11).}
+
+\item{base_family}{Base font family (default \code{""} = system sans-serif).}
+
+\item{base_theme}{A complete ggplot2 theme object to use instead of the
+default (e.g., \code{ggplot2::theme_bw()}). \code{NULL} = use plotit default.}
 }
 \value{
 Modified plotit object.
 }
 \description{
-Apply an arbitrary ggplot2 theme
+Applies plotit's default theme and overrides individual elements via \code{...}.
+Call \code{style(p)} without arguments to apply the default theme, or pass
+theme-element overrides like \code{style(p, plot.title = element_text(face="bold"))}.
+Use \code{base_theme} to switch to an entirely different base theme (e.g.,
+\code{style(p, base_theme = ggplot2::theme_bw())}).
 }
