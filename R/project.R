@@ -108,7 +108,9 @@ S7::method(project_polar, plotit_class) <- function(
 ) {
   plot@gg <- plot@gg +
     ggplot2::coord_polar(theta = theta, start = start,
-                         direction = direction, clip = clip, ...)
+                         direction = direction, clip = clip, ...) +
+    ggplot2::theme(axis.line = ggplot2::element_blank(),
+                   axis.ticks = ggplot2::element_blank())
   plot
 }
 
@@ -239,7 +241,9 @@ S7::method(project_parallel, plotit_class) <- function(
 
   plot@gg <- plot@gg +
     ggplot2::geom_line(data = long, mapping = pc_mapping, alpha = alpha, ...) +
-    ggplot2::geom_point(data = long, mapping = pc_mapping, size = size)
+    ggplot2::geom_point(data = long, mapping = pc_mapping, size = size) +
+    ggplot2::theme(axis.line = ggplot2::element_blank(),
+                   axis.ticks = ggplot2::element_blank())
 
   plot
 }
@@ -345,6 +349,8 @@ S7::method(project_radial, plotit_class) <- function(
   } else {
     args$direction <- direction
   }
-  plot@gg <- plot@gg + do.call(ggplot2::coord_radial, c(args, list(...)))
+  plot@gg <- plot@gg + do.call(ggplot2::coord_radial, c(args, list(...))) +
+    ggplot2::theme(axis.line = ggplot2::element_blank(),
+                   axis.ticks = ggplot2::element_blank())
   plot
 }
