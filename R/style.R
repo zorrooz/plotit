@@ -8,18 +8,19 @@ NULL
     base_size = base_size %||% 11,
     base_family = base_family %||% ""
   ) + ggplot2::theme(
+    # Clean white panel, no grid
+    panel.background = ggplot2::element_rect(fill = "white", colour = NA),
+    panel.grid = ggplot2::element_blank(),
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank(),
+    # Transparent outer elements
     plot.background = ggplot2::element_rect(fill = NA, colour = NA),
-    panel.background = ggplot2::element_rect(fill = NA, colour = NA),
     legend.background = ggplot2::element_rect(fill = NA, colour = NA),
     legend.key = ggplot2::element_rect(fill = NA, colour = NA),
     legend.box.background = ggplot2::element_rect(fill = NA, colour = NA),
     legend.box.spacing = ggplot2::unit(0, "cm"),
     strip.background = ggplot2::element_rect(fill = NA, colour = NA),
-    panel.grid.minor = ggplot2::element_blank(),
-    panel.grid.major = ggplot2::element_line(
-      colour = "grey92", linewidth = 0.3
-    ),
-    panel.grid = ggplot2::element_blank(),
+    # Axis lines and ticks (Cartesian)
     axis.line = ggplot2::element_line(colour = "grey50", linewidth = 0.3),
     axis.ticks = ggplot2::element_line(colour = "grey50", linewidth = 0.3),
     legend.position = "right",
