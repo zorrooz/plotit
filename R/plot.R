@@ -20,7 +20,7 @@ plotit <- function(
   height = 5,
   size_unit = "in",
   dodge = NULL,
-  default_color = "black"
+  default_color = "#4E79A7"
 ) {
   if (!inherits(mapping, "plotit_encode")) {
     cli::cli_abort(c(
@@ -56,12 +56,14 @@ plotit <- function(
   has_color <- "colour" %in% names(mapping)
   has_fill <- "fill" %in% names(mapping)
 
-  # Inject I(default_color) to suppress legend when no colour/fill mapping exists
+  # Inject I(default_color) to both colour and fill so that all geoms
+  # (points, bars, tiles, ...) pick up the same single-color appearance.
   use_default <- !is.null(default_color) && !has_color && !has_fill
   if (use_default) {
     mapping$colour <- I(default_color)
+    mapping$fill <- I(default_color)
     p <- ggplot2::ggplot(data, mapping) +
-      ggplot2::guides(colour = "none")
+      ggplot2::guides(colour = "none", fill = "none")
   } else {
     p <- ggplot2::ggplot(data, mapping)
   }
@@ -79,7 +81,7 @@ plotit <- function(
 
   p <- p + .theme_default()
 
-  # Stored on meta, not gg$theme — patchwork wrapping would shadow $theme
+  # Stored on meta, not gg$theme -- patchwork wrapping would shadow $theme
   attr(meta, "plotit_theme_managed") <- TRUE
 
   if (!autofit) {

@@ -40,5 +40,5 @@ Modified plotit object.
 }
 \description{
 The primary coordinate function. Supports zooming, flipping, fixed aspect
-ratio, and coordinate transformations — all through parameters.
+ratio, and coordinate transformations -- all through parameters.
 }

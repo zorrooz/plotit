@@ -27,7 +27,7 @@
 > 当前为 0.x，API 仍在演进。
 
 **核心契约**（跨主版本稳定，1.0 后修改需主版本号升级）：
-- 函数名：`plotit()`、`encode()`、`mark_*`、`scale_*`、`label_*`、`style()`、`export()`
+- 函数名：`plotit()`、`encode()`、`mark_*`、`scale_*`、`label_*`、`compose_*`、`style()`、`export()`
 - 返回类型：所有操作返回 `plotit`，支持管道
 - `plotit()` 的 `data` 和 `mapping` 参数
 
@@ -81,11 +81,12 @@
 | `split_*` | 分面布局 | `facet_*` |
 | `label_*` | 文本标签 | `labs()` |
 | `style()` | 主题设置 | `theme()` |
+| `compose_*` | 多图组合布局 | `patchwork`（`wrap_plots` / `inset_element` / `plot_layout` / `plot_annotation`） |
 | `export()` | 图表导出 | `ggsave()` |
 
 ### 3.2 `mark_*` 目录
 
-**已实现**（4 个）：
+**已实现**（6 个）：
 
 | 函数 | 对应 | 用途 |
 |---|---|---|
@@ -93,6 +94,8 @@
 | `mark_line` | `geom_line` | 折线 / 趋势 |
 | `mark_bar` | `geom_bar` / `geom_col` | 柱状图（有 y 映射→`geom_col`，无 y→`geom_bar`） |
 | `mark_boxplot` | `geom_boxplot` | 箱线图 |
+| `mark_histogram` | `geom_histogram` | 直方图 |
+| `mark_density` | `geom_density` | 密度曲线 |
 
 **规划中**（签名与行为在开发中确定）：
 
@@ -112,7 +115,7 @@
 ```r
 plotit(data, mapping = encode(), autofit = FALSE,
        width = 7, height = 5, size_unit = "in",
-       dodge = NULL, default_color = "black")
+       dodge = NULL, default_color = "#4E79A7")
 ```
 
 | 参数 | 说明 |
@@ -123,7 +126,7 @@ plotit(data, mapping = encode(), autofit = FALSE,
 | `width`, `height` | 面板尺寸（非总尺寸）；`autofit=FALSE` 时两者均非 NULL 才有效 |
 | `size_unit` | `"in"` / `"cm"` / `"mm"`，始终验证合法性，不受 `autofit` 影响 |
 | `dodge` | 全局默认躲避宽度；`NULL` 时启发式判断（离散 X/Y → 设 dodge） |
-| `default_color` | 无 `colour`/`fill` 映射时注入单色；添加任何 colour/fill scale 后自动失效 |
+| `default_color` | 无 `colour`/`fill` 映射时同时注入 `colour` 和 `fill`（默认 `"#4E79A7"` 蓝色）；添加任何 colour/fill scale 后自动失效 |
 
 **尺寸优先级链**：显式传参 > meta 存储 > autofit 自适应。
 
@@ -173,6 +176,15 @@ scale_<aes>(p, name = waiver(), trans = <默认>,
 | `"discrete"` | ✅ | ✅ | ✅ 默认 |
 | `"binned"` | ✅ | ✅ | ❌ |
 
+各函数默认 `trans`：
+
+| 函数 | 默认 `trans` | 含义 |
+|---|---|---|
+| `scale_x` / `scale_y` | `"identity"` | 连续线性 |
+| `scale_color` / `scale_fill` | `NULL` | 自动检测（离散→`"discrete"`，连续→`"identity"`） |
+| `scale_size` / `scale_alpha` | `NULL` | 同上 |
+| `scale_shape` / `scale_linetype` | `"discrete"` | 离散（连续无效） |
+
 不支持的组合给出 `cli::cli_abort` 定向错误。
 
 内部校验矩阵：
@@ -210,7 +222,7 @@ trans_legal <- list(
 
 **`name` vs `label_*`**：`scale_*(name=)` 设置 scale 层默认名，`label_*` 设置最终显示名——后执行者胜。
 
-**default_color 覆盖**：任何用户提供的 `colour`/`fill` 映射（无论是全局 `encode()`、图层级 `mark_*(mapping=...)`、还是 `project_parallel(group=...)`）都必须触发清除 `default_color` 注入的 `guides(colour="none")`。清除逻辑应统一调用单一内部函数（1.0 前待办）。
+**default_color 覆盖**：任何用户提供的 `colour`/`fill` 映射都必须触发清除 `default_color` 注入的 `mapping$colour`/`mapping$fill` 和 `guides(colour="none", fill="none")`。当前三处清除点（`._reset_default_color`、`._auto_reset_default_color`、`project_parallel`）均已对称处理 `colour`/`fill` 两侧，待统一收归为单一内部函数（1.0 前待办）。
 
 #### 3.3.5 `project_*` — 坐标系
 
@@ -221,7 +233,19 @@ trans_legal <- list(
 | `project_parallel` | 数据重塑 + `geom_line` / `geom_point` | `columns`, `group`, `scale`, `alpha`, `size`, `clip`, `...` |
 | `project_map` | `coord_sf` / `coord_map` | `projection`, `xlim`, `ylim`, `clip`, `...` |
 
-`project_parallel` 将选定列重塑为长格式，绘制平行坐标折线。支持按列标准化 (`scale="std"`)、全局尺度 (`"global"`，当前实现与 `"none"` 相同——使用原始值) 或无缩放 (`"none"`)。`project_map` 默认使用 `coord_sf()`；传入 `projection` 参数时切换到 `coord_map()`（需 `mapproj`）。`project_radial` 需要 ggplot2 ≥ 3.5.0。
+`project_parallel` 将选定列重塑为长格式，绘制平行坐标折线。架构参考 **Vega 平行坐标**的实现（`vega.github.io/vega/examples/parallel-coordinates/`）：Vega 为每列定义独立的 linear scale 并渲染真实原生 axis（`orient: "left"`），通过 ordinal scale 加 offset 将每列轴平移至对应 x 位置。plotit 等效实现采用三模式互斥设计：
+
+| 模式 | 归一化 | y 轴 | 每列轴 |
+|---|---|---|---|
+| `scale="std"` | 每列 min-max → [0,1] | 共享原生 `scale_y_continuous()` | 无（原生 y 轴提供刻度和标签） |
+| `scale="global"` | 全局 min-max → [0,1] | 共享原生 `scale_y_continuous()` | 无 |
+| `scale="none"` | 无 | 抑制原生 y 轴 | 每列手动渲染轴线（`geom_vline` + `axis.line.y`）、单向刻度（`geom_segment` + `axis.ticks.y`）、首尾列数值标签（`geom_text` + `axis.text.y`）、顶部列名标题（`geom_text` + `axis.title`） |
+
+横轴使用原生 `scale_x_discrete()` 显示列名标签，但通过 `theme(axis.line.x/axis.ticks.x = element_blank())` 关闭轴线与刻度。`std`/`global` 模式下刻度/标签由 ggplot2 guide 系统 100% 原生渲染；`none` 模式下的每列轴尽可能匹配 `axis.*` 主题属性以保持风格一致。`project_map` 默认使用 `coord_sf()`；传入 `projection` 参数时切换到 `coord_map()`（需 `mapproj`）。`project_polar` 的径向模式（`inner_radius > 0` 或 `r_axis_inside = TRUE`）需要 ggplot2 ≥ 3.5.0。
+
+> **`scale="none"` 的已知局限性**：此模式下每列轴由包层通过 `geom_segment`（轴线+刻度）和 `geom_text`（标签）手动绘制，而非使用 ggplot2 原生 guide 系统。轴线颜色/线宽/字体从当前主题的 `axis.*` 元素提取（`._parallel_theme_props`），但**不保证与原生轴在所有 ggplot2 版本下 100% 像素一致**。推荐优先使用 `scale="std"` 或 `scale="global"`，仅在需要保留原始量纲时使用 `scale="none"`。此限制源于 ggplot2 不原生支持单一面板上的多个独立 y 轴——在一个面板上渲染多套坐标轴的唯一方式就是手动绘制。
+
+> **注意**：`project_cartesian(coord_trans=)` 与 `scale_*(trans=)` 含义不同。前者是**坐标系变换**（`coord_trans`），改变坐标轴物理缩放；后者是**数据标度变换**，改变数据到视觉属性的映射。`trans` 参数名已在 0.x 中重命名为 `coord_trans`——旧名不再接受，无弃用过渡（0.x 版本不保证 API 稳定）。
 
 > **注意**：`project_cartesian(coord_trans=)` 与 `scale_*(trans=)` 含义不同。前者是**坐标系变换**（`coord_trans`），改变坐标轴物理缩放；后者是**数据标度变换**，改变数据到视觉属性的映射。`trans` 参数名已在 0.x 中重命名为 `coord_trans`——旧名不再接受，无弃用过渡（0.x 版本不保证 API 稳定）。
 
@@ -265,7 +289,7 @@ trans_legal <- list(
 
 **`label_legend` 的 `aes = NULL` 全局模式**：当不指定 `aes` 时影响所有已映射美学。若后续对单个 aes 调用 `label_legend(aes = "colour")`，后者覆盖全局设置（后执行者胜）。`meta$legend` 中 `"default"` 条目与具体 aes 条目共存但后者优先生效。
 
-> **待优化**：`default` 与具体 aes 的优先级目前散落在代码逻辑中。建议改为动态解析（渲染时检查是否存在具体键，若无则回退 `default`），而非静态存储叠加。
+> `default` 与具体 aes 的优先级由 `label_legend()` 方法统一处理：`aes=NULL` 时写入 `meta$legend[["default"]]` 并应用到当前所有已映射美学；后续对单个 aes 的调用会覆盖之（后执行者胜）。逻辑集中，无需额外抽象。
 
 #### 3.3.8 `style()` — 主题
 
@@ -299,8 +323,79 @@ export(plot, filename, width = NULL, height = NULL, dpi = 300, device = NULL, ..
 > 当前实现基于 patchwork gtable 测量。此为已知耦合点——patchwork 或 ggplot2 升级可能影响测量精度。替换方案允许，只要面板尺寸契约不被破坏。
 >
 > **1.0 前待办**：移除 patchwork 依赖，改用 `ggplot2::ggplot_build()` + `grid` 手动修改 gtable 面板尺寸。当前 patchwork 方案使 `@gg` 存储的是 `patchwork` 对象而非纯 `ggplot`，违背"完全基于 ggplot2 构造"的声明。
+>
+> **剥离路线图（设计文档，非实现）**：
+> 1. **单图面板尺寸**：`plotit()` 不再调用 `patchwork::plot_layout()`。改为在 `export()`/`print()` 时通过 `ggplot2::ggplot_build()` 获得 gtable，再使用 `grid::convertWidth` / `grid::convertHeight` 锁定面板为绝对单位。`@meta` 中的 `width`/`height`/`unit` 保持不变。
+> 2. **组合图布局**：`compose_*` 函数改用 `gridExtra::grid.arrange()` 或纯 `grid` 组装多个 gtable，替代 `patchwork::wrap_plots()`。每个子图的 gtable 通过 `ggplot_build()` 获得。组合后的总尺寸从各子图 gtable 求和得出。
+> 3. **影响评估**：`._reset_sizing()` 和 `._assemble_plots()` 将被移除；`compose_*` 的核心实现需要重写；`plotit()` 构造函数简化。
 
 
+
+#### 3.3.11 `compose_*` — 图形组合
+
+将多个 `plotit` 图表组装为多面板布局。与 `split_*`（一分多，数据层面）正交——`compose_*` 是"多合一"（图表层面），每个子图可有完全不同的数据、几何图层、坐标系和标度。
+
+##### API 签名
+
+```r
+compose_grid(..., ncol = NULL, nrow = NULL, byrow = TRUE,
+             widths = NULL, heights = NULL, guides = NULL,
+             axes = "keep", tag_levels = NULL)
+
+compose_inset(base, inset, left = 0, bottom = 0, right = 1, top = 1,
+              align_to = "panel", on_top = TRUE, ...)
+
+compose_marginal(main, top, right, widths = c(4, 1), heights = c(1, 4),
+                 guides = "collect")
+```
+
+##### 参数说明
+
+| 参数 | 适用函数 | 默认 | 说明 |
+|---|---|---|---|
+| `ncol` / `nrow` | `compose_grid` | `NULL` | 都 NULL → 默认 `ncol=1`（纵向堆叠）；仅设 `nrow=1` → 横向 |
+| `widths` / `heights` | `compose_grid`, `compose_marginal` | `NULL` | 面板比例，如 `c(3, 1)` 左宽右窄 |
+| `guides` | `compose_grid`, `compose_marginal` | `NULL` / `"collect"` | `"collect"` 合并图例，`"keep"` 独立，`NULL` 自动 |
+| `axes` | `compose_grid` | `"keep"` | `"collect"` 共享全部轴，`"collect_x"`/`"collect_y"` 单方向 |
+| `tag_levels` | `compose_grid` | `NULL` | `"A"`/`"a"`/`"1"`/`"i"` 或自定义字符向量 |
+| `left`/`bottom`/`right`/`top` | `compose_inset` | `0,0,1,1` | 嵌入位置 (npc 0–1) |
+| `align_to` | `compose_inset` | `"panel"` | `"panel"` 或 `"plot"` |
+| `on_top` | `compose_inset` | `TRUE` | 嵌入置于前景 |
+
+##### 返回类型与管道
+
+全部返回 `plotit_composite`（S7 类）。槽位：
+- `@gg` — 组装后的 patchwork ggplot（不含注释，注释惰性注入）
+- `@plots` — list of 子 `plotit` / `plotit_composite`
+- `@layout` — 布局参数 list
+- `@annotations` — list(`title`, `subtitle`, `caption`, `tag_levels`)
+
+以下现有函数通过 S7 多分派无缝衔接，管道不中断：
+- `label_title()` / `label_subtitle()` / `label_caption()` → 写入 `@annotations`，`print()`/`export()` 时通过 `patchwork::plot_annotation()` 一次性渲染（惰性，消除调用顺序依赖）
+- `style()` → `theme()` 应用到组装后的 patchwork
+- `export(p, filename, width, height, dpi, device, ...)` → gtable 测量 + `ggsave()`；不传 `width`/`height` 则自动测量
+- `print()` → 委托 RStudio Plots 窗格渲染
+
+**不支持的操作**：`mark_*` / `scale_*` / `project_*` / `split_*` 不接受 `plotit_composite`——先构建再组合。
+
+##### `compose_grid` 细节
+
+- 默认 `ncol=NULL, nrow=NULL` → `ncol=1`（纵向堆叠）。仅设 `nrow=1` 则横向并排，`ncol` 保持 NULL 由 patchwork 推断。
+- `axes` 封装 `patchwork::plot_layout(axes=)`，操作于组合层面。
+- `tag_levels` 存入 `@annotations`，惰性注入。
+- 嵌套：`compose_grid()` 接受 `plotit_composite`，组合可嵌套。
+- 单图：`compose_grid(p)` 合法，返回包含单图的 composite（便于打 tag）。
+
+##### `compose_inset` 细节
+
+- base 的 `@gg` 在组装前调用 `._reset_sizing()` 剥除固定面板尺寸，防止嵌入图裁切。
+- 返回 composite 接受 `label_*` / `style()` / `export()`。
+
+##### `compose_marginal` 细节
+
+- 布局：`wrap_plots(design="AB\nCD")` 扁平 2×2（顶部直方图 + 角落空白 / 主散点 + 右侧直方图）。
+- **共享坐标轴**：组装前对 `top_gg` 隐藏 X 轴文字/标题/刻度，对 `right_gg` 隐藏 Y 轴文字/标题/刻度（`+ theme(axis.text.* = element_blank(), ...)`）。组装后 X 轴只出现在主散点底部，Y 轴只出现在主散点左侧，轴线完全对齐。右侧直方图需用户调用 `project_cartesian(flip=TRUE)` 翻转以对齐 Y 轴。
+- 图例默认合并（`guides="collect"`），可传 `"keep"` 独立。
 
 ---
 
@@ -327,6 +422,7 @@ R/
 ├── project.R    # 所有 project_*
 ├── split.R      # 所有 split_*
 ├── label.R      # 所有 label_*
+├── compose.R    # compose_grid() + compose_inset() + composite 方法
 ├── style.R      # style() + 默认主题
 ├── output.R     # print() + export()
 
@@ -334,6 +430,7 @@ tests/testthat/
 ├── test-encode.R  test-plot.R    test-mark.R
 ├── test-scale.R   test-label.R   test-project.R
 ├── test-split.R   test-style.R   test-export.R
+├── test-compose.R
 ```
 
 文件名 `snake_case.R`。`R/` 下只放包源码。`playground.R` 用于临时手动测试，不纳入版本管理。
@@ -361,7 +458,7 @@ tests/testthat/
 
 使用 `pkg::fun()` 显式调用外部函数。内部用 `%||%` 处理 NULL 默认值。
 
-**禁止直接访问 ggplot2 内部结构**：不得操作 `gg$labels`、`gg$scales$scales`、`gg$theme` 等未在 ggplot2 文档中公开的内部槽位。所有视觉修改必须通过 `+ labs()`、`+ guides()`、`+ theme()` 等公开 API。`gg$mapping` 是 ggplot2 的公开槽位，读取和修改其元素属于合法操作。内部结构在 ggplot2 小版本升级时无兼容保证。
+**禁止直接访问 ggplot2 内部结构**：不得操作 `gg$labels`、`gg$scales$scales` 等未在 ggplot2 文档中公开的内部槽位。所有视觉修改必须通过 `+ labs()`、`+ guides()`、`+ theme()` 等公开 API。`gg$mapping` 和 `gg$data` 是 ggplot2 的公开槽位，读取和修改属于合法操作。`gg$theme` 是文档化的公开槽位，允许只读访问（如通过 `calc_element()` 提取主题属性）；对 theme 的修改必须通过 `+ theme()` 公开 API。内部结构在 ggplot2 小版本升级时无兼容保证。
 
 **非标准求值只用 rlang**：数据掩码场景（列名查找）必须使用 `rlang::eval_tidy()`，禁止 `eval()` + `baseenv()` 组合。
 
@@ -373,9 +470,13 @@ tests/testthat/
 
 按函数族分文件。覆盖合法值及关键组合、非法输入的错误路径、管道链集成场景。
 
-**断言行为而非内部状态**：测试应验证用户可见结果（标签内容、图例是否显示），而非 `gg$labels` 的键存在性或 `scales$scales[[1]]$name` 的值。内部状态会因实现路径变更而合法改变，不应进入测试契约。当前测试套件仍以面向实现的断言为主，属于已知过渡状态——贡献者不应视其为稳定契约。
+**断言行为而非内部状态**：测试应验证用户可见结果，使用 `ggplot2::ggplot_build(p@gg)` 提取最终渲染数据进行断言。
 
-> **1.0 前待办**：重写测试套件，改用 `ggplot2::ggplot_build(p@gg)` 提取最终渲染数据（面板范围、图例标签、颜色值）进行断言。当前大量测试直接检查 `@gg$theme`、`@gg$labels` 等内部槽位。
+**BDD 测试规范**（已全面应用）：
+- **断言锚点**：`ggplot2::ggplot_build(p@gg)` 返回的 `$plot$labels`、`$plot$theme`、`$plot$scales`、`$layout`、`$data`。
+- **禁止检查**：`@gg$layers`、`@gg$labels`、`@gg$theme`、`@meta@...` 等内部槽位（重构时内部表示可能合法变更）。
+- **标记**：BDD 测试以 `[BDD]` 前缀标注，方便识别。
+- **覆盖状态**：9/9 测试文件已完成 BDD 迁移，零内部槽位断言残留。✅ (278 tests, 0 fail, 0 warn)
 
 ---
 
@@ -383,8 +484,8 @@ tests/testthat/
 
 属于 §1.4 可迭代范围，具体参数可随版本调整。
 
-- **主题**：基于 `theme_minimal`，背景透明，无网格线，保留轴线（浅灰），无衬线字体，层级分明的字号。极坐标系自动关闭轴线、刻度线和轴文本。平行坐标系保留刻度线和列名标签（每个平行轴=一个可见轴）。
-- **颜色**：无映射时单色 + 隐藏图例。有映射时默认 viridis（色盲友好）。
+- **主题**：基于 `theme_minimal`，背景透明，无网格线，保留轴线（浅灰），无衬线字体，层级分明的字号。极坐标系自动关闭轴线、刻度线和轴文本。平行坐标系遵循 Vega 参考架构：`std`/`global` 模式使用共享原生 y 轴，`none` 模式每列渲染主题匹配轴线。
+- **颜色**：无映射时默认 Tableau 蓝（`#4E79A7`），同时应用于 `colour` 和 `fill`，图例隐藏。有映射时默认 viridis（色盲友好）。
 - **图例**：右侧，背景透明，边框简洁。
 - **尺寸**：自适应关闭时默认约 7×5 英寸，导出 300 dpi。
 
@@ -425,5 +526,5 @@ export(p, "output.pdf", dpi = 300)
 | 4 | 默认值分叉 | 新增条件分支 → 同步更新默认值逻辑 |
 | 5 | 底层接口兼容性 | 透传前确认底层接受该参数；不接受时切换函数 |
 | 6 | 内部概念不泄漏 | 包层参数名可能与底层同名但语义不同（如 `trans="binned"`） |
-| 7 | 有状态默认值对称清除 | `default_color` 注入 `guides(colour="none")` 后，任何图层级 `colour`/`fill` 映射也必须触发清除，不能仅依赖 `scale_*`。清除逻辑当前分散在 `scale_*` / `mark_*` / `project_parallel` 三处，待统一收归为单一内部函数。 |
+| 7 | 有状态默认值对称清除 | `default_color` 同时注入 `mapping$colour`/`mapping$fill` + `guides(colour="none", fill="none")`。任何图层级 `colour`/`fill` 映射触发清除时必须对称处理两侧。已统一为 `._clear_default_color()`（`utils.R`），`mark_*`/`scale_*`/`project_parallel` 三处共用。✅ |
 | 8 | 契约边界可验证 | 契约必须用用户可见的指标定义（如面板尺寸 ±1%），不能用"±5% 容差"等无法验证的免责声明。 |

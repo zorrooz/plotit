@@ -24,7 +24,7 @@ project_polar(
 
 \item{direction}{\code{1} = clockwise, \code{-1} = anti-clockwise.}
 
-\item{inner_radius}{Inner radius as a fraction of the panel (0–1).
+\item{inner_radius}{Inner radius as a fraction of the panel (0-1).
 \code{0} = polar (full circle). \verb{>0} = radial (hollow centre, needs
 ggplot2 >= 3.5.0).}
 

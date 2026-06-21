@@ -24,12 +24,13 @@ Imports:
     patchwork
 Collate: 
     'class.R'
-    'encode.R'
-    'label.R'
-    'mark.R'
     'utils.R'
     'style.R'
     'output.R'
+    'label.R'
+    'compose.R'
+    'encode.R'
+    'mark.R'
     'plot.R'
     'project.R'
     'scale.R'

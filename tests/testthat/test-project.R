@@ -197,11 +197,19 @@ test_that("project_parallel errors on empty data", {
   )
 })
 
-test_that("project_parallel adds data layers plus axis lines", {
+test_that("[BDD] project_parallel shared-scale mode has 2 data layers", {
   p <- plotit(iris, encode()) |>
     project_parallel(columns = c("Sepal.Width", "Sepal.Length"))
-  n <- length(p@gg$layers)
-  expect_gt(n, 2)  # geom_line + geom_point + axis segments per column
+  built <- ggplot2::ggplot_build(p@gg)
+  expect_equal(length(built$data), 2)  # geom_line + geom_point only
+})
+
+test_that("[BDD] project_parallel none mode adds per-column axis layers", {
+  p <- plotit(iris, encode()) |>
+    project_parallel(columns = c("Sepal.Width", "Sepal.Length"),
+                     scale = "none")
+  built <- ggplot2::ggplot_build(p@gg)
+  expect_gt(length(built$data), 2)  # line + point + axis layers
 })
 
 test_that("project_polar clip=\"off\" works", {
@@ -211,13 +219,16 @@ test_that("project_polar clip=\"off\" works", {
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("project_parallel clears default_color when group provides colour", {
+test_that("[BDD] project_parallel clears default_color when group provides colour", {
+  # project_parallel adds its own layers; no need for mark_point()
   p <- plotit(iris, encode(), default_color = "black") |>
-    mark_point() |>
     project_parallel(columns = c("Sepal.Width", "Sepal.Length"),
                      group = "Species")
-  expect_null(p@meta@default_color)
-  expect_null(p@gg$mapping$colour)
+  # Group introduces colour mapping -> default_color cleared -> scale exists
+  built <- ggplot2::ggplot_build(p@gg)
+  colour_scale <- Filter(function(s) any(s$aesthetics == "colour"),
+                         built$plot$scales$scales)
+  expect_length(colour_scale, 1)
 })
 
 test_that("project_parallel errors on non-existent group column", {
@@ -256,6 +267,30 @@ test_that("project_cartesian multi-mode warning names correct active mode", {
     project_cartesian(p, flip = TRUE, fixed = 1),
     "Only .*flip.* will be used"
   )
+})
+
+# ---- BDD: project_parallel scale="none" axis rendering ----
+test_that("[BDD] scale='none' draws per-column axis lines", {
+  p <- plotit(iris, encode()) |>
+    project_parallel(columns = c("Sepal.Width", "Sepal.Length"), scale = "none")
+  built <- ggplot2::ggplot_build(p@gg)
+  # Should have data layers (line + point) plus axis segments
+  expect_gt(length(built$data), 2)  # line + point + axis layers
+})
+
+test_that("[BDD] scale='none' suppresses native y-axis", {
+  p <- plotit(iris, encode()) |>
+    project_parallel(columns = c("Sepal.Width", "Sepal.Length"), scale = "none")
+  built <- ggplot2::ggplot_build(p@gg)
+  # Native y-axis line should be blank
+  expect_true(inherits(built$plot$theme$axis.line.y, "element_blank"))
+})
+
+test_that("[BDD] scale='std' uses shared y-axis (no manual axes)", {
+  p <- plotit(iris, encode()) |>
+    project_parallel(columns = c("Sepal.Width", "Sepal.Length"), scale = "std")
+  built <- ggplot2::ggplot_build(p@gg)
+  expect_length(built$data, 2)  # only line + point, no axis segments
 })
 
 

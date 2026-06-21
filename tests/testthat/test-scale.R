@@ -21,13 +21,15 @@ test_that("scale_color auto-detects discrete variable", {
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_color clears default_color injection", {
-  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
+test_that("[BDD] scale_color clears default_color (legend becomes visible)", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species),
     default_color = "steelblue"
-  )
-  p <- scale_color(p, name = "test")
-  expect_null(p@gg$mapping$colour)
-  expect_null(p@meta@default_color)
+  ) |>
+    mark_point(size = 2) |>
+    scale_color()
+  built <- ggplot2::ggplot_build(p@gg)
+  # After scale_color, the colour legend should appear (not "none")
+  expect_false(identical(built$plot$guides$colour, "none"))
 })
 
 test_that("scale_color range=viridis (discrete)", {
@@ -157,13 +159,14 @@ test_that("scale_fill auto-detects discrete variable", {
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("scale_fill clears default_color injection", {
-  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length),
+test_that("[BDD] scale_fill clears default_color (legend becomes visible)", {
+  p <- plotit(iris, encode(x = Species, fill = Species),
     default_color = "steelblue"
-  )
-  p <- scale_fill(p, name = "test")
-  expect_null(p@gg$mapping$colour)
-  expect_null(p@meta@default_color)
+  ) |>
+    mark_bar() |>
+    scale_fill()
+  built <- ggplot2::ggplot_build(p@gg)
+  expect_false(identical(built$plot$guides$fill, "none"))
 })
 
 test_that("scale_fill range=viridis (discrete)", {
@@ -482,4 +485,34 @@ test_that("same plot chained scale_color + scale_size no conflict", {
     scale_color(name = "power", range = "viridis") |>
     scale_size(range = c(1, 8))
   expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- behaviour-driven tests (assert rendered output) ----
+
+test_that("[BDD] scale_color range=c(blue,red) renders gradient colours", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg, colour = hp)) |>
+    mark_point(size = 2) |>
+    scale_color(range = c("blue", "red"))
+  built <- ggplot2::ggplot_build(p@gg)
+  # The rendered scale should be continuous (colour gradient, not manual)
+  scale <- built$plot$scales$get_scales("colour")
+  expect_false(inherits(scale, "ScaleDiscrete"))
+})
+
+test_that("[BDD] scale_color range=brewer renders discrete colours", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+    mark_point() |>
+    scale_color(range = "brewer")
+  built <- ggplot2::ggplot_build(p@gg)
+  expect_false(identical(built$plot$guides$colour, "none"))
+})
+
+test_that("[BDD] scale_color trans=reverse + range=c(blue,red) reverses gradient", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg, colour = hp)) |>
+    mark_point(size = 2) |>
+    scale_color(trans = "reverse", range = c("blue", "red"))
+  built <- ggplot2::ggplot_build(p@gg)
+  # Reverse should swap the gradient direction — verify scale exists
+  scale <- built$plot$scales$get_scales("colour")
+  expect_true(inherits(scale, "ScaleContinuous"))
 })

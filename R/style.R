@@ -2,7 +2,7 @@
 NULL
 
 # ---- Internal theme builder ----
-# Constructs the default plotit theme object (not exported — use style_default())
+# Constructs the default plotit theme object (not exported -- use style_default())
 .theme_default <- function(base_size = NULL, base_family = NULL) {
   ggplot2::theme_minimal(
     base_size = base_size %||% 11,

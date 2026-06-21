@@ -25,7 +25,7 @@ S7::method(print, plotit_class) <- function(x, ...) {
 
   dev_opt <- getOption("plotit.device", "default")
   if (interactive() && !is.null(x@meta@width) && !is.null(x@meta@height) &&
-      !is.null(dev_opt)) {
+    !is.null(dev_opt)) {
     gt <- patchwork::patchworkGrob(x@gg)
     pw <- grid::convertWidth(
       sum(gt$widths) + ggplot2::unit(1, "mm"), "inches",

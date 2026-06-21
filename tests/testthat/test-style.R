@@ -1,72 +1,84 @@
 # ============================================================
-# style function family — theme application
+# style function family -- BDD tests (assert rendered theme)
+# AGENTS.md §4.8
 # ============================================================
 library(plotit)
 
 # ---- style_default ----
-test_that("style_default() applies default theme", {
+test_that("[BDD] style_default() renders with white panel background", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     style_default()
-  expect_s3_class(p, "plotit::plotit")
-  expect_true(attr(p@meta, "plotit_theme_managed"))
+  built <- ggplot2::ggplot_build(p@gg)
+  # Default theme should have white panel (not grey)
+  fill <- built$plot$theme$panel.background$fill
+  expect_true(is.null(fill) || fill == "white" || identical(fill, "#FFFFFF"))
 })
 
-test_that("style_default(base_size) no error", {
+test_that("[BDD] style_default(base_size) changes text size", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     style_default(base_size = 14)
-  expect_s3_class(p, "plotit::plotit")
+  built <- ggplot2::ggplot_build(p@gg)
+  expect_equal(built$plot$theme$text$size, 14)
 })
 
-test_that("style_default(base_family) no error", {
+test_that("[BDD] style_default(base_family) changes font", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     style_default(base_family = "serif")
-  expect_s3_class(p, "plotit::plotit")
+  built <- ggplot2::ggplot_build(p@gg)
+  expect_equal(built$plot$theme$text$family, "serif")
 })
 
-test_that("style_default multiple calls do not stack default theme", {
+test_that("[BDD] style_default multiple calls use last setting", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     style_default() |>
     style_default(base_size = 16)
-  expect_s3_class(p, "plotit::plotit")
+  built <- ggplot2::ggplot_build(p@gg)
+  expect_equal(built$plot$theme$text$size, 16)
 })
 
 # ---- style ----
-test_that("style() with no args applies default theme", {
+test_that("[BDD] style() with no args applies clean theme", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     style()
-  expect_s3_class(p, "plotit::plotit")
-  expect_true(attr(p@meta, "plotit_theme_managed"))
+  built <- ggplot2::ggplot_build(p@gg)
+  # Legend position should be "right" (default)
+  expect_equal(built$plot$theme$legend.position, "right")
 })
 
-test_that("style() supports ... for individual theme element overrides", {
+test_that("[BDD] style() element overrides are reflected in rendered theme", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     style(plot.title = ggplot2::element_text(face = "bold"))
-  expect_s3_class(p, "plotit::plotit")
+  built <- ggplot2::ggplot_build(p@gg)
+  expect_equal(built$plot$theme$plot.title$face, "bold")
 })
 
-test_that("style() accepts base_theme to switch base theme", {
+test_that("[BDD] style() base_theme switches to different base", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     style(base_theme = ggplot2::theme_bw())
-  expect_s3_class(p, "plotit::plotit")
+  built <- ggplot2::ggplot_build(p@gg)
+  # theme_bw has grey panel border
+  expect_false(is.null(built$plot$theme$panel.border))
 })
 
-test_that("style() base_theme + overrides work together", {
+test_that("[BDD] style() base_theme + overrides combine", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     style(base_theme = ggplot2::theme_bw(),
           plot.title = ggplot2::element_text(face = "bold"))
-  expect_s3_class(p, "plotit::plotit")
+  built <- ggplot2::ggplot_build(p@gg)
+  expect_equal(built$plot$theme$plot.title$face, "bold")
 })
 
-test_that("plotit() auto-applies default theme during construction", {
+test_that("[BDD] plotit() applies default theme automatically", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
-  expect_s3_class(p, "plotit::plotit")
-  expect_true(attr(p@meta, "plotit_theme_managed"))
+  built <- ggplot2::ggplot_build(p@gg)
+  fill <- built$plot$theme$panel.background$fill
+  expect_true(is.null(fill) || fill == "white" || identical(fill, "#FFFFFF"))
 })

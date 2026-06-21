@@ -23,8 +23,9 @@ Order matters: the first column is the leftmost axis.}
 
 \item{group}{Column name for colouring lines. \code{NULL} = no grouping.}
 
-\item{scale}{\code{"std"} (default): min-max normalise each column to 0–1.
-\code{"global"}: use raw values. \code{"none"}: no scaling.}
+\item{scale}{\code{"std"} (default): min-max normalise each column to 0-1.
+\code{"global"}: min-max normalise across all columns to 0-1.
+\code{"none"}: no normalisation, each column keeps its own range.}
 
 \item{alpha, size}{Passed to \code{geom_line()} / \code{geom_point()}.}
 
@@ -40,7 +41,7 @@ Modified plotit object.
 Reshapes the plot data so that the selected columns become parallel
 vertical axes. Each observation is drawn as a polyline connecting its
 values across all axes. Values are optionally normalised per column
-to share a common 0–1 scale.
+to share a common 0-1 scale.
 }
 \details{
 Adds \code{geom_line()} and \code{geom_point()} layers. Call \emph{after} any

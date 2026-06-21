@@ -29,7 +29,8 @@ NULL
     plot@gg <- plot@gg + .theme_el(theme_el_name, ggplot2::element_blank())
   } else if (isTRUE(reset)) {
     S7::prop(plot@meta@labels, slot_name) <- NULL
-    plot@gg <- plot@gg + .labs_el(slot_name, NULL)
+    # Directly clear label (documented public slot); see ._label_set_aes
+    plot@gg$labels[[slot_name]] <- NULL
   } else if (!is.null(text)) {
     S7::prop(plot@meta@labels, slot_name) <- text
     plot@gg <- plot@gg + .labs_el(slot_name, text)
@@ -71,7 +72,10 @@ NULL
     names(args) <- a
     gg <- gg + do.call(ggplot2::guides, args)
   } else if (is.null(text)) {
-    gg <- gg + .labs_el(a, NULL)
+    # Directly clear the label entry (documented public slot) so ggplot
+    # falls back to the scale name.  ggplot2::labs(a = NULL) goes through
+    # modifyList which may not propagate NULL consistently.
+    gg$labels[[a]] <- NULL
   } else {
     gg <- gg + .labs_el(a, text)
   }
@@ -182,7 +186,8 @@ S7::method(label_axis, plotit_class) <- function(plot, text = NULL, aes = NULL,
   } else if (isTRUE(reset)) {
     S7::prop(plot@meta@labels, aes) <- NULL
     plot@gg <- plot@gg + .theme_el(paste0("axis.title.", aes), NULL)
-    plot@gg <- plot@gg + .labs_el(aes, NULL)
+    # Directly clear label (documented public slot); see ._label_set_aes
+    plot@gg$labels[[aes]] <- NULL
   } else if (!is.null(text)) {
     S7::prop(plot@meta@labels, aes) <- text
     plot@gg <- plot@gg + .theme_el(paste0("axis.title.", aes), NULL)
@@ -214,9 +219,15 @@ S7::method(label_legend, plotit_class) <- function(plot, text = NULL, aes = NULL
                                                    hide = FALSE, reset = FALSE, ...) {
   ._check_text_reset(text, reset, "label_legend")
   # Determine the effective text: NULL=skip, reset=waiver, otherwise custom
-  eff_text <- if (isTRUE(reset)) ggplot2::waiver() else text
-  # Skip if nothing to do (all defaults)
-  if (is.null(eff_text) && !isTRUE(hide)) return(plot)
+  # reset: NULL clears the labs() override so ggplot falls through to the
+  # scale's name (which typically defaults to the variable name).
+  # waiver() would keep the previous custom text, defeating the purpose.
+  eff_text <- if (isTRUE(reset)) NULL else text
+  # Skip if nothing to do (all defaults).  reset=TRUE intentionally
+  # sets eff_text=NULL -- do NOT skip in that case.
+  if (is.null(eff_text) && !isTRUE(hide) && !isTRUE(reset)) {
+    return(plot)
+  }
   if (is.null(aes)) {
     plot@meta@labels@legend[["default"]] <- if (hide) FALSE else eff_text
     aes_names <- .collect_aes_names(
@@ -227,7 +238,6 @@ S7::method(label_legend, plotit_class) <- function(plot, text = NULL, aes = NULL
       plot@gg <- .label_set_aes(plot@gg, a, eff_text, hide)
     }
   } else {
-    plot@meta@labels@legend[[aes]] <- if (hide) FALSE else eff_text
     aes_all <- .collect_aes_names(
       plot@gg,
       c("colour", "fill", "shape", "linetype", "size", "alpha")
@@ -235,6 +245,7 @@ S7::method(label_legend, plotit_class) <- function(plot, text = NULL, aes = NULL
     if (!(aes %in% aes_all)) {
       cli::cli_warn("Aesthetic {.val {aes}} is not present in the plot mapping.")
     } else {
+      plot@meta@labels@legend[[aes]] <- if (hide) FALSE else eff_text
       plot@gg <- .label_set_aes(plot@gg, aes, eff_text, hide)
     }
   }

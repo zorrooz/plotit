@@ -3,25 +3,11 @@ NULL
 
 # ---- Internal helpers ----
 
-# If the layer mapping introduces colour or fill, cancel the global
-# default_color so the legend appears (AGENTS.md §3.3.4).  Without this,
-# guides(colour="none") injected by plotit() would suppress legends even
-# when a layer has its own colour/fill mapping.
-._auto_reset_default_color <- function(plot, mapping) {
-  if (is.null(plot@meta@default_color)) return(plot)
-  if (!is.null(mapping$colour) || !is.null(mapping$fill)) {
-    plot@gg$mapping$colour <- NULL
-    plot@gg <- plot@gg + ggplot2::guides(colour = ggplot2::waiver())
-    S7::prop(plot@meta, "default_color") <- NULL
-  }
-  plot
-}
-
 # Shared mark logic: resolve position (auto-dodge or explicit), build geom,
-# auto-reset default_color if the layer provides colour/fill, rasterize.
+# clear default_color if the layer provides colour/fill, rasterize.
 ._mark_impl <- function(plot, mapping, data, position, geom_fun,
                         rasterize, rasterize_dpi, rasterize_dev, ...) {
-  plot <- ._auto_reset_default_color(plot, mapping)
+  plot <- ._clear_default_color(plot, mapping)
   pos <- position
   if (is.null(pos) && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
     pos <- ggplot2::position_dodge(plot@meta@dodge)
@@ -77,8 +63,10 @@ S7::method(mark_point, plotit_class) <- function(plot, mapping = NULL, data = NU
                                                  position = NULL, ...,
                                                  rasterize = FALSE, rasterize_dpi = 300,
                                                  rasterize_dev = "cairo") {
-  ._mark_impl(plot, mapping, data, position, ggplot2::geom_point,
-              rasterize, rasterize_dpi, rasterize_dev, ...)
+  ._mark_impl(
+    plot, mapping, data, position, ggplot2::geom_point,
+    rasterize, rasterize_dpi, rasterize_dev, ...
+  )
 }
 
 #' Generic for adding a line layer
@@ -107,8 +95,10 @@ S7::method(mark_line, plotit_class) <- function(plot, mapping = NULL, data = NUL
                                                 position = NULL, ...,
                                                 rasterize = FALSE, rasterize_dpi = 300,
                                                 rasterize_dev = "cairo") {
-  ._mark_impl(plot, mapping, data, position, ggplot2::geom_line,
-              rasterize, rasterize_dpi, rasterize_dev, ...)
+  ._mark_impl(
+    plot, mapping, data, position, ggplot2::geom_line,
+    rasterize, rasterize_dpi, rasterize_dev, ...
+  )
 }
 
 #' Generic for adding a bar layer
@@ -137,11 +127,18 @@ S7::method(mark_bar, plotit_class) <- function(plot, mapping = NULL, data = NULL
                                                position = NULL, ...,
                                                rasterize = FALSE, rasterize_dpi = 300,
                                                rasterize_dev = "cairo") {
-  has_y <- (!is.null(mapping) && !is.null(mapping$y)) ||
-    (!is.null(plot@gg$mapping$y))
+  # If layer mapping is provided, trust it (even if y = NULL).
+  # Only fall back to global mapping when no layer mapping is given.
+  has_y <- if (!is.null(mapping)) {
+    !is.null(mapping$y)
+  } else {
+    !is.null(plot@gg$mapping$y)
+  }
   geom_fun <- if (has_y) ggplot2::geom_col else ggplot2::geom_bar
-  ._mark_impl(plot, mapping, data, position, geom_fun,
-              rasterize, rasterize_dpi, rasterize_dev, ...)
+  ._mark_impl(
+    plot, mapping, data, position, geom_fun,
+    rasterize, rasterize_dpi, rasterize_dev, ...
+  )
 }
 
 #' Generic for adding a boxplot layer
@@ -170,6 +167,72 @@ S7::method(mark_boxplot, plotit_class) <- function(plot, mapping = NULL, data = 
                                                    position = NULL, ...,
                                                    rasterize = FALSE, rasterize_dpi = 300,
                                                    rasterize_dev = "cairo") {
-  ._mark_impl(plot, mapping, data, position, ggplot2::geom_boxplot,
-              rasterize, rasterize_dpi, rasterize_dev, ...)
+  ._mark_impl(
+    plot, mapping, data, position, ggplot2::geom_boxplot,
+    rasterize, rasterize_dpi, rasterize_dev, ...
+  )
+}
+
+#' Generic for adding a histogram layer
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional data for this layer
+#' @param position Position adjustment; if `NULL` and global dodge is set, auto-applies `position_dodge()`.
+#' @param rasterize If `TRUE`, rasterize the layer via `ggrastr::rasterise()` (requires \pkg{ggrastr}).
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_histogram`
+#' @return Modified plotit object
+#' @export
+mark_histogram <- S7::new_generic(
+  "mark_histogram",
+  "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_histogram, plotit_class) <- function(plot, mapping = NULL, data = NULL,
+                                                     position = NULL, ...,
+                                                     rasterize = FALSE, rasterize_dpi = 300,
+                                                     rasterize_dev = "cairo") {
+  ._mark_impl(
+    plot, mapping, data, position, ggplot2::geom_histogram,
+    rasterize, rasterize_dpi, rasterize_dev, ...
+  )
+}
+
+#' Generic for adding a density layer
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional data for this layer
+#' @param position Position adjustment; if `NULL` and global dodge is set, auto-applies `position_dodge()`.
+#' @param rasterize If `TRUE`, rasterize the layer via `ggrastr::rasterise()` (requires \pkg{ggrastr}).
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_density`
+#' @return Modified plotit object
+#' @export
+mark_density <- S7::new_generic(
+  "mark_density",
+  "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_density, plotit_class) <- function(plot, mapping = NULL, data = NULL,
+                                                   position = NULL, ...,
+                                                   rasterize = FALSE, rasterize_dpi = 300,
+                                                   rasterize_dev = "cairo") {
+  ._mark_impl(
+    plot, mapping, data, position, ggplot2::geom_density,
+    rasterize, rasterize_dpi, rasterize_dev, ...
+  )
 }

@@ -12,7 +12,7 @@ plotit(
   height = 5,
   size_unit = "in",
   dodge = NULL,
-  default_color = "black"
+  default_color = "#4E79A7"
 )
 }
 \arguments{

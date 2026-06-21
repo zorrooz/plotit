@@ -3,16 +3,6 @@ NULL
 
 # ---- Internal helpers ----
 
-.reset_default_color <- function(plot) {
-  if (is.null(plot@meta@default_color)) {
-    return(plot)
-  }
-  plot@gg$mapping$colour <- NULL
-  plot@gg <- plot@gg + ggplot2::guides(colour = ggplot2::waiver())
-  S7::prop(plot@meta, "default_color") <- NULL
-  plot
-}
-
 .detect_discrete_aes <- function(plot, aes_name) {
   var <- plot@gg$mapping[[aes_name]]
   if (!is.null(var)) {
@@ -39,7 +29,7 @@ NULL
 
 # Friendly error messages for known-bad trans x aesthetic combinations.
 # Called before the generic allowed-set check so the user gets a targeted
-# explanation instead of a generic "must be one of …" message.
+# explanation instead of a generic "must be one of ..." message.
 ._validate_trans <- function(aes_name, trans, allowed) {
   visual_aes <- c("colour", "fill", "size", "alpha", "shape", "linetype")
   # log / sqrt on visual aesthetics
@@ -93,21 +83,21 @@ NULL
   if (discrete) {
     switch(scheme,
       viridis = ._cf(aes, ggplot2::scale_colour_viridis_d, ggplot2::scale_fill_viridis_d)(direction = dir, ...),
-      brewer  = ._cf(aes, ggplot2::scale_colour_brewer,      ggplot2::scale_fill_brewer)(direction = dir, ...),
-      grey    = ._cf(aes, ggplot2::scale_colour_grey,        ggplot2::scale_fill_grey)(start = if (reverse) 0.8 else 0.2, end = if (reverse) 0.2 else 0.8, ...),
-      hue     = ._cf(aes, ggplot2::scale_colour_discrete,    ggplot2::scale_fill_discrete)(direction = dir, ...),
+      brewer  = ._cf(aes, ggplot2::scale_colour_brewer, ggplot2::scale_fill_brewer)(direction = dir, ...),
+      grey    = ._cf(aes, ggplot2::scale_colour_grey, ggplot2::scale_fill_grey)(start = if (reverse) 0.8 else 0.2, end = if (reverse) 0.2 else 0.8, ...),
+      hue     = ._cf(aes, ggplot2::scale_colour_discrete, ggplot2::scale_fill_discrete)(direction = dir, ...),
       cli::cli_abort("Unknown colour scheme: {.val {scheme}}.")
     )
   } else if (binned) {
     switch(scheme,
       viridis = ._cf(aes, ggplot2::scale_colour_viridis_b, ggplot2::scale_fill_viridis_b)(direction = dir, ...),
-      brewer  = ._cf(aes, ggplot2::scale_colour_fermenter,  ggplot2::scale_fill_fermenter)(direction = dir, ...),
+      brewer  = ._cf(aes, ggplot2::scale_colour_fermenter, ggplot2::scale_fill_fermenter)(direction = dir, ...),
       cli::cli_abort("Unknown colour scheme for binned: {.val {scheme}}.")
     )
   } else {
     switch(scheme,
       viridis = ._cf(aes, ggplot2::scale_colour_viridis_c, ggplot2::scale_fill_viridis_c)(direction = dir, ...),
-      brewer  = ._cf(aes, ggplot2::scale_colour_distiller,  ggplot2::scale_fill_distiller)(direction = dir, ...),
+      brewer  = ._cf(aes, ggplot2::scale_colour_distiller, ggplot2::scale_fill_distiller)(direction = dir, ...),
       cli::cli_abort("Unknown colour scheme for continuous: {.val {scheme}}.")
     )
   }
@@ -116,6 +106,7 @@ NULL
 # Custom colour vector dispatch: manual, gradient, steps
 ._scale_custom <- function(aes, range, discrete, binned, reverse, ...) {
   if (discrete) {
+    if (reverse) range <- rev(range)
     ._cf(aes, ggplot2::scale_colour_manual, ggplot2::scale_fill_manual)(values = range, ...)
   } else {
     lo <- if (reverse) range[length(range)] else range[1]
@@ -221,10 +212,10 @@ NULL
       vals <- rlang::eval_tidy(var, data)
       rng <- range(vals, na.rm = TRUE, finite = TRUE)
       dr <- rng[2] - rng[1]
-      if (dr > 0) {
+      d <- range[2] - range[1]
+      if (dr > 0 && d > 0) {
         p_left <- range[1]
         p_right <- range[2]
-        d <- p_right - p_left
         limits <- c(rng[1] - (p_left / d) * dr, rng[2] + ((1 - p_right) / d) * dr)
       }
     }
@@ -300,7 +291,7 @@ S7::method(scale_color, plotit_class) <- function(plot, name = ggplot2::waiver()
                                                   trans = NULL, limits = NULL,
                                                   range = NULL, breaks = NULL,
                                                   labels = NULL, ...) {
-  plot <- .reset_default_color(plot)
+  plot <- ._clear_default_color(plot)
   trans <- .resolve_trans(plot, "colour", trans, .trans_cf)
   # When trans="reverse" and the mapped variable is discrete, route to
   # the discrete scale instead of continuous (symmetry with .scale_xy_impl)
@@ -346,7 +337,7 @@ S7::method(scale_fill, plotit_class) <- function(plot, name = ggplot2::waiver(),
                                                  trans = NULL, limits = NULL,
                                                  range = NULL, breaks = NULL,
                                                  labels = NULL, ...) {
-  plot <- .reset_default_color(plot)
+  plot <- ._clear_default_color(plot)
   trans <- .resolve_trans(plot, "fill", trans, .trans_cf)
   # When trans="reverse" and the mapped variable is discrete, route to
   # the discrete scale instead of continuous (symmetry with .scale_xy_impl)
