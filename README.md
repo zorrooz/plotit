@@ -2,9 +2,7 @@
 
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 
-<p align="center"><a href="README_ZH.md">简体中文</a> · <b>English</b></p>
-
----
+<p align="center"><a href="README_ZH.md">简体中文</a> | <b>English</b></p>
 
 **plotit** is a declarative, pipeline-friendly plotting package built on
 [ggplot2](https://ggplot2.tidyverse.org). It provides a unified **verb-prefix
