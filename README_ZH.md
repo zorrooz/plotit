@@ -105,7 +105,8 @@ export(p, "fuel_economy.pdf", dpi = 300)
 
 | 函数族 | 前缀 | 职责 | 示例 |
 |--------|------|------|------|
-| 图层 | `mark_*` | 添加几何图层 | `mark_point()`, `mark_line()`, `mark_bar()`, `mark_boxplot()` |
+| 图层 | `mark_*` | 添加几何图层 | `mark_point()`, `mark_line()`, `mark_bar()`, `mark_boxplot()`, `mark_histogram()`, `mark_density()` |
+| 组合 | `compose_*` | 多图布局 | `compose_grid()`, `compose_inset()`, `compose_marginal()` |
 | 标度 | `scale_*` | 数据 → 视觉映射 | `scale_x(trans = "log")`, `scale_color(range = "viridis")` |
 | 标签 | `label_*` | 标题、轴名、图例名 | `label_title("标题")`, `label_axis("X轴", aes = "x")` |
 | 坐标系 | `project_*` | 坐标变换 | `project_cartesian(flip=TRUE)`, `project_polar()`, `project_parallel()` |
@@ -125,8 +126,33 @@ export(p, "fuel_economy.pdf", dpi = 300)
 | `mark_line()` | `geom_line()` | 折线、趋势线、时间序列 |
 | `mark_bar()` | `geom_bar()` / `geom_col()` | 柱状图 |
 | `mark_boxplot()` | `geom_boxplot()` | 分组分布展示 |
+| `mark_histogram()` | `geom_histogram()` | 直方图 |
+| `mark_density()` | `geom_density()` | 密度曲线 |
 
 ---
+
+### `compose_*` — 多图组合布局
+
+三个函数用于将多个图表组装为复合布局。全部返回 `plotit_composite` 对象，
+支持 `label_*()` / `style()` / `export()` 管道持续。
+
+| 函数 | 说明 | 关键参数 |
+|------|------|----------|
+| `compose_grid()` | 网格排列 | `...`, `ncol`, `nrow`, `widths`, `heights`, `guides`, `axes`, `tag_levels` |
+| `compose_inset()` | 浮动嵌入 | `base`, `inset`, `left`, `bottom`, `right`, `top` |
+| `compose_marginal()` | 散点 + 边际分布 | `main`, `top`, `right`, `widths`, `heights` |
+
+```r
+# 2×2 仪表盘 + 自动子图标签
+compose_grid(p1, p2, p3, p4, ncol = 2, tag_levels = "A") |>
+  label_title("仪表盘") |>
+  export("dashboard.png")
+
+# 散点图 + 边际直方图
+compose_marginal(main_scatter, top_hist, right_hist) |>
+  label_title("Iris") |>
+  export("marginal.png")
+```
 
 ### `scale_*` — 数据到视觉的映射
 

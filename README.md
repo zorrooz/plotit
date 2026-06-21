@@ -136,7 +136,8 @@ export(p, "fuel_economy.pdf", dpi = 300)
 
 | Family | Prefix | Purpose | Quick example |
 |--------|--------|---------|---------------|
-| Layer | `mark_*` | Add geometric layers | `mark_point()`, `mark_line()`, `mark_bar()`, `mark_boxplot()` |
+| Layer | `mark_*` | Add geometric layers | `mark_point()`, `mark_line()`, `mark_bar()`, `mark_boxplot()`, `mark_histogram()`, `mark_density()` |
+| Compose | `compose_*` | Multi-panel layouts | `compose_grid()`, `compose_inset()`, `compose_marginal()` |
 | Scale | `scale_*` | Data → visual mapping | `scale_x(trans = "log")`, `scale_color(range = "viridis")` |
 | Label | `label_*` | Titles, axis & legend labels | `label_title("Title")`, `label_axis("X", aes = "x")` |
 | Project | `project_*` | Coordinate system | `project_cartesian(flip=TRUE)`, `project_polar()`, `project_parallel()` |
@@ -158,8 +159,34 @@ Four mark functions are currently implemented, sharing a unified signature
 | `mark_line()` | `geom_line()` | Lines, trends, time series |
 | `mark_bar()` | `geom_bar()` / `geom_col()` | Bar charts, histograms |
 | `mark_boxplot()` | `geom_boxplot()` | Distributions by group |
+| `mark_histogram()` | `geom_histogram()` | Histograms |
+| `mark_density()` | `geom_density()` | Density plots |
 
 ---
+
+### `compose_*` — Multi-panel layouts
+
+Three functions for assembling multiple plots into compound layouts.  All
+return a `plotit_composite` that accepts `label_*()` / `style()` / `export()`
+via the same pipeline.
+
+| Function | Description | Key parameters |
+|----------|-------------|----------------|
+| `compose_grid()` | Arrange plots in a grid | `...`, `ncol`, `nrow`, `widths`, `heights`, `guides`, `axes`, `tag_levels` |
+| `compose_inset()` | Overlay a floating inset | `base`, `inset`, `left`, `bottom`, `right`, `top` |
+| `compose_marginal()` | Scatter + marginal distributions | `main`, `top`, `right`, `widths`, `heights` |
+
+```r
+# 2×2 dashboard with shared title and auto-tags
+compose_grid(p1, p2, p3, p4, ncol = 2, tag_levels = "A") |>
+  label_title("Dashboard") |>
+  export("dashboard.png")
+
+# Scatter plot with marginal histograms
+compose_marginal(main_scatter, top_hist, right_hist) |>
+  label_title("Iris") |>
+  export("marginal.png")
+```
 
 ### `scale_*` — Data-to-visual mapping
 
