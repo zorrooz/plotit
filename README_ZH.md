@@ -2,7 +2,7 @@
 
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 
-[English version](README.md) · [GitHub](https://github.com/zorrooz/plotit)
+<p align="center"><b>简体中文</b> · <a href="README.md">English</a></p>
 
 ---
 
