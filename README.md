@@ -2,12 +2,12 @@
 
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 
-> [中文版本](README_ZH.md)
+[中文版本](README_ZH.md) · [GitHub](https://github.com/zorrooz/plotit)
 
 ---
 
 **plotit** is a declarative, pipeline-friendly plotting package built on
-[ggplot2](https://ggplot2.tidyverse.org).  It provides a unified **verb-prefix
+[ggplot2](https://ggplot2.tidyverse.org). It provides a unified **verb-prefix
 API** that turns data into publication-ready charts in a single pipeline —
 sensible defaults, zero boilerplate.
 
@@ -15,14 +15,14 @@ sensible defaults, zero boilerplate.
 library(plotit)
 
 iris |>
-  plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
-  mark_point(size = 2, alpha = 0.7) |>
-  scale_color(range = "viridis") |>
-  label_title("Iris Sepal Dimensions") |>
-  label_axis(text = "Sepal Width", aes = "x") |>
-  label_axis(text = "Sepal Length", aes = "y") |>
-  style(ggplot2::theme_minimal(base_size = 14)) |>
-  export("iris_plot.pdf")
+ plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+ mark_point(size = 2, alpha = 0.7) |>
+ scale_color(range = "viridis") |>
+ label_title("Iris Sepal Dimensions") |>
+ label_axis(text = "Sepal Width", aes = "x") |>
+ label_axis(text = "Sepal Length", aes = "y") |>
+ style(ggplot2::theme_minimal(base_size = 14)) |>
+ export("iris_plot.pdf")
 ```
 
 <details>
@@ -31,22 +31,22 @@ iris |>
 ```r
 # plotit — 4 lines
 iris |>
-  plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
-  mark_point(size = 2, alpha = 0.7) |>
-  scale_color(range = "viridis") |>
-  label_title("Iris Sepal Dimensions")
+ plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+ mark_point(size = 2, alpha = 0.7) |>
+ scale_color(range = "viridis") |>
+ label_title("Iris Sepal Dimensions")
 
 # base ggplot2 — 3 lines
 ggplot(iris, aes(x = Sepal.Width, y = Sepal.Length, colour = Species)) +
-  geom_point(size = 2, alpha = 0.7) +
-  scale_colour_viridis_d() +
-  labs(title = "Iris Sepal Dimensions")
+ geom_point(size = 2, alpha = 0.7) +
+ scale_colour_viridis_d() +
+ labs(title = "Iris Sepal Dimensions")
 ```
 </details>
 
 ---
 
-## 📦 Installation
+## Installation
 
 ```r
 # install.packages("pak")
@@ -55,7 +55,7 @@ pak::pak("zorrooz/plotit")
 
 ---
 
-## 🧭 Usage
+## Usage
 
 ### Pipeline pattern
 
@@ -78,18 +78,18 @@ data |> plotit(encode(...)) |> mark_*() |> scale_*() |> label_*() |> style() |> 
 
 | Family | Prefix | Purpose | Examples |
 |:---|:---|:---|:---|
-| 🎨 Layer | `mark_*` | Geometric layers | `mark_point()`, `mark_line()`, `mark_bar()`, `mark_boxplot()`, `mark_histogram()`, `mark_density()` |
-| 🧩 Compose | `compose_*` | Multi-panel layouts | `compose_grid()`, `compose_inset()`, `compose_marginal()` |
-| 📐 Scale | `scale_*` | Data → visual mapping | `scale_x(trans = "log")`, `scale_color(range = "viridis")` |
-| 🏷️ Label | `label_*` | Titles & labels | `label_title("Title")`, `label_axis("X", aes = "x")` |
-| 🔄 Project | `project_*` | Coordinate systems | `project_cartesian(flip = TRUE)`, `project_polar()` |
-| 📊 Split | `split_*` | Facet layouts | `split_wrap(Species)`, `split_grid(rows = vars(cyl))` |
-| 🎨 Style | `style()` | Theme | `style(theme_minimal(base_size = 14))` |
-| 💾 Export | `export()` | Output to file | `export("plot.pdf", dpi = 300)` |
+| Layer | `mark_*` | Geometric layers | `mark_point()`, `mark_line()`, `mark_bar()`, `mark_boxplot()`, `mark_histogram()`, `mark_density()` |
+| Compose | `compose_*` | Multi-panel layouts | `compose_grid()`, `compose_inset()`, `compose_marginal()` |
+| Scale | `scale_*` | Data → visual mapping | `scale_x(trans = "log")`, `scale_color(range = "viridis")` |
+| Label | `label_*` | Titles & labels | `label_title("Title")`, `label_axis("X", aes = "x")` |
+| Project | `project_*` | Coordinate systems | `project_cartesian(flip = TRUE)`, `project_polar()` |
+| Split | `split_*` | Facet layouts | `split_wrap(Species)`, `split_grid(rows = vars(cyl))` |
+| Style | `style()` | Theme | `style(theme_minimal(base_size = 14))` |
+| Export | `export()` | Output to file | `export("plot.pdf", dpi = 300)` |
 
 ---
 
-## 🎨 `mark_*` — Geometric Layers
+## `mark_*` — Geometric Layers
 
 Six mark functions, unified signature (`mapping`, `data`, `position`, `rasterize`, `...`).
 
@@ -104,9 +104,9 @@ Six mark functions, unified signature (`mapping`, `data`, `position`, `rasterize
 
 ---
 
-## 🧩 `compose_*` — Multi-Panel Layouts
+## `compose_*` — Multi-Panel Layouts
 
-Assemble multiple plots into compound layouts.  All return a `plotit_composite`
+Assemble multiple plots into compound layouts. All return a `plotit_composite`
 that pipes seamlessly into `label_*()` / `style()` / `export()`.
 
 | Function | Description | Key params |
@@ -118,18 +118,18 @@ that pipes seamlessly into `label_*()` / `style()` / `export()`.
 ```r
 # 2×2 dashboard with auto-tags
 compose_grid(p1, p2, p3, p4, ncol = 2, tag_levels = "A") |>
-  label_title("Dashboard") |>
-  export("dashboard.png")
+ label_title("Dashboard") |>
+ export("dashboard.png")
 
 # Scatter plot with marginal histograms
 compose_marginal(main, top_hist, right_hist) |>
-  label_title("Iris") |>
-  export("marginal.png")
+ label_title("Iris") |>
+ export("marginal.png")
 ```
 
 ---
 
-## 📐 `scale_*` — Data-to-Visual Mapping
+## `scale_*` — Data-to-Visual Mapping
 
 Eight functions with identical parameters — only the `trans` default varies.
 
@@ -179,7 +179,7 @@ All accept `name`, `limits`, `range`, `breaks`, `labels`, `...`.
 
 ---
 
-## 🏷️ `label_*` — Text Labels
+## `label_*` — Text Labels
 
 Five functions with a three-parameter protocol:
 
@@ -200,7 +200,7 @@ Five functions with a three-parameter protocol:
 
 ---
 
-## 🔄 `project_*` — Coordinate Systems
+## `project_*` — Coordinate Systems
 
 | Function | Description | Key params |
 |:---|:---|:---|
@@ -209,14 +209,14 @@ Five functions with a three-parameter protocol:
 | `project_parallel()` | Parallel coordinates | `columns`, `group`, `scale`, `alpha`, `size` |
 | `project_map()` | Geographic projection | `projection`, `xlim`, `ylim`, `clip` |
 
-## 📊 `split_*` — Facets
+## `split_*` — Facets
 
 | Function | Description | Key params |
 |:---|:---|:---|
 | `split_wrap()` | Wrapped facets | `...` (variables), `ncol`, `nrow`, `scales` |
 | `split_grid()` | Grid facets | `rows`, `cols`, `scales`, `space` |
 
-## 🎨 `style()` & 💾 `export()`
+## `style()` & `export()`
 
 | Function | Description | Key params |
 |:---|:---|:---|

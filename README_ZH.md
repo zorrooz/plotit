@@ -2,7 +2,7 @@
 
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 
-> [English version](README.md)
+[English version](README.md) · [GitHub](https://github.com/zorrooz/plotit)
 
 ---
 
@@ -12,14 +12,14 @@
 library(plotit)
 
 iris |>
-  plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
-  mark_point(size = 2, alpha = 0.7) |>
-  scale_color(range = "viridis") |>
-  label_title("Iris Sepal Dimensions") |>
-  label_axis(text = "Sepal Width", aes = "x") |>
-  label_axis(text = "Sepal Length", aes = "y") |>
-  style(ggplot2::theme_minimal(base_size = 14)) |>
-  export("iris_plot.pdf")
+ plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+ mark_point(size = 2, alpha = 0.7) |>
+ scale_color(range = "viridis") |>
+ label_title("Iris Sepal Dimensions") |>
+ label_axis(text = "Sepal Width", aes = "x") |>
+ label_axis(text = "Sepal Length", aes = "y") |>
+ style(ggplot2::theme_minimal(base_size = 14)) |>
+ export("iris_plot.pdf")
 ```
 
 <details>
@@ -28,22 +28,22 @@ iris |>
 ```r
 # plotit — 4 行
 iris |>
-  plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
-  mark_point(size = 2, alpha = 0.7) |>
-  scale_color(range = "viridis") |>
-  label_title("Iris Sepal Dimensions")
+ plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+ mark_point(size = 2, alpha = 0.7) |>
+ scale_color(range = "viridis") |>
+ label_title("Iris Sepal Dimensions")
 
 # 原生 ggplot2 — 3 行
 ggplot(iris, aes(x = Sepal.Width, y = Sepal.Length, colour = Species)) +
-  geom_point(size = 2, alpha = 0.7) +
-  scale_colour_viridis_d() +
-  labs(title = "Iris Sepal Dimensions")
+ geom_point(size = 2, alpha = 0.7) +
+ scale_colour_viridis_d() +
+ labs(title = "Iris Sepal Dimensions")
 ```
 </details>
 
 ---
 
-## 📦 安装
+## 安装
 
 ```r
 # install.packages("pak")
@@ -52,7 +52,7 @@ pak::pak("zorrooz/plotit")
 
 ---
 
-## 🧭 使用指南
+## 使用指南
 
 ### 管道模式
 
@@ -75,18 +75,18 @@ data |> plotit(encode(...)) |> mark_*() |> scale_*() |> label_*() |> style() |> 
 
 | 家族 | 前缀 | 职责 | 示例 |
 |:---|:---|:---|:---|
-| 🎨 图层 | `mark_*` | 几何图层 | `mark_point()`, `mark_line()`, `mark_bar()`, `mark_boxplot()`, `mark_histogram()`, `mark_density()` |
-| 🧩 组合 | `compose_*` | 多图布局 | `compose_grid()`, `compose_inset()`, `compose_marginal()` |
-| 📐 标度 | `scale_*` | 数据 → 视觉映射 | `scale_x(trans = "log")`, `scale_color(range = "viridis")` |
-| 🏷️ 标签 | `label_*` | 标题与标注 | `label_title("标题")`, `label_axis("X轴", aes = "x")` |
-| 🔄 坐标系 | `project_*` | 坐标变换 | `project_cartesian(flip = TRUE)`, `project_polar()` |
-| 📊 分面 | `split_*` | 分面布局 | `split_wrap(Species)`, `split_grid(rows = vars(cyl))` |
-| 🎨 主题 | `style()` | 主题 | `style(theme_minimal(base_size = 14))` |
-| 💾 导出 | `export()` | 输出文件 | `export("plot.pdf", dpi = 300)` |
+| 图层 | `mark_*` | 几何图层 | `mark_point()`, `mark_line()`, `mark_bar()`, `mark_boxplot()`, `mark_histogram()`, `mark_density()` |
+| 组合 | `compose_*` | 多图布局 | `compose_grid()`, `compose_inset()`, `compose_marginal()` |
+| 标度 | `scale_*` | 数据 → 视觉映射 | `scale_x(trans = "log")`, `scale_color(range = "viridis")` |
+| 标签 | `label_*` | 标题与标注 | `label_title("标题")`, `label_axis("X轴", aes = "x")` |
+| 坐标系 | `project_*` | 坐标变换 | `project_cartesian(flip = TRUE)`, `project_polar()` |
+| 分面 | `split_*` | 分面布局 | `split_wrap(Species)`, `split_grid(rows = vars(cyl))` |
+| 主题 | `style()` | 主题 | `style(theme_minimal(base_size = 14))` |
+| 导出 | `export()` | 输出文件 | `export("plot.pdf", dpi = 300)` |
 
 ---
 
-## 🎨 `mark_*` — 几何图层
+## `mark_*` — 几何图层
 
 六个 mark 函数，统一签名（`mapping`, `data`, `position`, `rasterize`, `...`）。
 
@@ -101,7 +101,7 @@ data |> plotit(encode(...)) |> mark_*() |> scale_*() |> label_*() |> style() |> 
 
 ---
 
-## 🧩 `compose_*` — 多图组合布局
+## `compose_*` — 多图组合布局
 
 将多个图表组装为复合布局。全部返回 `plotit_composite` 对象，
 支持 `label_*()` / `style()` / `export()` 管道延续。
@@ -115,18 +115,18 @@ data |> plotit(encode(...)) |> mark_*() |> scale_*() |> label_*() |> style() |> 
 ```r
 # 2×2 仪表盘 + 自动子图标签
 compose_grid(p1, p2, p3, p4, ncol = 2, tag_levels = "A") |>
-  label_title("仪表盘") |>
-  export("dashboard.png")
+ label_title("仪表盘") |>
+ export("dashboard.png")
 
 # 散点图 + 边际直方图
 compose_marginal(main, top_hist, right_hist) |>
-  label_title("Iris") |>
-  export("marginal.png")
+ label_title("Iris") |>
+ export("marginal.png")
 ```
 
 ---
 
-## 📐 `scale_*` — 数据到视觉的映射
+## `scale_*` — 数据到视觉的映射
 
 八个函数，参数完全一致——仅 `trans` 默认值不同。
 
@@ -176,7 +176,7 @@ compose_marginal(main, top_hist, right_hist) |>
 
 ---
 
-## 🏷️ `label_*` — 文本标签
+## `label_*` — 文本标签
 
 五个函数，三参数协议：
 
@@ -197,7 +197,7 @@ compose_marginal(main, top_hist, right_hist) |>
 
 ---
 
-## 🔄 `project_*` — 坐标系
+## `project_*` — 坐标系
 
 | 函数 | 说明 | 关键参数 |
 |:---|:---|:---|
@@ -206,14 +206,14 @@ compose_marginal(main, top_hist, right_hist) |>
 | `project_parallel()` | 平行坐标 | `columns`, `group`, `scale`, `alpha`, `size` |
 | `project_map()` | 地理投影 | `projection`, `xlim`, `ylim`, `clip` |
 
-## 📊 `split_*` — 分面
+## `split_*` — 分面
 
 | 函数 | 说明 | 关键参数 |
 |:---|:---|:---|
 | `split_wrap()` | 环绕分面 | `...`（分面变量）, `ncol`, `nrow`, `scales` |
 | `split_grid()` | 网格分面 | `rows`, `cols`, `scales`, `space` |
 
-## 🎨 `style()` & 💾 `export()`
+## `style()` & `export()`
 
 | 函数 | 说明 | 关键参数 |
 |:---|:---|:---|
