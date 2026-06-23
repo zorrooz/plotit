@@ -134,11 +134,8 @@ S7::method(project_polar, plotit_class) <- function(
       theta = theta, start = start,
       r.axis.inside = r_axis_inside, inner.radius = inner_radius, clip = clip
     )
-    if (utils::packageVersion("ggplot2") >= "4.0") {
-      if (direction == -1) args$reverse <- "theta"
-    } else {
-      args$direction <- direction
-    }
+    # coord_radial supports direction parameter since ggplot2 3.5.0
+    if (direction != 1) args$direction <- direction
     plot@gg <- plot@gg + do.call(ggplot2::coord_radial, c(args, list(...)))
   } else {
     plot@gg <- plot@gg +

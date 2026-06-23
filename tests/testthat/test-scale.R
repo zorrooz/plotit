@@ -267,6 +267,20 @@ test_that("scale_alpha trans=binned", {
   expect_s3_class(p, "plotit::plotit")
 })
 
+test_that("scale_alpha trans=discrete", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg, alpha = hp)) |>
+    mark_point() |>
+    scale_alpha(trans = "discrete")
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("scale_alpha range=c(0.2, 0.8)", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg, alpha = hp)) |>
+    mark_point() |>
+    scale_alpha(range = c(0.2, 0.8))
+  expect_s3_class(p, "plotit::plotit")
+})
+
 # ============================================================
 # scale_shape
 # ============================================================
@@ -329,6 +343,14 @@ test_that("scale_linetype trans=identity errors", {
   expect_error(
     scale_linetype(p, trans = "identity"),
     "continuous mapping"
+  )
+})
+
+test_that("scale_linetype trans=reverse with custom values", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, linetype = Species)) |>
+    mark_line()
+  expect_no_error(
+    scale_linetype(p, trans = "reverse", range = c("solid", "dashed", "dotted"))
   )
 })
 

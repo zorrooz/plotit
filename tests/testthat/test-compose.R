@@ -287,6 +287,22 @@ test_that("[BDD] compose_marginal builds and renders", {
   unlink(f)
 })
 
+test_that("[BDD] compose_marginal custom widths/heights", {
+  main <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length,
+                colour = Species)) |> mark_point()
+  top <- plotit(iris, encode(x = Sepal.Width, fill = Species)) |>
+    mark_histogram(bins = 15, alpha = 0.5)
+  right <- plotit(iris, encode(x = Sepal.Length, fill = Species)) |>
+    mark_histogram(bins = 15, alpha = 0.5) |>
+    project_cartesian(flip = TRUE)
+  c <- compose_marginal(main, top, right, widths = c(3, 1), heights = c(1, 3))
+  expect_s3_class(c, "plotit::plotit_composite")
+  f <- tempfile(fileext = ".png")
+  export(c, f, dpi = 72)
+  expect_true(file.exists(f))
+  unlink(f)
+})
+
 test_that("[BDD] compose_marginal pipeline: label + style + export", {
   main <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length,
                 colour = Species)) |> mark_point()

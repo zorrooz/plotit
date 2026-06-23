@@ -359,6 +359,19 @@ S7::method(export, plotit_composite) <- function(
 
   gg <- ._apply_annotations(plot)
 
+  # Resolve size_unit from first sub-plot's meta, or global option
+  meta_unit <- NULL
+  for (p in plot@plots) {
+    if (S7::S7_inherits(p, plotit_class)) {
+      meta_unit <- p@meta@unit
+      break
+    }
+  }
+  meta_unit <- meta_unit %||% getOption("plotit.default_unit", "in")
+
+  if (!is.null(width)) width <- .unit_to_inches(width, meta_unit)
+  if (!is.null(height)) height <- .unit_to_inches(height, meta_unit)
+
   if (is.null(width) || is.null(height)) {
     gt <- patchwork::patchworkGrob(gg)
     if (is.null(width)) {
