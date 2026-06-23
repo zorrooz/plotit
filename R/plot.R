@@ -60,8 +60,11 @@ plotit <- function(
   # (points, bars, tiles, ...) pick up the same single-color appearance.
   use_default <- !is.null(default_color) && !has_color && !has_fill
   if (use_default) {
-    mapping$colour <- I(default_color)
-    mapping$fill <- I(default_color)
+    # Clone mapping to avoid mutating the caller's encode() object
+    mapping <- structure(
+      utils::modifyList(mapping, list(colour = I(default_color), fill = I(default_color))),
+      class = c("plotit_encode", "uneval")
+    )
     p <- ggplot2::ggplot(data, mapping) +
       ggplot2::guides(colour = "none", fill = "none")
   } else {

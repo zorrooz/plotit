@@ -263,8 +263,8 @@ compose_inset <- function(
 #'   Typically built from the same data and x mapping as `main`, with the
 #'   same `fill`/`colour` aesthetic to match.
 #' @param right A `plotit` histogram or density plot for the y variable.
-#'   Same conventions as `top`; will be rendered with flipped coordinates
-#'   automatically so the y-axis aligns with the scatter.
+#'   Same conventions as `top`.  Call `project_cartesian(flip = TRUE)` on
+#'   this plot before passing it so the y-axis aligns with the scatter.
 #' @param widths Relative column widths for the main and right-marginal
 #'   panels.  Default `c(4, 1)` = right marginal is 1/5 of total width.
 #' @param heights Relative row heights for the top-marginal and main

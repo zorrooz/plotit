@@ -242,6 +242,13 @@ test_that("scale_size trans=reverse", {
   expect_s3_class(p, "plotit::plotit")
 })
 
+test_that("scale_size trans=reverse with discrete variable", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, size = Species)) |>
+    mark_point() |>
+    scale_size(trans = "reverse")
+  expect_s3_class(p, "plotit::plotit")
+})
+
 # ============================================================
 # scale_alpha
 # ============================================================
@@ -271,6 +278,13 @@ test_that("scale_alpha trans=discrete", {
   p <- plotit(mtcars, encode(x = wt, y = mpg, alpha = hp)) |>
     mark_point() |>
     scale_alpha(trans = "discrete")
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("scale_alpha trans=reverse with discrete variable", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, alpha = Species)) |>
+    mark_point() |>
+    scale_alpha(trans = "reverse")
   expect_s3_class(p, "plotit::plotit")
 })
 

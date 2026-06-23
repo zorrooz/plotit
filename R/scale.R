@@ -175,8 +175,14 @@ NULL
     )
   }
   args <- list(...)
+  # Explicit defaults per AGENTS.md §3.3.4
+  if (is.null(range) && !binned && !discrete) {
+    range <- switch(aes, size = c(1, 6), alpha = c(0.1, 1))
+  }
   if (!is.null(range) && !binned && !discrete) args$range <- range
   if (reverse && !discrete) args$trans <- "reverse"
+  # Discrete + reverse: reverse the guide order (symmetry with ._scale_discrete_fun)
+  if (reverse && discrete) args$guide <- ggplot2::guide_legend(reverse = TRUE)
   do.call(fun, args)
 }
 

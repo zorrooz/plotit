@@ -458,7 +458,15 @@ tests/testthat/
 
 使用 `pkg::fun()` 显式调用外部函数。内部用 `%||%` 处理 NULL 默认值。
 
-**禁止直接访问 ggplot2 内部结构**：不得操作 `gg$labels`、`gg$scales$scales` 等未在 ggplot2 文档中公开的内部槽位。所有视觉修改必须通过 `+ labs()`、`+ guides()`、`+ theme()` 等公开 API。`gg$mapping` 和 `gg$data` 是 ggplot2 的公开槽位，读取和修改属于合法操作。`gg$theme` 是文档化的公开槽位，允许只读访问（如通过 `calc_element()` 提取主题属性）；对 theme 的修改必须通过 `+ theme()` 公开 API。内部结构在 ggplot2 小版本升级时无兼容保证。
+**优先使用公开 API**：所有视觉修改首先尝试 `+ labs()`、`+ guides()`、`+ theme()` 等 ggplot2 公开函数。
+
+**直接槽位访问（允许）**：
+- `gg$mapping` — 公开槽位，可读写。
+- `gg$data` — 公开槽位，可读写。
+- `gg$labels` — 公开槽位（ggplot2 文档化的 `list of labels for the plot`），可读写。当 `labs(a = NULL)` 因 `modifyList` 的 `keep.null` 默认行为无法正确清空标签时，可直接操作此槽位。
+- `gg$theme` — 公开槽位，允许只读访问（如 `calc_element()`）；修改必须通过 `+ theme()`。
+
+**禁止直接访问**：`gg$scales$scales`、`gg$layers` 等未文档化的内部结构。这些在 ggplot2 小版本升级时无兼容保证。测试中也禁止检查这些内部槽位。
 
 **非标准求值只用 rlang**：数据掩码场景（列名查找）必须使用 `rlang::eval_tidy()`，禁止 `eval()` + `baseenv()` 组合。
 
