@@ -9,13 +9,13 @@ label_axis(plot, text = NULL, aes = NULL, hide = FALSE, reset = FALSE, ...)
 \arguments{
 \item{plot}{A plotit object}
 
-\item{text}{Axis title text. \code{NULL} = don't modify. \code{"str"} = custom title.}
+\item{text}{Axis title text. NULL = don't modify. "str" = custom title.}
 
-\item{aes}{Which axis to apply to: \code{"x"} or \code{"y"} (required).}
+\item{aes}{Which axis to apply to: "x" or "y" (required).}
 
-\item{hide}{If \code{TRUE}, hide the axis title entirely (\code{element_blank()}).}
+\item{hide}{If TRUE, hide the axis title entirely (�lement_blank()).}
 
-\item{reset}{If \code{TRUE}, restore the axis title to the variable name.}
+\item{reset}{If TRUE, restore the axis title to the variable name.}
 
 \item{...}{Currently unused}
 }

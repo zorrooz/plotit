@@ -32,9 +32,9 @@ S7::method(split_wrap, plotit_class) <- function(
   dots <- rlang::enquos(...)
   dot_names <- names(dots) %||% character(length(dots))
   is_named <- nzchar(dot_names)
-  # Unnamed args → facet variables (quosures, passed to vars())
+  # Unnamed args <U+2192> facet variables (quosures, passed to vars())
   facet_quos <- dots[!is_named]
-  # Named args → evaluated and passed through to facet_wrap()
+  # Named args <U+2192> evaluated and passed through to facet_wrap()
   passthrough <- lapply(dots[is_named], rlang::eval_tidy)
 
   args <- c(

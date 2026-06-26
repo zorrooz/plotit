@@ -1,6 +1,6 @@
 # ============================================================
 # style function family -- BDD tests (assert rendered theme)
-# AGENTS.md §4.8
+# AGENTS.md <U+00A7>4.8
 # ============================================================
 library(plotit)
 
@@ -70,8 +70,10 @@ test_that("[BDD] style() base_theme switches to different base", {
 test_that("[BDD] style() base_theme + overrides combine", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
-    style(base_theme = ggplot2::theme_bw(),
-          plot.title = ggplot2::element_text(face = "bold"))
+    style(
+      base_theme = ggplot2::theme_bw(),
+      plot.title = ggplot2::element_text(face = "bold")
+    )
   built <- ggplot2::ggplot_build(p@gg)
   expect_equal(built$plot$theme$plot.title$face, "bold")
 })

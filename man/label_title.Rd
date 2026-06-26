@@ -9,11 +9,11 @@ label_title(plot, text = NULL, hide = FALSE, reset = FALSE, ...)
 \arguments{
 \item{plot}{A plotit object}
 
-\item{text}{Title text. \code{NULL} = don't modify. \code{"str"} = custom title.}
+\item{text}{Title text. NULL = don't modify. "str" = custom title.}
 
-\item{hide}{If \code{TRUE}, remove title element from layout entirely.}
+\item{hide}{If TRUE, remove title element from layout entirely.}
 
-\item{reset}{If \code{TRUE}, remove the title text (restore to no title).}
+\item{reset}{If TRUE, remove the title text (restore to no title).}
 
 \item{...}{Currently unused}
 }

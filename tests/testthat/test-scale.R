@@ -1,5 +1,5 @@
 # ============================================================
-# scale_* function family — all 8 scales, full coverage
+# scale_* function family <U+2014> all 8 scales, full coverage
 # ============================================================
 library(plotit)
 
@@ -548,7 +548,7 @@ test_that("[BDD] scale_color trans=reverse + range=c(blue,red) reverses gradient
     mark_point(size = 2) |>
     scale_color(trans = "reverse", range = c("blue", "red"))
   built <- ggplot2::ggplot_build(p@gg)
-  # Reverse should swap the gradient direction — verify scale exists
+  # Reverse should swap the gradient direction <U+2014> verify scale exists
   scale <- built$plot$scales$get_scales("colour")
   expect_true(inherits(scale, "ScaleContinuous"))
 })

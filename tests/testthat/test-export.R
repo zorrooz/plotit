@@ -1,6 +1,6 @@
 # ============================================================
 # export + print tests -- BDD (file-system assertions)
-# AGENTS.md §4.8
+# AGENTS.md <U+00A7>4.8
 # ============================================================
 library(plotit)
 
@@ -76,8 +76,8 @@ test_that("[BDD] print() returns plotit object invisibly", {
   expect_s3_class(print(p), "plotit::plotit")
 })
 
-# ---- contract boundary (§3.3.10) ----
-test_that("[BDD] panel size respects contract within ±1%", {
+# ---- contract boundary (<U+00A7>3.3.10) ----
+test_that("[BDD] panel size respects contract within <U+00B1>1%", {
   p <- plotit(mtcars, encode(x = wt, y = mpg),
     width = 5, height = 4, size_unit = "in"
   ) |> mark_point()

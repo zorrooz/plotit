@@ -1,6 +1,6 @@
 # ============================================================
 # compose function family -- BDD tests
-# AGENTS.md §4.8
+# AGENTS.md <U+00A7>4.8
 # ============================================================
 library(plotit)
 
@@ -159,7 +159,9 @@ test_that("[BDD] label_caption on composite renders via export", {
 })
 
 test_that("[BDD] label_title hide renders via export", {
-  c <- compose_grid(.p1, .p2) |> label_title("T") |> label_title(hide = TRUE)
+  c <- compose_grid(.p1, .p2) |>
+    label_title("T") |>
+    label_title(hide = TRUE)
   f <- tempfile(fileext = ".png")
   export(c, f, dpi = 72)
   expect_true(file.exists(f))
@@ -167,7 +169,9 @@ test_that("[BDD] label_title hide renders via export", {
 })
 
 test_that("[BDD] label_title reset renders via export", {
-  c <- compose_grid(.p1, .p2) |> label_title("T") |> label_title(reset = TRUE)
+  c <- compose_grid(.p1, .p2) |>
+    label_title("T") |>
+    label_title(reset = TRUE)
   f <- tempfile(fileext = ".png")
   export(c, f, dpi = 72)
   expect_true(file.exists(f))
@@ -272,8 +276,10 @@ test_that("[BDD] pipeline: compose_inset -> label -> style -> export", {
 # =====================================================================
 
 test_that("[BDD] compose_marginal builds and renders", {
-  main <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length,
-                colour = Species)) |> mark_point()
+  main <- plotit(iris, encode(
+    x = Sepal.Width, y = Sepal.Length,
+    colour = Species
+  )) |> mark_point()
   top <- plotit(iris, encode(x = Sepal.Width, fill = Species)) |>
     mark_histogram(bins = 15, alpha = 0.5)
   right <- plotit(iris, encode(x = Sepal.Length, fill = Species)) |>
@@ -288,8 +294,10 @@ test_that("[BDD] compose_marginal builds and renders", {
 })
 
 test_that("[BDD] compose_marginal custom widths/heights", {
-  main <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length,
-                colour = Species)) |> mark_point()
+  main <- plotit(iris, encode(
+    x = Sepal.Width, y = Sepal.Length,
+    colour = Species
+  )) |> mark_point()
   top <- plotit(iris, encode(x = Sepal.Width, fill = Species)) |>
     mark_histogram(bins = 15, alpha = 0.5)
   right <- plotit(iris, encode(x = Sepal.Length, fill = Species)) |>
@@ -304,8 +312,10 @@ test_that("[BDD] compose_marginal custom widths/heights", {
 })
 
 test_that("[BDD] compose_marginal pipeline: label + style + export", {
-  main <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length,
-                colour = Species)) |> mark_point()
+  main <- plotit(iris, encode(
+    x = Sepal.Width, y = Sepal.Length,
+    colour = Species
+  )) |> mark_point()
   top <- plotit(iris, encode(x = Sepal.Width, fill = Species)) |>
     mark_histogram(bins = 15, alpha = 0.5)
   right <- plotit(iris, encode(x = Sepal.Length, fill = Species)) |>

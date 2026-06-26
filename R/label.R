@@ -2,7 +2,7 @@
 NULL
 
 # ---- Internal helpers for label family ----
-# Three-parameter protocol (AGENTS.md §3.3.7):
+# Three-parameter protocol (AGENTS.md <U+00A7>3.3.7):
 #   text  = NULL     -> no-op (don't change current label)
 #   text  = "str"    -> set custom text
 #   hide  = TRUE     -> remove element from layout (element_blank())
@@ -87,7 +87,9 @@ NULL
 ._sync_labels <- function(plot) {
   labels <- plot@meta@labels
   dirty <- names(labels@dirty)
-  if (length(dirty) == 0) return(plot)
+  if (length(dirty) == 0) {
+    return(plot)
+  }
 
   # Title
   if ("title" %in% dirty) {
@@ -161,8 +163,10 @@ NULL
 
   # Legend entries
   if ("legend" %in% dirty && length(labels@legend) > 0) {
-    aes_names <- ._collect_aes_names(plot@gg,
-      c("colour", "fill", "shape", "linetype", "size", "alpha"))
+    aes_names <- ._collect_aes_names(
+      plot@gg,
+      c("colour", "fill", "shape", "linetype", "size", "alpha")
+    )
     for (a in aes_names) {
       val <- labels@legend[[a]] %||% labels@legend[["default"]]
       if (isTRUE(val == FALSE)) {
@@ -321,7 +325,8 @@ S7::method(label_legend, plotit_class) <- function(plot, text = NULL, aes = NULL
   } else {
     aes_all <- ._collect_aes_names(
       plot@gg,
-      c("colour", "fill", "shape", "linetype", "size", "alpha"))
+      c("colour", "fill", "shape", "linetype", "size", "alpha")
+    )
     if (!(aes %in% aes_all)) {
       cli::cli_warn("Aesthetic {.val {aes}} is not present in the plot mapping.")
     } else {

@@ -61,7 +61,7 @@ test_that("[BDD] default_color renders single colour when no mapping", {
     default_color = "steelblue"
   ) |> mark_point(size = 2)
   built <- .build(p)
-  # default_color injects guides(colour="none") — rendered guide is NULL
+  # default_color injects guides(colour="none") <U+2014> rendered guide is NULL
   expect_null(built$plot$guides$colour)
 })
 
@@ -70,7 +70,7 @@ test_that("[BDD] default_color NOT injected when colour mapping present", {
     default_color = "steelblue"
   ) |> mark_point(size = 2)
   built <- .build(p)
-  # Colour mapping present → rendered points use multiple colours
+  # Colour mapping present <U+2192> rendered points use multiple colours
   colour_scale <- built$plot$scales$get_scales("colour")
   expect_false(is.null(colour_scale))
 })
@@ -80,7 +80,7 @@ test_that("[BDD] default_color cleared when layer provides colour mapping", {
     default_color = "steelblue"
   ) |> mark_point(mapping = encode(colour = Species), size = 2)
   built <- .build(p)
-  # Layer-level colour mapping triggers clearing → scale is present
+  # Layer-level colour mapping triggers clearing <U+2192> scale is present
   colour_scale <- built$plot$scales$get_scales("colour")
   expect_false(is.null(colour_scale))
 })
@@ -94,7 +94,7 @@ test_that("[BDD] default_color = NULL renders multiple colours from mapping", {
   expect_false(is.null(colour_scale))
 })
 
-# ---- patchwork integration (structural — remove when §3.3.10 debt is paid) ----
+# ---- patchwork integration (structural <U+2014> remove when <U+00A7>3.3.10 debt is paid) ----
 test_that("plotit() autofit=TRUE does not wrap in patchwork", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length), autofit = TRUE)
   expect_false(inherits(p@gg, "patchwork"))

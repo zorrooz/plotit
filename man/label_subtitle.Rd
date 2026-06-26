@@ -9,11 +9,11 @@ label_subtitle(plot, text = NULL, hide = FALSE, reset = FALSE, ...)
 \arguments{
 \item{plot}{A plotit object}
 
-\item{text}{Subtitle text. \code{NULL} = don't modify. \code{"str"} = custom subtitle.}
+\item{text}{Subtitle text. NULL = don't modify. "str" = custom subtitle.}
 
-\item{hide}{If \code{TRUE}, remove subtitle element from layout entirely.}
+\item{hide}{If TRUE, remove subtitle element from layout entirely.}
 
-\item{reset}{If \code{TRUE}, remove the subtitle text (restore to no subtitle).}
+\item{reset}{If TRUE, remove the subtitle text (restore to no subtitle).}
 
 \item{...}{Currently unused}
 }

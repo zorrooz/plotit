@@ -21,8 +21,8 @@ Typically built from the same data and x mapping as \code{main}, with the
 same \code{fill}/\code{colour} aesthetic to match.}
 
 \item{right}{A \code{plotit} histogram or density plot for the y variable.
-Same conventions as \code{top}; will be rendered with flipped coordinates
-automatically so the y-axis aligns with the scatter.}
+Same conventions as \code{top}.  Call \code{project_cartesian(flip = TRUE)} on
+this plot before passing it so the y-axis aligns with the scatter.}
 
 \item{widths}{Relative column widths for the main and right-marginal
 panels.  Default \code{c(4, 1)} = right marginal is 1/5 of total width.}

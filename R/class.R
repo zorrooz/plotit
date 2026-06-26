@@ -103,7 +103,8 @@ plotit_composite <- S7::new_class(
   constructor = function(gg, plots, layout, annotations) {
     S7::new_object(
       plotit_class(gg = gg, meta = plotit_metadata(autofit = TRUE)),
-      plots = plots, layout = layout, annotations = annotations)
+      plots = plots, layout = layout, annotations = annotations
+    )
   },
   validator = function(self) {
     if (!inherits(self@gg, "ggplot")) {

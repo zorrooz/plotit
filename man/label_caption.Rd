@@ -9,11 +9,11 @@ label_caption(plot, text = NULL, hide = FALSE, reset = FALSE, ...)
 \arguments{
 \item{plot}{A plotit object}
 
-\item{text}{Caption text. \code{NULL} = don't modify. \code{"str"} = custom caption.}
+\item{text}{Caption text. NULL = don't modify. "str" = custom caption.}
 
-\item{hide}{If \code{TRUE}, remove caption element from layout entirely.}
+\item{hide}{If TRUE, remove caption element from layout entirely.}
 
-\item{reset}{If \code{TRUE}, remove the caption text (restore to no caption).}
+\item{reset}{If TRUE, remove the caption text (restore to no caption).}
 
 \item{...}{Currently unused}
 }

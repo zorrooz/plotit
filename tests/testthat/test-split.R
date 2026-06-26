@@ -1,6 +1,6 @@
 # ============================================================
 # split_* function family -- BDD tests (assert rendered output)
-# AGENTS.md §4.8
+# AGENTS.md <U+00A7>4.8
 # ============================================================
 library(plotit)
 
@@ -102,7 +102,9 @@ test_that("[BDD] split_wrap passes labeller through", {
 test_that("[BDD] split_grid passes labeller through", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
     mark_point() |>
-    split_grid(rows = ggplot2::vars(vs), cols = ggplot2::vars(am),
-               labeller = "label_both")
+    split_grid(
+      rows = ggplot2::vars(vs), cols = ggplot2::vars(am),
+      labeller = "label_both"
+    )
   expect_s3_class(p, "plotit::plotit")
 })

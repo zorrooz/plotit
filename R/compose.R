@@ -214,7 +214,7 @@ compose_inset <- function(
     cli::cli_abort("{.arg base} must be a {.cls plotit} object.")
   }
 
-  base_gg <- ._reset_sizing(base@gg)
+  base_gg <- ._reset_sizing(._extract_gg(base))
   inset_gg <- ._reset_sizing(._extract_gg(inset))
   gg <- base_gg + patchwork::inset_element(
     inset_gg,
@@ -287,7 +287,7 @@ compose_marginal <- function(
     cli::cli_abort("{.arg main} must be a {.cls plotit} object.")
   }
 
-  main_gg <- ._reset_sizing(main@gg)
+  main_gg <- ._reset_sizing(._extract_gg(main))
   top_gg <- ._reset_sizing(._extract_gg(top))
   right_gg <- ._reset_sizing(._extract_gg(right))
 
@@ -304,7 +304,7 @@ compose_marginal <- function(
     axis.ticks.y = ggplot2::element_blank()
   )
 
-  # Flat 2×2 design
+  # Flat 2<U+00D7>2 design
   gg <- patchwork::wrap_plots(
     A = top_gg, B = patchwork::plot_spacer(),
     C = main_gg, D = right_gg,
@@ -344,10 +344,12 @@ S7::method(print, plotit_composite) <- function(x, ...) {
     gt <- patchwork::patchworkGrob(gg)
     pw <- grid::convertWidth(
       sum(gt$widths) + ggplot2::unit(1, "mm"), "inches",
-      valueOnly = TRUE)
+      valueOnly = TRUE
+    )
     ph <- grid::convertHeight(
       sum(gt$heights) + ggplot2::unit(1, "mm"), "inches",
-      valueOnly = TRUE)
+      valueOnly = TRUE
+    )
     use_rstudio <- isTRUE(dev_opt == "rstudio")
     grDevices::dev.new(width = pw, height = ph, noRStudioGD = !use_rstudio)
   }
@@ -498,25 +500,4 @@ S7::method(style_default, plotit_composite) <- function(
   base_family = NULL
 ) {
   style(plot, base_size = base_size, base_family = base_family)
-}
-
-# ---- Unsupported operations on composites (Problem 5) ----
-# Provide clear error messages for operations that only work on single plots.
-for (.generic_name in c("mark_point", "mark_line", "mark_bar", "mark_boxplot",
-                         "mark_histogram", "mark_density",
-                         "scale_color", "scale_fill", "scale_size", "scale_alpha",
-                         "scale_shape", "scale_linetype", "scale_x", "scale_y",
-                         "project_cartesian", "project_polar", "project_parallel",
-                         "project_map", "split_wrap", "split_grid",
-                         "label_axis", "label_legend")) {
-  .generic <- get(.generic_name)
-  local({
-    .name <- .generic_name
-    S7::method(.generic, plotit_composite) <<- function(plot, ...) {
-      cli::cli_abort(c(
-        "{.fn {.name}} is not supported for {.cls plotit_composite} objects.",
-        "i" = "Apply it to individual sub-plots before composing."
-      ))
-    }
-  })
 }

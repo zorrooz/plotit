@@ -9,13 +9,13 @@ label_legend(plot, text = NULL, aes = NULL, hide = FALSE, reset = FALSE, ...)
 \arguments{
 \item{plot}{A plotit object}
 
-\item{text}{Legend title text. \code{NULL} = don't modify. \code{"str"} = custom title.}
+\item{text}{Legend title text. NULL = don't modify. "str" = custom title.}
 
-\item{aes}{Aesthetic to apply to (e.g. \code{"colour"}, \code{"fill"}). \code{NULL} = all mapped aesthetics.}
+\item{aes}{Aesthetic to apply to (e.g. "colour", "fill"). NULL = all mapped aesthetics.}
 
-\item{hide}{If \code{TRUE}, hide the legend title.}
+\item{hide}{If TRUE, hide the legend title.}
 
-\item{reset}{If \code{TRUE}, restore the legend title to the variable name.}
+\item{reset}{If TRUE, restore the legend title to the variable name.}
 
 \item{...}{Currently unused}
 }

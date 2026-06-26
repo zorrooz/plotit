@@ -11,8 +11,6 @@ NULL
   # Only check global mapping (AGENTS.md 4.6: gg$layers is internal).
   TRUE
 }
-  TRUE
-}
 
 # When trans="reverse" and the mapped variable is discrete, route to
 # the discrete scale instead of attempting a continuous reverse scale
@@ -175,9 +173,12 @@ NULL
     )
   }
   args <- list(...)
-  # Explicit defaults per AGENTS.md §3.3.4
+  # Explicit defaults per AGENTS.md <U+00A7>3.3.4
   if (is.null(range) && !binned && !discrete) {
-    range <- switch(aes, size = c(1, 6), alpha = c(0.1, 1))
+    range <- switch(aes,
+      size = c(1, 6),
+      alpha = c(0.1, 1)
+    )
   }
   if (!is.null(range) && !binned && !discrete) args$range <- range
   if (reverse && !discrete) args$trans <- "reverse"
@@ -214,7 +215,7 @@ NULL
     discrete <- TRUE
   }
 
-  # range = normalized panel proportion (Vega-aligned, AGENTS.md §3.3.4)
+  # range = normalized panel proportion (Vega-aligned, AGENTS.md <U+00A7>3.3.4)
   if (!is.null(range) && !discrete && !binned) {
     if (!is.null(limits)) {
       cli::cli_warn(c(
@@ -285,7 +286,7 @@ NULL
 #'   `"identity"`, `"discrete"`, `"reverse"`, `"binned"`.
 #'   Unsupported values (e.g. `"log"`) produce a targeted error message.
 #' @param limits Data domain. `c(min, max)` for continuous; character vector for discrete limits.
-#' @param range Output range. `NULL` = auto (discrete→hue, continuous→viridis).
+#' @param range Output range. `NULL` = auto (discrete<U+2192>hue, continuous<U+2192>viridis).
 #'   A colour vector (`c("blue","red")`) for manual colours, or a scheme name:
 #'   `"viridis"`, `"brewer"`, `"grey"`, `"hue"`.
 #'   For binned: only `"viridis"`, `"brewer"`.

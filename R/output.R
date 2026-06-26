@@ -22,8 +22,8 @@ S7::method(print, plotit_class) <- function(x, ...) {
     x@gg <- x@gg + .theme_default()
     attr(x@meta, "plotit_theme_managed") <- TRUE
 
-  # Apply lazy labels (Problem 3)
-  x <- ._sync_labels(x)
+    # Apply lazy labels (Problem 3)
+    x <- ._sync_labels(x)
   }
 
   dev_opt <- getOption("plotit.device", "default")

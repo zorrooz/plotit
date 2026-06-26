@@ -213,7 +213,9 @@ project_parallel <- S7::new_generic(
   }
   g_ts <- function(name, default_pt) {
     el <- ggplot2::calc_element(name, theme)
-    if (inherits(el, "element_blank")) return(default_pt * 0.3528)
+    if (inherits(el, "element_blank")) {
+      return(default_pt * 0.3528)
+    }
     sz <- el$size %||% default_pt
     if (inherits(sz, "rel")) sz <- as.numeric(sz) * base_pt
     sz * 0.3528
@@ -234,23 +236,25 @@ project_parallel <- S7::new_generic(
   label_gap <- tick_len * 0.4
 
   list(
-    axis_line_col = g_lc("axis.line.y",    g_lc("axis.line",    "grey50")),
-    axis_line_lwd = g_ll("axis.line.y",    g_ll("axis.line",    0.3)),
-    tick_col      = g_lc("axis.ticks.y",   g_lc("axis.ticks",   "grey50")),
-    tick_lwd      = g_ll("axis.ticks.y",   g_ll("axis.ticks",   0.3)),
+    axis_line_col = g_lc("axis.line.y", g_lc("axis.line", "grey50")),
+    axis_line_lwd = g_ll("axis.line.y", g_ll("axis.line", 0.3)),
+    tick_col      = g_lc("axis.ticks.y", g_lc("axis.ticks", "grey50")),
+    tick_lwd      = g_ll("axis.ticks.y", g_ll("axis.ticks", 0.3)),
     tick_len      = tick_len,
     label_gap     = label_gap,
-    text_col      = g_tc("axis.text.y",    g_tc("axis.text",    "grey30")),
-    text_sz_mm    = g_ts("axis.text.y",    9),
-    text_face     = g_tf("axis.text.y",    g_tf("axis.text",    "plain")),
-    text_family   = g_tfm("axis.text.y",   g_tfm("axis.text",   ""))
+    text_col      = g_tc("axis.text.y", g_tc("axis.text", "grey30")),
+    text_sz_mm    = g_ts("axis.text.y", 9),
+    text_face     = g_tf("axis.text.y", g_tf("axis.text", "plain")),
+    text_family   = g_tfm("axis.text.y", g_tfm("axis.text", ""))
   )
 }
 
 # Build a format string for axis tick labels based on the step size between
 # breaks.  Uses 0, 1, or 2 decimal places depending on the break granularity.
 ._pp_label_fmt <- function(breaks) {
-  if (length(breaks) < 2) return("%.2f")
+  if (length(breaks) < 2) {
+    return("%.2f")
+  }
   step <- diff(range(breaks, na.rm = TRUE)) / (length(breaks) - 1)
   if (step >= 1) "%.0f" else if (step >= 0.1) "%.1f" else "%.2f"
 }
@@ -274,10 +278,12 @@ project_parallel <- S7::new_generic(
   }))
   plot@gg <- plot@gg +
     ggplot2::geom_segment(
-      data    = df_axis,
-      mapping = ggplot2::aes(x = .data$x, y = .data$y,
-                              xend = .data$xend, yend = .data$yend),
-      colour    = tp$axis_line_col,
+      data = df_axis,
+      mapping = ggplot2::aes(
+        x = .data$x, y = .data$y,
+        xend = .data$xend, yend = .data$yend
+      ),
+      colour = tp$axis_line_col,
       linewidth = tp$axis_line_lwd,
       inherit.aes = FALSE
     )
@@ -286,17 +292,23 @@ project_parallel <- S7::new_generic(
   tlen <- tp$tick_len
   df_ticks <- do.call(rbind, lapply(col_info, function(ci) {
     n <- length(ci$breaks)
-    if (n == 0) return(NULL)
-    data.frame(x = rep(ci$pos, n), xend = rep(ci$pos - tlen, n),
-               y = ci$breaks, yend = ci$breaks)
+    if (n == 0) {
+      return(NULL)
+    }
+    data.frame(
+      x = rep(ci$pos, n), xend = rep(ci$pos - tlen, n),
+      y = ci$breaks, yend = ci$breaks
+    )
   }))
   if (!is.null(df_ticks) && nrow(df_ticks) > 0) {
     plot@gg <- plot@gg +
       ggplot2::geom_segment(
-        data    = df_ticks,
-        mapping = ggplot2::aes(x = .data$x, y = .data$y,
-                                xend = .data$xend, yend = .data$yend),
-        colour    = tp$tick_col,
+        data = df_ticks,
+        mapping = ggplot2::aes(
+          x = .data$x, y = .data$y,
+          xend = .data$xend, yend = .data$yend
+        ),
+        colour = tp$tick_col,
         linewidth = tp$tick_lwd,
         inherit.aes = FALSE
       )
@@ -305,7 +317,9 @@ project_parallel <- S7::new_generic(
   # Labels (positioned with extra gap beyond tick end)
   df_lab <- do.call(rbind, lapply(col_info, function(ci) {
     n <- length(ci$breaks)
-    if (n == 0) return(NULL)
+    if (n == 0) {
+      return(NULL)
+    }
     data.frame(
       x = rep(ci$pos - tlen - tp$label_gap, n), y = ci$breaks,
       label = sprintf(ci$fmt, ci$breaks), hjust = rep(1, n),
@@ -315,13 +329,15 @@ project_parallel <- S7::new_generic(
   if (!is.null(df_lab) && nrow(df_lab) > 0) {
     plot@gg <- plot@gg +
       ggplot2::geom_text(
-        data    = df_lab,
-        mapping = ggplot2::aes(x = .data$x, y = .data$y,
-                                label = .data$label, hjust = .data$hjust),
-        colour    = tp$text_col,
-        size      = tp$text_sz_mm,
-        family    = tp$text_family,
-        fontface  = tp$text_face,
+        data = df_lab,
+        mapping = ggplot2::aes(
+          x = .data$x, y = .data$y,
+          label = .data$label, hjust = .data$hjust
+        ),
+        colour = tp$text_col,
+        size = tp$text_sz_mm,
+        family = tp$text_family,
+        fontface = tp$text_face,
         inherit.aes = FALSE
       )
   }
@@ -421,9 +437,9 @@ S7::method(project_parallel, plotit_class) <- function(
 
   # ---- Axis rendering: three mutually exclusive modes ----
   #
-  #   std    -- per-column normalised to 0-1  →  shared native y-axis
-  #   global -- globally normalised to 0-1     →  shared native y-axis
-  #   none   -- no normalisation                →  per-column axes
+  #   std    -- per-column normalised to 0-1  <U+2192>  shared native y-axis
+  #   global -- globally normalised to 0-1     <U+2192>  shared native y-axis
+  #   none   -- no normalisation                <U+2192>  per-column axes
   #
   #  Shared-scale modes delegate tick & label rendering to the native
   #  scale_y_continuous() guide -- this guarantees visual consistency with
