@@ -13,7 +13,7 @@
 
 所有图表配置（尺寸、autofit、单位、dodge 宽度、default_color、标签文本等）统一存储于 `meta` 组件中。
 
-标签类函数（`label_*`）**写入 `meta@labels` 并标记 dirty**（惰性模式），不立即修改 `gg`。通过 `._sync_labels()` 在 `print()`/`export()` 时统一将 `meta@labels` 的状态同步到 `gg$labels` 和 theme。
+标签类函数（`label_*`）**同步更新 `meta` 和 `gg`**：先将文本写入 `meta$labels`，随后立即通过 `ggplot2::labs()` 应用到 `gg`。
 
 > 直接操作 `plot@gg` 绕过 label 函数会导致 `meta$labels` 过时。
 
@@ -536,97 +536,3 @@ export(p, "output.pdf", dpi = 300)
 | 6 | 内部概念不泄漏 | 包层参数名可能与底层同名但语义不同（如 `trans="binned"`） |
 | 7 | 有状态默认值对称清除 | `default_color` 同时注入 `mapping$colour`/`mapping$fill` + `guides(colour="none", fill="none")`。任何图层级 `colour`/`fill` 映射触发清除时必须对称处理两侧。已统一为 `._clear_default_color()`（`utils.R`），`mark_*`/`scale_*`/`project_parallel` 三处共用。✅ |
 | 8 | 契约边界可验证 | 契约必须用用户可见的指标定义（如面板尺寸 ±1%），不能用"±5% 容差"等无法验证的免责声明。 |
-
----
-
-## 8. 现状评估与 1.0 路线图
-
-### 8.1 API 完成度
-
-| 函数族 | 规划数 | 已实现 | 完成度 |
-|--------|--------|--------|--------|
-| plotit() + encode() | 2 | 2 | 100% |
-| mark_* | 22 | 6 | 27% |
-| scale_* | 8 | 8 | 100% |
-| project_* | 4 | 4 | 100% |
-| split_* | 2 | 2 | 100% |
-| label_* | 6 | 6 | 100% |
-| style() + export() | 3 | 3 | 100% |
-| compose_* | 3 | 3 | 100% |
-| 总计 | ~50 | 34 | ~68% |
-
-### 8.2 设计原则符合度
-
-| 原则 | 状态 |
-|------|------|
-| 简化语法、动词前缀、管道 | 一致 |
-| 元数据集中管理（§1.2） | meta@labels 集中存储，惰性同步 |
-| 分域验证（§1.3） | cli::cli_abort 主动验证 |
-| 契约分层（§1.4） | 三层结构清晰 |
-| 自动生成不手动维护（§1.5） | roxygen2 驱动 |
-| 约定文档动态更新（§1.6） | 持续同步 |
-
-### 8.3 综合质量评分（2026-06-26）
-
-```
-维度         评分   说明
-API 完整度    6.8   mark_* 覆盖率不足
-架构设计      8.5   S7 + 惰性标签 + 集中元数据
-代码质量      7.5   干净代码，但 mark_* 有大量样板代码
-文档          6.5   AGENTS.md 强，缺 vignette / pkgdown
-测试覆盖      6.0   278 测试，但深度不足（BDD 约 15%）
-基础设施      5.0   无 CI/CD、无 pkgdown、无 @examples
-              ----
-综合          7.0   (0.x 阶段，重心在 API 设计正确性)
-```
-
----
-
-## 9. 已知技术债务与待办
-
-### 9.1 架构债务
-
-| # | 事项 | 优先级 | 说明 |
-|---|------|--------|------|
-| AD-1 | Patchwork 剥离（§3.3.10） | 中 | autofit=FALSE 时 @gg 存储 patchwork 对象而非纯 ggplot。剥离路线图已设计，未实施。 |
-| AD-2 | ._collect_aes_names 不再扫描 layers | 低 | P7 修复后不再检测图层级美学映射。label_legend(aes=NULL) 的图例标题变更不会应用到仅在图层级出现的离散变量。 |
-| AD-3 | ._sync_labels 函数结构 | 低 | 5 个几乎相同的 if 块（title/subtitle/caption/x/y），可抽象为循环。 |
-| AD-4 | S7 版本锁定 | 低 | DESCRIPTION 中无 S7 版本限制。S7 仍在 0.x 阶段，不兼容变更可能随时发生。 |
-| AD-5 | mark_* 样板代码 | 低 | 每个约 15 行 S7 泛型+方法定义，可用代码生成简化。 |
-
-### 9.2 功能缺口
-
-| # | 事项 | 优先级 | 说明 |
-|---|------|--------|------|
-| FG-1 | mark_* 补充 | 高 | 规划 22 种几何，目前只实现 6 种。1.0 前重点：mark_area、mark_violin、mark_text、mark_tile、mark_path |
-| FG-2 | mark_histogram 已在已实现表中但规划表中重复 | 低 | §3.2 表格将 mark_histogram 同时列在已实现和规划中，需清理。 |
-
-### 9.3 文档与基础设施
-
-| # | 事项 | 优先级 | 说明 |
-|---|------|--------|------|
-| DI-1 | Vignette | 高 | 至少 2-3 篇："Getting Started"、"Customizing Plots"、"Composing Figures" |
-| DI-2 | pkgdown 网站 | 中 | 函数参考 + vignette 集成 |
-| DI-3 | @examples | 中 | 每个导出函数的 roxygen 文档缺少可运行示例 |
-| DI-4 | CI/CD | 中 | GitHub Actions：R CMD check + testthat 自动化 |
-| DI-5 | roxygen 链接警告 | 低 | scale.R:538、scale.R:573 中 c(0, 1) 被误解析为链接目标 |
-
-### 9.4 测试
-
-| # | 事项 | 优先级 | 说明 |
-|---|------|--------|------|
-| TE-1 | BDD 渲染测试扩展 | 中 | 从约 15% 提到 40%+。目前大部分 scale 测试只检查 expect_s3_class（不崩溃），不验证实际视觉效果。 |
-| TE-2 | 惰性标签集成测试 | 中 | 新增测试验证 ._sync_labels + export() 的渲染结果与直接修改 gg 一致。 |
-
-### 9.5 1.0 前必做检查项
-
-- [ ] mark_* 扩至至少 15 个（重点：area, violin, text, tile, path）
-- [ ] 2-3 篇 vignette（"Getting Started"、"Customizing Plots"、"Composing Figures"）
-- [ ] pkgdown 网站 + GitHub Actions CI
-- [ ] 为所有导出函数补充 @examples
-- [ ] BDD 测试覆盖率提到 40%+
-- [ ] 惰性标签集成测试（验证 ._sync_labels + export() 渲染结果）
-- [ ] Patchwork 剥离（§3.3.10 路线图）
-- [ ] S7 版本锁定（Imports: S7 (>= 0.1.0)）
-- [ ] 修复 scale.R roxygen 链接警告
-- [ ] styler::style_pkg() + roxygen2::roxygenize()（每次 PR 前执行）
