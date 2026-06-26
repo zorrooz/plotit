@@ -1,5 +1,6 @@
 #' S7 class definitions for plotit
 #'
+
 #' @name plotit-class
 #' @keywords internal
 NULL
@@ -7,12 +8,13 @@ NULL
 plotit_labels <- S7::new_class(
   "plotit_labels",
   properties = list(
-    title = S7::class_character | NULL,
-    subtitle = S7::class_character | NULL,
-    caption = S7::class_character | NULL,
+    title = S7::class_character | S7::class_logical | NULL,
+    subtitle = S7::class_character | S7::class_logical | NULL,
+    caption = S7::class_character | S7::class_logical | NULL,
     x = S7::class_character | S7::class_logical | NULL,
     y = S7::class_character | S7::class_logical | NULL,
-    legend = S7::class_list | NULL
+    legend = S7::class_list | NULL,
+    dirty = S7::class_list
   ),
   constructor = function(
     title = NULL,
@@ -29,7 +31,8 @@ plotit_labels <- S7::new_class(
       caption = caption,
       x = x,
       y = y,
-      legend = legend
+      legend = legend,
+      dirty = list()
     )
   }
 )
@@ -81,7 +84,32 @@ plotit_class <- S7::new_class(
   ),
   validator = function(self) {
     if (!inherits(self@gg, "ggplot")) {
-      "`gg` must be a ggplot object"
+      "gg must be a ggplot object"
+    } else {
+      NULL
+    }
+  }
+)
+
+# ---- plotit_composite: inherits from plotit ----
+plotit_composite <- S7::new_class(
+  "plotit_composite",
+  parent = plotit_class,
+  properties = list(
+    plots       = S7::class_list,
+    layout      = S7::class_list,
+    annotations = S7::class_list
+  ),
+  constructor = function(gg, plots, layout, annotations) {
+    S7::new_object(
+      plotit_class(gg = gg, meta = plotit_metadata(autofit = TRUE)),
+      plots = plots, layout = layout, annotations = annotations)
+  },
+  validator = function(self) {
+    if (!inherits(self@gg, "ggplot")) {
+      "gg must be a ggplot object"
+    } else if (length(self@plots) == 0) {
+      "plots must contain at least one plot"
     } else {
       NULL
     }

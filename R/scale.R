@@ -8,16 +8,9 @@ NULL
   if (!is.null(var)) {
     return(is_discrete(plot@gg$data, var))
   }
-  for (layer in plot@gg$layers) {
-    lmap <- layer$mapping
-    if (is.null(lmap)) next
-    var <- lmap[[aes_name]]
-    if (!is.null(var)) {
-      data <- layer$data
-      if (is.null(data)) data <- plot@gg$data
-      return(is_discrete(data, var))
-    }
-  }
+  # Only check global mapping (AGENTS.md 4.6: gg$layers is internal).
+  TRUE
+}
   TRUE
 }
 

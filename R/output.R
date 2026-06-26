@@ -21,6 +21,9 @@ S7::method(print, plotit_class) <- function(x, ...) {
   if (is.null(attr(x@meta, "plotit_theme_managed", exact = TRUE))) {
     x@gg <- x@gg + .theme_default()
     attr(x@meta, "plotit_theme_managed") <- TRUE
+
+  # Apply lazy labels (Problem 3)
+  x <- ._sync_labels(x)
   }
 
   dev_opt <- getOption("plotit.device", "default")
@@ -86,6 +89,9 @@ S7::method(export, plotit_class) <- function(
 
   meta_unit <- plot@meta@unit %||% getOption("plotit.default_unit", "in")
 
+  # Apply lazy labels before measuring / exporting
+  plot <- ._sync_labels(plot)
+
   if (isTRUE(plot@meta@autofit)) {
     final_width <- if (is.null(width)) {
       getOption("plotit.default_width", 7)
@@ -110,8 +116,6 @@ S7::method(export, plotit_class) <- function(
       .unit_to_inches(height, meta_unit)
     }
   }
-
-  gg <- plot@gg
 
   ggplot2::ggsave(
     filename = filename,

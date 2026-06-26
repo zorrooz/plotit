@@ -337,6 +337,20 @@ compose_marginal <- function(
 #' @export
 S7::method(print, plotit_composite) <- function(x, ...) {
   gg <- ._apply_annotations(x)
+
+  # Device management (consistent with plotit_class print)
+  dev_opt <- getOption("plotit.device", "default")
+  if (interactive() && !is.null(dev_opt)) {
+    gt <- patchwork::patchworkGrob(gg)
+    pw <- grid::convertWidth(
+      sum(gt$widths) + ggplot2::unit(1, "mm"), "inches",
+      valueOnly = TRUE)
+    ph <- grid::convertHeight(
+      sum(gt$heights) + ggplot2::unit(1, "mm"), "inches",
+      valueOnly = TRUE)
+    use_rstudio <- isTRUE(dev_opt == "rstudio")
+    grDevices::dev.new(width = pw, height = ph, noRStudioGD = !use_rstudio)
+  }
   print(gg)
   invisible(x)
 }
@@ -484,4 +498,25 @@ S7::method(style_default, plotit_composite) <- function(
   base_family = NULL
 ) {
   style(plot, base_size = base_size, base_family = base_family)
+}
+
+# ---- Unsupported operations on composites (Problem 5) ----
+# Provide clear error messages for operations that only work on single plots.
+for (.generic_name in c("mark_point", "mark_line", "mark_bar", "mark_boxplot",
+                         "mark_histogram", "mark_density",
+                         "scale_color", "scale_fill", "scale_size", "scale_alpha",
+                         "scale_shape", "scale_linetype", "scale_x", "scale_y",
+                         "project_cartesian", "project_polar", "project_parallel",
+                         "project_map", "split_wrap", "split_grid",
+                         "label_axis", "label_legend")) {
+  .generic <- get(.generic_name)
+  local({
+    .name <- .generic_name
+    S7::method(.generic, plotit_composite) <<- function(plot, ...) {
+      cli::cli_abort(c(
+        "{.fn {.name}} is not supported for {.cls plotit_composite} objects.",
+        "i" = "Apply it to individual sub-plots before composing."
+      ))
+    }
+  })
 }
