@@ -33,3 +33,6 @@ Applies a geographic projection. Uses \code{ggplot2::coord_sf()} by default
 (for simple features), or \code{ggplot2::coord_map()} when a \code{projection}
 string is provided (requires \pkg{mapproj}).
 }
+\examples{
+\\donttest{# needs sf packagen#' plotit(nc, encode()) |> project_map()}
+}

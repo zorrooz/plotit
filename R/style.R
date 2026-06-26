@@ -47,6 +47,8 @@ NULL
 #' @param base_theme A complete ggplot2 theme object to use instead of the
 #'   default (e.g., `ggplot2::theme_bw()`). `NULL` = use plotit default.
 #' @return Modified plotit object.
+#' @examples
+#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point() |> style()
 #' @export
 style <- S7::new_generic(
   "style",
@@ -78,6 +80,8 @@ S7::method(style, plotit_class) <- function(
 #' @param base_size Base font size in pts (default 11).
 #' @param base_family Base font family (default `""` = system sans-serif).
 #' @return Modified plotit object.
+#' @examples
+#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point() |> style_default()
 #' @export
 style_default <- S7::new_generic(
   "style_default",

@@ -5,6 +5,9 @@ NULL
 
 # Shared mark logic: resolve position (auto-dodge or explicit), build geom,
 # clear default_color if the layer provides colour/fill, rasterize.
+#' Shared mark implementation: resolve position, clear default_color, rasterise.
+#' @noRd
+#' @keywords internal
 ._mark_impl <- function(plot, mapping, data, position, geom_fun,
                         rasterize, rasterize_dpi, rasterize_dev, ...) {
   plot <- ._clear_default_color(plot, mapping)
@@ -48,6 +51,8 @@ NULL
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_point`
 #' @return Modified plotit object
+#' @examples
+#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
 #' @export
 mark_point <- S7::new_generic(
   "mark_point",
@@ -80,6 +85,8 @@ S7::method(mark_point, plotit_class) <- function(plot, mapping = NULL, data = NU
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_line`
 #' @return Modified plotit object
+#' @examples
+#' plotit(ggplot2::economics, encode(x = date, y = unemploy)) |> mark_line()
 #' @export
 mark_line <- S7::new_generic(
   "mark_line",
@@ -112,6 +119,8 @@ S7::method(mark_line, plotit_class) <- function(plot, mapping = NULL, data = NUL
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_bar` or `geom_col`
 #' @return Modified plotit object
+#' @examples
+#' plotit(mtcars, encode(x = factor(cyl))) |> mark_bar()
 #' @export
 mark_bar <- S7::new_generic(
   "mark_bar",
@@ -152,6 +161,8 @@ S7::method(mark_bar, plotit_class) <- function(plot, mapping = NULL, data = NULL
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_boxplot`
 #' @return Modified plotit object
+#' @examples
+#' plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot()
 #' @export
 mark_boxplot <- S7::new_generic(
   "mark_boxplot",
@@ -184,6 +195,8 @@ S7::method(mark_boxplot, plotit_class) <- function(plot, mapping = NULL, data = 
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_histogram`
 #' @return Modified plotit object
+#' @examples
+#' plotit(iris, encode(x = Sepal.Width)) |> mark_histogram()
 #' @export
 mark_histogram <- S7::new_generic(
   "mark_histogram",
@@ -216,6 +229,8 @@ S7::method(mark_histogram, plotit_class) <- function(plot, mapping = NULL, data 
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_density`
 #' @return Modified plotit object
+#' @examples
+#' plotit(iris, encode(x = Sepal.Width)) |> mark_density()
 #' @export
 mark_density <- S7::new_generic(
   "mark_density",

@@ -38,3 +38,6 @@ Modified plotit object
 \description{
 Generic for adding a bar layer
 }
+\examples{
+plotit(mtcars, encode(x = factor(cyl))) |> mark_bar()
+}

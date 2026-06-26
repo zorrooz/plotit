@@ -42,3 +42,7 @@ Modified plotit object.
 The primary coordinate function. Supports zooming, flipping, fixed aspect
 ratio, and coordinate transformations -- all through parameters.
 }
+\examples{
+plotit(iris, encode(x = Species, y = Sepal.Length)) |>
+  mark_boxplot() |> project_cartesian(flip = TRUE)
+}

@@ -25,3 +25,7 @@ Modified plotit object
 \description{
 Generic for setting legend title(s)
 }
+\examples{
+plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+  mark_point() |> scale_color() |> label_legend(text = "Species", aes = "colour")
+}

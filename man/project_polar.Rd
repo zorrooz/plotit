@@ -44,3 +44,7 @@ zero inner radius) uses \code{coord_polar()}.  Set \code{inner_radius > 0} or
 \code{r_axis_inside = TRUE} to switch to the radial variant (requires
 ggplot2 >= 3.5.0).
 }
+\examples{
+plotit(mtcars, encode(x = factor(cyl))) |>
+  mark_bar() |> project_polar()
+}

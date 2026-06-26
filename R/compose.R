@@ -36,6 +36,9 @@ plotit_composite <- S7::new_class(
 # ---- Internal helpers -----------------------------------------------------
 
 # Pull the raw ggplot out of any plotit-family object
+#' Extract the raw ggplot from a plotit or plotit_composite object.
+#' @noRd
+#' @keywords internal
 ._extract_gg <- function(x) {
   if (S7::S7_inherits(x, plotit_composite)) {
     return(x@gg)
@@ -52,6 +55,10 @@ plotit_composite <- S7::new_class(
 # panel sizing.  This would force every sub-plot to a fixed physical size
 # when assembled by wrap_plots(), causing overflow and cropping.  Strip it
 # here so the composite controls layout.
+#' Strip fixed panel sizing from a patchwork object.
+#' Called before composite assembly to prevent cropping.
+#' @noRd
+#' @keywords internal
 ._reset_sizing <- function(gg) {
   if (!inherits(gg, "patchwork")) {
     return(gg)
@@ -60,6 +67,9 @@ plotit_composite <- S7::new_class(
 }
 
 # Assemble a list of plots into a patchwork via wrap_plots()
+#' Assemble a list of plots into a patchwork via wrap_plots().
+#' @noRd
+#' @keywords internal
 ._assemble_plots <- function(plots, layout) {
   ggs <- lapply(plots, ._extract_gg)
   ggs <- lapply(ggs, ._reset_sizing)
@@ -85,6 +95,9 @@ plotit_composite <- S7::new_class(
 # Lazily apply stored annotations to the raw assembled gg.
 # Called at print() / export() time so that label_* methods can be
 # called in any order without worrying about plot_annotation overwrites.
+#' Lazily apply stored annotations (title, subtitle, caption, tags) to composite gg.
+#' @noRd
+#' @keywords internal
 ._apply_annotations <- function(c) {
   gg <- c@gg
   ann <- c@annotations
@@ -129,6 +142,10 @@ plotit_composite <- S7::new_class(
 #'
 #' @return A `plotit_composite` object.  Pipe it to `label_title()`,
 #'   `style()`, or `export()`.
+#' @examples
+#' p1 <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
+#' p2 <- plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot()
+#' compose_grid(p1, p2)
 #' @export
 compose_grid <- function(
   ...,
@@ -198,6 +215,10 @@ compose_grid <- function(
 #' @param ... Passed through to `patchwork::inset_element()`.
 #'
 #' @return A `plotit_composite` object.
+#' @examples
+#' p1 <- plotit(mtcars, encode(x = wt, y = mpg)) |> mark_point()
+#' p2 <- plotit(mtcars, encode(x = factor(cyl))) |> mark_bar()
+#' compose_inset(p1, p2, left = 0.6, bottom = 0.6, right = 0.95, top = 0.95)
 #' @export
 compose_inset <- function(
   base,
@@ -274,6 +295,11 @@ compose_inset <- function(
 #'
 #' @return A `plotit_composite` object.  Pipe to `label_title()`,
 #'   `style()`, `export()` as usual.
+#' @examples
+#' main <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |> mark_point()
+#' top <- plotit(iris, encode(x = Sepal.Width, fill = Species)) |> mark_histogram(bins = 15, alpha = 0.5)
+#' right <- plotit(iris, encode(x = Sepal.Length, fill = Species)) |> mark_histogram(bins = 15, alpha = 0.5) |> project_cartesian(flip = TRUE)
+#' compose_marginal(main, top, right)
 #' @export
 compose_marginal <- function(
   main,

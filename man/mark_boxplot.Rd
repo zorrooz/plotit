@@ -38,3 +38,6 @@ Modified plotit object
 \description{
 Generic for adding a boxplot layer
 }
+\examples{
+plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot()
+}

@@ -38,3 +38,6 @@ Modified plotit object
 \description{
 Generic for adding a density layer
 }
+\examples{
+plotit(iris, encode(x = Sepal.Width)) |> mark_density()
+}

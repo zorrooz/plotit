@@ -19,3 +19,6 @@ Modified plotit object.
 \description{
 Apply the default plotit theme (convenience wrapper for style())
 }
+\examples{
+plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point() |> style_default()
+}

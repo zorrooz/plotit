@@ -26,7 +26,7 @@ Unsupported values (e.g. \code{"log"}) produce a targeted error message.}
 
 \item{limits}{Data domain. \code{c(min, max)} for continuous; character vector for discrete limits.}
 
-\item{range}{Output range. \code{NULL} = auto (discrete→hue, continuous→viridis).
+\item{range}{Output range. \code{NULL} = auto (discrete<U+2192>hue, continuous<U+2192>viridis).
 A colour vector (\code{c("blue","red")}) for manual colours, or a scheme name:
 \code{"viridis"}, \code{"brewer"}, \code{"grey"}, \code{"hue"}.
 For binned: only \code{"viridis"}, \code{"brewer"}.
@@ -44,4 +44,8 @@ A modified plotit object.
 \description{
 Maps data values to colours. Auto-detects discrete vs continuous variables;
 supports manual colour vectors and named colour schemes.
+}
+\examples{
+plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+  mark_point() |> scale_color(range = "viridis")
 }

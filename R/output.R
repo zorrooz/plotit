@@ -2,6 +2,9 @@
 NULL
 
 # Convert user-specified size unit to inches
+#' Convert user-specified size unit to inches.
+#' @noRd
+#' @keywords internal
 .unit_to_inches <- function(x, unit) {
   x / switch(unit,
     "in" = 1,
@@ -56,7 +59,11 @@ S7::method(print, plotit_class) <- function(x, ...) {
 #' @param device Graphics device to use (if NULL, auto-detected from filename).
 #' @param ... Additional arguments passed to `ggplot2::ggsave()`.
 #' @return Invisibly, the original `plotit` object.
-#' @export
+#' @examples
+#'   \\dontrun{
+#'   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
+#'   export(p, tempfile(fileext = ".png"), dpi = 72)
+#'   }
 export <- S7::new_generic(
   "export",
   "plot",

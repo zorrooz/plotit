@@ -38,3 +38,6 @@ Modified plotit object
 \description{
 Generic for adding a histogram layer
 }
+\examples{
+plotit(iris, encode(x = Sepal.Width)) |> mark_histogram()
+}

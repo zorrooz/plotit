@@ -16,6 +16,10 @@ NULL
 # @param mapping Optional layer mapping.  If provided, the function only
 #   clears when the mapping actually contains `colour` or `fill`.
 # @return The modified plotit object.
+#' Clear the global default_color injected by plotit().
+#' Called from mark_* / scale_* / project_parallel when colour/fill is provided.
+#' @noRd
+#' @keywords internal
 ._clear_default_color <- function(plot, mapping = NULL) {
   if (is.null(plot@meta@default_color)) {
     return(plot)
@@ -42,6 +46,10 @@ NULL
 # `var` is expected to be a quosure (as produced by aes()/encode()).
 # Uses rlang::eval_tidy for proper data-masking (avoids clashes when column
 # names shadow base R functions like 'mean' or 'list').
+#' Check if a variable (from data) is discrete.
+#' Uses rlang::eval_tidy for proper data-masking.
+#' @noRd
+#' @keywords internal
 is_discrete <- function(data, var) {
   if (is.null(data) || is.null(var)) {
     return(FALSE)

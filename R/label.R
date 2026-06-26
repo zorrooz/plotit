@@ -10,6 +10,9 @@ NULL
 #   text + reset     -> mutually exclusive; error if both are set
 
 # Check text/reset mutual exclusion
+#' Check mutual exclusion of text and reset parameters.
+#' @noRd
+#' @keywords internal
 ._check_text_reset <- function(text, reset, fun_name) {
   if (!is.null(text) && isTRUE(reset)) {
     cli::cli_abort(c(
@@ -24,6 +27,9 @@ NULL
 # time via ._sync_labels().  The dirty list tracks which slots have been
 # touched by label_* functions.
 
+#' Store a text/hide/reset intent for title/subtitle/caption in meta@labels.
+#' @noRd
+#' @keywords internal
 ._set_text_label <- function(plot, slot_name, theme_el_name,
                              text, hide, reset, fun_name) {
   ._check_text_reset(text, reset, fun_name)
@@ -41,12 +47,18 @@ NULL
 }
 
 # Helper: construct a single-element theme() call with dynamic name
+#' Construct a single-element theme() call.
+#' @noRd
+#' @keywords internal
 ._theme_el <- function(el, val) {
   args <- list(val)
   names(args) <- el
   do.call(ggplot2::theme, args)
 }
 # Helper: construct a single-element labs() call with dynamic name
+#' Construct a single-element labs() call.
+#' @noRd
+#' @keywords internal
 ._labs_el <- function(a, val) {
   args <- list(val)
   names(args) <- a
@@ -54,6 +66,9 @@ NULL
 }
 
 # Collect all aesthetic names from global + layer-level mappings
+#' Collect aesthetic names from global mapping.
+#' @noRd
+#' @keywords internal
 ._collect_aes_names <- function(gg, candidates) {
   unique(c(
     intersect(names(gg), candidates),
@@ -68,6 +83,9 @@ NULL
 }
 
 # Set legend title for a single aesthetic (public ggplot2 API only).
+#' Set legend title for a single aesthetic via guides/labs.
+#' @noRd
+#' @keywords internal
 ._label_set_aes <- function(gg, a, text, hide) {
   if (hide) {
     args <- list(ggplot2::guide_legend(title = NULL))
@@ -84,6 +102,10 @@ NULL
 # ---- Synchronise meta@labels to gg (called at print/export time) ----
 # Applies the complete label state from meta to gg, overwriting any
 # previous gg modifications.  Only touches slots listed in dirty.
+#' Sync meta@labels to gg at print/export time.
+#' Applies the complete label state (text, hide, reset) to gg.
+#' @noRd
+#' @keywords internal
 ._sync_labels <- function(plot) {
   labels <- plot@meta@labels
   dirty <- names(labels@dirty)
@@ -190,6 +212,8 @@ NULL
 #' @param reset If TRUE, remove the title text (restore to no title).
 #' @param ... Currently unused
 #' @return Modified plotit object
+#' @examples
+#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> label_title("My Title")
 #' @export
 label_title <- S7::new_generic(
   "label_title",
@@ -213,6 +237,8 @@ S7::method(label_title, plotit_class) <- function(plot, text = NULL, hide = FALS
 #' @param reset If TRUE, remove the subtitle text (restore to no subtitle).
 #' @param ... Currently unused
 #' @return Modified plotit object
+#' @examples
+#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> label_subtitle("Subtitle")
 #' @export
 label_subtitle <- S7::new_generic(
   "label_subtitle",
@@ -236,6 +262,8 @@ S7::method(label_subtitle, plotit_class) <- function(plot, text = NULL, hide = F
 #' @param reset If TRUE, remove the caption text (restore to no caption).
 #' @param ... Currently unused
 #' @return Modified plotit object
+#' @examples
+#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> label_caption("Caption")
 #' @export
 label_caption <- S7::new_generic(
   "label_caption",
@@ -260,6 +288,9 @@ S7::method(label_caption, plotit_class) <- function(plot, text = NULL, hide = FA
 #' @param reset If TRUE, restore the axis title to the variable name.
 #' @param ... Currently unused
 #' @return Modified plotit object
+#' @examples
+#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+#'   label_axis(text = "Width", aes = "x") |> label_axis(text = "Length", aes = "y")
 #' @export
 label_axis <- S7::new_generic(
   "label_axis",
@@ -302,6 +333,9 @@ S7::method(label_axis, plotit_class) <- function(plot, text = NULL, aes = NULL,
 #' @param reset If TRUE, restore the legend title to the variable name.
 #' @param ... Currently unused
 #' @return Modified plotit object
+#' @examples
+#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+#'   mark_point() |> scale_color() |> label_legend(text = "Species", aes = "colour")
 #' @export
 label_legend <- S7::new_generic(
   "label_legend",

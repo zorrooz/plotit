@@ -38,3 +38,6 @@ Modified plotit object
 \description{
 Generic for adding a point layer
 }
+\examples{
+plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
+}

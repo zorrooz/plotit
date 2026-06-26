@@ -51,3 +51,8 @@ grid via \code{patchwork::wrap_plots()}.  The default vertical stack (\code{ncol
 report figures.  Pipe the result to \code{label_title()} / \code{style()} /
 \code{export()} just as with a single \code{plotit}.
 }
+\examples{
+p1 <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
+p2 <- plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot()
+compose_grid(p1, p2)
+}

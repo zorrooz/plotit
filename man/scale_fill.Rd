@@ -42,3 +42,7 @@ A modified plotit object.
 Maps data values to fill colours. Same semantics as \code{\link[=scale_color]{scale_color()}} but for
 the \code{fill} aesthetic (bars, boxes, polygons, etc.).
 }
+\examples{
+plotit(iris, encode(x = Species, fill = Species)) |>
+  mark_bar() |> scale_fill(range = "viridis")
+}

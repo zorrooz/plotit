@@ -7,11 +7,16 @@
 encode(...)
 }
 \arguments{
-\item{...}{List of aesthetic mappings (e.g., x = wt, y = mpg, color = cyl)}
+\item{...}{List of aesthetic mappings (e.g., x = wt, y = mpg, color = cyl).}
 }
 \value{
-An object of class \code{"plotit_encode"} (a list)
+An object of class "plotit_encode" (a list).
 }
 \description{
 Create aesthetic mapping
+}
+\examples{
+encode(x = mpg, y = wt)
+encode(x = Sepal.Width, y = Sepal.Length, colour = Species)
+encode()  # empty mapping
 }

@@ -47,3 +47,7 @@ to share a common 0-1 scale.
 Adds \code{geom_line()} and \code{geom_point()} layers. Call \emph{after} any
 \verb{mark_*} layers that should sit beneath the parallel-coordinate lines.
 }
+\examples{
+plotit(iris, encode()) |>
+  project_parallel(columns = c("Sepal.Width", "Sepal.Length", "Petal.Width", "Petal.Length"))
+}

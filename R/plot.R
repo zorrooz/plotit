@@ -11,6 +11,9 @@
 #'   color/fill aesthetic is present in `mapping`. Adding any `scale_color()` or
 #'   `scale_fill()` later will automatically disable this single-color mapping.
 #' @return A `plotit` object.
+#' @examples
+#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
+#' plotit(mtcars, encode(x = wt, y = mpg, colour = cyl))
 #' @export
 plotit <- function(
   data,

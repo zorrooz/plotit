@@ -15,6 +15,9 @@ NULL
 # When trans="reverse" and the mapped variable is discrete, route to
 # the discrete scale instead of attempting a continuous reverse scale
 # which breaks on factors.  Returns a list(trans, force_reverse).
+#' Route trans="reverse" to discrete scale when variable is discrete.
+#' @noRd
+#' @keywords internal
 ._resolve_reverse_discrete <- function(plot, aes_name, trans) {
   if (identical(trans, "reverse") && .detect_discrete_aes(plot, aes_name)) {
     list(trans = "discrete", force_reverse = TRUE)
@@ -32,6 +35,9 @@ NULL
 # Friendly error messages for known-bad trans x aesthetic combinations.
 # Called before the generic allowed-set check so the user gets a targeted
 # explanation instead of a generic "must be one of ..." message.
+#' Validate trans parameter for a given aesthetic.
+#' @noRd
+#' @keywords internal
 ._validate_trans <- function(aes_name, trans, allowed) {
   visual_aes <- c("colour", "fill", "size", "alpha", "shape", "linetype")
   # log / sqrt on visual aesthetics
@@ -75,11 +81,17 @@ NULL
 }
 
 # Pick colour or fill variant of a scale function (eliminates aes branching)
+#' Pick colour or fill variant of a scale function.
+#' @noRd
+#' @keywords internal
 ._cf <- function(aes, fun_c, fun_f) {
   if (aes == "colour") fun_c else fun_f
 }
 
 # Scheme-based dispatch: viridis, brewer, grey, hue
+#' Dispatch to colour/fill scale by scheme name (viridis, brewer, grey, hue).
+#' @noRd
+#' @keywords internal
 ._scale_scheme <- function(aes, scheme, discrete, binned, reverse, ...) {
   dir <- if (reverse) -1 else 1
   if (discrete) {
@@ -106,6 +118,9 @@ NULL
 }
 
 # Custom colour vector dispatch: manual, gradient, steps
+#' Dispatch to colour/fill scale with custom colour vector.
+#' @noRd
+#' @keywords internal
 ._scale_custom <- function(aes, range, discrete, binned, reverse, ...) {
   if (discrete) {
     if (reverse) range <- rev(range)
@@ -295,6 +310,9 @@ NULL
 #' @param labels Legend key labels.
 #' @param ... Passed to the underlying ggplot2 scale function.
 #' @return A modified plotit object.
+#' @examples
+#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+#'   mark_point() |> scale_color(range = "viridis")
 #' @export
 scale_color <- S7::new_generic(
   "scale_color", "plot",
@@ -339,6 +357,9 @@ S7::method(scale_color, plotit_class) <- function(plot, name = ggplot2::waiver()
 #' @param labels Legend key labels.
 #' @param ... Passed to the underlying ggplot2 scale function.
 #' @return A modified plotit object.
+#' @examples
+#' plotit(iris, encode(x = Species, fill = Species)) |>
+#'   mark_bar() |> scale_fill(range = "viridis")
 #' @export
 scale_fill <- S7::new_generic(
   "scale_fill", "plot",
@@ -382,6 +403,9 @@ S7::method(scale_fill, plotit_class) <- function(plot, name = ggplot2::waiver(),
 #' @param labels Legend key labels.
 #' @param ... Passed to the underlying ggplot2 scale function.
 #' @return A modified plotit object.
+#' @examples
+#' plotit(mtcars, encode(x = wt, y = mpg, size = hp)) |>
+#'   mark_point() |> scale_size(range = c(1, 6))
 #' @export
 scale_size <- S7::new_generic(
   "scale_size", "plot",
@@ -424,6 +448,9 @@ S7::method(scale_size, plotit_class) <- function(plot, name = ggplot2::waiver(),
 #' @param labels Legend key labels.
 #' @param ... Passed to the underlying ggplot2 scale function.
 #' @return A modified plotit object.
+#' @examples
+#' plotit(mtcars, encode(x = wt, y = mpg, alpha = hp)) |>
+#'   mark_point() |> scale_alpha()
 #' @export
 scale_alpha <- S7::new_generic(
   "scale_alpha", "plot",
@@ -466,6 +493,9 @@ S7::method(scale_alpha, plotit_class) <- function(plot, name = ggplot2::waiver()
 #' @param labels Legend key labels.
 #' @param ... Passed to the underlying ggplot2 scale function.
 #' @return A modified plotit object.
+#' @examples
+#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, shape = Species)) |>
+#'   mark_point() |> scale_shape()
 #' @export
 scale_shape <- S7::new_generic(
   "scale_shape", "plot",
@@ -505,6 +535,9 @@ S7::method(scale_shape, plotit_class) <- function(plot, name = ggplot2::waiver()
 #' @param labels Legend key labels.
 #' @param ... Passed to the underlying ggplot2 scale function.
 #' @return A modified plotit object.
+#' @examples
+#' plotit(ggplot2::economics, encode(x = date, y = unemploy)) |>
+#'   mark_line() |> scale_linetype()
 #' @export
 scale_linetype <- S7::new_generic(
   "scale_linetype", "plot",
@@ -544,6 +577,9 @@ S7::method(scale_linetype, plotit_class) <- function(plot, name = ggplot2::waive
 #' @param labels Axis tick labels.
 #' @param ... Passed to the underlying ggplot2 scale function.
 #' @return A modified plotit object.
+#' @examples
+#' plotit(mtcars, encode(x = wt, y = mpg)) |>
+#'   mark_point() |> scale_x(trans = "log10")
 #' @export
 scale_x <- S7::new_generic(
   "scale_x", "plot",
@@ -579,6 +615,9 @@ S7::method(scale_x, plotit_class) <- function(plot, name = ggplot2::waiver(),
 #' @param labels Axis tick labels.
 #' @param ... Passed to the underlying ggplot2 scale function.
 #' @return A modified plotit object.
+#' @examples
+#' plotit(mtcars, encode(x = wt, y = mpg)) |>
+#'   mark_point() |> scale_y(limits = c(0, 40))
 #' @export
 scale_y <- S7::new_generic(
   "scale_y", "plot",

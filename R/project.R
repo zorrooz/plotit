@@ -20,6 +20,9 @@ NULL
 #' @param clip Should drawing be clipped to the panel? `"on"` or `"off"`.
 #' @param ... Passed to the underlying `coord_*` function.
 #' @return Modified plotit object.
+#' @examples
+#' plotit(iris, encode(x = Species, y = Sepal.Length)) |>
+#'   mark_boxplot() |> project_cartesian(flip = TRUE)
 #' @export
 project_cartesian <- S7::new_generic(
   "project_cartesian",
@@ -102,6 +105,9 @@ S7::method(project_cartesian, plotit_class) <- function(
 #' @param clip Should drawing be clipped? `"on"` or `"off"`.
 #' @param ... Passed to the underlying `coord_polar()` or `coord_radial()`.
 #' @return Modified plotit object.
+#' @examples
+#' plotit(mtcars, encode(x = factor(cyl))) |>
+#'   mark_bar() |> project_polar()
 #' @export
 project_polar <- S7::new_generic(
   "project_polar",
@@ -184,6 +190,9 @@ S7::method(project_polar, plotit_class) <- function(
 #'   coordinate system). Accepted for signature consistency.
 #' @param ... Passed to `geom_line()`.
 #' @return Modified plotit object.
+#' @examples
+#' plotit(iris, encode()) |>
+#'   project_parallel(columns = c("Sepal.Width", "Sepal.Length", "Petal.Width", "Petal.Length"))
 #' @export
 project_parallel <- S7::new_generic(
   "project_parallel",
@@ -196,6 +205,9 @@ project_parallel <- S7::new_generic(
 
 # Resolve axis theme properties + tick length for per-column axis rendering.
 # Returns a list of visual properties matching the plot's current theme.
+#' Extract axis theme properties for per-column axis rendering.
+#' @noRd
+#' @keywords internal
 ._parallel_theme_props <- function(theme) {
   base_pt <- (ggplot2::calc_element("text", theme)$size) %||% 11
 
@@ -251,6 +263,9 @@ project_parallel <- S7::new_generic(
 
 # Build a format string for axis tick labels based on the step size between
 # breaks.  Uses 0, 1, or 2 decimal places depending on the break granularity.
+#' Build a format string for axis tick labels based on break step size.
+#' @noRd
+#' @keywords internal
 ._pp_label_fmt <- function(breaks) {
   if (length(breaks) < 2) {
     return("%.2f")
@@ -262,6 +277,10 @@ project_parallel <- S7::new_generic(
 # Draw per-column axes for scale="none" mode.
 # Uses geom_segment for axis lines + ticks, geom_text for labels.
 # All colours, sizes, and fonts are drawn from `tp` (theme properties).
+#' Draw per-column axes for scale="none" parallel coordinates mode.
+#' Uses geom_segment and geom_text with theme-matched styling.
+#' @noRd
+#' @keywords internal
 ._pp_draw_axes <- function(plot, col_info, tp) {
   # Suppress native y-axis
   plot@gg <- plot@gg +
@@ -533,6 +552,8 @@ S7::method(project_parallel, plotit_class) <- function(
 #' @param clip Should drawing be clipped? `"on"` or `"off"`.
 #' @param ... Passed to `coord_sf()` or `coord_map()`.
 #' @return Modified plotit object.
+#' @examples
+#' \\donttest{# needs sf packagen#' plotit(nc, encode()) |> project_map()}
 #' @export
 project_map <- S7::new_generic(
   "project_map",

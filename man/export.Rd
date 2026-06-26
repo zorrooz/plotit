@@ -35,3 +35,9 @@ Invisibly, the original \code{plotit} object.
 \description{
 Export a plotit object to a file
 }
+\examples{
+  \\dontrun{
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
+  export(p, tempfile(fileext = ".png"), dpi = 72)
+  }
+}

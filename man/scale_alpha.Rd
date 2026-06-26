@@ -41,3 +41,7 @@ A modified plotit object.
 \description{
 Maps data values to alpha transparency.
 }
+\examples{
+plotit(mtcars, encode(x = wt, y = mpg, alpha = hp)) |>
+  mark_point() |> scale_alpha()
+}

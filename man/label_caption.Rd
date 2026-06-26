@@ -23,3 +23,6 @@ Modified plotit object
 \description{
 Generic for setting plot caption
 }
+\examples{
+plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> label_caption("Caption")
+}

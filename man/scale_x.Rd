@@ -41,3 +41,7 @@ A modified plotit object.
 \description{
 Controls the x-axis scale: transformation, limits, breaks, and labels.
 }
+\examples{
+plotit(mtcars, encode(x = wt, y = mpg)) |>
+  mark_point() |> scale_x(trans = "log10")
+}
