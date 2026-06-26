@@ -630,3 +630,86 @@ API 完整度    6.8   mark_* 覆盖率不足
 - [ ] S7 版本锁定（Imports: S7 (>= 0.1.0)）
 - [ ] 修复 scale.R roxygen 链接警告
 - [ ] styler::style_pkg() + roxygen2::roxygenize()（每次 PR 前执行）
+
+---
+
+## 10. 开发常见陷阱（Lessons Learned）
+
+> 本节记录本项目中反复出现的工具链误用模式。每次遇到新陷阱在此追加。
+
+### 10.1 PowerShell 字符串展开
+
+**根因**：PowerShell 的 `@"..."@`（双引号 here-string）和 `"..."`（双引号字符串）会展开 `$variable` 和 `` `e `` 等转义序列。
+
+**典型案例**：
+| 写法 | 实际写入 | 原因 |
+|------|----------|------|
+| `'plot@gg$labels$title <- NULL'` 在 `@"..."@` 中 | `plot@gg <- NULL` | `$labels` 和 `$title` 被当作变量展开（空值） |
+| `"encode"` 在 `@"..."@` 中 | `e` + `ncode`（0x1B） | `` `e `` 被解释为 ESC 转义符 |
+
+**修复方式**：
+- 需要保留 `$` 文本时，使用 `@'...'@` **单引号** here-string（禁止所有展开）
+- 少量文本中用 `` `$ `` 或 `$$` 转义（但易遗漏，不如直接单引号）
+
+### 10.2 `-replace` 的 .NET 正则替换陷阱
+
+**根因**：PowerShell 的 `-replace` 底层调用 .NET `Regex.Replace`，替换字符串中 `$` 是特殊标记（组引用）。
+
+**典型案例**：
+| 写法 | 实际结果 | 原因 |
+|------|----------|------|
+| `'gg$labels'` 在替换字符串中 | `ggabels` | .NET 将 `$labels` 视为命名捕获组 `labels`，未匹配则替换为空 |
+| `'meta\$labels'` 在模式字符串中 | 正确匹配 `meta$labels` | 正则中 `\$` 是字面 `$` |
+
+**修复方式**：
+- 替换字符串中字面 `$` 使用 `$$`
+- 非正则替换优先使用 `[string]::Replace()` 方法
+- 复杂文本修改优先按行处理，而非全文件 `-replace`
+
+### 10.3 `git index.lock` 持久锁定
+
+**根因**：前序 git 命令中断后（超时/进程被杀），`.git/index.lock` 未被清理，后续 git 操作失败。
+
+**现象**：
+```
+fatal: Unable to create '.../.git/index.lock': Permission denied
+```
+
+**修复方式**：
+```powershell
+# 或删除锁文件
+Remove-Item -Force .git/index.lock -ErrorAction SilentlyContinue
+```
+如锁文件反复出现，检查是否有残留 git 进程：
+```powershell
+Get-Process -Name git | Stop-Process -Force
+```
+
+### 10.4 S7 方法注册的加载顺序依赖
+
+**根因**：S7 方法注册时如果引用了尚未定义的 generic，会报错 `object not found`。
+
+**典型案例**：`compose.R` 中注册 `mark_point(plotit_composite)` 时，`mark_point` generic 尚未定义（在 `mark.R` 中）。
+
+**修复方式**：将对其它文件的 generic 引用推迟到最后加载的文件（如 `zzz.R`）。调整 Collate 顺序或在 `.onLoad()` 中注册。
+
+### 10.5 `styler` 导致的代码结构变化
+
+**根因**：`styler::style_pkg()` 会修改代码格式（缩进、换行、括号位置等），导致已写的 patch 或行号索引失效。
+
+**影响**：
+- 基于行号的 PowerShell 编辑（如 `$lines[42]` 指向错误行）
+- 基于上下文的正则匹配可能因空格/换行变化而失败
+
+**最佳实践**：styler 作为**最后一步**执行——在所有逻辑修改完成后运行，然后验证测试通过，再提交。
+
+### 10.6 `roxygen2` 对 `c(0, 1)` 的链接解析
+
+**根因**：roxygen2 将 `c(0, 1)` 中的 `0,1` 误认为链接目标。
+
+**警告**：
+```
+@param Could not resolve link to topic "0,1"
+```
+
+**修复方式**：使用 `\code{c(0, 1)}` 替代 `` `c(0, 1)` ``，或在 backtick 换行前加空格。
