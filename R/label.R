@@ -98,7 +98,7 @@ NULL
       plot@gg <- plot@gg + ._theme_el("plot.title", ggplot2::element_blank())
     } else if (is.null(val)) {
       plot@gg <- plot@gg + ._theme_el("plot.title", NULL)
-      plot@gg <- NULL
+      plot@gg$labels$title <- NULL
     } else if (is.character(val)) {
       plot@gg <- plot@gg + ._labs_el("title", val)
       plot@gg <- plot@gg + ._theme_el("plot.title", NULL)
@@ -112,7 +112,7 @@ NULL
       plot@gg <- plot@gg + ._theme_el("plot.subtitle", ggplot2::element_blank())
     } else if (is.null(val)) {
       plot@gg <- plot@gg + ._theme_el("plot.subtitle", NULL)
-      plot@gg <- NULL
+      plot@gg$labels$subtitle <- NULL
     } else if (is.character(val)) {
       plot@gg <- plot@gg + ._labs_el("subtitle", val)
       plot@gg <- plot@gg + ._theme_el("plot.subtitle", NULL)
@@ -126,7 +126,7 @@ NULL
       plot@gg <- plot@gg + ._theme_el("plot.caption", ggplot2::element_blank())
     } else if (is.null(val)) {
       plot@gg <- plot@gg + ._theme_el("plot.caption", NULL)
-      plot@gg <- NULL
+      plot@gg$labels$caption <- NULL
     } else if (is.character(val)) {
       plot@gg <- plot@gg + ._labs_el("caption", val)
       plot@gg <- plot@gg + ._theme_el("plot.caption", NULL)
@@ -140,7 +140,7 @@ NULL
       plot@gg <- plot@gg + ._theme_el("axis.title.x", ggplot2::element_blank())
     } else if (is.null(val)) {
       plot@gg <- plot@gg + ._theme_el("axis.title.x", NULL)
-      plot@gg <- NULL
+      plot@gg$labels$x <- NULL
     } else if (is.character(val)) {
       plot@gg <- plot@gg + ._labs_el("x", val)
       plot@gg <- plot@gg + ._theme_el("axis.title.x", NULL)
@@ -154,7 +154,7 @@ NULL
       plot@gg <- plot@gg + ._theme_el("axis.title.y", ggplot2::element_blank())
     } else if (is.null(val)) {
       plot@gg <- plot@gg + ._theme_el("axis.title.y", NULL)
-      plot@gg <- NULL
+      plot@gg$labels$y <- NULL
     } else if (is.character(val)) {
       plot@gg <- plot@gg + ._labs_el("y", val)
       plot@gg <- plot@gg + ._theme_el("axis.title.y", NULL)
