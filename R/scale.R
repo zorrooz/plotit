@@ -148,6 +148,13 @@ NULL
     ._scale_custom(aes, range, discrete, binned, reverse, ...)
   } else {
     scheme <- range %||% if (binned) "viridis" else if (discrete) "hue" else "viridis"
+    # Single color name -> helpful error instead of "unknown scheme"
+    if (is.character(range) && length(range) == 1 && !(scheme %in% c("viridis", "brewer", "grey", "hue"))) {
+      cli::cli_abort(c(
+        "{.val {range}} is not a known colour scheme name.",
+        "i" = "Use {.code range = c({range})} for a single custom colour, or one of: viridis, brewer, grey, hue."
+      ))
+    }
     ._scale_scheme(aes, scheme, discrete, binned, reverse, ...)
   }
 }

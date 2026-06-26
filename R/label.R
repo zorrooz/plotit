@@ -29,6 +29,7 @@ NULL
     plot@gg <- plot@gg + .theme_el(theme_el_name, ggplot2::element_blank())
   } else if (isTRUE(reset)) {
     S7::prop(plot@meta@labels, slot_name) <- NULL
+    plot@gg <- plot@gg + .theme_el(theme_el_name, NULL)
     # Directly clear label (documented public slot); see ._label_set_aes
     plot@gg$labels[[slot_name]] <- NULL
   } else if (!is.null(text)) {

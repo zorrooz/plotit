@@ -376,7 +376,7 @@ compose_marginal(main, top, right, widths = c(4, 1), heights = c(1, 4),
 - `export(p, filename, width, height, dpi, device, ...)` → gtable 测量 + `ggsave()`；不传 `width`/`height` 则自动测量
 - `print()` → 委托 RStudio Plots 窗格渲染
 
-**不支持的操作**：`mark_*` / `scale_*` / `project_*` / `split_*` 不接受 `plotit_composite`——先构建再组合。
+**不支持的操作**：`mark_*` / `scale_*` / `project_*` / `split_*` / `label_axis` / `label_legend` 不接受 `plotit_composite`——先构建再组合。
 
 ##### `compose_grid` 细节
 

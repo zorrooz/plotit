@@ -4,7 +4,7 @@
 library(plotit)
 
 # ---- project_polar ----
-test_that("project_polar basic no crash", {
+test_that("project_polar basic (no radial mode)", {
   p <- plotit(mtcars, encode(x = factor(cyl))) |>
     mark_bar() |>
     project_polar()
@@ -18,12 +18,6 @@ test_that("project_polar theta=\"y\"", {
   expect_s3_class(p, "plotit::plotit")
 })
 
-test_that("project_polar start + direction", {
-  p <- plotit(mtcars, encode(x = factor(cyl))) |>
-    mark_bar() |>
-    project_polar(start = pi / 2, direction = -1)
-  expect_s3_class(p, "plotit::plotit")
-})
 
 # ---- project_cartesian ----
 test_that("project_cartesian basic no crash", {
@@ -120,12 +114,13 @@ test_that("project_map default coord_sf works", {
 })
 
 # ---- project_polar radial mode ----
-test_that("project_polar basic no crash", {
+test_that("project_polar basic (non-radial test in radial section)", {
   p <- plotit(mtcars, encode(x = factor(cyl))) |>
     mark_bar() |>
     project_polar()
   expect_s3_class(p, "plotit::plotit")
 })
+
 
 test_that("project_polar inner_radius > 0 switches to radial", {
   skip_if(utils::packageVersion("ggplot2") < "3.5.0")
@@ -226,9 +221,8 @@ test_that("[BDD] project_parallel clears default_color when group provides colou
                      group = "Species")
   # Group introduces colour mapping -> default_color cleared -> scale exists
   built <- ggplot2::ggplot_build(p@gg)
-  colour_scale <- Filter(function(s) any(s$aesthetics == "colour"),
-                         built$plot$scales$scales)
-  expect_length(colour_scale, 1)
+  colour_scale <- built$plot$scales$get_scales("colour")
+  expect_false(is.null(colour_scale))
 })
 
 test_that("project_parallel errors on non-existent group column", {

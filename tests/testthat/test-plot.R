@@ -71,9 +71,8 @@ test_that("[BDD] default_color NOT injected when colour mapping present", {
   ) |> mark_point(size = 2)
   built <- .build(p)
   # Colour mapping present → rendered points use multiple colours
-  scales <- built$plot$scales$scales
-  colour_scale <- Filter(function(s) any(s$aesthetics == "colour"), scales)
-  expect_length(colour_scale, 1)
+  colour_scale <- built$plot$scales$get_scales("colour")
+  expect_false(is.null(colour_scale))
 })
 
 test_that("[BDD] default_color cleared when layer provides colour mapping", {
@@ -82,9 +81,8 @@ test_that("[BDD] default_color cleared when layer provides colour mapping", {
   ) |> mark_point(mapping = encode(colour = Species), size = 2)
   built <- .build(p)
   # Layer-level colour mapping triggers clearing → scale is present
-  scales <- built$plot$scales$scales
-  colour_scale <- Filter(function(s) any(s$aesthetics == "colour"), scales)
-  expect_length(colour_scale, 1)
+  colour_scale <- built$plot$scales$get_scales("colour")
+  expect_false(is.null(colour_scale))
 })
 
 test_that("[BDD] default_color = NULL renders multiple colours from mapping", {
@@ -92,9 +90,8 @@ test_that("[BDD] default_color = NULL renders multiple colours from mapping", {
     default_color = NULL
   ) |> mark_point(size = 2)
   built <- .build(p)
-  scales <- built$plot$scales$scales
-  colour_scale <- Filter(function(s) any(s$aesthetics == "colour"), scales)
-  expect_length(colour_scale, 1)
+  colour_scale <- built$plot$scales$get_scales("colour")
+  expect_false(is.null(colour_scale))
 })
 
 # ---- patchwork integration (structural — remove when §3.3.10 debt is paid) ----

@@ -1,4 +1,5 @@
 #' @include class.R
+#' @include utils.R
 NULL
 
 # ---- project_cartesian ----
