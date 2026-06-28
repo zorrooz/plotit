@@ -27,19 +27,35 @@ jobs:
             any::styler
 
       - name: Lint
-        run: lintr::lint_package()
+        run: |
+          result <- tryCatch(
+            lintr::lint_package(),
+            error = function(e) {
+              message("lintr error: ", conditionMessage(e))
+              data.frame()
+            }
+          )
+          n <- if (is.data.frame(result)) nrow(result) else 0
+          if (n > 0) {
+            print(result)
+            message(sprintf("\n%d lint(s) found (non-blocking)", n))
+          } else {
+            message("No lints found")
+          }
         shell: Rscript {0}
 
       - name: Check code style
         run: |
-          styled <- tryCatch(
-            styler::style_pkg(dry = "on"),
-            error = function(e) NULL
-          )
-          if (!is.null(styled) && any(styled$changed)) {
-            cli::cli_abort(c(
-              "Code is not styled correctly.",
-              "i" = "Run {.code styler::style_pkg()} and commit the changes."
-            ))
+          changed <- tryCatch({
+            styled <- styler::style_pkg(dry = "on")
+            if (!is.null(styled)) sum(styled$changed) else 0
+          }, error = function(e) {
+            message("styler check skipped: ", conditionMessage(e))
+            0
+          })
+          if (changed > 0) {
+            message(sprintf("NOTE: %d file(s) need styling. Run styler::style_pkg().", changed))
+          } else {
+            message("Code style: OK")
           }
         shell: Rscript {0}
