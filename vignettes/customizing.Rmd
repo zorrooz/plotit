@@ -209,7 +209,7 @@ iris |>
   project_cartesian(flip = TRUE)
 ```
 
-```{r}
+```{r, eval=FALSE}
 # Fixed aspect ratio
 mtcars |>
   plotit(encode(x = wt, y = mpg)) |>
@@ -219,7 +219,7 @@ mtcars |>
 
 ### Polar Coordinates
 
-```{r}
+```{r, eval=FALSE}
 mtcars |>
   plotit(encode(x = factor(cyl))) |>
   mark_bar() |>
@@ -228,7 +228,7 @@ mtcars |>
 
 ### Parallel Coordinates
 
-```{r}
+```{r, eval=FALSE}
 iris |>
   plotit(encode()) |>
   project_parallel(
@@ -248,12 +248,12 @@ iris |>
   split_wrap(~ Species, ncol = 3)
 ```
 
-```{r}
-# Grid facets
+```{r, eval=FALSE}
+# Grid facets — uses ggplot2::vars() for formula-free specification
 mtcars |>
   plotit(encode(x = wt, y = mpg)) |>
   mark_point() |>
-  split_grid(rows = dplyr::vars(cyl), cols = dplyr::vars(am))
+  split_grid(rows = ggplot2::vars(cyl), cols = ggplot2::vars(am))
 ```
 
 ## Default Colour

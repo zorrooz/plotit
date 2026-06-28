@@ -67,7 +67,7 @@ compose_grid(p1, p2) |>
 Control columns, rows, and relative sizes with `ncol`, `nrow`, `widths`, and
 `heights`:
 
-```{r}
+```{r, eval=FALSE}
 p1 <- mtcars |>
   plotit(encode(x = wt, y = mpg, colour = factor(cyl))) |>
   mark_point(size = 2) |>
