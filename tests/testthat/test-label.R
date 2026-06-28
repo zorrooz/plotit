@@ -45,7 +45,7 @@ test_that("[BDD] label_title hide=TRUE produces element_blank in theme", {
     label_title("Visible") |>
     label_title(hide = TRUE)
   built <- .build_synced(p)
-  expect_true(ggplot2::is.element_blank(built$plot$theme$plot.title))
+  expect_true(inherits(built$plot$theme$plot.title, "element_blank"))
 })
 
 test_that("[BDD] label_title text=\"\" renders empty title", {
@@ -85,7 +85,7 @@ test_that("[BDD] label_subtitle hide=TRUE produces element_blank", {
     mark_point() |>
     label_subtitle(hide = TRUE)
   built <- .build_synced(p)
-  expect_true(ggplot2::is.element_blank(built$plot$theme$plot.subtitle))
+  expect_true(inherits(built$plot$theme$plot.subtitle, "element_blank"))
 })
 
 # ---- label_caption ----
@@ -117,7 +117,7 @@ test_that("[BDD] label_caption hide=TRUE produces element_blank", {
     mark_point() |>
     label_caption(hide = TRUE)
   built <- .build_synced(p)
-  expect_true(ggplot2::is.element_blank(built$plot$theme$plot.caption))
+  expect_true(inherits(built$plot$theme$plot.caption, "element_blank"))
 })
 
 # ---- label_axis ----
@@ -159,7 +159,7 @@ test_that("[BDD] label_axis hide=TRUE produces element_blank in theme", {
     mark_point() |>
     label_axis(hide = TRUE, aes = "x")
   built <- .build_synced(p)
-  expect_true(ggplot2::is.element_blank(built$plot$theme$axis.title.x))
+  expect_true(inherits(built$plot$theme$axis.title.x, "element_blank"))
 })
 
 test_that("[BDD] label_axis text=NULL preserves current rendered label", {

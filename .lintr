@@ -1,10 +1,17 @@
 linters: linters_with_defaults(
-    line_length_linter = line_length_linter(80),
-    object_name_linter = object_name_linter(styles = c("snake_case")),
+    line_length_linter = line_length_linter(100),
+    object_name_linter = object_name_linter(
+      regexes = c("^[a-z][a-z0-9._]*$", "^[.]_[a-z][a-z0-9._]*$")
+    ),
     object_usage_linter = NULL,
     commented_code_linter = NULL,
     cyclocomp_linter = NULL,
     indentation_linter = indentation_linter(indent = 2L)
   )
-encoding: "UTF-8"
-exclusions: list("playground.R", "R/zzz.R", "tests/testthat.R")
+encoding: UTF-8
+exclusions: list(
+    "playground.R",
+    "R/zzz.R",
+    "tests/testthat.R",
+    "tests/testthat/_snaps"
+  )

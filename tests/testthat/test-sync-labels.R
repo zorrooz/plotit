@@ -68,7 +68,7 @@ test_that("[BDD] ._sync_labels hide=TRUE creates element_blank in theme", {
     label_title(hide = TRUE)
   p <- .sync(p)
   built <- ggplot2::ggplot_build(p@gg)
-  expect_true(ggplot2::is.element_blank(built$plot$theme$plot.title))
+  expect_true(inherits(built$plot$theme$plot.title, "element_blank"))
 })
 
 test_that("[BDD] ._sync_labels axis hide=TRUE creates element_blank", {
@@ -77,7 +77,7 @@ test_that("[BDD] ._sync_labels axis hide=TRUE creates element_blank", {
     label_axis(hide = TRUE, aes = "x")
   p <- .sync(p)
   built <- ggplot2::ggplot_build(p@gg)
-  expect_true(ggplot2::is.element_blank(built$plot$theme$axis.title.x))
+  expect_true(inherits(built$plot$theme$axis.title.x, "element_blank"))
 })
 
 # ---- reset behaviour after sync ----
