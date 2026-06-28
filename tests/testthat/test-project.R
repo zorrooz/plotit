@@ -293,3 +293,62 @@ test_that("[BDD] scale='std' uses shared y-axis (no manual axes)", {
   built <- ggplot2::ggplot_build(p@gg)
   expect_length(built$data, 2) # only line + point, no axis segments
 })
+
+# ---- [BDD] project_cartesian deep rendering tests ----
+
+test_that("[BDD] project_cartesian xlim crops rendered x data", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
+    mark_point() |>
+    project_cartesian(xlim = c(2, 4))
+  built <- ggplot2::ggplot_build(p@gg)
+  x_vals <- built$data[[1]]$x
+  expect_true(all(x_vals >= 2 & x_vals <= 4))
+})
+
+test_that("[BDD] project_cartesian flip=TRUE swaps axes", {
+  p <- plotit(mtcars, encode(x = factor(cyl), y = mpg)) |>
+    mark_boxplot() |>
+    project_cartesian(flip = TRUE)
+  built <- ggplot2::ggplot_build(p@gg)
+  expect_true(inherits(built$plot$coordinates, "CoordFlip"))
+})
+
+test_that("[BDD] project_cartesian fixed=1 locks aspect ratio", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
+    mark_point() |>
+    project_cartesian(fixed = 1)
+  built <- ggplot2::ggplot_build(p@gg)
+  expect_true(inherits(built$plot$coordinates, "CoordFixed"))
+  expect_equal(built$plot$coordinates$ratio, 1)
+})
+
+# ---- [BDD] project_polar deep rendering tests ----
+
+test_that("[BDD] project_polar renders polar coordinates", {
+  p <- plotit(mtcars, encode(x = factor(cyl))) |>
+    mark_bar() |>
+    project_polar()
+  built <- ggplot2::ggplot_build(p@gg)
+  expect_true(inherits(built$plot$coordinates, "CoordPolar"))
+})
+
+test_that("[BDD] project_polar with inner_radius activates radial coord", {
+  skip_if(utils::packageVersion("ggplot2") < "3.5.0")
+  p <- plotit(mtcars, encode(x = factor(cyl))) |>
+    mark_bar() |>
+    project_polar(inner_radius = 0.3)
+  built <- ggplot2::ggplot_build(p@gg)
+  expect_true(inherits(built$plot$coordinates, "CoordRadial"))
+})
+
+# ---- [BDD] project_map deep rendering tests ----
+
+test_that("[BDD] project_map produces CoordSf coordinate system", {
+  skip_if_not_installed("sf")
+  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  p <- plotit(nc, encode(fill = AREA)) |>
+    mark_point() |>
+    project_map()
+  built <- ggplot2::ggplot_build(p@gg)
+  expect_true(inherits(built$plot$coordinates, "CoordSf"))
+})

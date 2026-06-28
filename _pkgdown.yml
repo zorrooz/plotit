@@ -1,0 +1,69 @@
+url: https://zorrooz.github.io/plotit/
+template:
+  bootstrap: 5
+
+title: plotit
+subtitle: Declarative Plotting with ggplot2
+
+navbar:
+  structure:
+    left:  [intro, reference, articles, news]
+    right: [search, github]
+  components:
+    intro:
+      text: Get Started
+      href: articles/plotit.html
+    reference:
+      text: Reference
+      href: reference/index.html
+    articles:
+      text: Articles
+      menu:
+      - text: Getting Started
+        href: articles/plotit.html
+      - text: Customizing Plots
+        href: articles/customizing.html
+      - text: Composing Figures
+        href: articles/composing.html
+    news:
+      text: News
+      href: news/index.html
+    github:
+      icon: fab fa-github
+      href: https://github.com/zorrooz/plotit
+
+reference:
+- title: Plot Construction
+  contents:
+  - plotit
+  - encode
+- title: Geometric Layers
+  desc: Add visual marks to your plot.
+  contents:
+  - starts_with("mark_")
+- title: Scales
+  desc: Control how data maps to visual properties.
+  contents:
+  - starts_with("scale_")
+- title: Labels
+  desc: Set titles, axis labels, and legend text.
+  contents:
+  - starts_with("label_")
+- title: Coordinate Systems
+  desc: Transform the coordinate space.
+  contents:
+  - starts_with("project_")
+- title: Facets
+  desc: Split data into subplots.
+  contents:
+  - starts_with("split_")
+- title: Composition
+  desc: Combine multiple plots into layouts.
+  contents:
+  - starts_with("compose_")
+- title: Theme & Export
+  desc: Style and save your plots.
+  contents:
+  - style
+  - style_default
+  - export

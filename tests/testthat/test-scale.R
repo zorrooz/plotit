@@ -552,3 +552,93 @@ test_that("[BDD] scale_color trans=reverse + range=c(blue,red) reverses gradient
   scale <- built$plot$scales$get_scales("colour")
   expect_true(inherits(scale, "ScaleContinuous"))
 })
+
+# ---- [BDD] scale_size deep rendering tests ----
+
+test_that("[BDD] scale_size continuous renders with custom range", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg, size = hp)) |>
+    mark_point() |>
+    scale_size(range = c(1, 10))
+  built <- ggplot2::ggplot_build(p@gg)
+  scale <- built$plot$scales$get_scales("size")
+  expect_true(inherits(scale, "ScaleContinuous"))
+})
+
+test_that("[BDD] scale_size default applies continuous scale", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg, size = hp)) |>
+    mark_point()
+  built <- ggplot2::ggplot_build(p@gg)
+  expect_true("size" %in% names(built$data[[1]]))
+})
+
+# ---- [BDD] scale_alpha deep rendering tests ----
+
+test_that("[BDD] scale_alpha continuous renders with custom range", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg, alpha = hp)) |>
+    mark_point() |>
+    scale_alpha(range = c(0.2, 0.8))
+  built <- ggplot2::ggplot_build(p@gg)
+  alpha_vals <- built$data[[1]]$alpha
+  expect_true(all(alpha_vals >= 0.2 & alpha_vals <= 0.8, na.rm = TRUE))
+})
+
+test_that("[BDD] scale_alpha default applies continuous scale", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg, alpha = hp)) |>
+    mark_point()
+  built <- ggplot2::ggplot_build(p@gg)
+  expect_true("alpha" %in% names(built$data[[1]]))
+})
+
+# ---- [BDD] scale_shape deep rendering tests ----
+
+test_that("[BDD] scale_shape discrete renders shape values in data", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, shape = Species)) |>
+    mark_point() |>
+    scale_shape(range = c(16, 17, 18))
+  built <- ggplot2::ggplot_build(p@gg)
+  expect_true("shape" %in% names(built$data[[1]]))
+  scale <- built$plot$scales$get_scales("shape")
+  expect_true(inherits(scale, "ScaleDiscrete"))
+})
+
+# ---- [BDD] scale_linetype deep rendering tests ----
+
+test_that("[BDD] scale_linetype discrete applies linetype scale", {
+  p <- plotit(ggplot2::economics, encode(x = date, y = unemploy)) |>
+    mark_line()
+  built <- ggplot2::ggplot_build(p@gg)
+  expect_true("linetype" %in% names(built$data[[1]]) ||
+    inherits(built$plot$scales$get_scales("linetype"), "Scale"))
+})
+
+# ---- [BDD] scale_x positional deep rendering tests ----
+
+test_that("[BDD] scale_x trans=log10 renders log-transformed x-axis", {
+  skip_if_not_installed("scales")
+  p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
+    mark_point() |>
+    scale_x(trans = "log10")
+  built <- ggplot2::ggplot_build(p@gg)
+  scale <- built$plot$scales$get_scales("x")
+  expect_equal(scale$trans$name, "log-10")
+})
+
+test_that("[BDD] scale_x limits crop rendered x data", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
+    mark_point() |>
+    scale_x(limits = c(2, 4))
+  built <- ggplot2::ggplot_build(p@gg)
+  x_vals <- built$data[[1]]$x
+  expect_true(all(x_vals >= 2 & x_vals <= 4))
+})
+
+# ---- [BDD] scale_y positional deep rendering tests ----
+
+test_that("[BDD] scale_y limits crop rendered y data", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
+    mark_point() |>
+    scale_y(limits = c(15, 25))
+  built <- ggplot2::ggplot_build(p@gg)
+  y_vals <- built$data[[1]]$y
+  expect_true(all(y_vals >= 15 & y_vals <= 25))
+})

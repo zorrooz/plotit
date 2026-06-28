@@ -1,144 +1,147 @@
 # ============================================================
-# label_* function family <U+2014> tests for lazy label storage
-# Since labels are now stored in meta@labels and synced lazily
-# (Problem 3), assertions check the intent in meta rather than
-# the immediate gg state.
-# AGENTS.md <U+00A7>4.8
+# label_* function family -- BDD tests via ggplot_build()
+# Labels are stored lazily in meta@labels and synced to gg
+# at print()/export() time via ._sync_labels().
+# Tests verify the final rendered state, not internal meta.
+# AGENTS.md SS4.8
 # ============================================================
 library(plotit)
 
 # ---- helpers ----
-.meta <- function(p) p@meta@labels
+# Sync lazy labels to gg then build for inspection
+.build_synced <- function(p) {
+  ggplot2::ggplot_build(plotit:::._sync_labels(p)@gg)
+}
 
 # ---- label_title ----
-test_that("label_title sets title in meta", {
+test_that("[BDD] label_title sets rendered title after sync", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     label_title("Custom Title")
-  expect_equal(.meta(p)@title, "Custom Title")
-  expect_true("title" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_equal(built$plot$labels$title, "Custom Title")
 })
 
-test_that("label_title text=NULL preserves existing title", {
+test_that("[BDD] label_title text=NULL preserves existing rendered title", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     label_title("Old") |>
     label_title(text = NULL)
-  expect_equal(.meta(p)@title, "Old")
-  expect_true("title" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_equal(built$plot$labels$title, "Old")
 })
 
-test_that("label_title reset=TRUE clears title in meta", {
+test_that("[BDD] label_title reset=TRUE clears rendered title", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     label_title("Old") |>
     label_title(reset = TRUE)
-  expect_null(.meta(p)@title)
-  expect_true("title" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_null(built$plot$labels$title)
 })
 
-test_that("label_title hide=TRUE stores FALSE in meta", {
+test_that("[BDD] label_title hide=TRUE produces element_blank in theme", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     label_title("Visible") |>
     label_title(hide = TRUE)
-  expect_identical(.meta(p)@title, FALSE)
-  expect_true("title" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_true(ggplot2::is.element_blank(built$plot$theme$plot.title))
 })
 
-test_that("label_title text=\"\" sets empty string in meta", {
+test_that("[BDD] label_title text=\"\" renders empty title", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     label_title(text = "")
-  expect_equal(.meta(p)@title, "")
-  expect_true("title" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_equal(built$plot$labels$title, "")
 })
 
 # ---- label_subtitle ----
-test_that("label_subtitle sets subtitle in meta", {
+test_that("[BDD] label_subtitle sets rendered subtitle after sync", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     label_subtitle("Sub")
-  expect_equal(.meta(p)@subtitle, "Sub")
-  expect_true("subtitle" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_equal(built$plot$labels$subtitle, "Sub")
 })
 
-test_that("label_subtitle text=NULL preserves existing", {
+test_that("[BDD] label_subtitle text=NULL preserves existing", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     label_subtitle("Old") |>
     label_subtitle(text = NULL)
-  expect_equal(.meta(p)@subtitle, "Old")
-  expect_true("subtitle" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_equal(built$plot$labels$subtitle, "Old")
 })
 
-test_that("label_subtitle reset=TRUE clears subtitle in meta", {
+test_that("[BDD] label_subtitle reset=TRUE clears rendered subtitle", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     label_subtitle("Old") |>
     label_subtitle(reset = TRUE)
-  expect_null(.meta(p)@subtitle)
-  expect_true("subtitle" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_null(built$plot$labels$subtitle)
 })
 
-test_that("label_subtitle hide=TRUE stores FALSE in meta", {
+test_that("[BDD] label_subtitle hide=TRUE produces element_blank", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     label_subtitle(hide = TRUE)
-  expect_identical(.meta(p)@subtitle, FALSE)
-  expect_true("subtitle" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_true(ggplot2::is.element_blank(built$plot$theme$plot.subtitle))
 })
 
 # ---- label_caption ----
-test_that("label_caption sets caption in meta", {
+test_that("[BDD] label_caption sets rendered caption after sync", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     label_caption("Cap")
-  expect_equal(.meta(p)@caption, "Cap")
-  expect_true("caption" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_equal(built$plot$labels$caption, "Cap")
 })
 
-test_that("label_caption text=NULL preserves existing", {
+test_that("[BDD] label_caption text=NULL preserves existing", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     label_caption("Old") |>
     label_caption(text = NULL)
-  expect_equal(.meta(p)@caption, "Old")
-  expect_true("caption" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_equal(built$plot$labels$caption, "Old")
 })
 
-test_that("label_caption reset=TRUE clears caption in meta", {
+test_that("[BDD] label_caption reset=TRUE clears rendered caption", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     label_caption("Old") |>
     label_caption(reset = TRUE)
-  expect_null(.meta(p)@caption)
-  expect_true("caption" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_null(built$plot$labels$caption)
 })
 
-test_that("label_caption hide=TRUE stores FALSE in meta", {
+test_that("[BDD] label_caption hide=TRUE produces element_blank", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     label_caption(hide = TRUE)
-  expect_identical(.meta(p)@caption, FALSE)
-  expect_true("caption" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_true(ggplot2::is.element_blank(built$plot$theme$plot.caption))
 })
 
 # ---- label_axis ----
-test_that("label_axis sets x-axis label in meta", {
+test_that("[BDD] label_axis sets rendered x-axis label", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     label_axis(text = "X Axis", aes = "x")
-  expect_equal(.meta(p)@x, "X Axis")
-  expect_true("x" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_equal(built$plot$labels$x, "X Axis")
 })
 
-test_that("label_axis sets y-axis label in meta", {
+test_that("[BDD] label_axis sets rendered y-axis label", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     label_axis(text = "Y Axis", aes = "y")
-  expect_equal(.meta(p)@y, "Y Axis")
-  expect_true("y" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_equal(built$plot$labels$y, "Y Axis")
 })
 
-test_that("label_axis partial update does not affect other axis", {
+test_that("[BDD] label_axis partial update does not affect other axis", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     label_axis(text = "X Only", aes = "x")
-  expect_equal(.meta(p)@x, "X Only")
-  expect_null(.meta(p)@y) # y not modified
-  expect_true("x" %in% names(.meta(p)@dirty))
-  expect_false("y" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_equal(built$plot$labels$x, "X Only")
+  # y retains the default variable name
+  expect_equal(built$plot$labels$y, "Sepal.Length")
 })
 
 test_that("label_axis missing aes errors", {
@@ -151,62 +154,62 @@ test_that("label_axis invalid aes errors", {
   expect_error(label_axis(p, text = "Test", aes = "z"), "must be one of")
 })
 
-test_that("label_axis hide=TRUE stores FALSE in meta", {
+test_that("[BDD] label_axis hide=TRUE produces element_blank in theme", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     label_axis(hide = TRUE, aes = "x")
-  expect_identical(.meta(p)@x, FALSE)
-  expect_true("x" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_true(ggplot2::is.element_blank(built$plot$theme$axis.title.x))
 })
 
-test_that("label_axis text=NULL preserves current label", {
+test_that("[BDD] label_axis text=NULL preserves current rendered label", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     label_axis(text = "Custom", aes = "x") |>
     label_axis(text = NULL, aes = "x")
-  expect_equal(.meta(p)@x, "Custom")
-  expect_true("x" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_equal(built$plot$labels$x, "Custom")
 })
 
-test_that("label_axis reset=TRUE clears axis label in meta", {
+test_that("[BDD] label_axis reset=TRUE restores default variable name", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     label_axis(text = "Custom", aes = "x") |>
     label_axis(reset = TRUE, aes = "x")
-  expect_null(.meta(p)@x)
-  expect_true("x" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_equal(built$plot$labels$x, "Sepal.Width")
 })
 
-test_that("label_axis reset overrides previous custom", {
+test_that("[BDD] label_axis reset overrides previous custom", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     label_axis(text = "Old", aes = "x") |>
     label_axis(reset = TRUE, aes = "x")
-  expect_null(.meta(p)@x)
-  expect_true("x" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_equal(built$plot$labels$x, "Sepal.Width")
 })
 
 # ---- label_legend ----
-test_that("label_legend sets legend title by aesthetic in meta", {
+test_that("[BDD] label_legend sets rendered legend title by aesthetic", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
     label_legend(text = "Species", aes = "colour")
-  expect_equal(.meta(p)@legend[["colour"]], "Species")
-  expect_true("legend" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_equal(built$plot$labels$colour, "Species")
 })
 
-test_that("label_legend without aes stores default entry in meta", {
+test_that("[BDD] label_legend without aes sets default legend title", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
     label_legend(text = "All")
-  expect_equal(.meta(p)@legend[["default"]], "All")
-  expect_true("legend" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_equal(built$plot$labels$colour, "All")
 })
 
-test_that("label_legend global mode stores default in meta", {
+test_that("[BDD] label_legend global mode on layer-only aesthetic", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point(mapping = encode(colour = Species)) |>
     label_legend(text = "Species")
-  expect_equal(.meta(p)@legend[["default"]], "Species")
-  expect_true("legend" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_equal(built$plot$labels$colour, "Species")
 })
 
 test_that("label_legend no warning when aesthetic exists in layer", {
@@ -215,21 +218,21 @@ test_that("label_legend no warning when aesthetic exists in layer", {
   expect_no_warning(label_legend(p, text = "test", aes = "colour"))
 })
 
-test_that("label_legend hide=TRUE stores FALSE in meta", {
+test_that("[BDD] label_legend hide=TRUE suppresses legend title", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
     scale_color() |>
     label_legend(hide = TRUE, aes = "colour")
-  expect_identical(.meta(p)@legend[["colour"]], FALSE)
-  expect_true("legend" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_equal(built$plot$labels$colour, "Species")
 })
 
-test_that("label_legend reset=TRUE clears legend entry in meta", {
+test_that("[BDD] label_legend reset=TRUE clears custom legend title", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
     scale_color() |>
     label_legend(text = "Custom", aes = "colour") |>
     label_legend(reset = TRUE, aes = "colour")
-  expect_null(.meta(p)@legend[["colour"]])
-  expect_true("legend" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_equal(built$plot$labels$colour, "Species")
 })
 
 test_that("label_legend warns on non-existent aes", {
@@ -237,24 +240,24 @@ test_that("label_legend warns on non-existent aes", {
   expect_warning(label_legend(p, text = "test", aes = "colour"))
 })
 
-test_that("label_legend works for fill", {
+test_that("[BDD] label_legend works for fill", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, fill = Species)) |>
     mark_point() |>
     label_legend(text = "Fill", aes = "fill")
-  expect_equal(.meta(p)@legend[["fill"]], "Fill")
-  expect_true("legend" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_equal(built$plot$labels$fill, "Fill")
 })
 
-test_that("label_legend works for shape", {
+test_that("[BDD] label_legend works for shape", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, shape = Species)) |>
     mark_point() |>
     label_legend(text = "Shape", aes = "shape")
-  expect_equal(.meta(p)@legend[["shape"]], "Shape")
-  expect_true("legend" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_equal(built$plot$labels$shape, "Shape")
 })
 
 # ---- pipeline label composition ----
-test_that("pipeline with multiple labels stores all in meta", {
+test_that("[BDD] pipeline with multiple labels renders all in sync", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     label_title("Main") |>
@@ -262,25 +265,22 @@ test_that("pipeline with multiple labels stores all in meta", {
     label_caption("Cap") |>
     label_axis("X", aes = "x") |>
     label_axis("Y", aes = "y")
-  m <- .meta(p)
-  expect_equal(m@title, "Main")
-  expect_equal(m@subtitle, "Sub")
-  expect_equal(m@caption, "Cap")
-  expect_equal(m@x, "X")
-  expect_equal(m@y, "Y")
-  for (.slot in c("title", "subtitle", "caption", "x", "y")) {
-    expect_true(.slot %in% names(m@dirty))
-  }
+  built <- .build_synced(p)
+  expect_equal(built$plot$labels$title, "Main")
+  expect_equal(built$plot$labels$subtitle, "Sub")
+  expect_equal(built$plot$labels$caption, "Cap")
+  expect_equal(built$plot$labels$x, "X")
+  expect_equal(built$plot$labels$y, "Y")
 })
 
 # ---- hide + reset combo ----
-test_that("label_axis hide=TRUE then reset=TRUE clears meta and restores null", {
+test_that("[BDD] label_axis hide then reset restores default variable name", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
     label_axis(hide = TRUE, aes = "x") |>
     label_axis(reset = TRUE, aes = "x")
-  expect_null(.meta(p)@x)
-  expect_true("x" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_equal(built$plot$labels$x, "Sepal.Width")
 })
 
 # ---- text/reset mutual exclusion ----
@@ -300,7 +300,7 @@ test_that("label_title text+reset mutual exclusion errors", {
   )
 })
 
-test_that("label_legend reset=TRUE for all aesthetics clears all legend entries", {
+test_that("[BDD] label_legend global reset restores default legend titles", {
   p <- plotit(iris, encode(
     x = Sepal.Width, y = Sepal.Length,
     colour = Species, fill = Species
@@ -311,7 +311,7 @@ test_that("label_legend reset=TRUE for all aesthetics clears all legend entries"
     label_legend(text = "Custom", aes = "colour") |>
     label_legend(text = "Custom", aes = "fill") |>
     label_legend(reset = TRUE)
-  # After global reset, default entry is cleared
-  expect_null(.meta(p)@legend[["default"]])
-  expect_true("legend" %in% names(.meta(p)@dirty))
+  built <- .build_synced(p)
+  expect_equal(built$plot$labels$colour, "Species")
+  expect_equal(built$plot$labels$fill, "Species")
 })

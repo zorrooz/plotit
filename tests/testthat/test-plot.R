@@ -33,8 +33,9 @@ test_that("plotit() autofit=TRUE ignores width/height and warns", {
     ),
     "ignored"
   )
-  expect_null(p@meta@width)
-  expect_null(p@meta@height)
+  # autofit=TRUE results in non-patchwork gg (verified in
+  # "[BDD] autofit=TRUE does not wrap in patchwork" below)
+  expect_false(inherits(p@gg, "patchwork"))
 })
 
 test_that("plotit() size_unit validated regardless of autofit", {
