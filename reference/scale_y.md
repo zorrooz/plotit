@@ -1,0 +1,94 @@
+# Y-axis position scale
+
+Controls the y-axis scale: transformation, limits, breaks, and labels.
+
+## Usage
+
+``` r
+scale_y(
+  plot,
+  name = ggplot2::waiver(),
+  trans = "identity",
+  limits = NULL,
+  range = NULL,
+  breaks = NULL,
+  labels = NULL,
+  ...
+)
+```
+
+## Arguments
+
+- plot:
+
+  A plotit object.
+
+- name:
+
+  Axis title.
+  [`ggplot2::waiver()`](https://ggplot2.tidyverse.org/reference/waiver.html)
+  = use variable name.
+
+- trans:
+
+  Scale transformation. Default `"identity"`. Allowed: `"identity"`,
+  `"discrete"`, `"log"`, `"log10"`, `"log2"`, `"sqrt"`, `"reverse"`,
+  `"binned"`.
+
+- limits:
+
+  Axis limits as `c(min, max)`.
+
+- range:
+
+  Normalized panel proportion as `c(min, max)` in `[0,1]`. E.g.
+  `c(0.1, 0.9)` maps data to the middle 80% of the panel.
+
+- breaks:
+
+  Axis tick positions.
+
+- labels:
+
+  Axis tick labels.
+
+- ...:
+
+  Passed to the underlying ggplot2 scale function.
+
+## Value
+
+A modified plotit object.
+
+## Examples
+
+``` r
+plotit(mtcars, encode(x = wt, y = mpg)) |>
+  mark_point() |>
+  scale_y(limits = c(0, 40))
+#> <plotit::plotit>
+#>  @ gg  :A patchwork composed of 1 patches
+#> - Autotagging is turned off
+#> - Guides are kept
+#> 
+#> Layout:
+#> 1 patch areas, spanning 1 columns and 1 rows
+#> 
+#>     t l b r
+#> 1:  1 1 1 1
+#>  @ meta: <plotit::plotit_metadata>
+#>  .. @ autofit      : logi FALSE
+#>  .. @ width        : num 7
+#>  .. @ height       : num 5
+#>  .. @ unit         : chr "in"
+#>  .. @ dodge        : num 0
+#>  .. @ default_color: chr "#4E79A7"
+#>  .. @ labels       : <plotit::plotit_labels>
+#>  .. .. @ title   : NULL
+#>  .. .. @ subtitle: NULL
+#>  .. .. @ caption : NULL
+#>  .. .. @ x       : NULL
+#>  .. .. @ y       : NULL
+#>  .. .. @ legend  : NULL
+#>  .. .. @ dirty   : list()
+```

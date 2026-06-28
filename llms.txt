@@ -1,0 +1,344 @@
+# plotit
+
+[![Lifecycle:
+experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+
+[简体中文](https://zorrooz.github.io/plotit/README_ZH.md) \| **English**
+
+**plotit** is a declarative, pipeline-friendly plotting package built on
+[ggplot2](https://ggplot2.tidyverse.org). It provides a unified
+**verb-prefix API** that turns data into publication-ready charts in a
+single pipeline — sensible defaults, zero boilerplate.
+
+``` r
+
+library(plotit)
+
+iris |>
+ plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+ mark_point(size = 2, alpha = 0.7) |>
+ scale_color(range = "viridis") |>
+ label_title("Iris Sepal Dimensions") |>
+ label_axis(text = "Sepal Width", aes = "x") |>
+ label_axis(text = "Sepal Length", aes = "y") |>
+ style(ggplot2::theme_minimal(base_size = 14)) |>
+ export("iris_plot.pdf")
+```
+
+vs base ggplot2
+
+``` r
+
+# plotit — 4 lines
+iris |>
+ plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+ mark_point(size = 2, alpha = 0.7) |>
+ scale_color(range = "viridis") |>
+ label_title("Iris Sepal Dimensions")
+
+# base ggplot2 — 3 lines
+ggplot(iris, aes(x = Sepal.Width, y = Sepal.Length, colour = Species)) +
+ geom_point(size = 2, alpha = 0.7) +
+ scale_colour_viridis_d() +
+ labs(title = "Iris Sepal Dimensions")
+```
+
+------------------------------------------------------------------------
+
+## Installation
+
+``` r
+
+# install.packages("pak")
+pak::pak("zorrooz/plotit")
+```
+
+------------------------------------------------------------------------
+
+## Usage
+
+### Pipeline pattern
+
+Every plotit pipeline follows the same grammar:
+
+    data |> plotit(encode(...)) |> mark_*() |> scale_*() |> label_*() |> style() |> export()
+
+| Step | Function | Job |
+|:---|:---|:---|
+| 1\. Create | [`plotit()`](https://zorrooz.github.io/plotit/reference/plotit.md) | Initialise the plot with data & aesthetic mappings |
+| 2\. Layer | `mark_*()` | Add geometric layers |
+| 3\. Scale | `scale_*()` | Control data-to-visual mapping |
+| 4\. Label | `label_*()` | Set titles, axis labels, legend titles |
+| 5\. Theme | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | Apply a ggplot2 theme |
+| 6\. Export | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | Render to file |
+
+### Function families
+
+| Family | Prefix | Purpose | Examples |
+|:---|:---|:---|:---|
+| Layer | `mark_*` | Geometric layers | [`mark_point()`](https://zorrooz.github.io/plotit/reference/mark_point.md), [`mark_line()`](https://zorrooz.github.io/plotit/reference/mark_line.md), [`mark_bar()`](https://zorrooz.github.io/plotit/reference/mark_bar.md), [`mark_boxplot()`](https://zorrooz.github.io/plotit/reference/mark_boxplot.md), [`mark_histogram()`](https://zorrooz.github.io/plotit/reference/mark_histogram.md), [`mark_density()`](https://zorrooz.github.io/plotit/reference/mark_density.md) |
+| Compose | `compose_*` | Multi-panel layouts | [`compose_grid()`](https://zorrooz.github.io/plotit/reference/compose_grid.md), [`compose_inset()`](https://zorrooz.github.io/plotit/reference/compose_inset.md), [`compose_marginal()`](https://zorrooz.github.io/plotit/reference/compose_marginal.md) |
+| Scale | `scale_*` | Data → visual mapping | `scale_x(trans = "log")`, `scale_color(range = "viridis")` |
+| Label | `label_*` | Titles & labels | `label_title("Title")`, `label_axis("X", aes = "x")` |
+| Project | `project_*` | Coordinate systems | `project_cartesian(flip = TRUE)`, [`project_polar()`](https://zorrooz.github.io/plotit/reference/project_polar.md) |
+| Split | `split_*` | Facet layouts | `split_wrap(Species)`, `split_grid(rows = vars(cyl))` |
+| Style | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | Theme | `style(theme_minimal(base_size = 14))` |
+| Export | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | Output to file | `export("plot.pdf", dpi = 300)` |
+
+------------------------------------------------------------------------
+
+## `mark_*` — Geometric Layers
+
+Six mark functions, unified signature (`mapping`, `data`, `position`,
+`rasterize`, `...`).
+
+| Function | ggplot2 | Use for |
+|:---|:---|:---|
+| [`mark_point()`](https://zorrooz.github.io/plotit/reference/mark_point.md) | `geom_point()` | Scatter plots |
+| [`mark_line()`](https://zorrooz.github.io/plotit/reference/mark_line.md) | `geom_line()` | Lines, trends, time series |
+| [`mark_bar()`](https://zorrooz.github.io/plotit/reference/mark_bar.md) | `geom_bar()` / `geom_col()` | Bar charts |
+| [`mark_boxplot()`](https://zorrooz.github.io/plotit/reference/mark_boxplot.md) | `geom_boxplot()` | Distributions by group |
+| [`mark_histogram()`](https://zorrooz.github.io/plotit/reference/mark_histogram.md) | `geom_histogram()` | Histograms |
+| [`mark_density()`](https://zorrooz.github.io/plotit/reference/mark_density.md) | `geom_density()` | Density curves |
+
+------------------------------------------------------------------------
+
+## `compose_*` — Multi-Panel Layouts
+
+Assemble multiple plots into compound layouts. All return a
+`plotit_composite` that pipes seamlessly into `label_*()` /
+[`style()`](https://zorrooz.github.io/plotit/reference/style.md) /
+[`export()`](https://zorrooz.github.io/plotit/reference/export.md).
+
+| Function | Description | Key params |
+|:---|:---|:---|
+| [`compose_grid()`](https://zorrooz.github.io/plotit/reference/compose_grid.md) | Grid arrangement | `...`, `ncol`, `nrow`, `widths`, `heights`, `guides`, `axes`, `tag_levels` |
+| [`compose_inset()`](https://zorrooz.github.io/plotit/reference/compose_inset.md) | Floating overlay | `base`, `inset`, `left`, `bottom`, `right`, `top` |
+| [`compose_marginal()`](https://zorrooz.github.io/plotit/reference/compose_marginal.md) | Scatter + marginal distributions | `main`, `top`, `right`, `widths`, `heights` |
+
+``` r
+
+# 2×2 dashboard with auto-tags
+compose_grid(p1, p2, p3, p4, ncol = 2, tag_levels = "A") |>
+ label_title("Dashboard") |>
+ export("dashboard.png")
+
+# Scatter plot with marginal histograms
+compose_marginal(main, top_hist, right_hist) |>
+ label_title("Iris") |>
+ export("marginal.png")
+```
+
+------------------------------------------------------------------------
+
+## `scale_*` — Data-to-Visual Mapping
+
+Eight functions with identical parameters — only the `trans` default
+varies.
+
+| Function | Aesthetic | `trans` default |
+|:---|:---|:---|
+| [`scale_color()`](https://zorrooz.github.io/plotit/reference/scale_color.md) | colour | `NULL` (auto-detect) |
+| [`scale_fill()`](https://zorrooz.github.io/plotit/reference/scale_fill.md) | fill | `NULL` (auto-detect) |
+| [`scale_size()`](https://zorrooz.github.io/plotit/reference/scale_size.md) | size | `NULL` (auto-detect) |
+| [`scale_alpha()`](https://zorrooz.github.io/plotit/reference/scale_alpha.md) | alpha | `NULL` (auto-detect) |
+| [`scale_shape()`](https://zorrooz.github.io/plotit/reference/scale_shape.md) | shape | `"discrete"` |
+| [`scale_linetype()`](https://zorrooz.github.io/plotit/reference/scale_linetype.md) | linetype | `"discrete"` |
+| [`scale_x()`](https://zorrooz.github.io/plotit/reference/scale_x.md) | x | `"identity"` |
+| [`scale_y()`](https://zorrooz.github.io/plotit/reference/scale_y.md) | y | `"identity"` |
+
+All accept `name`, `limits`, `range`, `breaks`, `labels`, `...`.
+
+| Parameter | Answers                        | Example                          |
+|:----------|:-------------------------------|:---------------------------------|
+| `range`   | Map to **what** visual values? | `"viridis"`, `c("blue","red")`   |
+| `trans`   | **How** to transform the data? | `"log"`, `"reverse"`, `"binned"` |
+| `limits`  | What data range to include?    | `c(0, 100)`                      |
+| `breaks`  | Where to place ticks / keys?   | `c(2, 4, 6)`                     |
+| `labels`  | What to call them?             | `c("low", "mid", "high")`        |
+| `name`    | What to call the scale?        | `"Engine Size"`                  |
+
+### `range` quick reference
+
+| Aesthetic | `range = NULL` | `range = "name"` | `range = c(a, b)` |
+|:---|:---|:---|:---|
+| colour, fill | auto (discrete→hue, continuous→viridis) | `"viridis"`, `"brewer"`, `"grey"`, `"hue"` | `c("blue", "red")` |
+| size | `c(1, 6)` | — | `c(0.5, 10)` |
+| alpha | `c(0.1, 1)` | — | `c(0, 0.8)` |
+| shape | default shapes | — | `c(1, 16)` |
+| linetype | default linetypes | — | `c("solid", "dashed")` |
+| x, y | data-driven | — | `c(0, 100)` |
+
+### `trans` quick reference
+
+| `trans` | Effect | Works on |
+|:---|:---|:---|
+| `"identity"` | Linear (default) | All |
+| `"log"`, `"log10"`, `"log2"` | Logarithmic | x, y |
+| `"sqrt"` | Square-root | x, y |
+| `"reverse"` | Reverse order | All |
+| `"discrete"` | Treat as categories | All |
+| `"binned"` | Bin, then discretize | All except shape, linetype |
+
+------------------------------------------------------------------------
+
+## `label_*` — Text Labels
+
+Five functions with a three-parameter protocol:
+
+| Call | Behaviour |
+|:---|:---|
+| `label_*(text = "str")` | Set custom text |
+| `label_*(hide = TRUE)` | Remove element and its space |
+| `label_*(reset = TRUE)` | Restore variable name (axis/legend) or remove (title) |
+| *(not called)* | Preserve current state |
+
+| Function | Scope |
+|:---|:---|
+| [`label_title()`](https://zorrooz.github.io/plotit/reference/label_title.md) | Main title |
+| [`label_subtitle()`](https://zorrooz.github.io/plotit/reference/label_subtitle.md) | Subtitle |
+| [`label_caption()`](https://zorrooz.github.io/plotit/reference/label_caption.md) | Caption |
+| [`label_axis()`](https://zorrooz.github.io/plotit/reference/label_axis.md) | Axis titles — `aes = "x"` or `"y"` (required) |
+| [`label_legend()`](https://zorrooz.github.io/plotit/reference/label_legend.md) | Legend titles — `aes = "colour"`, `"fill"`, … |
+
+------------------------------------------------------------------------
+
+## `project_*` — Coordinate Systems
+
+| Function | Description | Key params |
+|:---|:---|:---|
+| [`project_cartesian()`](https://zorrooz.github.io/plotit/reference/project_cartesian.md) | Cartesian (zoom, flip, fixed ratio, transform) | `xlim`, `ylim`, `expand`, `flip`, `fixed`, `coord_trans`, `clip` |
+| [`project_polar()`](https://zorrooz.github.io/plotit/reference/project_polar.md) | Polar | `theta`, `start`, `direction`, `clip` |
+| [`project_parallel()`](https://zorrooz.github.io/plotit/reference/project_parallel.md) | Parallel coordinates | `columns`, `group`, `scale`, `alpha`, `size` |
+| [`project_map()`](https://zorrooz.github.io/plotit/reference/project_map.md) | Geographic projection | `projection`, `xlim`, `ylim`, `clip` |
+
+## `split_*` — Facets
+
+| Function | Description | Key params |
+|:---|:---|:---|
+| [`split_wrap()`](https://zorrooz.github.io/plotit/reference/split_wrap.md) | Wrapped facets | `...` (variables), `ncol`, `nrow`, `scales` |
+| [`split_grid()`](https://zorrooz.github.io/plotit/reference/split_grid.md) | Grid facets | `rows`, `cols`, `scales`, `space` |
+
+## `style()` & `export()`
+
+| Function | Description | Key params |
+|:---|:---|:---|
+| [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | Apply ggplot2 theme | `...`, `base_size`, `base_family`, `base_theme` |
+| [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | Render to file | `filename`, `width`, `height`, `dpi`, `device` |
+
+# Package index
+
+## Plot Construction
+
+- [`plotit()`](https://zorrooz.github.io/plotit/reference/plotit.md) :
+  Initialize a plotit object
+- [`encode()`](https://zorrooz.github.io/plotit/reference/encode.md) :
+  Create aesthetic mapping
+
+## Geometric Layers
+
+Add visual marks to your plot.
+
+- [`mark_bar()`](https://zorrooz.github.io/plotit/reference/mark_bar.md)
+  : Generic for adding a bar layer
+- [`mark_boxplot()`](https://zorrooz.github.io/plotit/reference/mark_boxplot.md)
+  : Generic for adding a boxplot layer
+- [`mark_density()`](https://zorrooz.github.io/plotit/reference/mark_density.md)
+  : Generic for adding a density layer
+- [`mark_histogram()`](https://zorrooz.github.io/plotit/reference/mark_histogram.md)
+  : Generic for adding a histogram layer
+- [`mark_line()`](https://zorrooz.github.io/plotit/reference/mark_line.md)
+  : Generic for adding a line layer
+- [`mark_point()`](https://zorrooz.github.io/plotit/reference/mark_point.md)
+  : Generic for adding a point layer
+
+## Scales
+
+Control how data maps to visual properties.
+
+- [`scale_alpha()`](https://zorrooz.github.io/plotit/reference/scale_alpha.md)
+  : Alpha (transparency) scale
+- [`scale_color()`](https://zorrooz.github.io/plotit/reference/scale_color.md)
+  : Color scale
+- [`scale_fill()`](https://zorrooz.github.io/plotit/reference/scale_fill.md)
+  : Fill scale
+- [`scale_linetype()`](https://zorrooz.github.io/plotit/reference/scale_linetype.md)
+  : Linetype scale
+- [`scale_shape()`](https://zorrooz.github.io/plotit/reference/scale_shape.md)
+  : Shape scale
+- [`scale_size()`](https://zorrooz.github.io/plotit/reference/scale_size.md)
+  : Size scale
+- [`scale_x()`](https://zorrooz.github.io/plotit/reference/scale_x.md) :
+  X-axis position scale
+- [`scale_y()`](https://zorrooz.github.io/plotit/reference/scale_y.md) :
+  Y-axis position scale
+
+## Labels
+
+Set titles, axis labels, and legend text.
+
+- [`label_axis()`](https://zorrooz.github.io/plotit/reference/label_axis.md)
+  : Generic for setting axis titles
+- [`label_caption()`](https://zorrooz.github.io/plotit/reference/label_caption.md)
+  : Generic for setting plot caption
+- [`label_legend()`](https://zorrooz.github.io/plotit/reference/label_legend.md)
+  : Generic for setting legend title(s)
+- [`label_subtitle()`](https://zorrooz.github.io/plotit/reference/label_subtitle.md)
+  : Generic for setting plot subtitle
+- [`label_title()`](https://zorrooz.github.io/plotit/reference/label_title.md)
+  : Generic for setting plot title
+
+## Coordinate Systems
+
+Transform the coordinate space.
+
+- [`project_cartesian()`](https://zorrooz.github.io/plotit/reference/project_cartesian.md)
+  : Cartesian coordinate system
+- [`project_map()`](https://zorrooz.github.io/plotit/reference/project_map.md)
+  : Map coordinate system
+- [`project_parallel()`](https://zorrooz.github.io/plotit/reference/project_parallel.md)
+  : Parallel coordinates
+- [`project_polar()`](https://zorrooz.github.io/plotit/reference/project_polar.md)
+  : Polar / radial coordinate system
+
+## Facets
+
+Split data into subplots.
+
+- [`split_grid()`](https://zorrooz.github.io/plotit/reference/split_grid.md)
+  : Generic for grid facets
+- [`split_wrap()`](https://zorrooz.github.io/plotit/reference/split_wrap.md)
+  : Generic for wrapping facets
+
+## Composition
+
+Combine multiple plots into layouts.
+
+- [`compose_grid()`](https://zorrooz.github.io/plotit/reference/compose_grid.md)
+  : Assemble multiple plots into a grid layout
+- [`compose_inset()`](https://zorrooz.github.io/plotit/reference/compose_inset.md)
+  : Overlay an inset plot on a base plot
+- [`compose_marginal()`](https://zorrooz.github.io/plotit/reference/compose_marginal.md)
+  : Scatter plot with marginal distributions
+
+## Theme & Export
+
+Style and save your plots.
+
+- [`style()`](https://zorrooz.github.io/plotit/reference/style.md) :
+  Modify plot theme (aligns with ggplot2::theme)
+- [`style_default()`](https://zorrooz.github.io/plotit/reference/style_default.md)
+  : Apply the default plotit theme (convenience wrapper for style())
+- [`export()`](https://zorrooz.github.io/plotit/reference/export.md) :
+  Export a plotit object to a file
+
+# Articles
+
+### All vignettes
+
+- [Composing Figures with
+  plotit](https://zorrooz.github.io/plotit/articles/composing.md):
+- [Customizing Plots with
+  plotit](https://zorrooz.github.io/plotit/articles/customizing.md):
+- [Getting Started with
+  plotit](https://zorrooz.github.io/plotit/articles/plotit.md):
