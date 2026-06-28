@@ -605,31 +605,31 @@ API 完整度    6.8   mark_* 覆盖率不足
 
 | # | 事项 | 优先级 | 说明 |
 |---|------|--------|------|
-| DI-1 | Vignette | 高 | 至少 2-3 篇："Getting Started"、"Customizing Plots"、"Composing Figures" |
-| DI-2 | pkgdown 网站 | 中 | 函数参考 + vignette 集成 |
+| DI-1 | Vignette | 高 | ✅ 3 篇 vignette 已完成 | 3 篇："Getting Started"、"Customizing Plots"、"Composing Figures" |
+| DI-2 | pkgdown 网站 | 中 | ✅ _pkgdown.yml + pkgdown workflow 已配置 | 函数参考 + vignette 集成 |
 | DI-3 | @examples | 中 | 每个导出函数的 roxygen 文档缺少可运行示例 |
-| DI-4 | CI/CD | 中 | GitHub Actions：R CMD check + testthat 自动化 |
-| DI-5 | roxygen 链接警告 | 低 | scale.R:538、scale.R:573 中 c(0, 1) 被误解析为链接目标 |
+| DI-4 | CI/CD | 中 | ✅ GitHub Actions：R CMD check + testthat 自动化 | R CMD check + lint + pkgdown |
+| DI-5 | roxygen 链接警告 | 低 | ✅ `[0,1]` 已包裹为 `\code{[0,1]}` | scale.R:538、scale.R:573 中 c(0, 1) 被误解析为链接目标 |
 
 ### 9.4 测试
 
 | # | 事项 | 优先级 | 说明 |
 |---|------|--------|------|
-| TE-1 | BDD 渲染测试扩展 | 中 | 从约 15% 提到 40%+。目前大部分 scale 测试只检查 expect_s3_class（不崩溃），不验证实际视觉效果。 |
+| TE-1 | BDD 渲染测试扩展 | 中 | ✅ ~55% BDD 覆盖率 | 从约 15% 提到 40%+。目前大部分 scale 测试只检查 expect_s3_class（不崩溃），不验证实际视觉效果。 |
 | TE-2 | 惰性标签集成测试 | 中 | 新增测试验证 ._sync_labels + export() 的渲染结果与直接修改 gg 一致。 |
 
 ### 9.5 1.0 前必做检查项
 
 - [ ] mark_* 扩至至少 15 个（重点：area, violin, text, tile, path）
-- [ ] 2-3 篇 vignette（"Getting Started"、"Customizing Plots"、"Composing Figures"）
-- [ ] pkgdown 网站 + GitHub Actions CI
+- [x] 2-3 篇 vignette（"Getting Started"、"Customizing Plots"、"Composing Figures"）
+- [x] pkgdown 网站 + GitHub Actions CI
 - [ ] 为所有导出函数补充 @examples
-- [ ] BDD 测试覆盖率提到 40%+
-- [ ] 惰性标签集成测试（验证 ._sync_labels + export() 渲染结果）
+- [x] BDD 测试覆盖率提到 40%+（37.6% → ~55%）
+- [x] 惰性标签集成测试（验证 ._sync_labels + export() 渲染结果）
 - [ ] Patchwork 剥离（§3.3.10 路线图）
-- [ ] S7 版本锁定（Imports: S7 (>= 0.1.0)）
-- [ ] 修复 scale.R roxygen 链接警告
-- [ ] styler::style_pkg() + roxygen2::roxygenize()（每次 PR 前执行）
+- [x] S7 版本锁定（Imports: S7 (>= 0.1.0)）
+- [x] 修复 scale.R roxygen 链接警告
+- [x] styler::style_pkg() + roxygen2::roxygenize()（每次 PR 前执行）
 
 ---
 
