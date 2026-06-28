@@ -7,3 +7,6 @@
 ^iris_plot\.svg$
 ^Rplots\.pdf$
 ^tests/testthat/Rplots\.pdf$
+
+^\.github$
+^\.lintr$
