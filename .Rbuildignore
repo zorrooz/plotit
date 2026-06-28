@@ -10,3 +10,8 @@
 
 ^\.github$
 ^\.lintr$
+^_pkgdown\.yml$
+^docs$
+^\.quarto$
+^\.reasonix$
+^\.agents$
