@@ -553,7 +553,10 @@ S7::method(project_parallel, plotit_class) <- function(
 #' @param ... Passed to `coord_sf()` or `coord_map()`.
 #' @return Modified plotit object.
 #' @examples
-#' \\donttest{# needs sf packagen#' plotit(nc, encode()) |> project_map()}
+#' \\donttest{
+#' # needs sf package
+#' plotit(nc, encode()) |> project_map()
+#' }
 #' @export
 project_map <- S7::new_generic(
   "project_map",
