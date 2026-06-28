@@ -713,3 +713,62 @@ Get-Process -Name git | Stop-Process -Force
 ```
 
 **修复方式**：使用 `\code{c(0, 1)}` 替代 `` `c(0, 1)` ``，或在 backtick 换行前加空格。
+  **额外发现**：`[0,1]`（方括号）同样会被 roxygen2 markdown 解析为链接目标 `0,1`。修复：包裹在 `` `[0,1]` `` 或 `\code{[0,1]}` 中。
+
+### 10.7 `.lintr` DCF 格式陷阱
+
+**根因**：`.lintr` 使用 DCF（Debian Control File）格式。DCF 中 `key: value` 的值不应加引号——`encoding: "UTF-8"` 会将引号视为字面值的一部分（实际 encoding 变为 `"UTF-8"` 而非 `UTF-8`）。lintr 3.x 无法正确解析带引号的值。
+
+**修复方式**：`encoding: UTF-8`（不加引号）。
+
+### 10.8 `object_name_linter` 与内部函数 `._` 前缀
+
+**根因**：R 包内部辅助函数遵循 `._function_name` 约定（S7 风格），但 `object_name_linter` 的 `styles = c("snake_case")` 模式不识别前导点+下划线。
+
+**修复方式**：使用自定义 regex 替代 preset styles：
+```r
+object_name_linter(regexes = c("^[a-z][a-z0-9._]*$", "^[.]_[a-z][a-z0-9._]*$"))
+```
+第一个 regex 匹配普通 snake_case，第二个匹配 `._` 前缀的内部函数。
+
+### 10.9 `line_length_linter` 与 roxygen 注释
+
+**根因**：80 字符行宽对 roxygen `@examples` 代码示例过于严格——ggplot2 管道链天然超 80 字符。
+
+**决策**：将 `line_length_linter` 提升至 100 字符。代码行（非注释）仍应尽量遵守 80 字符，但 roxygen 示例和文档行允许适度放宽。
+
+### 10.10 `\donttest{}` vs `\dontrun{}` 在 R CMD check 中的行为差异
+
+**根因**：R CMD check 对 `\donttest{}` 代码块**仍然执行**（仅 CRAN 跳过），对 `\dontrun{}` **完全不执行**。若 `\donttest{}` 中包含未定义变量（如 `nc`），R CMD check 报 ERROR。
+
+**修复方式**：需要外部数据包（sf、mapproj）的示例使用 `\dontrun{}`。自包含示例（使用 iris、mtcars）可使用 `\donttest{}`。
+
+### 10.11 `ggplot2::is.element_blank()` 不存在
+
+**根因**：ggplot2 无 `is.element_blank()` 导出函数。判断 element_blank 的正确方式：`inherits(x, "element_blank")`。
+
+### 10.12 GitHub Actions Node.js 弃用
+
+**根因**：`actions/checkout@v4` 依赖 Node.js 20，GitHub 已弃用 Node.js 20（2025-09-19）。CI 产生弃用警告。
+
+**修复方式**：所有 workflow 中将 `actions/checkout@v4` 升级为 `actions/checkout@v5`。同时检查 `r-lib/actions` 最新版本号（当前为 v2）。
+
+### 10.13 S7 `@export` 泛型 vs 方法
+
+**根因**：roxygen2 的 `@export` 标记在 S7 方法上**只导出该方法**，不会自动导出泛型。泛型定义（`new_generic`）需要自己单独的 `@export` 标签，否则 `NAMESPACE` 中缺少泛型导出。
+
+**修复方式**：
+```r
+#' @export  # <-- 泛型的 @export
+export <- S7::new_generic("export", "plot", function(...) { S7::S7_dispatch() })
+
+#' @export  # <-- 方法的 @export（独立）  
+S7::method(export, plotit_class) <- function(...) { ... }
+```
+
+### 10.14 testthat 中访问内部函数
+
+**根因**：`plotit:::._sync_labels(p)` 使用 `:::` 访问未导出函数。`test_check()` 在包命名空间中运行测试，内部函数可直接访问（无需 `:::`）。但 `test_dir()` 在全局环境运行，需要 `:::` 或预先 source。
+
+**最佳实践**：测试中优先通过公开 API 验证行为（如 `export()` 触发 `._sync_labels()`）。确实需要直接调用时，使用 `:::` 并确保 CI 在所有平台通过（R CMD check 会产生 NOTE 但非 ERROR）。
+
