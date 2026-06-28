@@ -126,7 +126,7 @@ S7::method(export, plotit_class) <- function(
 
   ggplot2::ggsave(
     filename = filename,
-    plot = gg,
+    plot = plot@gg,
     width = final_width,
     height = final_height,
     dpi = dpi,

@@ -13,7 +13,7 @@
   uniform dispatch for shared methods and clear error messages for unsupported
   operations.
 * Label system migrated to lazy evaluation: labels are stored in meta@labels
-  and synced to gg at print()/xport() time via ._sync_labels().
+  and synced to gg at print()/export() time via ._sync_labels().
   This eliminates the dual-write pattern and ensures label operations are
   order-independent.
 * print(plotit_composite) now manages device sizing (opens dev.new())

@@ -5,34 +5,6 @@
 #' @keywords internal
 NULL
 
-# ---- plotit_composite class -----------------------------------------------
-
-#' S7 class for composed multi-panel layouts
-#'
-#' @slot gg Assembled ggplot/patchwork object (raw assembly, no annotations).
-#' @slot plots List of constituent `plotit` or `plotit_composite` objects.
-#' @slot layout List with layout parameters (`type`, `ncol`, `nrow`, ...).
-#' @slot annotations List of shared annotations
-#'   (`title`, `subtitle`, `caption`, `tag_levels`).
-#' @keywords internal
-#' @noRd
-plotit_composite <- S7::new_class(
-  "plotit_composite",
-  properties = list(
-    gg          = S7::class_any,
-    plots       = S7::class_list,
-    layout      = S7::class_list,
-    annotations = S7::class_list
-  ),
-  validator = function(self) {
-    if (!inherits(self@gg, "ggplot")) {
-      "`gg` must be a ggplot object"
-    } else {
-      NULL
-    }
-  }
-)
-
 # ---- Internal helpers -----------------------------------------------------
 
 # Pull the raw ggplot out of any plotit-family object
