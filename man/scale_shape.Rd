@@ -43,5 +43,6 @@ continuous variables are not supported (use binned via scale_colour instead).
 }
 \examples{
 plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, shape = Species)) |>
-  mark_point() |> scale_shape()
+  mark_point() |>
+  scale_shape()
 }

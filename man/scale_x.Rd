@@ -26,7 +26,7 @@ scale_x(
 
 \item{limits}{Axis limits as \code{c(min, max)}.}
 
-\item{range}{Normalized panel proportion as \code{c(min, max)} in \link{0,1}.
+\item{range}{Normalized panel proportion as \code{c(min, max)} in \code{[0,1]}.
 E.g. \code{c(0.1, 0.9)} maps data to the middle 80\% of the panel.}
 
 \item{breaks}{Axis tick positions.}
@@ -43,5 +43,6 @@ Controls the x-axis scale: transformation, limits, breaks, and labels.
 }
 \examples{
 plotit(mtcars, encode(x = wt, y = mpg)) |>
-  mark_point() |> scale_x(trans = "log10")
+  mark_point() |>
+  scale_x(trans = "log10")
 }

@@ -47,5 +47,6 @@ supports manual colour vectors and named colour schemes.
 }
 \examples{
 plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
-  mark_point() |> scale_color(range = "viridis")
+  mark_point() |>
+  scale_color(range = "viridis")
 }

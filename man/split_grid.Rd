@@ -36,5 +36,6 @@ Generic for grid facets
 }
 \examples{
 plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
-  mark_point() |> split_grid(rows = ggplot2::vars(Species))
+  mark_point() |>
+  split_grid(rows = ggplot2::vars(Species))
 }

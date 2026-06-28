@@ -29,5 +29,7 @@ Use \code{base_theme} to switch to an entirely different base theme (e.g.,
 \code{style(p, base_theme = ggplot2::theme_bw())}).
 }
 \examples{
-plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point() |> style()
+plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+  mark_point() |>
+  style()
 }
