@@ -8,7 +8,7 @@ NULL
 #' @examples
 #' encode(x = mpg, y = wt)
 #' encode(x = Sepal.Width, y = Sepal.Length, colour = Species)
-#' encode()  # empty mapping
+#' encode() # empty mapping
 #' @export
 encode <- function(...) {
   mapping <- ggplot2::aes(...)

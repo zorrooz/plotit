@@ -270,7 +270,9 @@ compose_inset <- function(
 #' @examples
 #' main <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |> mark_point()
 #' top <- plotit(iris, encode(x = Sepal.Width, fill = Species)) |> mark_histogram(bins = 15, alpha = 0.5)
-#' right <- plotit(iris, encode(x = Sepal.Length, fill = Species)) |> mark_histogram(bins = 15, alpha = 0.5) |> project_cartesian(flip = TRUE)
+#' right <- plotit(iris, encode(x = Sepal.Length, fill = Species)) |>
+#'   mark_histogram(bins = 15, alpha = 0.5) |>
+#'   project_cartesian(flip = TRUE)
 #' compose_marginal(main, top, right)
 #' @export
 compose_marginal <- function(

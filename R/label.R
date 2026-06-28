@@ -290,7 +290,8 @@ S7::method(label_caption, plotit_class) <- function(plot, text = NULL, hide = FA
 #' @return Modified plotit object
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
-#'   label_axis(text = "Width", aes = "x") |> label_axis(text = "Length", aes = "y")
+#'   label_axis(text = "Width", aes = "x") |>
+#'   label_axis(text = "Length", aes = "y")
 #' @export
 label_axis <- S7::new_generic(
   "label_axis",
@@ -335,7 +336,9 @@ S7::method(label_axis, plotit_class) <- function(plot, text = NULL, aes = NULL,
 #' @return Modified plotit object
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
-#'   mark_point() |> scale_color() |> label_legend(text = "Species", aes = "colour")
+#'   mark_point() |>
+#'   scale_color() |>
+#'   label_legend(text = "Species", aes = "colour")
 #' @export
 label_legend <- S7::new_generic(
   "label_legend",
