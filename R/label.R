@@ -92,7 +92,7 @@ NULL
     names(args) <- a
     gg <- gg + do.call(ggplot2::guides, args)
   } else if (is.null(text)) {
-    gg[[a]] <- NULL
+    gg$labels[[a]] <- NULL
   } else {
     gg <- gg + ._labs_el(a, text)
   }
