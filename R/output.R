@@ -24,10 +24,10 @@ S7::method(print, plotit_class) <- function(x, ...) {
   if (is.null(attr(x@meta, "plotit_theme_managed", exact = TRUE))) {
     x@gg <- x@gg + .theme_default()
     attr(x@meta, "plotit_theme_managed") <- TRUE
-
-    # Apply lazy labels (Problem 3)
-    x <- ._sync_labels(x)
   }
+
+  # Apply lazy labels on every print (not just the first)
+  x <- ._sync_labels(x)
 
   dev_opt <- getOption("plotit.device", "default")
   if (interactive() && !is.null(x@meta@width) && !is.null(x@meta@height) &&
@@ -64,6 +64,7 @@ S7::method(print, plotit_class) <- function(x, ...) {
 #'   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
 #'   export(p, tempfile(fileext = ".png"), dpi = 72)
 #'   }
+#' @export
 export <- S7::new_generic(
   "export",
   "plot",

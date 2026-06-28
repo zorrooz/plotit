@@ -34,5 +34,8 @@ Applies a geographic projection. Uses \code{ggplot2::coord_sf()} by default
 string is provided (requires \pkg{mapproj}).
 }
 \examples{
-\\donttest{# needs sf packagen#' plotit(nc, encode()) |> project_map()}
+\\donttest{
+# needs sf package
+plotit(nc, encode()) |> project_map()
+}
 }

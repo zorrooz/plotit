@@ -10,7 +10,10 @@ NULL
 #' @keywords internal
 ._mark_impl <- function(plot, mapping, data, position, geom_fun,
                         rasterize, rasterize_dpi, rasterize_dev, ...) {
-  plot <- ._clear_default_color(plot, mapping)
+  # Only clear default_color when the layer actually provides colour/fill
+  if (!is.null(mapping) && (!is.null(mapping$colour) || !is.null(mapping$fill))) {
+    plot <- ._clear_default_color(plot, mapping)
+  }
   pos <- position
   if (is.null(pos) && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
     pos <- ggplot2::position_dodge(plot@meta@dodge)

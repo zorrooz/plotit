@@ -25,10 +25,22 @@ NULL
     return(plot)
   }
   if (!is.null(mapping)) {
+    # Called from mark_*: only clear the aesthetics the layer actually provides
     if (is.null(mapping$colour) && is.null(mapping$fill)) {
       return(plot)
     }
+    if (!is.null(mapping$colour)) {
+      plot@gg$mapping$colour <- NULL
+      plot@gg <- plot@gg + ggplot2::guides(colour = ggplot2::waiver())
+    }
+    if (!is.null(mapping$fill)) {
+      plot@gg$mapping$fill <- NULL
+      plot@gg <- plot@gg + ggplot2::guides(fill = ggplot2::waiver())
+    }
+    S7::prop(plot@meta, "default_color") <- NULL
+    return(plot)
   }
+  # Called from scale_*: unconditional clear (user explicitly manages colour/fill)
   plot@gg$mapping$colour <- NULL
   plot@gg$mapping$fill <- NULL
   plot@gg <- plot@gg +
