@@ -3,6 +3,7 @@
 #' @include class.R label.R style.R output.R
 #' @name compose
 #' @keywords internal
+#' @examples NULL
 NULL
 
 # ---- Internal helpers -----------------------------------------------------

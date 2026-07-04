@@ -1,4 +1,11 @@
 # plotit 开发约定
+注意：Windows 系统默认编码为 GBK，Python 读取 UTF-8 YAML 文件时需显式指定 encoding='utf-8'。
+| DESCRIPTION Collate（@include） | DESCRIPTION 元信息 |
+| man/*.Rd（roxygen2） | R/*.R 源码中的 roxygen 注释 |
+
+**原则**：永远不要直接编辑 man/*.Rd 文件。如果 Rd 文件有错误（如示例解析失败），应修改对应的 R 源文件的 roxygen2 注释，然后运行 
+**原则**：永远不要直接编辑 `man/*.Rd` 文件。如果 Rd 文件有错误（如示例解析失败），应修改对应的 R 源文件的 roxygen2 注释，然后运行 `roxygen2::roxygenize()` 重新生成。例如 `\examples{}` 缺失应加 `@examples NULL`、`\usage{}` 缺失应检查 `@export` 标签。
+# plotit 开发约定
 
 ## 1. 设计原则
 
