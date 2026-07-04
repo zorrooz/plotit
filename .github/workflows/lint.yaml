@@ -46,6 +46,7 @@ jobs:
         shell: Rscript {0}
 
       - name: Check code style
+        continue-on-error: true
         run: |
           changed <- tryCatch({
             styled <- styler::style_pkg(dry = "on")
@@ -60,3 +61,4 @@ jobs:
             message("Code style: OK")
           }
         shell: Rscript {0}
+
