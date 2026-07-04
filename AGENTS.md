@@ -917,3 +917,237 @@ source("test.R")
 ```
 
 **预防措施**：每次新增或修改 Rd 示例后，在提交前运行 `R CMD check --no-manual` 验证示例可通过解析。
+
+---
+
+## 12. 通用 CI/CD 排查工作流（Reusable CI/CD Playbook）
+
+> 本节提供一套**语言/工具链无关的** CI/CD 故障排查框架。适用于任意 GitHub Actions 工作流的调试，不限于 R 包或本项目的具体实现。
+
+### 12.1 故障树：CI 失败排查路径
+
+```
+CI 步骤失败？
+├─ 是 0 秒（startedAt ≈ completedAt）？
+│  └─ Action 初始化阶段报错
+│     ├─ 检查 action.yml 的 inputs 定义——传入了不支持的参数？
+│     │  └─ 去掉非标准参数，对比官方模板
+│     ├─ 运行时缺少依赖（Node.js/Python 版本不兼容）？
+│     │  └─ 检查 actions/setup-* 版本，升级到最新 @vX
+│     └─ 权限不足（GITHUB_TOKEN 缺少 scope）？
+│        └─ 在 workflow 或 job 层显式声明 permissions: { contents: write, ... }
+│
+├─ 是几秒到数分钟（比预期快得多）？
+│  └─ Action 被触发但跳过核心逻辑
+│     ├─ 条件判断 `if:` 表达式提前退出？
+│     │  └─ 检查 if 条件中的 github.ref / github.event_name
+│     └─ 缓存命中导致略过关键步骤？
+│        └─ 检查 setup-r-dependencies 等缓存行为，必要时清缓存
+│
+├─ 是正常持续时间但失败？
+│  ├─ 步骤本身报错（语言运行时错误）
+│  │  ├─ R CMD check ERROR/WARNING/NOTE  → 读 check log，定位具体问题
+│  │  ├─ testthat 测试失败               → 记下 FAIL 数量，获取完整日志
+│  │  └─ 依赖安装失败（pak/remotes）     → 检查 CRAN 状态、网络权限
+│  │
+│  └─ 步骤被标记为 failure 但无明显错误
+│     ├─ `continue-on-error: true` 未设置，但步骤预期会失败？
+│     │  └─ 信息性检查（lint、coverage）应加 continue-on-error
+│     └─ 步骤实际失败但日志被截断
+│        └─ 通过 gh api 直接获取原始日志（见 §12.2）
+│
+└─ 有弃用警告但不影响结论？
+   └─ GitHub Actions Node.js 版本弃用
+      ├─ actions/checkout@v4 → @v5
+      ├─ actions/upload-artifact@v3 → @v4
+      └─ r-lib/actions/setup-r@v1 → @v2
+```
+
+### 12.2 标准化日志获取流程
+
+```powershell
+# ── Step 1: 列出最近的 workflow 运行 ──
+gh run list --limit 5 --json name,conclusion,status,headBranch,headSha,createdAt,databaseId
+
+# ── Step 2: 查看具体运行的 job 详情 ──
+gh run view <run_id> --json jobs
+
+# ── Step 3: 获取已完成 job 的原始日志 ──
+# 注意：workflow 必须在 status=completed 状态，否则报错
+gh api repos/{owner}/{repo}/actions/jobs/{job_id}/logs
+
+# 筛选失败步骤（纯文本，非 zip）
+gh api repos/owner/repo/actions/jobs/<job_id>/logs | Select-String "── Failure|── Error|ERROR|WARNING"
+
+# ── Step 4: 跨 job 比较（同一 failure 是否在所有 OS 上出现？） ──
+# 如果 Linux/macOS/Windows 全部同一测试失败→包逻辑 bug
+# 如果仅某个 OS：→平台特定问题（文件编码、路径分隔符、权限）
+
+# ── Step 5: 本地复现（仅当 CI 日志不足以定位时才需要） ──
+# 不要用本地 Windows 环境代替——差异太多（见 §11.6）
+# 优先在 WSL/Docker 容器中运行：
+R CMD build .
+docker run --rm -v "$PWD:/src" rocker/r-base:R-latest \
+  bash -c "R CMD check /src/*.tar.gz --no-manual"
+```
+
+### 12.3 R 包 CI 模板结构
+
+以下是一个**经过验证的** R 包 CI 结构，直接基于本项目的调试经验，去掉了所有已知陷阱：
+
+```yaml
+# ── lint.yaml：代码风格检查（非阻塞） ──
+name: lint
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          # ⚠️ 多行 extra-packages 必须用 | 指示器（见 §11.1）
+          extra-packages: |
+            any::lintr
+            any::styler
+      - name: Lint
+        continue-on-error: true  # 信息性检查，不阻塞 CI
+        run: lintr::lint_package()
+        shell: Rscript {0}
+      - name: Check code style
+        continue-on-error: true
+        run: |
+          changed <- styler::style_pkg(dry = "on")
+          if (!is.null(changed) && sum(changed$changed) > 0) {
+            message(sum(changed$changed), " file(s) need styling")
+          }
+        shell: Rscript {0}
+```
+
+```yaml
+# ── R-CMD-check.yaml：跨平台标准检查 ──
+name: R-CMD-check
+on: [push, pull_request, schedule: [{cron: "0 6 * * 1"}]]
+
+jobs:
+  R-CMD-check:
+    runs-on: ${{ matrix.config.os }}
+    name: ${{ matrix.config.os }} (R-${{ matrix.config.r }})
+    continue-on-error: ${{ matrix.config.r == 'devel' }}  # job 级
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: ubuntu-latest,  r: 'release'}
+          - {os: windows-latest, r: 'release'}
+          - {os: macOS-latest,   r: 'release'}
+          - {os: ubuntu-latest,  r: 'devel', http-user-agent: 'release'}  # ⚠️ R-devel 必须
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+      _R_CHECK_SYSTEM_CLOCK_: false          # 避免时钟问题
+    steps:
+      - uses: actions/checkout@v5
+      - uses: r-lib/actions/setup-pandoc@v2    # 仅需要 pkgdown/vignettes 时才加
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
+          http-user-agent: ${{ matrix.config.http-user-agent }}
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
+      # ⚠️ 不要加 upload-snapshots/error-on 等非标准参数（见 §11.2）
+      - uses: r-lib/actions/check-r-package@v2
+
+  test-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: r-lib/actions/setup-r@v2
+        with: {use-public-rspm: true}
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with: {extra-packages: any::covr}
+      - name: Test coverage
+        continue-on-error: true  # 无 CODECOV_TOKEN 时不阻塞
+        run: covr::codecov(quiet = FALSE)
+        shell: Rscript {0}
+```
+
+```yaml
+# ── pkgdown.yaml：文档站点构建（仅 main 分支） ──
+name: pkgdown
+on:
+  push: {branches: [main]}
+  pull_request: {branches: [main]}
+  workflow_dispatch:
+
+jobs:
+  pkgdown:
+    runs-on: ubuntu-latest
+    permissions: {contents: write}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: r-lib/actions/setup-pandoc@v2
+      - uses: r-lib/actions/setup-r@v2
+        with: {use-public-rspm: true}
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::pkgdown, local::.
+          needs: website
+      - name: Build site
+        # ⚠️ pkgdown >= 2.0 已移除 install 参数（见 §11.8）
+        run: pkgdown::build_site_github_pages(new_process = FALSE)
+        shell: Rscript {0}
+      - name: Deploy to GitHub Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+```
+
+### 12.4 CI/CD 预提交检查清单
+
+每次新增或修改 CI workflow 前，对照以下清单逐项检查：
+
+**YAML 结构**
+- [ ] 每个 `with:` 下的多行参数都使用了 `|`（block scalar）或 `,` 分隔的单行？
+- [ ] `continue-on-error: true` 没有出现在 `steps:` 列表的**中间**？
+- [ ] `steps:` 下的所有项缩进一致（均为 2 个额外空格）？
+- [ ] `on:` 的 `push:`/`pull_request:` 分支名与实际开发分支一致？
+
+**Action 版本**
+- [ ] `actions/checkout` 使用 `@v5`（2025 年后最新）？
+- [ ] `actions/upload-artifact` 使用 `@v4`？
+- [ ] `r-lib/actions/*` 使用 `@v2`？
+
+**R 特有**
+- [ ] R-devel 矩阵项包含 `http-user-agent: 'release'`？
+- [ ] `extra-packages` 使用 `any::` 前缀（如 `any::lintr`）而非裸包名？
+- [ ] `pkgdown::build_site_github_pages()` 不带 `install` 参数？
+- [ ] 信息性 job（lint、coverage）有 `continue-on-error: true`？
+
+**安全**
+- [ ] `secrets.GITHUB_TOKEN` 的权限在 `permissions:` 块中已显式声明？
+- [ ] deploy 步骤只在 `github.ref == 'refs/heads/main'` 时触发？
+- [ ] 没有在日志中泄露 `CODECOV_TOKEN` 等敏感变量？
+
+### 12.5 CI 日志速查表
+
+| 现象 | 最可能的根因 | 快速定位 |
+|------|-------------|----------|
+| workflow 未触发 | `on:` 分支名拼写错误 | `gh run list` 检查是否有任何运行 |
+| action 0 秒失败 | 非标准 `with:` 参数 | 检查 action.yml 的 inputs |
+| `setup-r-dependencies` 超时 | RSPM 无法连接 | 检查 `http-user-agent` 是否设置 |
+| R CMD check ERROR | 包代码/测试问题 | `gh api .../jobs/<id>/logs \| grep "ERROR\|Failure"` |
+| 仅在 macOS 失败 | 大小写文件名 / 系统编码 | 检查 `LC_ALL`、文件路径 |
+| 仅在 Windows 失败 | 行尾符 / 路径分隔符 | 检查 `file.rename()`、`\` vs `/` |
+| 测试"巧合通过" | expected == 默认值 | 换成非默认值重新运行（见 §11.5） |
+| `Namespace not available` | S7 泛型未导出 | 检查泛型的 `@export` 标签（见 §10.13） |
+| Rd 解析错误 | 示例代码语法错误 | `tools::Rd2ex(); source()` 定位（见 §11.8） |
