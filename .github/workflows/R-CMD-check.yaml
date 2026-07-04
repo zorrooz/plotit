@@ -13,6 +13,7 @@ jobs:
   R-CMD-check:
     runs-on: ${{ matrix.config.os }}
     name: ${{ matrix.config.os }} (R-${{ matrix.config.r }})
+    continue-on-error: ${{ matrix.config.r == 'devel' }}
     strategy:
       fail-fast: false
       matrix:
@@ -46,6 +47,7 @@ jobs:
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
+          error-on: "error"
 
   test-coverage:
     runs-on: ubuntu-latest

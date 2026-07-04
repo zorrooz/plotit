@@ -68,7 +68,7 @@ mtcars |>
 ```
 
 ```{r}
-# Bar chart — auto-detects geom_col vs geom_bar
+# Bar chart <U+2014> auto-detects geom_col vs geom_bar
 iris |>
   plotit(encode(x = Species, y = Sepal.Length)) |>
   mark_bar()
@@ -159,7 +159,7 @@ mtcars |>
 iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length)) |>
   mark_point() |>
-  split_wrap(~ Species, ncol = 3)
+  split_wrap(~Species, ncol = 3)
 ```
 
 ### `style()` — Themes

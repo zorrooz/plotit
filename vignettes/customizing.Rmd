@@ -167,7 +167,7 @@ iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length)) |>
   mark_point() |>
   label_axis("Custom X", aes = "x") |>
-  label_axis(reset = TRUE, aes = "x")  # restores "Sepal.Width"
+  label_axis(reset = TRUE, aes = "x") # restores "Sepal.Width"
 ```
 
 ## Themes with `style()`
@@ -245,11 +245,11 @@ iris |>
 iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length)) |>
   mark_point() |>
-  split_wrap(~ Species, ncol = 3)
+  split_wrap(~Species, ncol = 3)
 ```
 
 ```{r, eval=FALSE}
-# Grid facets — uses ggplot2::vars() for formula-free specification
+# Grid facets <U+2014> uses ggplot2::vars() for formula-free specification
 mtcars |>
   plotit(encode(x = wt, y = mpg)) |>
   mark_point() |>
