@@ -6,4 +6,7 @@
 \description{
 Graphics composition -- multi-panel layout assembly
 }
+\examples{
+NULL
+}
 \keyword{internal}

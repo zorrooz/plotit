@@ -774,486 +774,126 @@ S7::method(export, plotit_class) <- function(...) { ... }
 
 ---
 
-## 11. CI/CD 经验与陷阱（CI/CD Lessons Learned）
 
-> 本节记录 GitHub Actions 工作流开发与调试中反复出现的模式。每次遇到新的 CI 问题在此追加。
+---
 
-### 11.1 YAML 标量 vs 映射：`extra-packages:` 等参数格式
+## 11. CI/CD 通用实践（Reusable CI/CD Playbook）
 
-**根因**：YAML 中 `key:\n  item`（无 `|` 指示器）会被解析为映射 `{item: null}`，而非字符串。`r-lib/actions/setup-r-dependencies@v2` 的 `extra-packages` 参数**必须**是一个字符串（逗号或换行分隔）。
+> 本节汇总与具体项目无关的 CI/CD 调试方法，适用于任何 GitHub Actions + R 包项目。
 
-**错误写法**（被解析为 YAML mapping，action 静默忽略包名）：
-```yaml
+### 11.1 CI 故障诊断树
+
+`
+CI 步骤失败？
+├─ 0 秒完成（startedAt ≈ completedAt）？
+│  └─ Action 初始化报错 → 检查 action.yml inputs 定义，去掉非标准参数
+│
+├─ 比预期快得多（几秒到数分钟）？
+│  └─ Action 被跳过 ← 条件 if: 提前退出 / 缓存命中
+│
+├─ 正常耗时但失败？
+│  ├─ 步骤本身报错 → 读日志定位
+│  └─ 被标记为 failure 但无明显错误 → 缺 continue-on-error
+│
+└─ 有弃用警告 → GitHub Actions Node 版本升级
+`
+
+### 11.2 GitHub Actions 配置陷阱
+
+**YAML 标量 vs 映射**：多行参数必须用 | 指示器，不能用缩进列表。
+`yaml
+# 错误：被解析为 YAML mapping，action 静默忽略
 extra-packages:
   any::lintr
   any::styler
-```
 
-**正确写法**（使用 block scalar `|`）：
-```yaml
+# 正确：使用 block scalar
 extra-packages: |
   any::lintr
   any::styler
-```
-或逗号分隔单行：
-```yaml
-extra-packages: any::lintr, any::styler
-```
+`
 
-**检查清单**：每添加一个 `with:` 参数时，确认 YAML 结构——如果值是多行文本，必须用 `|`、`>` 或引号包裹。
+**Action 0 秒初始化失败**：为 action 添加非模板参数（upload-snapshots、error-on）时，可能在 setup/validation 阶段直接报错。诊断信号：日志中 startedAt = completedAt。修复：对比官方模板，先让 action 从最简配置跑起来。
 
-### 11.2 Action 初始化阶段 0 秒失败：非标准参数排查
+**continue-on-error 分层**：
+- step 级：该步骤失败后后续步骤仍执行，job 标记为成功。适用于 lint、coverage 等建议性检查。
+- job 级：该 job 失败后 workflow 仍继续。适用于 R-devel 等已知不稳定变体。
+- 不要在 steps: 列表中间放置 job 级属性——这是 YAML 语法错误，会破坏 steps: 结构。
 
-**根因**：为 `r-lib/actions/check-r-package@v2` 添加 `upload-snapshots: true` 或 `error-on: "error"` 等非模板参数时，action 可能在**初始化阶段**（R CMD check 执行前）直接报错 0 秒完成。
+### 11.3 CI 日志获取
 
-**诊断信号**：GitHub Actions 日志中步骤 completedAt 与 startedAt 时间相同（0-1 秒），说明 action 未运行底层 R CMD check，而是在 setup/input validation 阶段失败。
+`powershell
+# 列出最近 workflow
+gh run list --limit 5 --json name,conclusion,status
 
-**修复方式**：
-- 对比 `r-lib/actions` 的官方模板，去掉非标准参数
-- 先让 action 通过最简单的配置跑起来，再逐步添加参数
-- 不要假设非标准参数会被 action 静默忽略——它们可能导致 action 拒绝执行
-
-### 11.3 gh CLI 访问 CI 日志
-
-**基本原则**：
-- `gh run view <run_id> --log` 需要**整个 workflow run 完成**后才能使用（含最慢的并行 job）
-- 已完成的 job 日志可通过 API 直接访问：`gh api repos/{owner}/{repo}/actions/jobs/{job_id}/logs`
-- 该 API 返回 Content-Type: text/plain（纯文本，非 zip），可通过 Select-String 或 Python 过滤
-- 代理导致 Invoke-RestMethod/curl 无法连接时，`gh api` 内部自行处理代理，不受系统环境变量影响
-
-**实用模式**：
-```powershell
-# 获取某个 job 的日志并筛选失败步骤
-gh api repos/owner/repo/actions/jobs/<job_id>/logs | Select-String "── Failure|── Error"
-
-# 获取 workflow 内所有 job 状态
+# 获取各 job 状态（不需要 whole run 完成）
 gh run view <run_id> --json jobs
 
-# 获取 macOS 的构建结果
-gh run view <run_id> --json jobs | ConvertFrom-Json | ForEach-Object { $_.jobs } | Where-Object { $_.name -like "*macOS*" }
-```
+# 获取已完成 job 的原始纯文本日志
+gh api repos/{owner}/{repo}/actions/jobs/{job_id}/logs
 
-### 11.4 patchwork 对象在 CI 测试中的兼容问题
+# 筛选失败步骤
+gh api .../jobs/{id}/logs | Select-String Failure,Error
+`
 
-**根因**：`plotit` 将 `@gg` 存储为 patchwork 对象（通过 `plot_layout()` 固定面板尺寸）。patchwork 与纯 ggplot 的公开 API 行为存在差异：
+注意：gh run view --log 需要整个 workflow 完成后才能使用。已完成的 job 日志可通过 gh api 直接获取（无需等最慢的并行 job）。
 
-| 操作 | 纯 ggplot | patchwork |
-|------|-----------|-----------|
-| `gg$mapping` | 存在（aes 列表） | 不存在（在 `gg$plots[[1]]$mapping` 中） |
-| `gg$labels` | 顶层直接访问 | 修改需同步到每个 subplot |
-| `gg$coordinates` | 顶层直接访问 | 在 `gg$plots[[1]]$coordinates` 中 |
-| `ggplot_build()` | 返回标准 build | 返回组合 build 或 subplot build（版本依赖） |
-| `+ labs(...)` | 生效于 `$labels` | 仅 title/subtitle/caption 作为 annotation 生效；colour/fill 等因 patchwork 不支持而不传播 |
-
-**已采用的修复方式**：
-- `._collect_aes_names()`：检测 `inherits(gg, "patchwork")` 后递归检查 subplot
-- `._label_set_aes()`：直接设置 `gg$labels[[a]]`（兼用 `labs()`）
-- `._sync_labels()`：设置 legend 时遍历 `gg$plots[[i]]$labels[[a]]`
-
-**测试注意事项**：
-- `ggplot_build(p@gg)` 返回的 `built$plot` 可能是 patchwork 而非纯 ggplot
-- `built$plot$coordinates` 在 patchwork 构建中可能不可靠
-- 避免在测试中直接断言 patchwork 的内部槽位（如 `gg$plots`）
-- 注意 1.0 前将移除此 patchwork 依赖（见 §9）
-
-### 11.5 BDD 测试"巧合通过"陷阱
-
-**根因**：某些测试看似通过，但实际未覆盖目标行为。例如 test-label.R:193：
-```r
-expect_equal(built$plot$labels$colour, "Species")
-```
-该测试"通过"不是因为 `label_legend(text = "Species", aes = "colour")` 成功设置了图例标题，而是因为默认标签已经是 `"Species"`（变量名）。如果图例同步代码失效，该测试**仍然通过**。
-
-**预防措施**：
-- BDD 测试的 expected 值**不应等于默认值**（变量名或自动生成的标签）
-- 应使用与默认值不同的值验证修改的实际生效（如 `"All"` 而非 `"Species"`）
-- 每次重构后检查 FAIL 数量是否变化——即使相同数量的失败，可能是不同测试在失败
-
-**检查清单**：
-- 预期值是否与默认值不同？
-- 如果注释掉被测试的代码行，测试是否应该失败？（验证测试的有效性）
-- 测试是否依赖于巧合（如默认值与预期值相同）？
-
-### 11.6 环境差异：本地 Windows 与 CI Ubuntu/macOS
-
-**根因**：Windows 开发环境可能引入 CI 上不存在的干扰，反之亦然。
-
-**常见差异**：
+### 11.4 本地与 CI 环境差异
 
 | 本地现象 | CI 相关性 | 原因 |
 |----------|-----------|------|
-| R CMD check 安装阶段 `file.rename` 失败 | ❌ 无关 | Windows Defender / 杀毒软件拦截 staged install |
-| R CMD check CRAN URL 检查失败 | ❌ 无关 | 公司代理 / VPN 拦截出站连接 |
-| `styler::style_pkg()` 报 `cnd_type()` 错误 | ❌ 无关 | 本地 rlang 版本与 styler 不兼容 |
-| gh CLI 缓存写入失败 | ❌ 无关 | 沙箱限制 `%LOCALAPPDATA%` 写入 |
+| file.rename 失败 | 无关 | Windows Defender 拦截 staged install |
+| CRAN URL 检查失败 | 无关 | 公司代理拦截出站 |
+| styler 报 cnd_type() | 无关 | rlang 版本兼容 |
+| 工作流触发失败 | 相关 | 用 act 本地模拟 |
 
-**本地复现 CI 失败的正确方式**：
-- 使用 `gh api` 获取真实 CI 日志（不可用本地 R 会话替代）
-- 在 WSL / Docker 容器中运行 R CMD check（更接近 Ubuntu CI 环境）
-- 使用 `--no-manual --no-build-vignettes` 加速本地 R CMD check
+本地复现 CI 失败：优先使用 gh api 获取真实 CI 日志（见 11.3），不要在本地 Windows 环境直接运行 R CMD check——差异太多。需要在 WSL/Docker 中运行 R CMD check 以获得与 Ubuntu CI 一致的输出。
 
-### 11.7 continue-on-error 的粒度和传递性
+### 11.5 Rd 示例解析错误定位
 
-**根因**：`continue-on-error: true` 在 job 层和 step 层的行为不同：
-- **step 层**：该步骤失败后，后续步骤仍执行，job 标记为成功
-- **job 层**：该 job 失败后，同一 workflow 的后续 job 仍执行，但 workflow 标记为成功
+R CMD check 中 \"plotit-Ex.R parse error\" 的错误原因：某个 man/*.Rd 文件的 examples{} 节包含语法错误。
 
-**注意**：job 级 `continue-on-error` 不能代替 step 级——如果 job 中某个步骤失败（如 R CMD check 遇到 ERROR），job 级设置不会阻止该步骤中断后续步骤。需要 step 级设置。
+快速定位：
+`
+tools::Rd2ex(\"man/<file>.Rd\", \"test.R\")
+parse(file = \"test.R\")
+`
 
-**最佳实践**：
-- 信息性检查（lint、styler、codecov）使用 step 级 `continue-on-error: true`
-- R-devel 等已知不稳定的构建变体使用 job 级 `continue-on-error: true`
-- 不要在 job 级的 `steps:` 列表**中间**放置 `continue-on-error: true`——这是 YAML 语法错误，会破坏整个 `steps:` 结构
+### 11.6 CI 预提交检查清单
 
-### 11.8 R CMD check 示例错误排查
+每次新增/修改 CI workflow 前对照检查：
 
-**根因**：Rd 文件中 `\examples{}` 节的 R 代码语法错误在 R CMD check 中表现为 "plotit-Ex.R 第 N 行 parse error"。该文件是通过 `tools::Rd2ex()` 从各 Rd 文件的 `\examples{}` 合并生成的临时文件。
+- [ ] with: 下的多行参数使用了 |（block scalar）？
+- [ ] continue-on-error: true 不在 steps: 列表中间？
+- [ ] on: 的分支名与实际开发分支一致？
+- [ ] actions/checkout 使用 v5、upload-artifact 使用 v4？
+- [ ] 信息性 job（lint、coverage）使用 step 级 continue-on-error: true？
+- [ ] R-devel 矩阵项包含 http-user-agent: release？
+- [ ] secrets.GITHUB_TOKEN 的权限已显式声明？
+- [ ] deploy 步骤只在 main 分支触发？
 
-**定位方式**：
-```r
-# 逐个 Rd 文件检查示例
-tools::Rd2ex("man/<file>.Rd", "test.R")
-source("test.R")
-```
+### 11.7 预提交本地验证 SOP
 
-**预防措施**：每次新增或修改 Rd 示例后，在提交前运行 `R CMD check --no-manual` 验证示例可通过解析。
+每次 git push 前必须执行以下检查：
 
----
-
-## 12. 通用 CI/CD 排查工作流（Reusable CI/CD Playbook）
-
-> 本节提供一套**语言/工具链无关的** CI/CD 故障排查框架。适用于任意 GitHub Actions 工作流的调试，不限于 R 包或本项目的具体实现。
-
-### 12.1 故障树：CI 失败排查路径
-
-```
-CI 步骤失败？
-├─ 是 0 秒（startedAt ≈ completedAt）？
-│  └─ Action 初始化阶段报错
-│     ├─ 检查 action.yml 的 inputs 定义——传入了不支持的参数？
-│     │  └─ 去掉非标准参数，对比官方模板
-│     ├─ 运行时缺少依赖（Node.js/Python 版本不兼容）？
-│     │  └─ 检查 actions/setup-* 版本，升级到最新 @vX
-│     └─ 权限不足（GITHUB_TOKEN 缺少 scope）？
-│        └─ 在 workflow 或 job 层显式声明 permissions: { contents: write, ... }
-│
-├─ 是几秒到数分钟（比预期快得多）？
-│  └─ Action 被触发但跳过核心逻辑
-│     ├─ 条件判断 `if:` 表达式提前退出？
-│     │  └─ 检查 if 条件中的 github.ref / github.event_name
-│     └─ 缓存命中导致略过关键步骤？
-│        └─ 检查 setup-r-dependencies 等缓存行为，必要时清缓存
-│
-├─ 是正常持续时间但失败？
-│  ├─ 步骤本身报错（语言运行时错误）
-│  │  ├─ R CMD check ERROR/WARNING/NOTE  → 读 check log，定位具体问题
-│  │  ├─ testthat 测试失败               → 记下 FAIL 数量，获取完整日志
-│  │  └─ 依赖安装失败（pak/remotes）     → 检查 CRAN 状态、网络权限
-│  │
-│  └─ 步骤被标记为 failure 但无明显错误
-│     ├─ `continue-on-error: true` 未设置，但步骤预期会失败？
-│     │  └─ 信息性检查（lint、coverage）应加 continue-on-error
-│     └─ 步骤实际失败但日志被截断
-│        └─ 通过 gh api 直接获取原始日志（见 §12.2）
-│
-└─ 有弃用警告但不影响结论？
-   └─ GitHub Actions Node.js 版本弃用
-      ├─ actions/checkout@v4 → @v5
-      ├─ actions/upload-artifact@v3 → @v4
-      └─ r-lib/actions/setup-r@v1 → @v2
-```
-
-### 12.2 标准化日志获取流程
-
-```powershell
-# ── Step 1: 列出最近的 workflow 运行 ──
-gh run list --limit 5 --json name,conclusion,status,headBranch,headSha,createdAt,databaseId
-
-# ── Step 2: 查看具体运行的 job 详情 ──
-gh run view <run_id> --json jobs
-
-# ── Step 3: 获取已完成 job 的原始日志 ──
-# 注意：workflow 必须在 status=completed 状态，否则报错
-gh api repos/{owner}/{repo}/actions/jobs/{job_id}/logs
-
-# 筛选失败步骤（纯文本，非 zip）
-gh api repos/owner/repo/actions/jobs/<job_id>/logs | Select-String "── Failure|── Error|ERROR|WARNING"
-
-# ── Step 4: 跨 job 比较（同一 failure 是否在所有 OS 上出现？） ──
-# 如果 Linux/macOS/Windows 全部同一测试失败→包逻辑 bug
-# 如果仅某个 OS：→平台特定问题（文件编码、路径分隔符、权限）
-
-# ── Step 5: 本地复现（仅当 CI 日志不足以定位时才需要） ──
-# 不要用本地 Windows 环境代替——差异太多（见 §11.6）
-# 优先在 WSL/Docker 容器中运行：
-R CMD build .
-docker run --rm -v "$PWD:/src" rocker/r-base:R-latest \
-  bash -c "R CMD check /src/*.tar.gz --no-manual"
-```
-
-### 12.3 R 包 CI 模板结构
-
-以下是一个**经过验证的** R 包 CI 结构，直接基于本项目的调试经验，去掉了所有已知陷阱：
-
-```yaml
-# ── lint.yaml：代码风格检查（非阻塞） ──
-name: lint
-on: [push, pull_request]
-
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: r-lib/actions/setup-r@v2
-        with:
-          use-public-rspm: true
-      - uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          # ⚠️ 多行 extra-packages 必须用 | 指示器（见 §11.1）
-          extra-packages: |
-            any::lintr
-            any::styler
-      - name: Lint
-        continue-on-error: true  # 信息性检查，不阻塞 CI
-        run: lintr::lint_package()
-        shell: Rscript {0}
-      - name: Check code style
-        continue-on-error: true
-        run: |
-          changed <- styler::style_pkg(dry = "on")
-          if (!is.null(changed) && sum(changed$changed) > 0) {
-            message(sum(changed$changed), " file(s) need styling")
-          }
-        shell: Rscript {0}
-```
-
-```yaml
-# ── R-CMD-check.yaml：跨平台标准检查 ──
-name: R-CMD-check
-on: [push, pull_request, schedule: [{cron: "0 6 * * 1"}]]
-
-jobs:
-  R-CMD-check:
-    runs-on: ${{ matrix.config.os }}
-    name: ${{ matrix.config.os }} (R-${{ matrix.config.r }})
-    continue-on-error: ${{ matrix.config.r == 'devel' }}  # job 级
-    strategy:
-      fail-fast: false
-      matrix:
-        config:
-          - {os: ubuntu-latest,  r: 'release'}
-          - {os: windows-latest, r: 'release'}
-          - {os: macOS-latest,   r: 'release'}
-          - {os: ubuntu-latest,  r: 'devel', http-user-agent: 'release'}  # ⚠️ R-devel 必须
-    env:
-      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-      R_KEEP_PKG_SOURCE: yes
-      _R_CHECK_SYSTEM_CLOCK_: false          # 避免时钟问题
-    steps:
-      - uses: actions/checkout@v5
-      - uses: r-lib/actions/setup-pandoc@v2    # 仅需要 pkgdown/vignettes 时才加
-      - uses: r-lib/actions/setup-r@v2
-        with:
-          r-version: ${{ matrix.config.r }}
-          http-user-agent: ${{ matrix.config.http-user-agent }}
-          use-public-rspm: true
-      - uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          extra-packages: any::rcmdcheck
-          needs: check
-      # ⚠️ 不要加 upload-snapshots/error-on 等非标准参数（见 §11.2）
-      - uses: r-lib/actions/check-r-package@v2
-
-  test-coverage:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: r-lib/actions/setup-r@v2
-        with: {use-public-rspm: true}
-      - uses: r-lib/actions/setup-r-dependencies@v2
-        with: {extra-packages: any::covr}
-      - name: Test coverage
-        continue-on-error: true  # 无 CODECOV_TOKEN 时不阻塞
-        run: covr::codecov(quiet = FALSE)
-        shell: Rscript {0}
-```
-
-```yaml
-# ── pkgdown.yaml：文档站点构建（仅 main 分支） ──
-name: pkgdown
-on:
-  push: {branches: [main]}
-  pull_request: {branches: [main]}
-  workflow_dispatch:
-
-jobs:
-  pkgdown:
-    runs-on: ubuntu-latest
-    permissions: {contents: write}
-    steps:
-      - uses: actions/checkout@v5
-      - uses: r-lib/actions/setup-pandoc@v2
-      - uses: r-lib/actions/setup-r@v2
-        with: {use-public-rspm: true}
-      - uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          extra-packages: any::pkgdown, local::.
-          needs: website
-      - name: Build site
-        # ⚠️ pkgdown >= 2.0 已移除 install 参数（见 §11.8）
-        run: pkgdown::build_site_github_pages(new_process = FALSE)
-        shell: Rscript {0}
-      - name: Deploy to GitHub Pages
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs
-```
-
-### 12.4 CI/CD 预提交检查清单
-
-每次新增或修改 CI workflow 前，对照以下清单逐项检查：
-
-**YAML 结构**
-- [ ] 每个 `with:` 下的多行参数都使用了 `|`（block scalar）或 `,` 分隔的单行？
-- [ ] `continue-on-error: true` 没有出现在 `steps:` 列表的**中间**？
-- [ ] `steps:` 下的所有项缩进一致（均为 2 个额外空格）？
-- [ ] `on:` 的 `push:`/`pull_request:` 分支名与实际开发分支一致？
-
-**Action 版本**
-- [ ] `actions/checkout` 使用 `@v5`（2025 年后最新）？
-- [ ] `actions/upload-artifact` 使用 `@v4`？
-- [ ] `r-lib/actions/*` 使用 `@v2`？
-
-**R 特有**
-- [ ] R-devel 矩阵项包含 `http-user-agent: 'release'`？
-- [ ] `extra-packages` 使用 `any::` 前缀（如 `any::lintr`）而非裸包名？
-- [ ] `pkgdown::build_site_github_pages()` 不带 `install` 参数？
-- [ ] 信息性 job（lint、coverage）有 `continue-on-error: true`？
-
-**安全**
-- [ ] `secrets.GITHUB_TOKEN` 的权限在 `permissions:` 块中已显式声明？
-- [ ] deploy 步骤只在 `github.ref == 'refs/heads/main'` 时触发？
-- [ ] 没有在日志中泄露 `CODECOV_TOKEN` 等敏感变量？
-
-### 12.5 CI 日志速查表
-
-| 现象 | 最可能的根因 | 快速定位 |
-|------|-------------|----------|
-| workflow 未触发 | `on:` 分支名拼写错误 | `gh run list` 检查是否有任何运行 |
-| action 0 秒失败 | 非标准 `with:` 参数 | 检查 action.yml 的 inputs |
-| `setup-r-dependencies` 超时 | RSPM 无法连接 | 检查 `http-user-agent` 是否设置 |
-| R CMD check ERROR | 包代码/测试问题 | `gh api .../jobs/<id>/logs \| grep "ERROR\|Failure"` |
-| 仅在 macOS 失败 | 大小写文件名 / 系统编码 | 检查 `LC_ALL`、文件路径 |
-| 仅在 Windows 失败 | 行尾符 / 路径分隔符 | 检查 `file.rename()`、`\` vs `/` |
-| 测试"巧合通过" | expected == 默认值 | 换成非默认值重新运行（见 §11.5） |
-| `Namespace not available` | S7 泛型未导出 | 检查泛型的 `@export` 标签（见 §10.13） |
-| Rd 解析错误 | 示例代码语法错误 | `tools::Rd2ex(); source()` 定位（见 §11.8） |
-
----
-
-## 13. Push 前本地验证流程（Pre-Push Validation Protocol）
-
-> 本节定义每次 `git push` 之前必须执行的本地检查步骤。目的：在 CI 耗时 2-15 分钟之前，用秒级到分钟级的本地检查拦截绝大多数低级错误。
-
-### 13.1 核心原则
-
-- **本地能拦截的，绝不推到 CI 再发现。** 一个 parse error 本地 0.5 秒就能发现，推到 CI 往返需要 2-15 分钟。
-- **分层次验证**：耗时短的先跑，拦截掉 80% 的问题再跑耗时更长的。
-- **Windows 本地限制**：`file.rename()` 被 Defender 拦截时，CI 不受影响；不准以本地环境问题为由跳过验证。
-
-### 13.2 第一层：秒级语法检查（必须执行）
-
-```powershell
-# 1. 检查 git 改动的 R 文件
-$changed = git diff --name-only --cached -- "*.R"
-if ($changed) {
-  $changed | ForEach-Object {
-    Write-Output "Parsing: $_"
-    Rscript -e "parse(file='$_')" 2>&1 | Select-String -NotMatch "Warning|During startup"
-    if ($LASTEXITCODE -ne 0) {
-      Write-Error "PARSE ERROR in $_ — abort push"
-      exit 1
-    }
-  }
-  Write-Output "All R files parsed OK"
+Layer 1（秒级语法检查，必须执行）：
+`powershell
+git diff --name-only --cached -- *.R | ForEach-Object {
+  Rscript -e \"parse(file='')\"
+  if (0 -ne 0) { exit 1 }
 }
+`
 
-# 2. 检查 git 改动的 workflow YAML
-$yaml = git diff --name-only --cached -- ".github/workflows/*.yaml"
-if ($yaml) {
-  # 需要 python + pyyaml
- python -c "import yaml,sys; [sys.exit(1) for f in '$($yaml -join \",\")'.split(',') if yaml.safe_load(open(f)) is None]"
-  # 注意：Windows 系统默认编码为 GBK，yaml.safe_load(open(f)) 会因 UTF-8 文件报 UnicodeDecodeError。
-  # 必须显式指定 encoding='utf-8'：
-  #   yaml.safe_load(open(f, encoding='utf-8'))
-  if ($LASTEXITCODE -ne 0) {
-    Write-Error "YAML PARSE ERROR — abort push"
-    exit 1
-  }
-}
-```
-
-精简版（日常使用）：
-```powershell
-# 仅 R 文件 parse 检查
-git diff --name-only --cached -- "*.R" | ForEach-Object { Rscript -e "parse(file='$_')" 2>&1 | Select-String -NotMatch "Warning|During startup" }
-```
-
-### 13.3 第二层：分钟级安装验证（条件执行）
-
-当改动涉及 `DESCRIPTION`、`NAMESPACE` 或 `R/` 下多个文件时：
-
-```powershell
-# 1. 构建源码包（验证 Collate 顺序、文档完整性）
+Layer 2（分钟级构建验证，当改动涉及 DESCRIPTION/NAMESPACE 时）：
+`powershell
 R CMD build . --no-build-vignettes
+R CMD INSTALL *.tar.gz --library=<tmp_lib> --no-staged-install
+`
 
-# 2. 检查能否安装（跳过 staged-install 以避开 Defender）
-$tarball = Get-ChildItem *.tar.gz | Select-Object -First 1
-R CMD INSTALL $tarball --no-staged-install
+Layer 3（可选：lint + 风格检查）：
+`powershell
+Rscript -e \"lintr::lint_package()\"
+Rscript -e \"styler::style_pkg(dry='on')\"
+`
 
-# 3. 运行测试（如果安装成功）
-Rscript -e "testthat::test_dir('tests/testthat')"
-```
-
-> 注意：`R CMD build` 会调用 `roxygen2::roxygenize()` 并更新 `man/` 和 `NAMESPACE`。如果改动涉及新增/删除导出函数或修改 roxygen 注释，**build 后必须重新 stage 这些自动生成的文件**。未 stage 的 `man/*.Rd` 变更会导致 CI 上 R CMD check 报文档不匹配的 ERROR。
-
-### 13.4 第三层：lint / 风格检查（可选）
-
-```powershell
-# lint（不需要完整包安装）
-Rscript -e "lintr::lint_package()"
-
-# 代码风格（dry run）
-Rscript -e "styler::style_pkg(dry='on')"
-```
-
-> 当前本地 styler 因 rlang 版本兼容性报 `cnd_type()` 错误时跳过此层，不以本地环境问题为由拒绝 push。
-
-### 13.5 标准操作流程（SOP）
-
-```mermaid
-graph TD
-    A[git add] --> B[git diff --cached]
-    B --> C{改动了 .R 文件?}
-    C -->|是| D[Rscript parse 检查]
-    D -->|失败| E[修复 → 回到 A]
-    D -->|通过| F{改动了 workflow .yaml?}
-    C -->|否| F
-    F -->|是| G[Python YAML 解析验证]
-    G -->|失败| E
-    F -->|否| H
-    G -->|通过| H{改动了 DESCRIPTION / 多个 R 文件?}
-    H -->|是| I[R CMD build + INSTALL]
-    I -->|失败| E
-    I -->|通过| J[git commit + push]
-    H -->|否| J
-```
-
-### 13.6 这条规则是从哪里来的
-
-这条规则来自一次教训：`7baca2d` 的代码中 `R/label.R` 有一个 `unexpected ''else''` parse error，被推送到 GitHub 后才被 CI 发现，白白浪费了 2 分钟 workflow 运行时间和一次 commit 修复往返。本地 `Rscript -e "parse(file=''R/label.R'')"` 只需 0.5 秒就能拦截这个问题。
-
-**规则**：每次 push 前，对每个改动的 `.R` 文件执行 `parse()` 检查。这比运行整包测试快两个数量级，能拦截约 70% 的 CI 安装阶段失败。
+注意：Windows 系统默认编码为 GBK，Python 读取 UTF-8 YAML 文件时需显式指定 encoding='utf-8'。
