@@ -30,9 +30,12 @@ S7::method(print, plotit_class) <- function(x, ...) {
   x <- ._sync_labels(x)
 
   dev_opt <- getOption("plotit.device", "default")
-  if (interactive() && !is.null(x@meta@width) && !is.null(x@meta@height) &&
-    !is.null(dev_opt)) {
-    gt <- patchwork::patchworkGrob(x@gg)
+  if (interactive() && !is.null(x@meta@width) && !is.null(x@meta@height) && !is.null(dev_opt)) {
+    if (inherits(x@gg, "patchwork")) {
+      gt <- patchwork::patchworkGrob(x@gg)
+    } else {
+      gt <- ._build_fixed_gtable(x@gg, x@meta@width, x@meta@height, x@meta@unit)
+    }
     pw <- grid::convertWidth(
       sum(gt$widths) + ggplot2::unit(1, "mm"), "inches",
       valueOnly = TRUE
@@ -43,6 +46,9 @@ S7::method(print, plotit_class) <- function(x, ...) {
     )
     use_rstudio <- isTRUE(dev_opt == "rstudio")
     grDevices::dev.new(width = pw, height = ph, noRStudioGD = !use_rstudio)
+    grid::grid.draw(gt)
+  } else {
+    print(x@gg)
   }
   print(x@gg)
   invisible(x)
@@ -112,7 +118,12 @@ S7::method(export, plotit_class) <- function(
       .unit_to_inches(height, meta_unit)
     }
   } else {
-    gt <- patchwork::patchworkGrob(plot@gg)
+    if (inherits(plot@gg, "patchwork")) {
+      gt <- patchwork::patchworkGrob(plot@gg)
+    } else {
+      gt <- ._build_fixed_gtable(plot@gg, plot@meta@width, plot@meta@height, plot@meta@unit)
+    }
+    final_plot <- if (inherits(plot@gg, "patchwork")) plot@gg else gt
     final_width <- if (is.null(width)) {
       grid::convertWidth(sum(gt$widths) + ggplot2::unit(1, "mm"), "in", valueOnly = TRUE)
     } else {
@@ -127,7 +138,7 @@ S7::method(export, plotit_class) <- function(
 
   ggplot2::ggsave(
     filename = filename,
-    plot = plot@gg,
+    plot = final_plot,
     width = final_width,
     height = final_height,
     dpi = dpi,

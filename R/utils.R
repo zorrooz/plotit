@@ -46,7 +46,20 @@ NULL
   plot@gg <- plot@gg +
     ggplot2::guides(colour = ggplot2::waiver(), fill = ggplot2::waiver())
   S7::prop(plot@meta, "default_color") <- NULL
-  plot
+ plot
+}
+
+# Build a gtable with fixed panel dimensions (used at print/export time).
+#' Build a gtable with fixed panel dimensions.
+#' @noRd
+#' @keywords internal
+._build_fixed_gtable <- function(gg, width, height, unit = "in") {
+  gt <- ggplot2::ggplot_gtable(ggplot2::ggplot_build(gg))
+  panel_cols <- unique(gt$layout$l[gt$layout$name == "panel"])
+  panel_rows <- unique(gt$layout$t[gt$layout$name == "panel"])
+  for (col in panel_cols) gt$widths[[col]] <- grid::unit(width, unit)
+  for (row in panel_rows) gt$heights[[row]] <- grid::unit(height, unit)
+  gt
 }
 
 # Null coalescing operator
