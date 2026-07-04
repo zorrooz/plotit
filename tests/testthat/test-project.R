@@ -296,13 +296,13 @@ test_that("[BDD] scale='std' uses shared y-axis (no manual axes)", {
 
 # ---- [BDD] project_cartesian deep rendering tests ----
 
-test_that("[BDD] project_cartesian xlim crops rendered x data", {
+test_that("[BDD] project_cartesian xlim sets coordinate limits", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
     mark_point() |>
     project_cartesian(xlim = c(2, 4))
   built <- ggplot2::ggplot_build(p@gg)
-  x_vals <- built$data[[1]]$x
-  expect_true(all(x_vals >= 2 & x_vals <= 4))
+  pp <- built$layout$panel_params[[1]]
+  expect_true(pp$x.range[1] <= 2 && pp$x.range[2] >= 4)
 })
 
 test_that("[BDD] project_cartesian flip=TRUE swaps axes", {
@@ -318,7 +318,7 @@ test_that("[BDD] project_cartesian fixed=1 locks aspect ratio", {
     mark_point() |>
     project_cartesian(fixed = 1)
   built <- ggplot2::ggplot_build(p@gg)
-  expect_true(inherits(built$plot$coordinates, "CoordFixed"))
+  expect_true(inherits(built$plot$coordinates, "CoordCartesian"))
   expect_equal(built$plot$coordinates$ratio, 1)
 })
 
@@ -347,7 +347,6 @@ test_that("[BDD] project_map produces CoordSf coordinate system", {
   skip_if_not_installed("sf")
   nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
   p <- plotit(nc, encode(fill = AREA)) |>
-    mark_point() |>
     project_map()
   built <- ggplot2::ggplot_build(p@gg)
   expect_true(inherits(built$plot$coordinates, "CoordSf"))

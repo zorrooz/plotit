@@ -75,16 +75,15 @@ NULL
       ._collect_aes_names(p, candidates)
     }))))
   }
-  unique(c(
-    intersect(names(gg), candidates),
-    unlist(lapply(gg, function(l) {
-      if (is.null(l)) {
-        character(0)
-      } else {
-        intersect(names(l), candidates)
-      }
-    }))
-  ))
+  # Global mapping
+  global_aes <- intersect(names(gg$mapping), candidates)
+  # Layer-level mappings
+  layer_aes <- unlist(lapply(gg$layers, function(layer) {
+    intersect(names(layer$mapping), candidates)
+  }))
+  # Labels
+  label_aes <- intersect(names(gg$labels), candidates)
+  unique(c(global_aes, layer_aes, label_aes))
 }
 
 # Set legend title for a single aesthetic (public ggplot2 API only).
@@ -196,24 +195,24 @@ NULL
       c("colour", "fill", "shape", "linetype", "size", "alpha")
     )
     for (a in aes_names) {
-       val <- labels@legend[[a]] %||% labels@legend[["default"]]
+      val <- labels@legend[[a]] %||% labels@legend[["default"]]
       if (isTRUE(val == FALSE)) {
-       plot@gg <- ._label_set_aes(plot@gg, a, NULL, hide = TRUE)
+        plot@gg <- ._label_set_aes(plot@gg, a, NULL, hide = TRUE)
       } else if (is.null(val)) {
-       plot@gg <- ._label_set_aes(plot@gg, a, NULL, hide = FALSE)
+        plot@gg <- ._label_set_aes(plot@gg, a, NULL, hide = FALSE)
       } else {
-       # Direct sub-plot label setting for patchwork
-       if (inherits(plot@gg, "patchwork")) {
-         for (.i in seq_along(plot@gg$plots)) {
-           if (isTRUE(val == FALSE) || is.null(val)) {
-             plot@gg$plots[[.i]]$labels[[a]] <- NULL
-           } else {
-             plot@gg$plots[[.i]]$labels[[a]] <- val
-           }
-         }
-       }
-       plot@gg <- ._label_set_aes(plot@gg, a, val, hide = FALSE)
-     }
+        # Direct sub-plot label setting for patchwork
+        if (inherits(plot@gg, "patchwork")) {
+          for (.i in seq_along(plot@gg$plots)) {
+            if (isTRUE(val == FALSE) || is.null(val)) {
+              plot@gg$plots[[.i]]$labels[[a]] <- NULL
+            } else {
+              plot@gg$plots[[.i]]$labels[[a]] <- val
+            }
+          }
+        }
+        plot@gg <- ._label_set_aes(plot@gg, a, val, hide = FALSE)
+      }
     }
   }
 
@@ -373,6 +372,10 @@ S7::method(label_legend, plotit_class) <- function(plot, text = NULL, aes = NULL
     return(plot)
   }
   if (is.null(aes)) {
+    # Global reset: clear all per-aes entries so they don't shadow default
+    if (isTRUE(reset)) {
+      plot@meta@labels@legend <- list()
+    }
     plot@meta@labels@legend[["default"]] <- if (hide) FALSE else eff_text
     plot@meta@labels@dirty[["legend"]] <- TRUE
   } else {
@@ -389,4 +392,3 @@ S7::method(label_legend, plotit_class) <- function(plot, text = NULL, aes = NULL
   }
   plot
 }
-

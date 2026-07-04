@@ -46,7 +46,7 @@ NULL
   plot@gg <- plot@gg +
     ggplot2::guides(colour = ggplot2::waiver(), fill = ggplot2::waiver())
   S7::prop(plot@meta, "default_color") <- NULL
- plot
+  plot
 }
 
 # Build a gtable with fixed panel dimensions (used at print/export time).

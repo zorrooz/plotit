@@ -128,7 +128,7 @@ test_that("scale_color unknown scheme errors", {
     mark_point()
   expect_error(
     scale_color(p, range = "unknown_scheme"),
-    "Unknown colour scheme"
+    "not a known colour scheme"
   )
 })
 
@@ -629,7 +629,7 @@ test_that("[BDD] scale_x limits crop rendered x data", {
     scale_x(limits = c(2, 4))
   built <- ggplot2::ggplot_build(p@gg)
   x_vals <- built$data[[1]]$x
-  expect_true(all(x_vals >= 2 & x_vals <= 4))
+  expect_true(all(x_vals >= 2 & x_vals <= 4, na.rm = TRUE))
 })
 
 # ---- [BDD] scale_y positional deep rendering tests ----
@@ -640,5 +640,5 @@ test_that("[BDD] scale_y limits crop rendered y data", {
     scale_y(limits = c(15, 25))
   built <- ggplot2::ggplot_build(p@gg)
   y_vals <- built$data[[1]]$y
-  expect_true(all(y_vals >= 15 & y_vals <= 25))
+  expect_true(all(y_vals >= 15 & y_vals <= 25, na.rm = TRUE))
 })

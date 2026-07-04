@@ -107,6 +107,7 @@ S7::method(export, plotit_class) <- function(
   plot <- ._sync_labels(plot)
 
   if (isTRUE(plot@meta@autofit)) {
+    final_plot <- plot@gg
     final_width <- if (is.null(width)) {
       getOption("plotit.default_width", 7)
     } else {

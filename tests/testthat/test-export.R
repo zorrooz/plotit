@@ -81,7 +81,7 @@ test_that("[BDD] panel size respects contract within <U+00B1>1%", {
   p <- plotit(mtcars, encode(x = wt, y = mpg),
     width = 5, height = 4, size_unit = "in"
   ) |> mark_point()
-  gt <- patchwork::patchworkGrob(p@gg)
+  gt <- ._build_fixed_gtable(p@gg, 5, 4, "in")
   pw <- grid::convertWidth(sum(gt$widths), "in", valueOnly = TRUE)
   ph <- grid::convertHeight(sum(gt$heights), "in", valueOnly = TRUE)
   expect_gt(pw, 5)
