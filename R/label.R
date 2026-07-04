@@ -196,22 +196,22 @@ NULL
       c("colour", "fill", "shape", "linetype", "size", "alpha")
     )
     for (a in aes_names) {
-      val <- labels@legend[[a]] %||% labels@legend[["default"]]
+       val <- labels@legend[[a]] %||% labels@legend[["default"]]
       if (isTRUE(val == FALSE)) {
-        plot@gg <- ._label_set_aes(plot@gg, a, NULL, hide = TRUE)
+       plot@gg <- ._label_set_aes(plot@gg, a, NULL, hide = TRUE)
+      } else if (is.null(val)) {
+       plot@gg <- ._label_set_aes(plot@gg, a, NULL, hide = FALSE)
       } else {
-        plot@gg <- ._label_set_aes(plot@gg, a, NULL, hide = FALSE)
-     } else {
-        # Direct sub-plot label setting for patchwork
-        if (inherits(plot@gg, "patchwork")) {
-          for (.i in seq_along(plot@gg$plots)) {
-            if (isTRUE(val == FALSE) || is.null(val)) {
-              plot@gg$plots[[.i]]$labels[[a]] <- NULL
-            } else {
-              plot@gg$plots[[.i]]$labels[[a]] <- val
-            }
-          }
-        plot@gg <- ._label_set_aes(plot@gg, a, val, hide = FALSE)
+       # Direct sub-plot label setting for patchwork
+       if (inherits(plot@gg, "patchwork")) {
+         for (.i in seq_along(plot@gg$plots)) {
+           if (isTRUE(val == FALSE) || is.null(val)) {
+             plot@gg$plots[[.i]]$labels[[a]] <- NULL
+           } else {
+             plot@gg$plots[[.i]]$labels[[a]] <- val
+           }
+         }
+       }
        plot@gg <- ._label_set_aes(plot@gg, a, val, hide = FALSE)
      }
     }
