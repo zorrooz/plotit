@@ -772,3 +772,148 @@ S7::method(export, plotit_class) <- function(...) { ... }
 
 **最佳实践**：测试中优先通过公开 API 验证行为（如 `export()` 触发 `._sync_labels()`）。确实需要直接调用时，使用 `:::` 并确保 CI 在所有平台通过（R CMD check 会产生 NOTE 但非 ERROR）。
 
+---
+
+## 11. CI/CD 经验与陷阱（CI/CD Lessons Learned）
+
+> 本节记录 GitHub Actions 工作流开发与调试中反复出现的模式。每次遇到新的 CI 问题在此追加。
+
+### 11.1 YAML 标量 vs 映射：`extra-packages:` 等参数格式
+
+**根因**：YAML 中 `key:\n  item`（无 `|` 指示器）会被解析为映射 `{item: null}`，而非字符串。`r-lib/actions/setup-r-dependencies@v2` 的 `extra-packages` 参数**必须**是一个字符串（逗号或换行分隔）。
+
+**错误写法**（被解析为 YAML mapping，action 静默忽略包名）：
+```yaml
+extra-packages:
+  any::lintr
+  any::styler
+```
+
+**正确写法**（使用 block scalar `|`）：
+```yaml
+extra-packages: |
+  any::lintr
+  any::styler
+```
+或逗号分隔单行：
+```yaml
+extra-packages: any::lintr, any::styler
+```
+
+**检查清单**：每添加一个 `with:` 参数时，确认 YAML 结构——如果值是多行文本，必须用 `|`、`>` 或引号包裹。
+
+### 11.2 Action 初始化阶段 0 秒失败：非标准参数排查
+
+**根因**：为 `r-lib/actions/check-r-package@v2` 添加 `upload-snapshots: true` 或 `error-on: "error"` 等非模板参数时，action 可能在**初始化阶段**（R CMD check 执行前）直接报错 0 秒完成。
+
+**诊断信号**：GitHub Actions 日志中步骤 completedAt 与 startedAt 时间相同（0-1 秒），说明 action 未运行底层 R CMD check，而是在 setup/input validation 阶段失败。
+
+**修复方式**：
+- 对比 `r-lib/actions` 的官方模板，去掉非标准参数
+- 先让 action 通过最简单的配置跑起来，再逐步添加参数
+- 不要假设非标准参数会被 action 静默忽略——它们可能导致 action 拒绝执行
+
+### 11.3 gh CLI 访问 CI 日志
+
+**基本原则**：
+- `gh run view <run_id> --log` 需要**整个 workflow run 完成**后才能使用（含最慢的并行 job）
+- 已完成的 job 日志可通过 API 直接访问：`gh api repos/{owner}/{repo}/actions/jobs/{job_id}/logs`
+- 该 API 返回 Content-Type: text/plain（纯文本，非 zip），可通过 Select-String 或 Python 过滤
+- 代理导致 Invoke-RestMethod/curl 无法连接时，`gh api` 内部自行处理代理，不受系统环境变量影响
+
+**实用模式**：
+```powershell
+# 获取某个 job 的日志并筛选失败步骤
+gh api repos/owner/repo/actions/jobs/<job_id>/logs | Select-String "── Failure|── Error"
+
+# 获取 workflow 内所有 job 状态
+gh run view <run_id> --json jobs
+
+# 获取 macOS 的构建结果
+gh run view <run_id> --json jobs | ConvertFrom-Json | ForEach-Object { $_.jobs } | Where-Object { $_.name -like "*macOS*" }
+```
+
+### 11.4 patchwork 对象在 CI 测试中的兼容问题
+
+**根因**：`plotit` 将 `@gg` 存储为 patchwork 对象（通过 `plot_layout()` 固定面板尺寸）。patchwork 与纯 ggplot 的公开 API 行为存在差异：
+
+| 操作 | 纯 ggplot | patchwork |
+|------|-----------|-----------|
+| `gg$mapping` | 存在（aes 列表） | 不存在（在 `gg$plots[[1]]$mapping` 中） |
+| `gg$labels` | 顶层直接访问 | 修改需同步到每个 subplot |
+| `gg$coordinates` | 顶层直接访问 | 在 `gg$plots[[1]]$coordinates` 中 |
+| `ggplot_build()` | 返回标准 build | 返回组合 build 或 subplot build（版本依赖） |
+| `+ labs(...)` | 生效于 `$labels` | 仅 title/subtitle/caption 作为 annotation 生效；colour/fill 等因 patchwork 不支持而不传播 |
+
+**已采用的修复方式**：
+- `._collect_aes_names()`：检测 `inherits(gg, "patchwork")` 后递归检查 subplot
+- `._label_set_aes()`：直接设置 `gg$labels[[a]]`（兼用 `labs()`）
+- `._sync_labels()`：设置 legend 时遍历 `gg$plots[[i]]$labels[[a]]`
+
+**测试注意事项**：
+- `ggplot_build(p@gg)` 返回的 `built$plot` 可能是 patchwork 而非纯 ggplot
+- `built$plot$coordinates` 在 patchwork 构建中可能不可靠
+- 避免在测试中直接断言 patchwork 的内部槽位（如 `gg$plots`）
+- 注意 1.0 前将移除此 patchwork 依赖（见 §9）
+
+### 11.5 BDD 测试"巧合通过"陷阱
+
+**根因**：某些测试看似通过，但实际未覆盖目标行为。例如 test-label.R:193：
+```r
+expect_equal(built$plot$labels$colour, "Species")
+```
+该测试"通过"不是因为 `label_legend(text = "Species", aes = "colour")` 成功设置了图例标题，而是因为默认标签已经是 `"Species"`（变量名）。如果图例同步代码失效，该测试**仍然通过**。
+
+**预防措施**：
+- BDD 测试的 expected 值**不应等于默认值**（变量名或自动生成的标签）
+- 应使用与默认值不同的值验证修改的实际生效（如 `"All"` 而非 `"Species"`）
+- 每次重构后检查 FAIL 数量是否变化——即使相同数量的失败，可能是不同测试在失败
+
+**检查清单**：
+- 预期值是否与默认值不同？
+- 如果注释掉被测试的代码行，测试是否应该失败？（验证测试的有效性）
+- 测试是否依赖于巧合（如默认值与预期值相同）？
+
+### 11.6 环境差异：本地 Windows 与 CI Ubuntu/macOS
+
+**根因**：Windows 开发环境可能引入 CI 上不存在的干扰，反之亦然。
+
+**常见差异**：
+
+| 本地现象 | CI 相关性 | 原因 |
+|----------|-----------|------|
+| R CMD check 安装阶段 `file.rename` 失败 | ❌ 无关 | Windows Defender / 杀毒软件拦截 staged install |
+| R CMD check CRAN URL 检查失败 | ❌ 无关 | 公司代理 / VPN 拦截出站连接 |
+| `styler::style_pkg()` 报 `cnd_type()` 错误 | ❌ 无关 | 本地 rlang 版本与 styler 不兼容 |
+| gh CLI 缓存写入失败 | ❌ 无关 | 沙箱限制 `%LOCALAPPDATA%` 写入 |
+
+**本地复现 CI 失败的正确方式**：
+- 使用 `gh api` 获取真实 CI 日志（不可用本地 R 会话替代）
+- 在 WSL / Docker 容器中运行 R CMD check（更接近 Ubuntu CI 环境）
+- 使用 `--no-manual --no-build-vignettes` 加速本地 R CMD check
+
+### 11.7 continue-on-error 的粒度和传递性
+
+**根因**：`continue-on-error: true` 在 job 层和 step 层的行为不同：
+- **step 层**：该步骤失败后，后续步骤仍执行，job 标记为成功
+- **job 层**：该 job 失败后，同一 workflow 的后续 job 仍执行，但 workflow 标记为成功
+
+**注意**：job 级 `continue-on-error` 不能代替 step 级——如果 job 中某个步骤失败（如 R CMD check 遇到 ERROR），job 级设置不会阻止该步骤中断后续步骤。需要 step 级设置。
+
+**最佳实践**：
+- 信息性检查（lint、styler、codecov）使用 step 级 `continue-on-error: true`
+- R-devel 等已知不稳定的构建变体使用 job 级 `continue-on-error: true`
+- 不要在 job 级的 `steps:` 列表**中间**放置 `continue-on-error: true`——这是 YAML 语法错误，会破坏整个 `steps:` 结构
+
+### 11.8 R CMD check 示例错误排查
+
+**根因**：Rd 文件中 `\examples{}` 节的 R 代码语法错误在 R CMD check 中表现为 "plotit-Ex.R 第 N 行 parse error"。该文件是通过 `tools::Rd2ex()` 从各 Rd 文件的 `\examples{}` 合并生成的临时文件。
+
+**定位方式**：
+```r
+# 逐个 Rd 文件检查示例
+tools::Rd2ex("man/<file>.Rd", "test.R")
+source("test.R")
+```
+
+**预防措施**：每次新增或修改 Rd 示例后，在提交前运行 `R CMD check --no-manual` 验证示例可通过解析。
