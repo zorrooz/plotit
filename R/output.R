@@ -66,7 +66,7 @@ S7::method(print, plotit_class) <- function(x, ...) {
 #' @param ... Additional arguments passed to `ggplot2::ggsave()`.
 #' @return Invisibly, the original `plotit` object.
 #' @examples
-#'   \\dontrun{
+#'   \dontrun{
 #'   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
 #'   export(p, tempfile(fileext = ".png"), dpi = 72)
 #'   }
