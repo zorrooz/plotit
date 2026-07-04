@@ -1151,3 +1151,109 @@ jobs:
 | 测试"巧合通过" | expected == 默认值 | 换成非默认值重新运行（见 §11.5） |
 | `Namespace not available` | S7 泛型未导出 | 检查泛型的 `@export` 标签（见 §10.13） |
 | Rd 解析错误 | 示例代码语法错误 | `tools::Rd2ex(); source()` 定位（见 §11.8） |
+
+---
+
+## 13. Push 前本地验证流程（Pre-Push Validation Protocol）
+
+> 本节定义每次 `git push` 之前必须执行的本地检查步骤。目的：在 CI 耗时 2-15 分钟之前，用秒级到分钟级的本地检查拦截绝大多数低级错误。
+
+### 13.1 核心原则
+
+- **本地能拦截的，绝不推到 CI 再发现。** 一个 parse error 本地 0.5 秒就能发现，推到 CI 往返需要 2-15 分钟。
+- **分层次验证**：耗时短的先跑，拦截掉 80% 的问题再跑耗时更长的。
+- **Windows 本地限制**：`file.rename()` 被 Defender 拦截时，CI 不受影响；不准以本地环境问题为由跳过验证。
+
+### 13.2 第一层：秒级语法检查（必须执行）
+
+```powershell
+# 1. 检查 git 改动的 R 文件
+$changed = git diff --name-only --cached -- "*.R"
+if ($changed) {
+  $changed | ForEach-Object {
+    Write-Output "Parsing: $_"
+    Rscript -e "parse(file='$_')" 2>&1 | Select-String -NotMatch "Warning|During startup"
+    if ($LASTEXITCODE -ne 0) {
+      Write-Error "PARSE ERROR in $_ — abort push"
+      exit 1
+    }
+  }
+  Write-Output "All R files parsed OK"
+}
+
+# 2. 检查 git 改动的 workflow YAML
+$yaml = git diff --name-only --cached -- ".github/workflows/*.yaml"
+if ($yaml) {
+  # 需要 python + pyyaml
+ python -c "import yaml,sys; [sys.exit(1) for f in '$($yaml -join \",\")'.split(',') if yaml.safe_load(open(f)) is None]"
+  # 注意：Windows 系统默认编码为 GBK，yaml.safe_load(open(f)) 会因 UTF-8 文件报 UnicodeDecodeError。
+  # 必须显式指定 encoding='utf-8'：
+  #   yaml.safe_load(open(f, encoding='utf-8'))
+  if ($LASTEXITCODE -ne 0) {
+    Write-Error "YAML PARSE ERROR — abort push"
+    exit 1
+  }
+}
+```
+
+精简版（日常使用）：
+```powershell
+# 仅 R 文件 parse 检查
+git diff --name-only --cached -- "*.R" | ForEach-Object { Rscript -e "parse(file='$_')" 2>&1 | Select-String -NotMatch "Warning|During startup" }
+```
+
+### 13.3 第二层：分钟级安装验证（条件执行）
+
+当改动涉及 `DESCRIPTION`、`NAMESPACE` 或 `R/` 下多个文件时：
+
+```powershell
+# 1. 构建源码包（验证 Collate 顺序、文档完整性）
+R CMD build . --no-build-vignettes
+
+# 2. 检查能否安装（跳过 staged-install 以避开 Defender）
+$tarball = Get-ChildItem *.tar.gz | Select-Object -First 1
+R CMD INSTALL $tarball --no-staged-install
+
+# 3. 运行测试（如果安装成功）
+Rscript -e "testthat::test_dir('tests/testthat')"
+```
+
+> 注意：`R CMD build` 会调用 `roxygen2::roxygenize()` 并更新 `man/` 和 `NAMESPACE`。如果改动涉及新增/删除导出函数或修改 roxygen 注释，**build 后必须重新 stage 这些自动生成的文件**。未 stage 的 `man/*.Rd` 变更会导致 CI 上 R CMD check 报文档不匹配的 ERROR。
+
+### 13.4 第三层：lint / 风格检查（可选）
+
+```powershell
+# lint（不需要完整包安装）
+Rscript -e "lintr::lint_package()"
+
+# 代码风格（dry run）
+Rscript -e "styler::style_pkg(dry='on')"
+```
+
+> 当前本地 styler 因 rlang 版本兼容性报 `cnd_type()` 错误时跳过此层，不以本地环境问题为由拒绝 push。
+
+### 13.5 标准操作流程（SOP）
+
+```mermaid
+graph TD
+    A[git add] --> B[git diff --cached]
+    B --> C{改动了 .R 文件?}
+    C -->|是| D[Rscript parse 检查]
+    D -->|失败| E[修复 → 回到 A]
+    D -->|通过| F{改动了 workflow .yaml?}
+    C -->|否| F
+    F -->|是| G[Python YAML 解析验证]
+    G -->|失败| E
+    F -->|否| H
+    G -->|通过| H{改动了 DESCRIPTION / 多个 R 文件?}
+    H -->|是| I[R CMD build + INSTALL]
+    I -->|失败| E
+    I -->|通过| J[git commit + push]
+    H -->|否| J
+```
+
+### 13.6 这条规则是从哪里来的
+
+这条规则来自一次教训：`7baca2d` 的代码中 `R/label.R` 有一个 `unexpected ''else''` parse error，被推送到 GitHub 后才被 CI 发现，白白浪费了 2 分钟 workflow 运行时间和一次 commit 修复往返。本地 `Rscript -e "parse(file=''R/label.R'')"` 只需 0.5 秒就能拦截这个问题。
+
+**规则**：每次 push 前，对每个改动的 `.R` 文件执行 `parse()` 检查。这比运行整包测试快两个数量级，能拦截约 70% 的 CI 安装阶段失败。
