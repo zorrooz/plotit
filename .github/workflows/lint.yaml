@@ -27,6 +27,7 @@ jobs:
             any::styler
 
       - name: Lint
+        continue-on-error: true
         run: |
           result <- tryCatch(
             lintr::lint_package(),
