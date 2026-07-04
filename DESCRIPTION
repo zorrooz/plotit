@@ -2,7 +2,7 @@ Package: plotit
 Title: Declarative Plotting with ggplot2
 Version: 0.0.0.9000
 Authors@R: 
-    person("Zorro", "Oz", , "zorrooz@github.com", role = c("aut", "cre"))
+    person("zorrooz", , , "zorrooz@github.com", role = c("aut", "cre"))
 Description: A declarative plotting package built on top of 'ggplot2', providing a simplified, consistent API for creating publication-ready visualizations with sensible defaults.
 License: MIT + file LICENSE
 Encoding: UTF-8

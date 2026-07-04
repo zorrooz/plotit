@@ -1,11 +1,4 @@
 # plotit 开发约定
-注意：Windows 系统默认编码为 GBK，Python 读取 UTF-8 YAML 文件时需显式指定 encoding='utf-8'。
-| DESCRIPTION Collate（@include） | DESCRIPTION 元信息 |
-| man/*.Rd（roxygen2） | R/*.R 源码中的 roxygen 注释 |
-
-**原则**：永远不要直接编辑 man/*.Rd 文件。如果 Rd 文件有错误（如示例解析失败），应修改对应的 R 源文件的 roxygen2 注释，然后运行 
-**原则**：永远不要直接编辑 `man/*.Rd` 文件。如果 Rd 文件有错误（如示例解析失败），应修改对应的 R 源文件的 roxygen2 注释，然后运行 `roxygen2::roxygenize()` 重新生成。例如 `\examples{}` 缺失应加 `@examples NULL`、`\usage{}` 缺失应检查 `@export` 标签。
-# plotit 开发约定
 
 ## 1. 设计原则
 
@@ -78,6 +71,10 @@
 
 ### 3.1 函数族总览
 
+plotit 有两层操作：**单图管道**（内层，从数据构建一个图表）和**多图组合**（最外层，将多个 `plotit` 对象组装为复合布局）。
+
+**单图函数族**（内层——数据 → 图表）：
+
 | 函数族 | 职责 | ggplot2 对应 |
 |---|---|---|
 | `plotit()` | 初始化图表对象 | `ggplot()` |
@@ -86,10 +83,17 @@
 | `scale_*` | 数据→视觉映射 + 显示控制 | `scale_*` |
 | `project_*` | 坐标系变换 | `coord_*` |
 | `split_*` | 分面布局 | `facet_*` |
-| `label_*` | 文本标签 | `labs()` |
+| `label_*` | 文本标签（含轴/图例） | `labs()` |
 | `style()` | 主题设置 | `theme()` |
-| `compose_*` | 多图组合布局 | `patchwork`（`wrap_plots` / `inset_element` / `plot_layout` / `plot_annotation`） |
 | `export()` | 图表导出 | `ggsave()` |
+
+**多图组合**（最外层——多个 `plotit` 对象 → 复合布局）：
+
+| 函数族 | 职责 | ggplot2 对应 |
+|---|---|---|
+| `compose_*` | 组装多个 `plotit` 对象为多面板布局；返回 `plotit_composite`，支持 `label_title`/`label_subtitle`/`label_caption`/`style`/`export` 管道延续 | `patchwork`（`wrap_plots` / `inset_element` / `plot_layout` / `plot_annotation`） |
+
+> **关键区别**：`compose_*` 不操作数据，它接收的是**已构建完成的 `plotit` 对象**。单图函数（`mark_*`、`scale_*`、`project_*`、`split_*`、`label_axis`、`label_legend`）不能用于 `plotit_composite`——先分别构建各子图，最后再用 `compose_*` 组合。
 
 ### 3.2 `mark_*` 目录
 
@@ -338,9 +342,11 @@ export(plot, filename, width = NULL, height = NULL, dpi = 300, device = NULL, ..
 
 
 
-#### 3.3.11 `compose_*` — 图形组合
+---
 
-将多个 `plotit` 图表组装为多面板布局。与 `split_*`（一分多，数据层面）正交——`compose_*` 是"多合一"（图表层面），每个子图可有完全不同的数据、几何图层、坐标系和标度。
+### 3.4 `compose_*` — 图形组合（最外层）
+
+> **架构定位**：`compose_*` 是 plotit 的**最外层**。与 §3.3 中的所有单图函数族不同，`compose_*` 不操作数据——它接收**已构建完成的 `plotit` 对象**，将它们组装为多面板布局。与 `split_*`（一分多，数据层面）正交——`compose_*` 是"多合一"（图表层面），每个子图可有完全不同的数据、几何图层、坐标系和标度。
 
 ##### API 签名
 
@@ -406,7 +412,7 @@ compose_marginal(main, top, right, widths = c(4, 1), heights = c(1, 4),
 
 ---
 
-### 3.4 补充约定
+### 3.5 补充约定
 
 - **空数据与缺失值**：空 data.frame 行为由 ggplot2 决定。`NA` 由 ggplot2 默认静默移除。
 - **S7 槽位**：`plotit_labels`（`title`/`subtitle`/`caption`/`x`/`y`/`legend`）、`plotit_metadata`（`autofit`/`width`/`height`/`dodge`/`unit`/`default_color`/`labels`）、`plotit`（`gg`/`meta`）。
@@ -429,9 +435,10 @@ R/
 ├── project.R    # 所有 project_*
 ├── split.R      # 所有 split_*
 ├── label.R      # 所有 label_*
-├── compose.R    # compose_grid() + compose_inset() + composite 方法
 ├── style.R      # style() + 默认主题
 ├── output.R     # print() + export()
+├── compose.R    # compose_* 多图组合（最外层——操作 plotit 对象，非数据）
+│                #   必须排在 label/style/output 之后加载（S7 方法注册依赖）
 
 tests/testthat/
 ├── test-encode.R  test-plot.R    test-mark.R
@@ -550,17 +557,17 @@ export(p, "output.pdf", dpi = 300)
 
 ### 8.1 API 完成度
 
-| 函数族 | 规划数 | 已实现 | 完成度 |
-|--------|--------|--------|--------|
-| plotit() + encode() | 2 | 2 | 100% |
-| mark_* | 22 | 6 | 27% |
-| scale_* | 8 | 8 | 100% |
-| project_* | 4 | 4 | 100% |
-| split_* | 2 | 2 | 100% |
-| label_* | 6 | 6 | 100% |
-| style() + export() | 3 | 3 | 100% |
-| compose_* | 3 | 3 | 100% |
-| 总计 | ~50 | 34 | ~68% |
+| 层级 | 函数族 | 规划数 | 已实现 | 完成度 |
+|------|--------|--------|--------|--------|
+| 内层 | plotit() + encode() | 2 | 2 | 100% |
+| 内层 | mark_* | 22 | 6 | 27% |
+| 内层 | scale_* | 8 | 8 | 100% |
+| 内层 | project_* | 4 | 4 | 100% |
+| 内层 | split_* | 2 | 2 | 100% |
+| 内层 | label_* | 6 | 6 | 100% |
+| 内层 | style() + export() | 3 | 3 | 100% |
+| 最外层 | compose_* | 3 | 3 | 100% |
+| — | 总计 | ~50 | 34 | ~68% |
 
 ### 8.2 设计原则符合度
 
