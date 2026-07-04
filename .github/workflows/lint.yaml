@@ -22,7 +22,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages:
+          extra-packages: |
             any::lintr
             any::styler
 
@@ -45,7 +45,6 @@ jobs:
           }
         shell: Rscript {0}
 
-    continue-on-error: true
       - name: Check code style
         run: |
           changed <- tryCatch({
