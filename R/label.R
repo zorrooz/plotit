@@ -70,6 +70,11 @@ NULL
 #' @noRd
 #' @keywords internal
 ._collect_aes_names <- function(gg, candidates) {
+  if (inherits(gg, "patchwork")) {
+    return(unique(unlist(lapply(gg$plots, function(p) {
+      ._collect_aes_names(p, candidates)
+    }))))
+  }
   unique(c(
     intersect(names(gg), candidates),
     unlist(lapply(gg, function(l) {
@@ -94,6 +99,7 @@ NULL
   } else if (is.null(text)) {
     gg$labels[[a]] <- NULL
   } else {
+    gg$labels[[a]] <- text
     gg <- gg + ._labs_el(a, text)
   }
   gg
@@ -373,3 +379,4 @@ S7::method(label_legend, plotit_class) <- function(plot, text = NULL, aes = NULL
   }
   plot
 }
+
