@@ -159,7 +159,7 @@ mtcars |>
 iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length)) |>
   mark_point() |>
-  split_wrap(~Species, ncol = 3)
+  split_wrap(Species, ncol = 3)
 ```
 
 ### `style()` — Themes

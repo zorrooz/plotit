@@ -33,10 +33,21 @@ jobs:
         run: pkgdown::build_site_github_pages(new_process = FALSE)
         shell: Rscript {0}
 
-      - name: Clean up dev-only pages
+      - name: Remove dev-only pages
         run: |
           rm -f docs/AGENTS.html docs/AGENTS.md docs/AGENTS.new.html docs/AGENTS.new.md
-          rm -f docs/README_ZH.html docs/README_ZH.md
+
+      - name: Clean search index
+        run: |
+          import json, sys
+          with open("docs/search.json", encoding="utf-8") as f:
+              data = json.load(f)
+          before = len(data)
+          data = [e for e in data if "AGENTS" not in e.get("path","")]
+          with open("docs/search.json", "w", encoding="utf-8") as f:
+              json.dump(data, f, ensure_ascii=False)
+          print(f"Search entries: {before} -> {len(data)}")
+        shell: python
 
       - name: Deploy to GitHub Pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

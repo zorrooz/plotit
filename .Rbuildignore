@@ -4,7 +4,7 @@
 ^playground\.R$
 ^scratch/
 ^AGENTS\.md$
-^AGENTS\.new\.md$
+^\.claude$
 ^README_ZH\.md$
 ^iris_plot\.svg$
 ^Rplots\.pdf$

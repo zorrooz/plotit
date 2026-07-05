@@ -28,7 +28,7 @@ NULL
     # Install render hook fallback: catches plotit objects S3 dispatch missed
     tryCatch({
       knitr::knit_hooks$set(render = function(x, options) {
-        if (inherits(x, "plotit::plotit") || inherits(x, "plotit::plotit_composite")) {
+        if (inherits(x, "plotit") || inherits(x, "plotit_composite")) {
           ns$knit_print.plotit(x)
         } else {
           knitr::knit_print(x)

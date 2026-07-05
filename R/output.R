@@ -68,14 +68,14 @@ print.plotit <- function(x, ...) {
 # ---- knit_print ----
 # S3 methods for knitr to capture plotit plots in vignettes / R Markdown.
 # Renders the underlying ggplot to knitr's active device.
-#' @export
+#' @exportS3Method knitr::knit_print
 knit_print.plotit <- function(x, ...) {
   x <- ._sync_labels(x)
   print(x@gg)
   invisible(x)
 }
 
-#' @export
+#' @exportS3Method knitr::knit_print
 knit_print.plotit_composite <- function(x, ...) {
   x@gg <- ._apply_annotations(x)
   print(x@gg)
