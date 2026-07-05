@@ -38,33 +38,9 @@ mtcars |>
   mark_point(size = 2) |>
   scale_x(trans = "log10") |>
   label_title("Log-transformed x-axis")
-#> <plotit::plotit>
-#>  @ gg  :A patchwork composed of 1 patches
-#> - Autotagging is turned off
-#> - Guides are kept
-#> 
-#> Layout:
-#> 1 patch areas, spanning 1 columns and 1 rows
-#> 
-#>     t l b r
-#> 1:  1 1 1 1
-#>  @ meta: <plotit::plotit_metadata>
-#>  .. @ autofit      : logi FALSE
-#>  .. @ width        : num 7
-#>  .. @ height       : num 5
-#>  .. @ unit         : chr "in"
-#>  .. @ dodge        : num 0
-#>  .. @ default_color: chr "#4E79A7"
-#>  .. @ labels       : <plotit::plotit_labels>
-#>  .. .. @ title   : chr "Log-transformed x-axis"
-#>  .. .. @ subtitle: NULL
-#>  .. .. @ caption : NULL
-#>  .. .. @ x       : NULL
-#>  .. .. @ y       : NULL
-#>  .. .. @ legend  : NULL
-#>  .. .. @ dirty   :List of 1
-#>  .. .. .. $ title: logi TRUE
 ```
+
+![](customizing_files/figure-html/unnamed-chunk-3-1.png)
 
 ``` r
 
@@ -73,32 +49,9 @@ iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Sepal.Length)) |>
   mark_point(size = 2) |>
   scale_color(trans = "binned", range = "viridis")
-#> <plotit::plotit>
-#>  @ gg  :A patchwork composed of 1 patches
-#> - Autotagging is turned off
-#> - Guides are kept
-#> 
-#> Layout:
-#> 1 patch areas, spanning 1 columns and 1 rows
-#> 
-#>     t l b r
-#> 1:  1 1 1 1
-#>  @ meta: <plotit::plotit_metadata>
-#>  .. @ autofit      : logi FALSE
-#>  .. @ width        : num 7
-#>  .. @ height       : num 5
-#>  .. @ unit         : chr "in"
-#>  .. @ dodge        : num 0
-#>  .. @ default_color: NULL
-#>  .. @ labels       : <plotit::plotit_labels>
-#>  .. .. @ title   : NULL
-#>  .. .. @ subtitle: NULL
-#>  .. .. @ caption : NULL
-#>  .. .. @ x       : NULL
-#>  .. .. @ y       : NULL
-#>  .. .. @ legend  : NULL
-#>  .. .. @ dirty   : list()
 ```
+
+![](customizing_files/figure-html/unnamed-chunk-4-1.png)
 
 ``` r
 
@@ -107,32 +60,9 @@ mtcars |>
   plotit(encode(x = factor(cyl), y = mpg)) |>
   mark_boxplot() |>
   scale_x(trans = "reverse")
-#> <plotit::plotit>
-#>  @ gg  :A patchwork composed of 1 patches
-#> - Autotagging is turned off
-#> - Guides are kept
-#> 
-#> Layout:
-#> 1 patch areas, spanning 1 columns and 1 rows
-#> 
-#>     t l b r
-#> 1:  1 1 1 1
-#>  @ meta: <plotit::plotit_metadata>
-#>  .. @ autofit      : logi FALSE
-#>  .. @ width        : num 7
-#>  .. @ height       : num 5
-#>  .. @ unit         : chr "in"
-#>  .. @ dodge        : num 0.8
-#>  .. @ default_color: chr "#4E79A7"
-#>  .. @ labels       : <plotit::plotit_labels>
-#>  .. .. @ title   : NULL
-#>  .. .. @ subtitle: NULL
-#>  .. .. @ caption : NULL
-#>  .. .. @ x       : NULL
-#>  .. .. @ y       : NULL
-#>  .. .. @ legend  : NULL
-#>  .. .. @ dirty   : list()
 ```
+
+![](customizing_files/figure-html/unnamed-chunk-5-1.png)
 
 ### The `range` Parameter
 
@@ -146,32 +76,9 @@ mtcars |>
   plotit(encode(x = wt, y = mpg, colour = hp)) |>
   mark_point(size = 3, alpha = 0.8) |>
   scale_color(range = "viridis")
-#> <plotit::plotit>
-#>  @ gg  :A patchwork composed of 1 patches
-#> - Autotagging is turned off
-#> - Guides are kept
-#> 
-#> Layout:
-#> 1 patch areas, spanning 1 columns and 1 rows
-#> 
-#>     t l b r
-#> 1:  1 1 1 1
-#>  @ meta: <plotit::plotit_metadata>
-#>  .. @ autofit      : logi FALSE
-#>  .. @ width        : num 7
-#>  .. @ height       : num 5
-#>  .. @ unit         : chr "in"
-#>  .. @ dodge        : num 0
-#>  .. @ default_color: NULL
-#>  .. @ labels       : <plotit::plotit_labels>
-#>  .. .. @ title   : NULL
-#>  .. .. @ subtitle: NULL
-#>  .. .. @ caption : NULL
-#>  .. .. @ x       : NULL
-#>  .. .. @ y       : NULL
-#>  .. .. @ legend  : NULL
-#>  .. .. @ dirty   : list()
 ```
+
+![](customizing_files/figure-html/unnamed-chunk-6-1.png)
 
 ``` r
 
@@ -180,32 +87,9 @@ iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
   mark_point(size = 2) |>
   scale_color(range = "brewer")
-#> <plotit::plotit>
-#>  @ gg  :A patchwork composed of 1 patches
-#> - Autotagging is turned off
-#> - Guides are kept
-#> 
-#> Layout:
-#> 1 patch areas, spanning 1 columns and 1 rows
-#> 
-#>     t l b r
-#> 1:  1 1 1 1
-#>  @ meta: <plotit::plotit_metadata>
-#>  .. @ autofit      : logi FALSE
-#>  .. @ width        : num 7
-#>  .. @ height       : num 5
-#>  .. @ unit         : chr "in"
-#>  .. @ dodge        : num 0
-#>  .. @ default_color: NULL
-#>  .. @ labels       : <plotit::plotit_labels>
-#>  .. .. @ title   : NULL
-#>  .. .. @ subtitle: NULL
-#>  .. .. @ caption : NULL
-#>  .. .. @ x       : NULL
-#>  .. .. @ y       : NULL
-#>  .. .. @ legend  : NULL
-#>  .. .. @ dirty   : list()
 ```
+
+![](customizing_files/figure-html/unnamed-chunk-7-1.png)
 
 ``` r
 
@@ -214,32 +98,9 @@ mtcars |>
   plotit(encode(x = wt, y = mpg, colour = hp)) |>
   mark_point(size = 3) |>
   scale_color(range = c("steelblue", "tomato"))
-#> <plotit::plotit>
-#>  @ gg  :A patchwork composed of 1 patches
-#> - Autotagging is turned off
-#> - Guides are kept
-#> 
-#> Layout:
-#> 1 patch areas, spanning 1 columns and 1 rows
-#> 
-#>     t l b r
-#> 1:  1 1 1 1
-#>  @ meta: <plotit::plotit_metadata>
-#>  .. @ autofit      : logi FALSE
-#>  .. @ width        : num 7
-#>  .. @ height       : num 5
-#>  .. @ unit         : chr "in"
-#>  .. @ dodge        : num 0
-#>  .. @ default_color: NULL
-#>  .. @ labels       : <plotit::plotit_labels>
-#>  .. .. @ title   : NULL
-#>  .. .. @ subtitle: NULL
-#>  .. .. @ caption : NULL
-#>  .. .. @ x       : NULL
-#>  .. .. @ y       : NULL
-#>  .. .. @ legend  : NULL
-#>  .. .. @ dirty   : list()
 ```
+
+![](customizing_files/figure-html/unnamed-chunk-8-1.png)
 
 ``` r
 
@@ -248,32 +109,9 @@ mtcars |>
   plotit(encode(x = wt, y = mpg, size = hp)) |>
   mark_point(alpha = 0.6) |>
   scale_size(range = c(1, 15))
-#> <plotit::plotit>
-#>  @ gg  :A patchwork composed of 1 patches
-#> - Autotagging is turned off
-#> - Guides are kept
-#> 
-#> Layout:
-#> 1 patch areas, spanning 1 columns and 1 rows
-#> 
-#>     t l b r
-#> 1:  1 1 1 1
-#>  @ meta: <plotit::plotit_metadata>
-#>  .. @ autofit      : logi FALSE
-#>  .. @ width        : num 7
-#>  .. @ height       : num 5
-#>  .. @ unit         : chr "in"
-#>  .. @ dodge        : num 0
-#>  .. @ default_color: chr "#4E79A7"
-#>  .. @ labels       : <plotit::plotit_labels>
-#>  .. .. @ title   : NULL
-#>  .. .. @ subtitle: NULL
-#>  .. .. @ caption : NULL
-#>  .. .. @ x       : NULL
-#>  .. .. @ y       : NULL
-#>  .. .. @ legend  : NULL
-#>  .. .. @ dirty   : list()
 ```
+
+![](customizing_files/figure-html/unnamed-chunk-9-1.png)
 
 ### Breaks and Limits
 
@@ -284,32 +122,11 @@ mtcars |>
   mark_point() |>
   scale_x(limits = c(2, 5), breaks = c(2, 3, 4, 5)) |>
   scale_y(limits = c(10, 35))
-#> <plotit::plotit>
-#>  @ gg  :A patchwork composed of 1 patches
-#> - Autotagging is turned off
-#> - Guides are kept
-#> 
-#> Layout:
-#> 1 patch areas, spanning 1 columns and 1 rows
-#> 
-#>     t l b r
-#> 1:  1 1 1 1
-#>  @ meta: <plotit::plotit_metadata>
-#>  .. @ autofit      : logi FALSE
-#>  .. @ width        : num 7
-#>  .. @ height       : num 5
-#>  .. @ unit         : chr "in"
-#>  .. @ dodge        : num 0
-#>  .. @ default_color: chr "#4E79A7"
-#>  .. @ labels       : <plotit::plotit_labels>
-#>  .. .. @ title   : NULL
-#>  .. .. @ subtitle: NULL
-#>  .. .. @ caption : NULL
-#>  .. .. @ x       : NULL
-#>  .. .. @ y       : NULL
-#>  .. .. @ legend  : NULL
-#>  .. .. @ dirty   : list()
+#> Warning: Removed 7 rows containing missing values or values outside the scale range
+#> (`geom_point()`).
 ```
+
+![](customizing_files/figure-html/unnamed-chunk-10-1.png)
 
 ## Labels: The Three-Parameter Protocol
 
@@ -328,35 +145,9 @@ iris |>
   label_title("Iris Sepal Measurements") |>
   label_subtitle("Three species, 150 observations") |>
   label_caption("Data: Anderson (1935)")
-#> <plotit::plotit>
-#>  @ gg  :A patchwork composed of 1 patches
-#> - Autotagging is turned off
-#> - Guides are kept
-#> 
-#> Layout:
-#> 1 patch areas, spanning 1 columns and 1 rows
-#> 
-#>     t l b r
-#> 1:  1 1 1 1
-#>  @ meta: <plotit::plotit_metadata>
-#>  .. @ autofit      : logi FALSE
-#>  .. @ width        : num 7
-#>  .. @ height       : num 5
-#>  .. @ unit         : chr "in"
-#>  .. @ dodge        : num 0
-#>  .. @ default_color: NULL
-#>  .. @ labels       : <plotit::plotit_labels>
-#>  .. .. @ title   : chr "Iris Sepal Measurements"
-#>  .. .. @ subtitle: chr "Three species, 150 observations"
-#>  .. .. @ caption : chr "Data: Anderson (1935)"
-#>  .. .. @ x       : NULL
-#>  .. .. @ y       : NULL
-#>  .. .. @ legend  : NULL
-#>  .. .. @ dirty   :List of 3
-#>  .. .. .. $ title   : logi TRUE
-#>  .. .. .. $ subtitle: logi TRUE
-#>  .. .. .. $ caption : logi TRUE
 ```
+
+![](customizing_files/figure-html/unnamed-chunk-11-1.png)
 
 ### Axis and Legend Labels
 
@@ -369,35 +160,9 @@ iris |>
   label_axis("Sepal Width (cm)", aes = "x") |>
   label_axis("Sepal Length (cm)", aes = "y") |>
   label_legend("Iris Species", aes = "colour")
-#> Warning: Aesthetic "colour" is not present in the plot mapping.
-#> <plotit::plotit>
-#>  @ gg  :A patchwork composed of 1 patches
-#> - Autotagging is turned off
-#> - Guides are kept
-#> 
-#> Layout:
-#> 1 patch areas, spanning 1 columns and 1 rows
-#> 
-#>     t l b r
-#> 1:  1 1 1 1
-#>  @ meta: <plotit::plotit_metadata>
-#>  .. @ autofit      : logi FALSE
-#>  .. @ width        : num 7
-#>  .. @ height       : num 5
-#>  .. @ unit         : chr "in"
-#>  .. @ dodge        : num 0
-#>  .. @ default_color: NULL
-#>  .. @ labels       : <plotit::plotit_labels>
-#>  .. .. @ title   : NULL
-#>  .. .. @ subtitle: NULL
-#>  .. .. @ caption : NULL
-#>  .. .. @ x       : chr "Sepal Width (cm)"
-#>  .. .. @ y       : chr "Sepal Length (cm)"
-#>  .. .. @ legend  : NULL
-#>  .. .. @ dirty   :List of 2
-#>  .. .. .. $ x: logi TRUE
-#>  .. .. .. $ y: logi TRUE
 ```
+
+![](customizing_files/figure-html/unnamed-chunk-12-1.png)
 
 ### Hiding Elements
 
@@ -411,34 +176,9 @@ iris |>
   scale_color(range = "viridis") |>
   label_title(hide = TRUE) |>
   label_legend(hide = TRUE, aes = "colour")
-#> Warning: Aesthetic "colour" is not present in the plot mapping.
-#> <plotit::plotit>
-#>  @ gg  :A patchwork composed of 1 patches
-#> - Autotagging is turned off
-#> - Guides are kept
-#> 
-#> Layout:
-#> 1 patch areas, spanning 1 columns and 1 rows
-#> 
-#>     t l b r
-#> 1:  1 1 1 1
-#>  @ meta: <plotit::plotit_metadata>
-#>  .. @ autofit      : logi FALSE
-#>  .. @ width        : num 7
-#>  .. @ height       : num 5
-#>  .. @ unit         : chr "in"
-#>  .. @ dodge        : num 0
-#>  .. @ default_color: NULL
-#>  .. @ labels       : <plotit::plotit_labels>
-#>  .. .. @ title   : logi FALSE
-#>  .. .. @ subtitle: NULL
-#>  .. .. @ caption : NULL
-#>  .. .. @ x       : NULL
-#>  .. .. @ y       : NULL
-#>  .. .. @ legend  : NULL
-#>  .. .. @ dirty   :List of 1
-#>  .. .. .. $ title: logi TRUE
 ```
+
+![](customizing_files/figure-html/unnamed-chunk-13-1.png)
 
 ### Resetting to Defaults
 
@@ -451,34 +191,10 @@ iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length)) |>
   mark_point() |>
   label_axis("Custom X", aes = "x") |>
-  label_axis(reset = TRUE, aes = "x")  # restores "Sepal.Width"
-#> <plotit::plotit>
-#>  @ gg  :A patchwork composed of 1 patches
-#> - Autotagging is turned off
-#> - Guides are kept
-#> 
-#> Layout:
-#> 1 patch areas, spanning 1 columns and 1 rows
-#> 
-#>     t l b r
-#> 1:  1 1 1 1
-#>  @ meta: <plotit::plotit_metadata>
-#>  .. @ autofit      : logi FALSE
-#>  .. @ width        : num 7
-#>  .. @ height       : num 5
-#>  .. @ unit         : chr "in"
-#>  .. @ dodge        : num 0
-#>  .. @ default_color: chr "#4E79A7"
-#>  .. @ labels       : <plotit::plotit_labels>
-#>  .. .. @ title   : NULL
-#>  .. .. @ subtitle: NULL
-#>  .. .. @ caption : NULL
-#>  .. .. @ x       : NULL
-#>  .. .. @ y       : NULL
-#>  .. .. @ legend  : NULL
-#>  .. .. @ dirty   :List of 1
-#>  .. .. .. $ x: logi TRUE
+  label_axis(reset = TRUE, aes = "x") # restores "Sepal.Width"
 ```
+
+![](customizing_files/figure-html/unnamed-chunk-14-1.png)
 
 ## Themes with `style()`
 
@@ -497,33 +213,9 @@ iris |>
     legend.position = "bottom"
   ) |>
   label_title("Iris Sepal Measurements")
-#> <plotit::plotit>
-#>  @ gg  :A patchwork composed of 1 patches
-#> - Autotagging is turned off
-#> - Guides are kept
-#> 
-#> Layout:
-#> 1 patch areas, spanning 1 columns and 1 rows
-#> 
-#>     t l b r
-#> 1:  1 1 1 1
-#>  @ meta: <plotit::plotit_metadata>
-#>  .. @ autofit      : logi FALSE
-#>  .. @ width        : num 7
-#>  .. @ height       : num 5
-#>  .. @ unit         : chr "in"
-#>  .. @ dodge        : num 0
-#>  .. @ default_color: NULL
-#>  .. @ labels       : <plotit::plotit_labels>
-#>  .. .. @ title   : chr "Iris Sepal Measurements"
-#>  .. .. @ subtitle: NULL
-#>  .. .. @ caption : NULL
-#>  .. .. @ x       : NULL
-#>  .. .. @ y       : NULL
-#>  .. .. @ legend  : NULL
-#>  .. .. @ dirty   :List of 1
-#>  .. .. .. $ title: logi TRUE
 ```
+
+![](customizing_files/figure-html/unnamed-chunk-15-1.png)
 
 [`style_default()`](https://zorrooz.github.io/plotit/reference/style_default.md)
 applies the built-in plotit default theme:
@@ -535,32 +227,9 @@ iris |>
   mark_point() |>
   scale_color(range = "viridis") |>
   style_default(base_size = 12)
-#> <plotit::plotit>
-#>  @ gg  :A patchwork composed of 1 patches
-#> - Autotagging is turned off
-#> - Guides are kept
-#> 
-#> Layout:
-#> 1 patch areas, spanning 1 columns and 1 rows
-#> 
-#>     t l b r
-#> 1:  1 1 1 1
-#>  @ meta: <plotit::plotit_metadata>
-#>  .. @ autofit      : logi FALSE
-#>  .. @ width        : num 7
-#>  .. @ height       : num 5
-#>  .. @ unit         : chr "in"
-#>  .. @ dodge        : num 0
-#>  .. @ default_color: NULL
-#>  .. @ labels       : <plotit::plotit_labels>
-#>  .. .. @ title   : NULL
-#>  .. .. @ subtitle: NULL
-#>  .. .. @ caption : NULL
-#>  .. .. @ x       : NULL
-#>  .. .. @ y       : NULL
-#>  .. .. @ legend  : NULL
-#>  .. .. @ dirty   : list()
 ```
+
+![](customizing_files/figure-html/unnamed-chunk-16-1.png)
 
 ## Coordinate Systems with `project_*()`
 
@@ -573,32 +242,9 @@ iris |>
   plotit(encode(x = Species, y = Sepal.Length, fill = Species)) |>
   mark_boxplot() |>
   project_cartesian(flip = TRUE)
-#> <plotit::plotit>
-#>  @ gg  :A patchwork composed of 1 patches
-#> - Autotagging is turned off
-#> - Guides are kept
-#> 
-#> Layout:
-#> 1 patch areas, spanning 1 columns and 1 rows
-#> 
-#>     t l b r
-#> 1:  1 1 1 1
-#>  @ meta: <plotit::plotit_metadata>
-#>  .. @ autofit      : logi FALSE
-#>  .. @ width        : num 7
-#>  .. @ height       : num 5
-#>  .. @ unit         : chr "in"
-#>  .. @ dodge        : num 0.8
-#>  .. @ default_color: NULL
-#>  .. @ labels       : <plotit::plotit_labels>
-#>  .. .. @ title   : NULL
-#>  .. .. @ subtitle: NULL
-#>  .. .. @ caption : NULL
-#>  .. .. @ x       : NULL
-#>  .. .. @ y       : NULL
-#>  .. .. @ legend  : NULL
-#>  .. .. @ dirty   : list()
 ```
+
+![](customizing_files/figure-html/unnamed-chunk-17-1.png)
 
 ``` r
 
@@ -640,37 +286,14 @@ iris |>
 iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length)) |>
   mark_point() |>
-  split_wrap(~ Species, ncol = 3)
-#> <plotit::plotit>
-#>  @ gg  :A patchwork composed of 1 patches
-#> - Autotagging is turned off
-#> - Guides are kept
-#> 
-#> Layout:
-#> 1 patch areas, spanning 1 columns and 1 rows
-#> 
-#>     t l b r
-#> 1:  1 1 1 1
-#>  @ meta: <plotit::plotit_metadata>
-#>  .. @ autofit      : logi FALSE
-#>  .. @ width        : num 7
-#>  .. @ height       : num 5
-#>  .. @ unit         : chr "in"
-#>  .. @ dodge        : num 0
-#>  .. @ default_color: chr "#4E79A7"
-#>  .. @ labels       : <plotit::plotit_labels>
-#>  .. .. @ title   : NULL
-#>  .. .. @ subtitle: NULL
-#>  .. .. @ caption : NULL
-#>  .. .. @ x       : NULL
-#>  .. .. @ y       : NULL
-#>  .. .. @ legend  : NULL
-#>  .. .. @ dirty   : list()
+  split_wrap(Species, ncol = 3)
 ```
+
+![](customizing_files/figure-html/unnamed-chunk-21-1.png)
 
 ``` r
 
-# Grid facets — uses ggplot2::vars() for formula-free specification
+# Grid facets <U+2014> uses ggplot2::vars() for formula-free specification
 mtcars |>
   plotit(encode(x = wt, y = mpg)) |>
   mark_point() |>
@@ -689,29 +312,6 @@ or fill scale:
 iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length)) |>
   mark_point(size = 2)
-#> <plotit::plotit>
-#>  @ gg  :A patchwork composed of 1 patches
-#> - Autotagging is turned off
-#> - Guides are kept
-#> 
-#> Layout:
-#> 1 patch areas, spanning 1 columns and 1 rows
-#> 
-#>     t l b r
-#> 1:  1 1 1 1
-#>  @ meta: <plotit::plotit_metadata>
-#>  .. @ autofit      : logi FALSE
-#>  .. @ width        : num 7
-#>  .. @ height       : num 5
-#>  .. @ unit         : chr "in"
-#>  .. @ dodge        : num 0
-#>  .. @ default_color: chr "#4E79A7"
-#>  .. @ labels       : <plotit::plotit_labels>
-#>  .. .. @ title   : NULL
-#>  .. .. @ subtitle: NULL
-#>  .. .. @ caption : NULL
-#>  .. .. @ x       : NULL
-#>  .. .. @ y       : NULL
-#>  .. .. @ legend  : NULL
-#>  .. .. @ dirty   : list()
 ```
+
+![](customizing_files/figure-html/unnamed-chunk-23-1.png)

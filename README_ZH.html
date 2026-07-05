@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">plotit</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.0.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -26,7 +26,7 @@
 <li class="nav-item"><a class="nav-link" href="news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json"></form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/zorrooz/plotit"><span class="fa fab fa-github"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/zorrooz/plotit" aria-label="GitHub repository"><span class="fa fab fa-github"></span></a></li>
       </ul></div>
 
 
@@ -83,8 +83,9 @@
 <h2 id="使用指南">使用指南<a class="anchor" aria-label="anchor" href="#%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97"></a></h2>
 <div class="section level3">
 <h3 id="管道模式">管道模式<a class="anchor" aria-label="anchor" href="#%E7%AE%A1%E9%81%93%E6%A8%A1%E5%BC%8F"></a></h3>
-<p>每条 plotit 管道遵循同一套语法：</p>
-<pre><code>data |&gt; plotit(encode(...)) |&gt; mark_*() |&gt; scale_*() |&gt; label_*() |&gt; style() |&gt; export()</code></pre>
+<p>plotit 有两层操作：</p>
+<p><strong>单图管道</strong> — 从数据构建一个图表：</p>
+<pre><code>data |&gt; plotit(encode(...)) |&gt; mark_*() |&gt; scale_*() |&gt; label_*() |&gt; project_*() |&gt; split_*() |&gt; style() |&gt; export()</code></pre>
 <table class="table"><thead><tr><th align="left">步骤</th>
 <th align="left">函数</th>
 <th align="left">职责</th>
@@ -100,30 +101,59 @@
 </tr><tr><td align="left">4. 标签</td>
 <td align="left"><code>label_*()</code></td>
 <td align="left">设置标题、轴名、图例名</td>
-</tr><tr><td align="left">5. 主题</td>
+</tr><tr><td align="left">5. 坐标系</td>
+<td align="left"><code>project_*()</code></td>
+<td align="left">设置坐标系</td>
+</tr><tr><td align="left">6. 分面</td>
+<td align="left"><code>split_*()</code></td>
+<td align="left">拆分为小倍数图</td>
+</tr><tr><td align="left">7. 主题</td>
 <td align="left"><code><a href="reference/style.html">style()</a></code></td>
 <td align="left">应用 ggplot2 主题</td>
-</tr><tr><td align="left">6. 导出</td>
+</tr><tr><td align="left">8. 导出</td>
 <td align="left"><code><a href="reference/export.html">export()</a></code></td>
 <td align="left">渲染为文件</td>
-</tr></tbody></table></div>
+</tr></tbody></table><p><strong>多图组合</strong> — 将多个 <code>plotit</code> 对象组装为一个布局（最外层）：</p>
+<pre><code>compose_*(p1, p2, ...) |&gt; label_*() |&gt; style() |&gt; export()</code></pre>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th align="left">步骤</th>
+<th align="left">函数</th>
+<th align="left">职责</th>
+</tr></thead><tbody><tr><td align="left">1. 组装</td>
+<td align="left"><code>compose_*()</code></td>
+<td align="left">将多个 <code>plotit</code> 对象组合为复合布局</td>
+</tr><tr><td align="left">2. 标签</td>
+<td align="left">
+<code><a href="reference/label_title.html">label_title()</a></code> / <code><a href="reference/label_subtitle.html">label_subtitle()</a></code> / <code><a href="reference/label_caption.html">label_caption()</a></code>
+</td>
+<td align="left">设置组合级标题</td>
+</tr><tr><td align="left">3. 主题</td>
+<td align="left"><code><a href="reference/style.html">style()</a></code></td>
+<td align="left">对组合应用 ggplot2 主题</td>
+</tr><tr><td align="left">4. 导出</td>
+<td align="left"><code><a href="reference/export.html">export()</a></code></td>
+<td align="left">将组合渲染为文件</td>
+</tr></tbody></table><blockquote>
+<p><strong>关键区别</strong>：单图函数（<code>mark_*</code>、<code>scale_*</code>、<code>project_*</code>、<code>split_*</code>、<code>label_axis</code>、<code>label_legend</code>）操作<strong>一个包含数据的 <code>plotit</code> 对象</strong>。<code>compose_*</code> 操作<strong>多个 <code>plotit</code> 对象</strong>并返回 <code>plotit_composite</code>——它是最外层，在各子图构建完成后才应用。</p>
+</blockquote>
+</div>
 <div class="section level3">
 <h3 id="函数族速览">函数族速览<a class="anchor" aria-label="anchor" href="#%E5%87%BD%E6%95%B0%E6%97%8F%E9%80%9F%E8%A7%88"></a></h3>
+<p><strong>单图函数族</strong>（内层）：</p>
 <table class="table"><colgroup><col width="25%"><col width="25%"><col width="25%"><col width="25%"></colgroup><thead><tr><th align="left">家族</th>
 <th align="left">前缀</th>
 <th align="left">职责</th>
 <th align="left">示例</th>
-</tr></thead><tbody><tr><td align="left">图层</td>
+</tr></thead><tbody><tr><td align="left">创建</td>
+<td align="left">
+<code><a href="reference/plotit.html">plotit()</a></code> + <code><a href="reference/encode.html">encode()</a></code>
+</td>
+<td align="left">初始化图表，传入数据与美学映射</td>
+<td align="left"><code>plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))</code></td>
+</tr><tr><td align="left">图层</td>
 <td align="left"><code>mark_*</code></td>
 <td align="left">几何图层</td>
 <td align="left">
 <code><a href="reference/mark_point.html">mark_point()</a></code>, <code><a href="reference/mark_line.html">mark_line()</a></code>, <code><a href="reference/mark_bar.html">mark_bar()</a></code>, <code><a href="reference/mark_boxplot.html">mark_boxplot()</a></code>, <code><a href="reference/mark_histogram.html">mark_histogram()</a></code>, <code><a href="reference/mark_density.html">mark_density()</a></code>
-</td>
-</tr><tr><td align="left">组合</td>
-<td align="left"><code>compose_*</code></td>
-<td align="left">多图布局</td>
-<td align="left">
-<code><a href="reference/compose_grid.html">compose_grid()</a></code>, <code><a href="reference/compose_inset.html">compose_inset()</a></code>, <code><a href="reference/compose_marginal.html">compose_marginal()</a></code>
 </td>
 </tr><tr><td align="left">标度</td>
 <td align="left"><code>scale_*</code></td>
@@ -133,9 +163,9 @@
 </td>
 </tr><tr><td align="left">标签</td>
 <td align="left"><code>label_*</code></td>
-<td align="left">标题与标注</td>
+<td align="left">标题与轴/图例标注</td>
 <td align="left">
-<code>label_title("标题")</code>, <code>label_axis("X轴", aes = "x")</code>
+<code>label_title("标题")</code>, <code>label_axis("X轴", aes = "x")</code>, <code>label_legend("种类", aes = "colour")</code>
 </td>
 </tr><tr><td align="left">坐标系</td>
 <td align="left"><code>project_*</code></td>
@@ -151,12 +181,23 @@
 </td>
 </tr><tr><td align="left">主题</td>
 <td align="left"><code><a href="reference/style.html">style()</a></code></td>
-<td align="left">主题</td>
+<td align="left">应用 ggplot2 主题</td>
 <td align="left"><code>style(theme_minimal(base_size = 14))</code></td>
 </tr><tr><td align="left">导出</td>
 <td align="left"><code><a href="reference/export.html">export()</a></code></td>
-<td align="left">输出文件</td>
+<td align="left">渲染为文件</td>
 <td align="left"><code>export("plot.pdf", dpi = 300)</code></td>
+</tr></tbody></table><p><strong>多图组合</strong>（最外层——操作 <code>plotit</code> 对象，而非数据）：</p>
+<table class="table"><colgroup><col width="25%"><col width="25%"><col width="25%"><col width="25%"></colgroup><thead><tr><th align="left">家族</th>
+<th align="left">前缀</th>
+<th align="left">职责</th>
+<th align="left">示例</th>
+</tr></thead><tbody><tr><td align="left">组合</td>
+<td align="left"><code>compose_*</code></td>
+<td align="left">将多个 <code>plotit</code> 对象组装为一个布局</td>
+<td align="left">
+<code><a href="reference/compose_grid.html">compose_grid()</a></code>, <code><a href="reference/compose_inset.html">compose_inset()</a></code>, <code><a href="reference/compose_marginal.html">compose_marginal()</a></code>
+</td>
 </tr></tbody></table><hr></div>
 </div>
 <div class="section level2">
@@ -187,39 +228,6 @@
 <td align="left"><code>geom_density()</code></td>
 <td align="left">密度曲线</td>
 </tr></tbody></table><hr></div>
-<div class="section level2">
-<h2 id="compose_--多图组合布局">
-<code>compose_*</code> — 多图组合布局<a class="anchor" aria-label="anchor" href="#compose_--%E5%A4%9A%E5%9B%BE%E7%BB%84%E5%90%88%E5%B8%83%E5%B1%80"></a></h2>
-<p>将多个图表组装为复合布局。全部返回 <code>plotit_composite</code> 对象， 支持 <code>label_*()</code> / <code><a href="reference/style.html">style()</a></code> / <code><a href="reference/export.html">export()</a></code> 管道延续。</p>
-<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th align="left">函数</th>
-<th align="left">说明</th>
-<th align="left">关键参数</th>
-</tr></thead><tbody><tr><td align="left"><code><a href="reference/compose_grid.html">compose_grid()</a></code></td>
-<td align="left">网格排列</td>
-<td align="left">
-<code>...</code>, <code>ncol</code>, <code>nrow</code>, <code>widths</code>, <code>heights</code>, <code>guides</code>, <code>axes</code>, <code>tag_levels</code>
-</td>
-</tr><tr><td align="left"><code><a href="reference/compose_inset.html">compose_inset()</a></code></td>
-<td align="left">浮动嵌入</td>
-<td align="left">
-<code>base</code>, <code>inset</code>, <code>left</code>, <code>bottom</code>, <code>right</code>, <code>top</code>
-</td>
-</tr><tr><td align="left"><code><a href="reference/compose_marginal.html">compose_marginal()</a></code></td>
-<td align="left">散点 + 边际分布</td>
-<td align="left">
-<code>main</code>, <code>top</code>, <code>right</code>, <code>widths</code>, <code>heights</code>
-</td>
-</tr></tbody></table><div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># 2×2 仪表盘 + 自动子图标签</span></span>
-<span><span class="fu"><a href="reference/compose_grid.html">compose_grid</a></span><span class="op">(</span><span class="va">p1</span>, <span class="va">p2</span>, <span class="va">p3</span>, <span class="va">p4</span>, ncol <span class="op">=</span> <span class="fl">2</span>, tag_levels <span class="op">=</span> <span class="st">"A"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span> <span class="fu"><a href="reference/label_title.html">label_title</a></span><span class="op">(</span><span class="st">"仪表盘"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span> <span class="fu"><a href="reference/export.html">export</a></span><span class="op">(</span><span class="st">"dashboard.png"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># 散点图 + 边际直方图</span></span>
-<span><span class="fu"><a href="reference/compose_marginal.html">compose_marginal</a></span><span class="op">(</span><span class="va">main</span>, <span class="va">top_hist</span>, <span class="va">right_hist</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span> <span class="fu"><a href="reference/label_title.html">label_title</a></span><span class="op">(</span><span class="st">"Iris"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span> <span class="fu"><a href="reference/export.html">export</a></span><span class="op">(</span><span class="st">"marginal.png"</span><span class="op">)</span></span></code></pre></div>
-<hr></div>
 <div class="section level2">
 <h2 id="scale_--数据到视觉的映射">
 <code>scale_*</code> — 数据到视觉的映射<a class="anchor" aria-label="anchor" href="#scale_--%E6%95%B0%E6%8D%AE%E5%88%B0%E8%A7%86%E8%A7%89%E7%9A%84%E6%98%A0%E5%B0%84"></a></h2>
@@ -434,7 +442,41 @@
 <td align="left">
 <code>filename</code>, <code>width</code>, <code>height</code>, <code>dpi</code>, <code>device</code>
 </td>
-</tr></tbody></table></div>
+</tr></tbody></table><hr></div>
+<div class="section level2">
+<h2 id="compose_--多图组合最外层">
+<code>compose_*</code> — 多图组合（最外层）<a class="anchor" aria-label="anchor" href="#compose_--%E5%A4%9A%E5%9B%BE%E7%BB%84%E5%90%88%E6%9C%80%E5%A4%96%E5%B1%82"></a></h2>
+<p>将多个 <code>plotit</code> 对象组装为复合布局。与操作数据的单图函数不同， <code>compose_*</code> 接收<strong>已构建好的 <code>plotit</code> 对象</strong>作为输入，返回 <code>plotit_composite</code>。 这是 plotit 架构中的<strong>最外层</strong>——先分别构建各子图，再组合到一起。</p>
+<p>返回的复合对象支持管道连接到 <code><a href="reference/label_title.html">label_title()</a></code> / <code><a href="reference/label_subtitle.html">label_subtitle()</a></code> / <code><a href="reference/label_caption.html">label_caption()</a></code> / <code><a href="reference/style.html">style()</a></code> / <code><a href="reference/export.html">export()</a></code>。</p>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th align="left">函数</th>
+<th align="left">说明</th>
+<th align="left">关键参数</th>
+</tr></thead><tbody><tr><td align="left"><code><a href="reference/compose_grid.html">compose_grid()</a></code></td>
+<td align="left">网格排列</td>
+<td align="left">
+<code>...</code>, <code>ncol</code>, <code>nrow</code>, <code>widths</code>, <code>heights</code>, <code>guides</code>, <code>axes</code>, <code>tag_levels</code>
+</td>
+</tr><tr><td align="left"><code><a href="reference/compose_inset.html">compose_inset()</a></code></td>
+<td align="left">浮动嵌入</td>
+<td align="left">
+<code>base</code>, <code>inset</code>, <code>left</code>, <code>bottom</code>, <code>right</code>, <code>top</code>
+</td>
+</tr><tr><td align="left"><code><a href="reference/compose_marginal.html">compose_marginal()</a></code></td>
+<td align="left">散点 + 边际分布</td>
+<td align="left">
+<code>main</code>, <code>top</code>, <code>right</code>, <code>widths</code>, <code>heights</code>
+</td>
+</tr></tbody></table><div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># 2×2 仪表盘 + 自动子图标签</span></span>
+<span><span class="fu"><a href="reference/compose_grid.html">compose_grid</a></span><span class="op">(</span><span class="va">p1</span>, <span class="va">p2</span>, <span class="va">p3</span>, <span class="va">p4</span>, ncol <span class="op">=</span> <span class="fl">2</span>, tag_levels <span class="op">=</span> <span class="st">"A"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span> <span class="fu"><a href="reference/label_title.html">label_title</a></span><span class="op">(</span><span class="st">"仪表盘"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span> <span class="fu"><a href="reference/export.html">export</a></span><span class="op">(</span><span class="st">"dashboard.png"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># 散点图 + 边际直方图</span></span>
+<span><span class="fu"><a href="reference/compose_marginal.html">compose_marginal</a></span><span class="op">(</span><span class="va">main</span>, <span class="va">top_hist</span>, <span class="va">right_hist</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span> <span class="fu"><a href="reference/label_title.html">label_title</a></span><span class="op">(</span><span class="st">"Iris"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span> <span class="fu"><a href="reference/export.html">export</a></span><span class="op">(</span><span class="st">"marginal.png"</span><span class="op">)</span></span></code></pre></div>
+</div>
 </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -442,7 +484,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Zorro Oz.</p>
+  <p>Developed by zorrooz.</p>
 </div>
 
 <div class="pkgdown-footer-right">

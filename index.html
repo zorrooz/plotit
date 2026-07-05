@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">plotit</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.0.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,7 +47,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json">
 </form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/zorrooz/plotit"><span class="fa fab fa-github"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/zorrooz/plotit" aria-label="GitHub repository"><span class="fa fab fa-github"></span></a></li>
       </ul>
 </div>
 
@@ -105,8 +105,9 @@ vs base ggplot2
 <div class="section level3">
 <h3 id="pipeline-pattern">Pipeline pattern<a class="anchor" aria-label="anchor" href="#pipeline-pattern"></a>
 </h3>
-<p>Every plotit pipeline follows the same grammar:</p>
-<pre><code>data |&gt; plotit(encode(...)) |&gt; mark_*() |&gt; scale_*() |&gt; label_*() |&gt; style() |&gt; export()</code></pre>
+<p>plotit has two levels of operation:</p>
+<p><strong>Single-plot pipeline</strong> — build one chart from data:</p>
+<pre><code>data |&gt; plotit(encode(...)) |&gt; mark_*() |&gt; scale_*() |&gt; label_*() |&gt; project_*() |&gt; split_*() |&gt; style() |&gt; export()</code></pre>
 <table class="table">
 <colgroup>
 <col width="33%">
@@ -140,21 +141,73 @@ vs base ggplot2
 <td align="left">Set titles, axis labels, legend titles</td>
 </tr>
 <tr>
-<td align="left">5. Theme</td>
+<td align="left">5. Coordinate</td>
+<td align="left"><code>project_*()</code></td>
+<td align="left">Set coordinate system</td>
+</tr>
+<tr>
+<td align="left">6. Facet</td>
+<td align="left"><code>split_*()</code></td>
+<td align="left">Split into small multiples</td>
+</tr>
+<tr>
+<td align="left">7. Theme</td>
 <td align="left"><code><a href="reference/style.html">style()</a></code></td>
 <td align="left">Apply a ggplot2 theme</td>
 </tr>
 <tr>
-<td align="left">6. Export</td>
+<td align="left">8. Export</td>
 <td align="left"><code><a href="reference/export.html">export()</a></code></td>
 <td align="left">Render to file</td>
 </tr>
 </tbody>
 </table>
+<p><strong>Multi-plot composition</strong> — assemble multiple <code>plotit</code> objects into one layout (outermost layer):</p>
+<pre><code>compose_*(p1, p2, ...) |&gt; label_*() |&gt; style() |&gt; export()</code></pre>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr>
+<th align="left">Step</th>
+<th align="left">Function</th>
+<th align="left">Job</th>
+</tr></thead>
+<tbody>
+<tr>
+<td align="left">1. Assemble</td>
+<td align="left"><code>compose_*()</code></td>
+<td align="left">Combine multiple <code>plotit</code> objects into a composite layout</td>
+</tr>
+<tr>
+<td align="left">2. Label</td>
+<td align="left">
+<code><a href="reference/label_title.html">label_title()</a></code> / <code><a href="reference/label_subtitle.html">label_subtitle()</a></code> / <code><a href="reference/label_caption.html">label_caption()</a></code>
+</td>
+<td align="left">Set composite-level titles</td>
+</tr>
+<tr>
+<td align="left">3. Theme</td>
+<td align="left"><code><a href="reference/style.html">style()</a></code></td>
+<td align="left">Apply a ggplot2 theme to the composite</td>
+</tr>
+<tr>
+<td align="left">4. Export</td>
+<td align="left"><code><a href="reference/export.html">export()</a></code></td>
+<td align="left">Render the composite to file</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Key difference</strong>: Single-plot functions (<code>mark_*</code>, <code>scale_*</code>, <code>project_*</code>, <code>split_*</code>, <code>label_axis</code>, <code>label_legend</code>) operate on <strong>one <code>plotit</code> object with data</strong>. <code>compose_*</code> operates on <strong>multiple <code>plotit</code> objects</strong> and returns a <code>plotit_composite</code> — it is the outermost layer, applied after individual plots are built.</p>
+</blockquote>
 </div>
 <div class="section level3">
 <h3 id="function-families">Function families<a class="anchor" aria-label="anchor" href="#function-families"></a>
 </h3>
+<p><strong>Single-plot families</strong> (inner layer):</p>
 <table class="table">
 <colgroup>
 <col width="25%">
@@ -170,19 +223,19 @@ vs base ggplot2
 </tr></thead>
 <tbody>
 <tr>
+<td align="left">Create</td>
+<td align="left">
+<code><a href="reference/plotit.html">plotit()</a></code> + <code><a href="reference/encode.html">encode()</a></code>
+</td>
+<td align="left">Initialise plot with data &amp; aesthetic mappings</td>
+<td align="left"><code>plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))</code></td>
+</tr>
+<tr>
 <td align="left">Layer</td>
 <td align="left"><code>mark_*</code></td>
 <td align="left">Geometric layers</td>
 <td align="left">
 <code><a href="reference/mark_point.html">mark_point()</a></code>, <code><a href="reference/mark_line.html">mark_line()</a></code>, <code><a href="reference/mark_bar.html">mark_bar()</a></code>, <code><a href="reference/mark_boxplot.html">mark_boxplot()</a></code>, <code><a href="reference/mark_histogram.html">mark_histogram()</a></code>, <code><a href="reference/mark_density.html">mark_density()</a></code>
-</td>
-</tr>
-<tr>
-<td align="left">Compose</td>
-<td align="left"><code>compose_*</code></td>
-<td align="left">Multi-panel layouts</td>
-<td align="left">
-<code><a href="reference/compose_grid.html">compose_grid()</a></code>, <code><a href="reference/compose_inset.html">compose_inset()</a></code>, <code><a href="reference/compose_marginal.html">compose_marginal()</a></code>
 </td>
 </tr>
 <tr>
@@ -196,13 +249,13 @@ vs base ggplot2
 <tr>
 <td align="left">Label</td>
 <td align="left"><code>label_*</code></td>
-<td align="left">Titles &amp; labels</td>
+<td align="left">Titles, axis &amp; legend labels</td>
 <td align="left">
-<code>label_title("Title")</code>, <code>label_axis("X", aes = "x")</code>
+<code>label_title("Title")</code>, <code>label_axis("X", aes = "x")</code>, <code>label_legend("Species", aes = "colour")</code>
 </td>
 </tr>
 <tr>
-<td align="left">Project</td>
+<td align="left">Coordinate</td>
 <td align="left"><code>project_*</code></td>
 <td align="left">Coordinate systems</td>
 <td align="left">
@@ -210,7 +263,7 @@ vs base ggplot2
 </td>
 </tr>
 <tr>
-<td align="left">Split</td>
+<td align="left">Facet</td>
 <td align="left"><code>split_*</code></td>
 <td align="left">Facet layouts</td>
 <td align="left">
@@ -218,18 +271,41 @@ vs base ggplot2
 </td>
 </tr>
 <tr>
-<td align="left">Style</td>
-<td align="left"><code><a href="reference/style.html">style()</a></code></td>
 <td align="left">Theme</td>
+<td align="left"><code><a href="reference/style.html">style()</a></code></td>
+<td align="left">Apply ggplot2 theme</td>
 <td align="left"><code>style(theme_minimal(base_size = 14))</code></td>
 </tr>
 <tr>
 <td align="left">Export</td>
 <td align="left"><code><a href="reference/export.html">export()</a></code></td>
-<td align="left">Output to file</td>
+<td align="left">Render to file</td>
 <td align="left"><code>export("plot.pdf", dpi = 300)</code></td>
 </tr>
 </tbody>
+</table>
+<p><strong>Multi-plot composition</strong> (outermost layer — operates on <code>plotit</code> objects, not data):</p>
+<table class="table">
+<colgroup>
+<col width="25%">
+<col width="25%">
+<col width="25%">
+<col width="25%">
+</colgroup>
+<thead><tr>
+<th align="left">Family</th>
+<th align="left">Prefix</th>
+<th align="left">Purpose</th>
+<th align="left">Examples</th>
+</tr></thead>
+<tbody><tr>
+<td align="left">Compose</td>
+<td align="left"><code>compose_*</code></td>
+<td align="left">Assemble multiple <code>plotit</code> objects into one layout</td>
+<td align="left">
+<code><a href="reference/compose_grid.html">compose_grid()</a></code>, <code><a href="reference/compose_inset.html">compose_inset()</a></code>, <code><a href="reference/compose_marginal.html">compose_marginal()</a></code>
+</td>
+</tr></tbody>
 </table>
 <hr>
 </div>
@@ -280,58 +356,6 @@ vs base ggplot2
 </tr>
 </tbody>
 </table>
-<hr>
-</div>
-<div class="section level2">
-<h2 id="compose_--multi-panel-layouts">
-<code>compose_*</code> — Multi-Panel Layouts<a class="anchor" aria-label="anchor" href="#compose_--multi-panel-layouts"></a>
-</h2>
-<p>Assemble multiple plots into compound layouts. All return a <code>plotit_composite</code> that pipes seamlessly into <code>label_*()</code> / <code><a href="reference/style.html">style()</a></code> / <code><a href="reference/export.html">export()</a></code>.</p>
-<table class="table">
-<colgroup>
-<col width="33%">
-<col width="33%">
-<col width="33%">
-</colgroup>
-<thead><tr>
-<th align="left">Function</th>
-<th align="left">Description</th>
-<th align="left">Key params</th>
-</tr></thead>
-<tbody>
-<tr>
-<td align="left"><code><a href="reference/compose_grid.html">compose_grid()</a></code></td>
-<td align="left">Grid arrangement</td>
-<td align="left">
-<code>...</code>, <code>ncol</code>, <code>nrow</code>, <code>widths</code>, <code>heights</code>, <code>guides</code>, <code>axes</code>, <code>tag_levels</code>
-</td>
-</tr>
-<tr>
-<td align="left"><code><a href="reference/compose_inset.html">compose_inset()</a></code></td>
-<td align="left">Floating overlay</td>
-<td align="left">
-<code>base</code>, <code>inset</code>, <code>left</code>, <code>bottom</code>, <code>right</code>, <code>top</code>
-</td>
-</tr>
-<tr>
-<td align="left"><code><a href="reference/compose_marginal.html">compose_marginal()</a></code></td>
-<td align="left">Scatter + marginal distributions</td>
-<td align="left">
-<code>main</code>, <code>top</code>, <code>right</code>, <code>widths</code>, <code>heights</code>
-</td>
-</tr>
-</tbody>
-</table>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># 2×2 dashboard with auto-tags</span></span>
-<span><span class="fu"><a href="reference/compose_grid.html">compose_grid</a></span><span class="op">(</span><span class="va">p1</span>, <span class="va">p2</span>, <span class="va">p3</span>, <span class="va">p4</span>, ncol <span class="op">=</span> <span class="fl">2</span>, tag_levels <span class="op">=</span> <span class="st">"A"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span> <span class="fu"><a href="reference/label_title.html">label_title</a></span><span class="op">(</span><span class="st">"Dashboard"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span> <span class="fu"><a href="reference/export.html">export</a></span><span class="op">(</span><span class="st">"dashboard.png"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Scatter plot with marginal histograms</span></span>
-<span><span class="fu"><a href="reference/compose_marginal.html">compose_marginal</a></span><span class="op">(</span><span class="va">main</span>, <span class="va">top_hist</span>, <span class="va">right_hist</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span> <span class="fu"><a href="reference/label_title.html">label_title</a></span><span class="op">(</span><span class="st">"Iris"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span> <span class="fu"><a href="reference/export.html">export</a></span><span class="op">(</span><span class="st">"marginal.png"</span><span class="op">)</span></span></code></pre></div>
 <hr>
 </div>
 <div class="section level2">
@@ -726,6 +750,59 @@ vs base ggplot2
 </tr>
 </tbody>
 </table>
+<hr>
+</div>
+<div class="section level2">
+<h2 id="compose_--multi-plot-composition-outermost-layer">
+<code>compose_*</code> — Multi-Plot Composition (Outermost Layer)<a class="anchor" aria-label="anchor" href="#compose_--multi-plot-composition-outermost-layer"></a>
+</h2>
+<p>Assemble multiple <code>plotit</code> objects into compound layouts. Unlike single-plot functions that operate on data, <code>compose_*</code> takes <strong>already-built <code>plotit</code> objects</strong> as input and returns a <code>plotit_composite</code>. This is the <strong>outermost layer</strong> in the plotit architecture — build individual plots first, then compose them together.</p>
+<p>The returned composite pipes seamlessly into <code><a href="reference/label_title.html">label_title()</a></code> / <code><a href="reference/label_subtitle.html">label_subtitle()</a></code> / <code><a href="reference/label_caption.html">label_caption()</a></code> / <code><a href="reference/style.html">style()</a></code> / <code><a href="reference/export.html">export()</a></code>.</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr>
+<th align="left">Function</th>
+<th align="left">Description</th>
+<th align="left">Key params</th>
+</tr></thead>
+<tbody>
+<tr>
+<td align="left"><code><a href="reference/compose_grid.html">compose_grid()</a></code></td>
+<td align="left">Grid arrangement</td>
+<td align="left">
+<code>...</code>, <code>ncol</code>, <code>nrow</code>, <code>widths</code>, <code>heights</code>, <code>guides</code>, <code>axes</code>, <code>tag_levels</code>
+</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/compose_inset.html">compose_inset()</a></code></td>
+<td align="left">Floating overlay</td>
+<td align="left">
+<code>base</code>, <code>inset</code>, <code>left</code>, <code>bottom</code>, <code>right</code>, <code>top</code>
+</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/compose_marginal.html">compose_marginal()</a></code></td>
+<td align="left">Scatter + marginal distributions</td>
+<td align="left">
+<code>main</code>, <code>top</code>, <code>right</code>, <code>widths</code>, <code>heights</code>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># 2×2 dashboard with auto-tags</span></span>
+<span><span class="fu"><a href="reference/compose_grid.html">compose_grid</a></span><span class="op">(</span><span class="va">p1</span>, <span class="va">p2</span>, <span class="va">p3</span>, <span class="va">p4</span>, ncol <span class="op">=</span> <span class="fl">2</span>, tag_levels <span class="op">=</span> <span class="st">"A"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span> <span class="fu"><a href="reference/label_title.html">label_title</a></span><span class="op">(</span><span class="st">"Dashboard"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span> <span class="fu"><a href="reference/export.html">export</a></span><span class="op">(</span><span class="st">"dashboard.png"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Scatter plot with marginal histograms</span></span>
+<span><span class="fu"><a href="reference/compose_marginal.html">compose_marginal</a></span><span class="op">(</span><span class="va">main</span>, <span class="va">top_hist</span>, <span class="va">right_hist</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span> <span class="fu"><a href="reference/label_title.html">label_title</a></span><span class="op">(</span><span class="st">"Iris"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span> <span class="fu"><a href="reference/export.html">export</a></span><span class="op">(</span><span class="st">"marginal.png"</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
@@ -755,7 +832,7 @@ vs base ggplot2
 <div class="developers">
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li>Zorro Oz <br><small class="roles"> Author, maintainer </small>   </li>
+<li>zorrooz <br><small class="roles"> Author, maintainer </small>   </li>
 </ul>
 </div>
 
@@ -766,7 +843,7 @@ vs base ggplot2
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Zorro Oz.</p>
+  <p>Developed by zorrooz.</p>
 </div>
 
 <div class="pkgdown-footer-right">

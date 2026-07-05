@@ -59,9 +59,11 @@ pak::pak("zorrooz/plotit")
 
 ### Pipeline pattern
 
-Every plotit pipeline follows the same grammar:
+plotit has two levels of operation:
 
-    data |> plotit(encode(...)) |> mark_*() |> scale_*() |> label_*() |> style() |> export()
+**Single-plot pipeline** — build one chart from data:
+
+    data |> plotit(encode(...)) |> mark_*() |> scale_*() |> label_*() |> project_*() |> split_*() |> style() |> export()
 
 | Step | Function | Job |
 |:---|:---|:---|
@@ -69,21 +71,50 @@ Every plotit pipeline follows the same grammar:
 | 2\. Layer | `mark_*()` | Add geometric layers |
 | 3\. Scale | `scale_*()` | Control data-to-visual mapping |
 | 4\. Label | `label_*()` | Set titles, axis labels, legend titles |
-| 5\. Theme | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | Apply a ggplot2 theme |
-| 6\. Export | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | Render to file |
+| 5\. Coordinate | `project_*()` | Set coordinate system |
+| 6\. Facet | `split_*()` | Split into small multiples |
+| 7\. Theme | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | Apply a ggplot2 theme |
+| 8\. Export | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | Render to file |
+
+**Multi-plot composition** — assemble multiple `plotit` objects into one
+layout (outermost layer):
+
+    compose_*(p1, p2, ...) |> label_*() |> style() |> export()
+
+| Step | Function | Job |
+|:---|:---|:---|
+| 1\. Assemble | `compose_*()` | Combine multiple `plotit` objects into a composite layout |
+| 2\. Label | [`label_title()`](https://zorrooz.github.io/plotit/reference/label_title.md) / [`label_subtitle()`](https://zorrooz.github.io/plotit/reference/label_subtitle.md) / [`label_caption()`](https://zorrooz.github.io/plotit/reference/label_caption.md) | Set composite-level titles |
+| 3\. Theme | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | Apply a ggplot2 theme to the composite |
+| 4\. Export | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | Render the composite to file |
+
+> **Key difference**: Single-plot functions (`mark_*`, `scale_*`,
+> `project_*`, `split_*`, `label_axis`, `label_legend`) operate on **one
+> `plotit` object with data**. `compose_*` operates on **multiple
+> `plotit` objects** and returns a `plotit_composite` — it is the
+> outermost layer, applied after individual plots are built.
 
 ### Function families
 
+**Single-plot families** (inner layer):
+
 | Family | Prefix | Purpose | Examples |
 |:---|:---|:---|:---|
+| Create | [`plotit()`](https://zorrooz.github.io/plotit/reference/plotit.md) + [`encode()`](https://zorrooz.github.io/plotit/reference/encode.md) | Initialise plot with data & aesthetic mappings | `plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))` |
 | Layer | `mark_*` | Geometric layers | [`mark_point()`](https://zorrooz.github.io/plotit/reference/mark_point.md), [`mark_line()`](https://zorrooz.github.io/plotit/reference/mark_line.md), [`mark_bar()`](https://zorrooz.github.io/plotit/reference/mark_bar.md), [`mark_boxplot()`](https://zorrooz.github.io/plotit/reference/mark_boxplot.md), [`mark_histogram()`](https://zorrooz.github.io/plotit/reference/mark_histogram.md), [`mark_density()`](https://zorrooz.github.io/plotit/reference/mark_density.md) |
-| Compose | `compose_*` | Multi-panel layouts | [`compose_grid()`](https://zorrooz.github.io/plotit/reference/compose_grid.md), [`compose_inset()`](https://zorrooz.github.io/plotit/reference/compose_inset.md), [`compose_marginal()`](https://zorrooz.github.io/plotit/reference/compose_marginal.md) |
 | Scale | `scale_*` | Data → visual mapping | `scale_x(trans = "log")`, `scale_color(range = "viridis")` |
-| Label | `label_*` | Titles & labels | `label_title("Title")`, `label_axis("X", aes = "x")` |
-| Project | `project_*` | Coordinate systems | `project_cartesian(flip = TRUE)`, [`project_polar()`](https://zorrooz.github.io/plotit/reference/project_polar.md) |
-| Split | `split_*` | Facet layouts | `split_wrap(Species)`, `split_grid(rows = vars(cyl))` |
-| Style | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | Theme | `style(theme_minimal(base_size = 14))` |
-| Export | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | Output to file | `export("plot.pdf", dpi = 300)` |
+| Label | `label_*` | Titles, axis & legend labels | `label_title("Title")`, `label_axis("X", aes = "x")`, `label_legend("Species", aes = "colour")` |
+| Coordinate | `project_*` | Coordinate systems | `project_cartesian(flip = TRUE)`, [`project_polar()`](https://zorrooz.github.io/plotit/reference/project_polar.md) |
+| Facet | `split_*` | Facet layouts | `split_wrap(Species)`, `split_grid(rows = vars(cyl))` |
+| Theme | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | Apply ggplot2 theme | `style(theme_minimal(base_size = 14))` |
+| Export | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | Render to file | `export("plot.pdf", dpi = 300)` |
+
+**Multi-plot composition** (outermost layer — operates on `plotit`
+objects, not data):
+
+| Family | Prefix | Purpose | Examples |
+|:---|:---|:---|:---|
+| Compose | `compose_*` | Assemble multiple `plotit` objects into one layout | [`compose_grid()`](https://zorrooz.github.io/plotit/reference/compose_grid.md), [`compose_inset()`](https://zorrooz.github.io/plotit/reference/compose_inset.md), [`compose_marginal()`](https://zorrooz.github.io/plotit/reference/compose_marginal.md) |
 
 ------------------------------------------------------------------------
 
@@ -100,34 +131,6 @@ Six mark functions, unified signature (`mapping`, `data`, `position`,
 | [`mark_boxplot()`](https://zorrooz.github.io/plotit/reference/mark_boxplot.md) | `geom_boxplot()` | Distributions by group |
 | [`mark_histogram()`](https://zorrooz.github.io/plotit/reference/mark_histogram.md) | `geom_histogram()` | Histograms |
 | [`mark_density()`](https://zorrooz.github.io/plotit/reference/mark_density.md) | `geom_density()` | Density curves |
-
-------------------------------------------------------------------------
-
-## `compose_*` — Multi-Panel Layouts
-
-Assemble multiple plots into compound layouts. All return a
-`plotit_composite` that pipes seamlessly into `label_*()` /
-[`style()`](https://zorrooz.github.io/plotit/reference/style.md) /
-[`export()`](https://zorrooz.github.io/plotit/reference/export.md).
-
-| Function | Description | Key params |
-|:---|:---|:---|
-| [`compose_grid()`](https://zorrooz.github.io/plotit/reference/compose_grid.md) | Grid arrangement | `...`, `ncol`, `nrow`, `widths`, `heights`, `guides`, `axes`, `tag_levels` |
-| [`compose_inset()`](https://zorrooz.github.io/plotit/reference/compose_inset.md) | Floating overlay | `base`, `inset`, `left`, `bottom`, `right`, `top` |
-| [`compose_marginal()`](https://zorrooz.github.io/plotit/reference/compose_marginal.md) | Scatter + marginal distributions | `main`, `top`, `right`, `widths`, `heights` |
-
-``` r
-
-# 2×2 dashboard with auto-tags
-compose_grid(p1, p2, p3, p4, ncol = 2, tag_levels = "A") |>
- label_title("Dashboard") |>
- export("dashboard.png")
-
-# Scatter plot with marginal histograms
-compose_marginal(main, top_hist, right_hist) |>
- label_title("Iris") |>
- export("marginal.png")
-```
 
 ------------------------------------------------------------------------
 
@@ -225,3 +228,41 @@ Five functions with a three-parameter protocol:
 |:---|:---|:---|
 | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | Apply ggplot2 theme | `...`, `base_size`, `base_family`, `base_theme` |
 | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | Render to file | `filename`, `width`, `height`, `dpi`, `device` |
+
+------------------------------------------------------------------------
+
+## `compose_*` — Multi-Plot Composition (Outermost Layer)
+
+Assemble multiple `plotit` objects into compound layouts. Unlike
+single-plot functions that operate on data, `compose_*` takes
+**already-built `plotit` objects** as input and returns a
+`plotit_composite`. This is the **outermost layer** in the plotit
+architecture — build individual plots first, then compose them together.
+
+The returned composite pipes seamlessly into
+[`label_title()`](https://zorrooz.github.io/plotit/reference/label_title.md)
+/
+[`label_subtitle()`](https://zorrooz.github.io/plotit/reference/label_subtitle.md)
+/
+[`label_caption()`](https://zorrooz.github.io/plotit/reference/label_caption.md)
+/ [`style()`](https://zorrooz.github.io/plotit/reference/style.md) /
+[`export()`](https://zorrooz.github.io/plotit/reference/export.md).
+
+| Function | Description | Key params |
+|:---|:---|:---|
+| [`compose_grid()`](https://zorrooz.github.io/plotit/reference/compose_grid.md) | Grid arrangement | `...`, `ncol`, `nrow`, `widths`, `heights`, `guides`, `axes`, `tag_levels` |
+| [`compose_inset()`](https://zorrooz.github.io/plotit/reference/compose_inset.md) | Floating overlay | `base`, `inset`, `left`, `bottom`, `right`, `top` |
+| [`compose_marginal()`](https://zorrooz.github.io/plotit/reference/compose_marginal.md) | Scatter + marginal distributions | `main`, `top`, `right`, `widths`, `heights` |
+
+``` r
+
+# 2×2 dashboard with auto-tags
+compose_grid(p1, p2, p3, p4, ncol = 2, tag_levels = "A") |>
+ label_title("Dashboard") |>
+ export("dashboard.png")
+
+# Scatter plot with marginal histograms
+compose_marginal(main, top_hist, right_hist) |>
+ label_title("Iris") |>
+ export("marginal.png")
+```

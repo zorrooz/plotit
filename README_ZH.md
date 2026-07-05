@@ -58,9 +58,11 @@ pak::pak("zorrooz/plotit")
 
 ### 管道模式
 
-每条 plotit 管道遵循同一套语法：
+plotit 有两层操作：
 
-    data |> plotit(encode(...)) |> mark_*() |> scale_*() |> label_*() |> style() |> export()
+**单图管道** — 从数据构建一个图表：
+
+    data |> plotit(encode(...)) |> mark_*() |> scale_*() |> label_*() |> project_*() |> split_*() |> style() |> export()
 
 | 步骤 | 函数 | 职责 |
 |:---|:---|:---|
@@ -68,21 +70,46 @@ pak::pak("zorrooz/plotit")
 | 2\. 图层 | `mark_*()` | 添加几何图层 |
 | 3\. 标度 | `scale_*()` | 控制数据到视觉属性的映射 |
 | 4\. 标签 | `label_*()` | 设置标题、轴名、图例名 |
-| 5\. 主题 | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | 应用 ggplot2 主题 |
-| 6\. 导出 | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | 渲染为文件 |
+| 5\. 坐标系 | `project_*()` | 设置坐标系 |
+| 6\. 分面 | `split_*()` | 拆分为小倍数图 |
+| 7\. 主题 | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | 应用 ggplot2 主题 |
+| 8\. 导出 | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | 渲染为文件 |
+
+**多图组合** — 将多个 `plotit` 对象组装为一个布局（最外层）：
+
+    compose_*(p1, p2, ...) |> label_*() |> style() |> export()
+
+| 步骤 | 函数 | 职责 |
+|:---|:---|:---|
+| 1\. 组装 | `compose_*()` | 将多个 `plotit` 对象组合为复合布局 |
+| 2\. 标签 | [`label_title()`](https://zorrooz.github.io/plotit/reference/label_title.md) / [`label_subtitle()`](https://zorrooz.github.io/plotit/reference/label_subtitle.md) / [`label_caption()`](https://zorrooz.github.io/plotit/reference/label_caption.md) | 设置组合级标题 |
+| 3\. 主题 | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | 对组合应用 ggplot2 主题 |
+| 4\. 导出 | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | 将组合渲染为文件 |
+
+> **关键区别**：单图函数（`mark_*`、`scale_*`、`project_*`、`split_*`、`label_axis`、`label_legend`）操作**一个包含数据的
+> `plotit` 对象**。`compose_*` 操作**多个 `plotit` 对象**并返回
+> `plotit_composite`——它是最外层，在各子图构建完成后才应用。
 
 ### 函数族速览
 
+**单图函数族**（内层）：
+
 | 家族 | 前缀 | 职责 | 示例 |
 |:---|:---|:---|:---|
+| 创建 | [`plotit()`](https://zorrooz.github.io/plotit/reference/plotit.md) + [`encode()`](https://zorrooz.github.io/plotit/reference/encode.md) | 初始化图表，传入数据与美学映射 | `plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))` |
 | 图层 | `mark_*` | 几何图层 | [`mark_point()`](https://zorrooz.github.io/plotit/reference/mark_point.md), [`mark_line()`](https://zorrooz.github.io/plotit/reference/mark_line.md), [`mark_bar()`](https://zorrooz.github.io/plotit/reference/mark_bar.md), [`mark_boxplot()`](https://zorrooz.github.io/plotit/reference/mark_boxplot.md), [`mark_histogram()`](https://zorrooz.github.io/plotit/reference/mark_histogram.md), [`mark_density()`](https://zorrooz.github.io/plotit/reference/mark_density.md) |
-| 组合 | `compose_*` | 多图布局 | [`compose_grid()`](https://zorrooz.github.io/plotit/reference/compose_grid.md), [`compose_inset()`](https://zorrooz.github.io/plotit/reference/compose_inset.md), [`compose_marginal()`](https://zorrooz.github.io/plotit/reference/compose_marginal.md) |
 | 标度 | `scale_*` | 数据 → 视觉映射 | `scale_x(trans = "log")`, `scale_color(range = "viridis")` |
-| 标签 | `label_*` | 标题与标注 | `label_title("标题")`, `label_axis("X轴", aes = "x")` |
+| 标签 | `label_*` | 标题与轴/图例标注 | `label_title("标题")`, `label_axis("X轴", aes = "x")`, `label_legend("种类", aes = "colour")` |
 | 坐标系 | `project_*` | 坐标变换 | `project_cartesian(flip = TRUE)`, [`project_polar()`](https://zorrooz.github.io/plotit/reference/project_polar.md) |
 | 分面 | `split_*` | 分面布局 | `split_wrap(Species)`, `split_grid(rows = vars(cyl))` |
-| 主题 | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | 主题 | `style(theme_minimal(base_size = 14))` |
-| 导出 | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | 输出文件 | `export("plot.pdf", dpi = 300)` |
+| 主题 | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | 应用 ggplot2 主题 | `style(theme_minimal(base_size = 14))` |
+| 导出 | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | 渲染为文件 | `export("plot.pdf", dpi = 300)` |
+
+**多图组合**（最外层——操作 `plotit` 对象，而非数据）：
+
+| 家族 | 前缀 | 职责 | 示例 |
+|:---|:---|:---|:---|
+| 组合 | `compose_*` | 将多个 `plotit` 对象组装为一个布局 | [`compose_grid()`](https://zorrooz.github.io/plotit/reference/compose_grid.md), [`compose_inset()`](https://zorrooz.github.io/plotit/reference/compose_inset.md), [`compose_marginal()`](https://zorrooz.github.io/plotit/reference/compose_marginal.md) |
 
 ------------------------------------------------------------------------
 
@@ -99,35 +126,6 @@ pak::pak("zorrooz/plotit")
 | [`mark_boxplot()`](https://zorrooz.github.io/plotit/reference/mark_boxplot.md) | `geom_boxplot()` | 分组分布展示 |
 | [`mark_histogram()`](https://zorrooz.github.io/plotit/reference/mark_histogram.md) | `geom_histogram()` | 直方图 |
 | [`mark_density()`](https://zorrooz.github.io/plotit/reference/mark_density.md) | `geom_density()` | 密度曲线 |
-
-------------------------------------------------------------------------
-
-## `compose_*` — 多图组合布局
-
-将多个图表组装为复合布局。全部返回 `plotit_composite` 对象， 支持
-`label_*()` /
-[`style()`](https://zorrooz.github.io/plotit/reference/style.md) /
-[`export()`](https://zorrooz.github.io/plotit/reference/export.md)
-管道延续。
-
-| 函数 | 说明 | 关键参数 |
-|:---|:---|:---|
-| [`compose_grid()`](https://zorrooz.github.io/plotit/reference/compose_grid.md) | 网格排列 | `...`, `ncol`, `nrow`, `widths`, `heights`, `guides`, `axes`, `tag_levels` |
-| [`compose_inset()`](https://zorrooz.github.io/plotit/reference/compose_inset.md) | 浮动嵌入 | `base`, `inset`, `left`, `bottom`, `right`, `top` |
-| [`compose_marginal()`](https://zorrooz.github.io/plotit/reference/compose_marginal.md) | 散点 + 边际分布 | `main`, `top`, `right`, `widths`, `heights` |
-
-``` r
-
-# 2×2 仪表盘 + 自动子图标签
-compose_grid(p1, p2, p3, p4, ncol = 2, tag_levels = "A") |>
- label_title("仪表盘") |>
- export("dashboard.png")
-
-# 散点图 + 边际直方图
-compose_marginal(main, top_hist, right_hist) |>
- label_title("Iris") |>
- export("marginal.png")
-```
 
 ------------------------------------------------------------------------
 
@@ -224,3 +222,40 @@ compose_marginal(main, top_hist, right_hist) |>
 |:---|:---|:---|
 | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | 应用 ggplot2 主题 | `...`, `base_size`, `base_family`, `base_theme` |
 | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | 渲染为文件 | `filename`, `width`, `height`, `dpi`, `device` |
+
+------------------------------------------------------------------------
+
+## `compose_*` — 多图组合（最外层）
+
+将多个 `plotit` 对象组装为复合布局。与操作数据的单图函数不同，
+`compose_*` 接收**已构建好的 `plotit` 对象**作为输入，返回
+`plotit_composite`。 这是 plotit
+架构中的**最外层**——先分别构建各子图，再组合到一起。
+
+返回的复合对象支持管道连接到
+[`label_title()`](https://zorrooz.github.io/plotit/reference/label_title.md)
+/
+[`label_subtitle()`](https://zorrooz.github.io/plotit/reference/label_subtitle.md)
+/
+[`label_caption()`](https://zorrooz.github.io/plotit/reference/label_caption.md)
+/ [`style()`](https://zorrooz.github.io/plotit/reference/style.md) /
+[`export()`](https://zorrooz.github.io/plotit/reference/export.md)。
+
+| 函数 | 说明 | 关键参数 |
+|:---|:---|:---|
+| [`compose_grid()`](https://zorrooz.github.io/plotit/reference/compose_grid.md) | 网格排列 | `...`, `ncol`, `nrow`, `widths`, `heights`, `guides`, `axes`, `tag_levels` |
+| [`compose_inset()`](https://zorrooz.github.io/plotit/reference/compose_inset.md) | 浮动嵌入 | `base`, `inset`, `left`, `bottom`, `right`, `top` |
+| [`compose_marginal()`](https://zorrooz.github.io/plotit/reference/compose_marginal.md) | 散点 + 边际分布 | `main`, `top`, `right`, `widths`, `heights` |
+
+``` r
+
+# 2×2 仪表盘 + 自动子图标签
+compose_grid(p1, p2, p3, p4, ncol = 2, tag_levels = "A") |>
+ label_title("仪表盘") |>
+ export("dashboard.png")
+
+# 散点图 + 边际直方图
+compose_marginal(main, top_hist, right_hist) |>
+ label_title("Iris") |>
+ export("marginal.png")
+```
