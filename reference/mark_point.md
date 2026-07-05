@@ -208,9 +208,9 @@ plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
 #>     super:  <ggproto object: Class Guides, gg> 
 #>  .. @ mapping    : <ggplot2::mapping> List of 4
 #>  .. .. $ x     : language ~Sepal.Width
-#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x558880390470> 
+#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce8d8d7008> 
 #>  .. .. $ y     : language ~Sepal.Length
-#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x558880390470> 
+#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce8d8d7008> 
 #>  .. .. $ colour: 'AsIs' chr "#4E79A7"
 #>  .. .. $ fill  : 'AsIs' chr "#4E79A7"
 #>  .. @ theme      : <theme> List of 144
@@ -697,7 +697,7 @@ plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
 #>     super:  <ggproto object: Class Layout, gg> 
 #>  .. @ labels     : <ggplot2::labels>  Named list()
 #>  .. @ meta       : list()
-#>  .. @ plot_env   :<environment: 0x55888039d680> 
+#>  .. @ plot_env   :<environment: 0x55ce8d8a0410> 
 #>  @ meta: <plotit::plotit_metadata>
 #>  .. @ autofit      : logi FALSE
 #>  .. @ width        : num 7

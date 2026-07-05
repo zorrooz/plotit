@@ -3,7 +3,7 @@
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 
-**简体中文** \| [English](https://zorrooz.github.io/plotit/README.md)
+**简体中文** \| [English](https://zorrooz.github.io/plotit/index.md)
 
 **plotit** 是一个基于 [ggplot2](https://ggplot2.tidyverse.org)
 的**声明式、管道友好**的 R 绘图包。统一的**动词前缀

@@ -212,7 +212,7 @@ plotit(iris, encode(x = Sepal.Width)) |> mark_histogram()
 #>     super:  <ggproto object: Class Guides, gg> 
 #>  .. @ mapping    : <ggplot2::mapping> List of 3
 #>  .. .. $ x     : language ~Sepal.Width
-#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55887c9e79c0> 
+#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce8aa69cd0> 
 #>  .. .. $ colour: 'AsIs' chr "#4E79A7"
 #>  .. .. $ fill  : 'AsIs' chr "#4E79A7"
 #>  .. @ theme      : <theme> List of 144
@@ -699,7 +699,7 @@ plotit(iris, encode(x = Sepal.Width)) |> mark_histogram()
 #>     super:  <ggproto object: Class Layout, gg> 
 #>  .. @ labels     : <ggplot2::labels>  Named list()
 #>  .. @ meta       : list()
-#>  .. @ plot_env   :<environment: 0x55887fb5d138> 
+#>  .. @ plot_env   :<environment: 0x55ce8b5afe20> 
 #>  @ meta: <plotit::plotit_metadata>
 #>  .. @ autofit      : logi FALSE
 #>  .. @ width        : num 7

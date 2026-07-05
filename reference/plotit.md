@@ -136,9 +136,9 @@ plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
 #>     super:  <ggproto object: Class Guides, gg> 
 #>  .. @ mapping    : <ggplot2::mapping> List of 4
 #>  .. .. $ x     : language ~Sepal.Width
-#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55887fafa640> 
+#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce8f489ae0> 
 #>  .. .. $ y     : language ~Sepal.Length
-#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55887fafa640> 
+#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce8f489ae0> 
 #>  .. .. $ colour: 'AsIs' chr "#4E79A7"
 #>  .. .. $ fill  : 'AsIs' chr "#4E79A7"
 #>  .. @ theme      : <theme> List of 144
@@ -625,7 +625,7 @@ plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
 #>     super:  <ggproto object: Class Layout, gg> 
 #>  .. @ labels     : <ggplot2::labels>  Named list()
 #>  .. @ meta       : list()
-#>  .. @ plot_env   :<environment: 0x55887f78e918> 
+#>  .. @ plot_env   :<environment: 0x55ce90b2cf00> 
 #>  @ meta: <plotit::plotit_metadata>
 #>  .. @ autofit      : logi FALSE
 #>  .. @ width        : num 7
@@ -723,11 +723,11 @@ plotit(mtcars, encode(x = wt, y = mpg, colour = cyl))
 #>     super:  <ggproto object: Class Guides, gg> 
 #>  .. @ mapping    : <plotit_encode> List of 3
 #>  .. .. $ x     : language ~wt
-#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55887fafa640> 
+#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce8f489ae0> 
 #>  .. .. $ y     : language ~mpg
-#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55887fafa640> 
+#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce8f489ae0> 
 #>  .. .. $ colour: language ~cyl
-#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55887fafa640> 
+#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce8f489ae0> 
 #>  .. @ theme      : <theme> List of 144
 #>  .. .. $ line                            : <ggplot2::element_line>
 #>  .. ..  ..@ colour       : chr "black"
@@ -1212,7 +1212,7 @@ plotit(mtcars, encode(x = wt, y = mpg, colour = cyl))
 #>     super:  <ggproto object: Class Layout, gg> 
 #>  .. @ labels     : <ggplot2::labels>  Named list()
 #>  .. @ meta       : list()
-#>  .. @ plot_env   :<environment: 0x5588802ad6f8> 
+#>  .. @ plot_env   :<environment: 0x55ce8d7e19d0> 
 #>  @ meta: <plotit::plotit_metadata>
 #>  .. @ autofit      : logi FALSE
 #>  .. @ width        : num 7

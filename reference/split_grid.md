@@ -199,9 +199,9 @@ plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
 #>     super:  <ggproto object: Class Guides, gg> 
 #>  .. @ mapping    : <ggplot2::mapping> List of 4
 #>  .. .. $ x     : language ~Sepal.Width
-#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x5588801ea8d8> 
+#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce8d6c11b8> 
 #>  .. .. $ y     : language ~Sepal.Length
-#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x5588801ea8d8> 
+#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce8d6c11b8> 
 #>  .. .. $ colour: 'AsIs' chr "#4E79A7"
 #>  .. .. $ fill  : 'AsIs' chr "#4E79A7"
 #>  .. @ theme      : <theme> List of 144
@@ -688,7 +688,7 @@ plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
 #>     super:  <ggproto object: Class Layout, gg> 
 #>  .. @ labels     : <ggplot2::labels>  Named list()
 #>  .. @ meta       : list()
-#>  .. @ plot_env   :<environment: 0x5588801331d8> 
+#>  .. @ plot_env   :<environment: 0x55ce8d5f75b0> 
 #>  @ meta: <plotit::plotit_metadata>
 #>  .. @ autofit      : logi FALSE
 #>  .. @ width        : num 7

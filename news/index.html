@@ -41,28 +41,10 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="plotit-development-version">plotit (development version)<a class="anchor" aria-label="anchor" href="#plotit-development-version"></a></h2>
-<div class="section level3">
-<h3 id="design-improvements-development-version">Design improvements (2026-06-26)<a class="anchor" aria-label="anchor" href="#design-improvements-development-version"></a></h3>
-<ul><li><p><strong>Tidy evaluation infrastructure</strong>: added zzz.R for package options registration; package defaults are now visible via options().</p></li>
-<li><p><strong>Dependency hygiene</strong>: added NEWS.md for changelog tracking.</p></li>
+<ul><li>Active development stage — frequent breaking changes expected.</li>
+<li>See <a href="https://github.com/zorrooz/plotit/releases" class="external-link">GitHub releases</a> for version history.</li>
 </ul></div>
-<div class="section level3">
-<h3 id="bug-fixes-and-design-changes-development-version">Bug fixes and design changes<a class="anchor" aria-label="anchor" href="#bug-fixes-and-design-changes-development-version"></a></h3>
-<ul><li>plotit_composite now inherits from plotit_class (S7 parent), enabling uniform dispatch for shared methods and clear error messages for unsupported operations.</li>
-<li>Label system migrated to lazy evaluation: labels are stored in <a href="mailto:meta@labels" class="email">meta@labels</a> and synced to gg at print()/export() time via ._sync_labels(). This eliminates the dual-write pattern and ensures label operations are order-independent.</li>
-<li>print(plotit_composite) now manages device sizing (opens dev.new()) consistent with print(plotit).</li>
-<li>_detect_discrete_aes no longer accesses gg (per §4.6). Only global mapping is inspected; layer-only aesthetics default to discrete.</li>
-<li>compose_inset and compose_marginal now sync sub-plot labels before assembly, preventing label loss in composite figures.</li>
-<li>_collect_aes_names simplified to only check global mapping (no gg).</li>
-</ul></div>
-<div class="section level3">
-<h3 id="documentation-development-version">Documentation<a class="anchor" aria-label="anchor" href="#documentation-development-version"></a></h3>
-<ul><li>AGENTS.md (§3.3.4): brewer scheme documented as available for binned scales (via scale_colour_fermenter).</li>
-<li>AGENTS.md (§3.3.11): label_axis/label_legend added to unsupported operations for plot composites.</li>
-</ul></div>
-</div>
-  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
-    </nav></aside></div>
+  </main></div>
 
 
     <footer><div class="pkgdown-footer-left">

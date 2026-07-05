@@ -756,7 +756,7 @@ plotit(iris, encode()) |>
 #>     super:  <ggproto object: Class Layout, gg> 
 #>  .. @ labels     : <ggplot2::labels>  Named list()
 #>  .. @ meta       : list()
-#>  .. @ plot_env   :<environment: 0x5588805669e8> 
+#>  .. @ plot_env   :<environment: 0x55ce8da3b828> 
 #>  @ meta: <plotit::plotit_metadata>
 #>  .. @ autofit      : logi FALSE
 #>  .. @ width        : num 7

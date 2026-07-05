@@ -242,9 +242,9 @@ compose_inset(p1, p2, left = 0.6, bottom = 0.6, right = 0.95, top = 0.95)
 #>     super:  <ggproto object: Class Guides, gg> 
 #>  .. .. .. @ mapping    : <ggplot2::mapping> List of 4
 #>  .. .. .. .. $ x     : language ~wt
-#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x558883542120> 
+#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce909c6538> 
 #>  .. .. .. .. $ y     : language ~mpg
-#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x558883542120> 
+#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce909c6538> 
 #>  .. .. .. .. $ colour: 'AsIs' chr "#4E79A7"
 #>  .. .. .. .. $ fill  : 'AsIs' chr "#4E79A7"
 #>  .. .. .. @ theme      : <theme> List of 144
@@ -731,7 +731,7 @@ compose_inset(p1, p2, left = 0.6, bottom = 0.6, right = 0.95, top = 0.95)
 #>     super:  <ggproto object: Class Layout, gg> 
 #>  .. .. .. @ labels     : <ggplot2::labels>  Named list()
 #>  .. .. .. @ meta       : list()
-#>  .. .. .. @ plot_env   :<environment: 0x55888354da48> 
+#>  .. .. .. @ plot_env   :<environment: 0x55ce909d6250> 
 #>  ..  ..@ meta: <plotit::plotit_metadata>
 #>  .. .. .. @ autofit      : logi FALSE
 #>  .. .. .. @ width        : num 7
@@ -903,7 +903,7 @@ compose_inset(p1, p2, left = 0.6, bottom = 0.6, right = 0.95, top = 0.95)
 #>     super:  <ggproto object: Class Guides, gg> 
 #>  .. .. .. @ mapping    : <ggplot2::mapping> List of 3
 #>  .. .. .. .. $ x     : language ~factor(cyl)
-#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x558883542120> 
+#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce909c6538> 
 #>  .. .. .. .. $ colour: 'AsIs' chr "#4E79A7"
 #>  .. .. .. .. $ fill  : 'AsIs' chr "#4E79A7"
 #>  .. .. .. @ theme      : <theme> List of 144
@@ -1390,7 +1390,7 @@ compose_inset(p1, p2, left = 0.6, bottom = 0.6, right = 0.95, top = 0.95)
 #>     super:  <ggproto object: Class Layout, gg> 
 #>  .. .. .. @ labels     : <ggplot2::labels>  Named list()
 #>  .. .. .. @ meta       : list()
-#>  .. .. .. @ plot_env   :<environment: 0x558880c686f8> 
+#>  .. .. .. @ plot_env   :<environment: 0x55ce8e0f6790> 
 #>  ..  ..@ meta: <plotit::plotit_metadata>
 #>  .. .. .. @ autofit      : logi FALSE
 #>  .. .. .. @ width        : num 7

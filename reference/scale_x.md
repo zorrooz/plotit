@@ -218,9 +218,9 @@ plotit(mtcars, encode(x = wt, y = mpg)) |>
 #>     super:  <ggproto object: Class Guides, gg> 
 #>  .. @ mapping    : <ggplot2::mapping> List of 4
 #>  .. .. $ x     : language ~wt
-#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x558887ba5f10> 
+#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce9503d478> 
 #>  .. .. $ y     : language ~mpg
-#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x558887ba5f10> 
+#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce9503d478> 
 #>  .. .. $ colour: 'AsIs' chr "#4E79A7"
 #>  .. .. $ fill  : 'AsIs' chr "#4E79A7"
 #>  .. @ theme      : <theme> List of 144
@@ -707,7 +707,7 @@ plotit(mtcars, encode(x = wt, y = mpg)) |>
 #>     super:  <ggproto object: Class Layout, gg> 
 #>  .. @ labels     : <ggplot2::labels>  Named list()
 #>  .. @ meta       : list()
-#>  .. @ plot_env   :<environment: 0x558887c40218> 
+#>  .. @ plot_env   :<environment: 0x55ce950d76a0> 
 #>  @ meta: <plotit::plotit_metadata>
 #>  .. @ autofit      : logi FALSE
 #>  .. @ width        : num 7

@@ -212,9 +212,9 @@ plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot()
 #>     super:  <ggproto object: Class Guides, gg> 
 #>  .. @ mapping    : <ggplot2::mapping> List of 4
 #>  .. .. $ x     : language ~Species
-#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55888104d918> 
+#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce8e577770> 
 #>  .. .. $ y     : language ~Sepal.Length
-#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55888104d918> 
+#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce8e577770> 
 #>  .. .. $ colour: 'AsIs' chr "#4E79A7"
 #>  .. .. $ fill  : 'AsIs' chr "#4E79A7"
 #>  .. @ theme      : <theme> List of 144
@@ -701,7 +701,7 @@ plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot()
 #>     super:  <ggproto object: Class Layout, gg> 
 #>  .. @ labels     : <ggplot2::labels>  Named list()
 #>  .. @ meta       : list()
-#>  .. @ plot_env   :<environment: 0x55888105b8f8> 
+#>  .. @ plot_env   :<environment: 0x55ce8e581a30> 
 #>  @ meta: <plotit::plotit_metadata>
 #>  .. @ autofit      : logi FALSE
 #>  .. @ width        : num 7

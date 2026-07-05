@@ -243,11 +243,11 @@ compose_marginal(main, top, right)
 #>     super:  <ggproto object: Class Guides, gg> 
 #>  .. .. .. @ mapping    : <plotit_encode> List of 3
 #>  .. .. .. .. $ x     : language ~Sepal.Width
-#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x5588831ebeb0> 
+#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce90679158> 
 #>  .. .. .. .. $ y     : language ~Sepal.Length
-#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x5588831ebeb0> 
+#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce90679158> 
 #>  .. .. .. .. $ colour: language ~Species
-#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x5588831ebeb0> 
+#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce90679158> 
 #>  .. .. .. @ theme      : <theme> List of 144
 #>  .. .. .. .. $ line                            : <ggplot2::element_line>
 #>  .. .. .. ..  ..@ colour       : chr "black"
@@ -732,7 +732,7 @@ compose_marginal(main, top, right)
 #>     super:  <ggproto object: Class Layout, gg> 
 #>  .. .. .. @ labels     : <ggplot2::labels>  Named list()
 #>  .. .. .. @ meta       : list()
-#>  .. .. .. @ plot_env   :<environment: 0x5588831f7e98> 
+#>  .. .. .. @ plot_env   :<environment: 0x55ce90682668> 
 #>  ..  ..@ meta: <plotit::plotit_metadata>
 #>  .. .. .. @ autofit      : logi FALSE
 #>  .. .. .. @ width        : num 7
@@ -898,9 +898,9 @@ compose_marginal(main, top, right)
 #>     super:  <ggproto object: Class Guides, gg> 
 #>  .. .. .. @ mapping    : <plotit_encode> List of 2
 #>  .. .. .. .. $ x   : language ~Sepal.Width
-#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x5588831ebeb0> 
+#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce90679158> 
 #>  .. .. .. .. $ fill: language ~Species
-#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x5588831ebeb0> 
+#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce90679158> 
 #>  .. .. .. @ theme      : <theme> List of 144
 #>  .. .. .. .. $ line                            : <ggplot2::element_line>
 #>  .. .. .. ..  ..@ colour       : chr "black"
@@ -1385,7 +1385,7 @@ compose_marginal(main, top, right)
 #>     super:  <ggproto object: Class Layout, gg> 
 #>  .. .. .. @ labels     : <ggplot2::labels>  Named list()
 #>  .. .. .. @ meta       : list()
-#>  .. .. .. @ plot_env   :<environment: 0x558880b83aa8> 
+#>  .. .. .. @ plot_env   :<environment: 0x55ce8e00ec60> 
 #>  ..  ..@ meta: <plotit::plotit_metadata>
 #>  .. .. .. @ autofit      : logi FALSE
 #>  .. .. .. @ width        : num 7
@@ -1551,9 +1551,9 @@ compose_marginal(main, top, right)
 #>     super:  <ggproto object: Class Guides, gg> 
 #>  .. .. .. @ mapping    : <plotit_encode> List of 2
 #>  .. .. .. .. $ x   : language ~Sepal.Length
-#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x5588831ebeb0> 
+#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce90679158> 
 #>  .. .. .. .. $ fill: language ~Species
-#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x5588831ebeb0> 
+#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce90679158> 
 #>  .. .. .. @ theme      : <theme> List of 144
 #>  .. .. .. .. $ line                            : <ggplot2::element_line>
 #>  .. .. .. ..  ..@ colour       : chr "black"
@@ -2037,7 +2037,7 @@ compose_marginal(main, top, right)
 #>     super:  <ggproto object: Class Layout, gg> 
 #>  .. .. .. @ labels     : <ggplot2::labels>  Named list()
 #>  .. .. .. @ meta       : list()
-#>  .. .. .. @ plot_env   :<environment: 0x55888322d9b0> 
+#>  .. .. .. @ plot_env   :<environment: 0x55ce906bcd60> 
 #>  ..  ..@ meta: <plotit::plotit_metadata>
 #>  .. .. .. @ autofit      : logi FALSE
 #>  .. .. .. @ width        : num 7

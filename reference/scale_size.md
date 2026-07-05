@@ -216,11 +216,11 @@ plotit(mtcars, encode(x = wt, y = mpg, size = hp)) |>
 #>     super:  <ggproto object: Class Guides, gg> 
 #>  .. @ mapping    : <ggplot2::mapping> List of 5
 #>  .. .. $ x     : language ~wt
-#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x558886bbf800> 
+#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce94054240> 
 #>  .. .. $ y     : language ~mpg
-#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x558886bbf800> 
+#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce94054240> 
 #>  .. .. $ size  : language ~hp
-#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x558886bbf800> 
+#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce94054240> 
 #>  .. .. $ colour: 'AsIs' chr "#4E79A7"
 #>  .. .. $ fill  : 'AsIs' chr "#4E79A7"
 #>  .. @ theme      : <theme> List of 144
@@ -707,7 +707,7 @@ plotit(mtcars, encode(x = wt, y = mpg, size = hp)) |>
 #>     super:  <ggproto object: Class Layout, gg> 
 #>  .. @ labels     : <ggplot2::labels>  Named list()
 #>  .. @ meta       : list()
-#>  .. @ plot_env   :<environment: 0x558886c65e08> 
+#>  .. @ plot_env   :<environment: 0x55ce940fa848> 
 #>  @ meta: <plotit::plotit_metadata>
 #>  .. @ autofit      : logi FALSE
 #>  .. @ width        : num 7

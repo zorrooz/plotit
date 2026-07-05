@@ -219,9 +219,9 @@ plotit(iris, encode(x = Species, fill = Species)) |>
 #>     super:  <ggproto object: Class Guides, gg> 
 #>  .. @ mapping    : <plotit_encode> List of 2
 #>  .. .. $ x   : language ~Species
-#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55887dfcab28> 
+#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce8b4a5bb0> 
 #>  .. .. $ fill: language ~Species
-#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55887dfcab28> 
+#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce8b4a5bb0> 
 #>  .. @ theme      : <theme> List of 144
 #>  .. .. $ line                            : <ggplot2::element_line>
 #>  .. ..  ..@ colour       : chr "black"
@@ -706,7 +706,7 @@ plotit(iris, encode(x = Species, fill = Species)) |>
 #>     super:  <ggproto object: Class Layout, gg> 
 #>  .. @ labels     : <ggplot2::labels>  Named list()
 #>  .. @ meta       : list()
-#>  .. @ plot_env   :<environment: 0x55887de83618> 
+#>  .. @ plot_env   :<environment: 0x55ce8b3a7388> 
 #>  @ meta: <plotit::plotit_metadata>
 #>  .. @ autofit      : logi FALSE
 #>  .. @ width        : num 7

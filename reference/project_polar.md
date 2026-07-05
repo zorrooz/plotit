@@ -220,7 +220,7 @@ plotit(mtcars, encode(x = factor(cyl))) |>
 #>     super:  <ggproto object: Class Guides, gg> 
 #>  .. @ mapping    : <ggplot2::mapping> List of 3
 #>  .. .. $ x     : language ~factor(cyl)
-#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x558881e879a0> 
+#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce8f13e488> 
 #>  .. .. $ colour: 'AsIs' chr "#4E79A7"
 #>  .. .. $ fill  : 'AsIs' chr "#4E79A7"
 #>  .. @ theme      : <theme> List of 144
@@ -665,7 +665,7 @@ plotit(mtcars, encode(x = factor(cyl))) |>
 #>     super:  <ggproto object: Class Layout, gg> 
 #>  .. @ labels     : <ggplot2::labels>  Named list()
 #>  .. @ meta       : list()
-#>  .. @ plot_env   :<environment: 0x558881b6a988> 
+#>  .. @ plot_env   :<environment: 0x55ce8ef3ba78> 
 #>  @ meta: <plotit::plotit_metadata>
 #>  .. @ autofit      : logi FALSE
 #>  .. @ width        : num 7

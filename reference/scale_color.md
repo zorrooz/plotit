@@ -217,11 +217,11 @@ plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
 #>     super:  <ggproto object: Class Guides, gg> 
 #>  .. @ mapping    : <plotit_encode> List of 3
 #>  .. .. $ x     : language ~Sepal.Width
-#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55888034d790> 
+#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce8d82e788> 
 #>  .. .. $ y     : language ~Sepal.Length
-#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55888034d790> 
+#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce8d82e788> 
 #>  .. .. $ colour: language ~Species
-#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55888034d790> 
+#>  .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce8d82e788> 
 #>  .. @ theme      : <theme> List of 144
 #>  .. .. $ line                            : <ggplot2::element_line>
 #>  .. ..  ..@ colour       : chr "black"
@@ -706,7 +706,7 @@ plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
 #>     super:  <ggproto object: Class Layout, gg> 
 #>  .. @ labels     : <ggplot2::labels>  Named list()
 #>  .. @ meta       : list()
-#>  .. @ plot_env   :<environment: 0x558880338198> 
+#>  .. @ plot_env   :<environment: 0x55ce8d820638> 
 #>  @ meta: <plotit::plotit_metadata>
 #>  .. @ autofit      : logi FALSE
 #>  .. @ width        : num 7
