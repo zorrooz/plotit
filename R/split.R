@@ -15,7 +15,7 @@ NULL
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
 #'   mark_point() |>
-#'   split_wrap(Species, ncol = 3) |> get_plot()
+#'   split_wrap(Species, ncol = 3)
 #' @export
 split_wrap <- S7::new_generic(
   "split_wrap",
@@ -65,7 +65,7 @@ S7::method(split_wrap, plotit_class) <- function(
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
 #'   mark_point() |>
-#'   split_grid(rows = ggplot2::vars(Species)) |> get_plot()
+#'   split_grid(rows = ggplot2::vars(Species))
 #' @export
 split_grid <- S7::new_generic(
   "split_grid",

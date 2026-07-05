@@ -44,5 +44,5 @@ Maps data values to point/line sizes.
 \examples{
 plotit(mtcars, encode(x = wt, y = mpg, size = hp)) |>
   mark_point() |>
-  scale_size(range = c(1, 6)) |> get_plot()
+  scale_size(range = c(1, 6))
 }

@@ -44,5 +44,5 @@ Controls the y-axis scale: transformation, limits, breaks, and labels.
 \examples{
 plotit(mtcars, encode(x = wt, y = mpg)) |>
   mark_point() |>
-  scale_y(limits = c(0, 40)) |> get_plot()
+  scale_y(limits = c(0, 40))
 }

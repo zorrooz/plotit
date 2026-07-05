@@ -45,5 +45,5 @@ the \code{fill} aesthetic (bars, boxes, polygons, etc.).
 \examples{
 plotit(iris, encode(x = Species, fill = Species)) |>
   mark_bar() |>
-  scale_fill(range = "viridis") |> get_plot()
+  scale_fill(range = "viridis")
 }

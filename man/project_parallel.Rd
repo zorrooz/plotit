@@ -49,5 +49,5 @@ Adds \code{geom_line()} and \code{geom_point()} layers. Call \emph{after} any
 }
 \examples{
 plotit(iris, encode()) |>
-  project_parallel(columns = c("Sepal.Width", "Sepal.Length", "Petal.Width", "Petal.Length")) |> get_plot()
+  project_parallel(columns = c("Sepal.Width", "Sepal.Length", "Petal.Width", "Petal.Length"))
 }

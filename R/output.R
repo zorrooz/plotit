@@ -19,11 +19,21 @@ NULL
 S7::method(format, plotit_class) <- function(x, ...) ""
 S7::method(format, plotit_composite) <- function(x, ...) ""
 
-# ---- get_plot ----
-# Extract the underlying ggplot.  The returned ggplot auto-prints correctly
-# in pkgdown reference examples, bypassing S4 show() dispatch entirely.
-#' @export
-get_plot <- function(x) x@gg
+# ---- internal render routing ----
+# Route plot rendering based on context.
+# - Non-interactive (pkgdown, R CMD check): return the ggplot so R's
+#   top-level auto-print renders it and evaluate captures it.
+# - Interactive (console, RStudio): render directly to the active device.
+#' @noRd
+#' @keywords internal
+._render_plotit <- function(x) {
+  if (interactive()) {
+    print(x@gg)
+    invisible(x)
+  } else {
+    x@gg
+  }
+}
 
 # ---- print ----
 #' Print a plotit object (automatically render the plot)
@@ -59,10 +69,10 @@ S7::method(print, plotit_class) <- function(x, ...) {
     use_rstudio <- isTRUE(dev_opt == "rstudio")
     grDevices::dev.new(width = pw, height = ph, noRStudioGD = !use_rstudio)
     grid::grid.draw(gt)
+    invisible(x)
   } else {
-    print(x@gg)
+    ._render_plotit(x)
   }
-  invisible(x)
 }
 
 # S3 print method — reaches knitr/vignette contexts where S7 dispatch doesn't fire
@@ -73,8 +83,7 @@ print.plotit <- function(x, ...) {
     attr(x@meta, "plotit_theme_managed") <- TRUE
   }
   x <- ._sync_labels(x)
-  print(x@gg)
-  invisible(x)
+  ._render_plotit(x)
 }
 
 # ---- knit_print ----

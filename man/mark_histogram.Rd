@@ -39,5 +39,5 @@ Modified plotit object
 Generic for adding a histogram layer
 }
 \examples{
-plotit(iris, encode(x = Sepal.Width)) |> mark_histogram() |> get_plot()
+plotit(iris, encode(x = Sepal.Width)) |> mark_histogram()
 }

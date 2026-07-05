@@ -13,7 +13,7 @@
 #' @return A `plotit` object.
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
-#' plotit(mtcars, encode(x = wt, y = mpg, colour = cyl)) |> get_plot()
+#' plotit(mtcars, encode(x = wt, y = mpg, colour = cyl))
 #' @export
 plotit <- function(
   data,

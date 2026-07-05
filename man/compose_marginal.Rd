@@ -48,5 +48,5 @@ top <- plotit(iris, encode(x = Sepal.Width, fill = Species)) |> mark_histogram(b
 right <- plotit(iris, encode(x = Sepal.Length, fill = Species)) |>
   mark_histogram(bins = 15, alpha = 0.5) |>
   project_cartesian(flip = TRUE)
-compose_marginal(main, top, right) |> get_plot()
+compose_marginal(main, top, right)
 }

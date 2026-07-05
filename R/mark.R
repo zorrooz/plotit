@@ -55,7 +55,7 @@ NULL
 #' @param ... Other arguments passed to `geom_point`
 #' @return Modified plotit object
 #' @examples
-#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point() |> get_plot()
+#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
 #' @export
 mark_point <- S7::new_generic(
   "mark_point",
@@ -89,7 +89,7 @@ S7::method(mark_point, plotit_class) <- function(plot, mapping = NULL, data = NU
 #' @param ... Other arguments passed to `geom_line`
 #' @return Modified plotit object
 #' @examples
-#' plotit(ggplot2::economics, encode(x = date, y = unemploy)) |> mark_line() |> get_plot()
+#' plotit(ggplot2::economics, encode(x = date, y = unemploy)) |> mark_line()
 #' @export
 mark_line <- S7::new_generic(
   "mark_line",
@@ -123,7 +123,7 @@ S7::method(mark_line, plotit_class) <- function(plot, mapping = NULL, data = NUL
 #' @param ... Other arguments passed to `geom_bar` or `geom_col`
 #' @return Modified plotit object
 #' @examples
-#' plotit(mtcars, encode(x = factor(cyl))) |> mark_bar() |> get_plot()
+#' plotit(mtcars, encode(x = factor(cyl))) |> mark_bar()
 #' @export
 mark_bar <- S7::new_generic(
   "mark_bar",
@@ -165,7 +165,7 @@ S7::method(mark_bar, plotit_class) <- function(plot, mapping = NULL, data = NULL
 #' @param ... Other arguments passed to `geom_boxplot`
 #' @return Modified plotit object
 #' @examples
-#' plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot() |> get_plot()
+#' plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot()
 #' @export
 mark_boxplot <- S7::new_generic(
   "mark_boxplot",
@@ -199,7 +199,7 @@ S7::method(mark_boxplot, plotit_class) <- function(plot, mapping = NULL, data = 
 #' @param ... Other arguments passed to `geom_histogram`
 #' @return Modified plotit object
 #' @examples
-#' plotit(iris, encode(x = Sepal.Width)) |> mark_histogram() |> get_plot()
+#' plotit(iris, encode(x = Sepal.Width)) |> mark_histogram()
 #' @export
 mark_histogram <- S7::new_generic(
   "mark_histogram",
@@ -233,7 +233,7 @@ S7::method(mark_histogram, plotit_class) <- function(plot, mapping = NULL, data 
 #' @param ... Other arguments passed to `geom_density`
 #' @return Modified plotit object
 #' @examples
-#' plotit(iris, encode(x = Sepal.Width)) |> mark_density() |> get_plot()
+#' plotit(iris, encode(x = Sepal.Width)) |> mark_density()
 #' @export
 mark_density <- S7::new_generic(
   "mark_density",

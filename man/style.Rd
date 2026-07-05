@@ -31,5 +31,5 @@ Use \code{base_theme} to switch to an entirely different base theme (e.g.,
 \examples{
 plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
   mark_point() |>
-  style() |> get_plot()
+  style()
 }

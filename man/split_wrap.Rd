@@ -29,5 +29,5 @@ Generic for wrapping facets
 \examples{
 plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
   mark_point() |>
-  split_wrap(Species, ncol = 3) |> get_plot()
+  split_wrap(Species, ncol = 3)
 }

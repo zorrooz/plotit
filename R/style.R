@@ -50,7 +50,7 @@ NULL
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
 #'   mark_point() |>
-#'   style() |> get_plot()
+#'   style()
 #' @export
 style <- S7::new_generic(
   "style",
@@ -85,7 +85,7 @@ S7::method(style, plotit_class) <- function(
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
 #'   mark_point() |>
-#'   style_default() |> get_plot()
+#'   style_default()
 #' @export
 style_default <- S7::new_generic(
   "style_default",

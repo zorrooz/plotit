@@ -44,5 +44,5 @@ continuous variables are not supported.
 \examples{
 plotit(ggplot2::economics, encode(x = date, y = unemploy)) |>
   mark_line() |>
-  scale_linetype() |> get_plot()
+  scale_linetype()
 }

@@ -44,5 +44,5 @@ Controls the x-axis scale: transformation, limits, breaks, and labels.
 \examples{
 plotit(mtcars, encode(x = wt, y = mpg)) |>
   mark_point() |>
-  scale_x(trans = "log10") |> get_plot()
+  scale_x(trans = "log10")
 }

@@ -24,5 +24,5 @@ Modified plotit object
 Generic for setting plot subtitle
 }
 \examples{
-plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> label_subtitle("Subtitle") |> get_plot()
+plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> label_subtitle("Subtitle")
 }

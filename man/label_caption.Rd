@@ -24,5 +24,5 @@ Modified plotit object
 Generic for setting plot caption
 }
 \examples{
-plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> label_caption("Caption") |> get_plot()
+plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> label_caption("Caption")
 }
