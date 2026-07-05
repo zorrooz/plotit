@@ -90,6 +90,9 @@ plotit <- function(
   # Stored on meta, not gg$theme -- patchwork wrapping would shadow $theme
   attr(meta, "plotit_theme_managed") <- TRUE
 
-
-  plotit_class(gg = p, meta = meta)
+  out <- plotit_class(gg = p, meta = meta)
+  # Register unqualified S3 class alias so S3 dispatch (e.g. knit_print.plotit)
+  # can find this object.  Keep the namespaced class first for S7.
+  class(out) <- c(class(out), "plotit")
+  out
 }

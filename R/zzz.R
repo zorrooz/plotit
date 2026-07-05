@@ -14,6 +14,33 @@ NULL
   op <- options()
   toset <- !(names(.plotit_options) %in% names(op))
   if (any(toset)) options(.plotit_options[toset])
+
+  # Register S3 knit_print methods once knitr is available.
+  # Also install a fallback render hook for S3 dispatch edge cases.
+  ns <- asNamespace(pkgname)
+  .register_knit_print <- function(ns) {
+    tryCatch({
+      registerS3method("knit_print", "plotit",
+        ns$knit_print.plotit, envir = ns)
+      registerS3method("knit_print", "plotit_composite",
+        ns$knit_print.plotit_composite, envir = ns)
+    }, error = function(e) NULL)
+    # Install render hook fallback: catches plotit objects S3 dispatch missed
+    tryCatch({
+      knitr::knit_hooks$set(render = function(x, options) {
+        if (inherits(x, "plotit::plotit") || inherits(x, "plotit::plotit_composite")) {
+          ns$knit_print.plotit(x)
+        } else {
+          knitr::knit_print(x)
+        }
+      })
+    }, error = function(e) NULL)
+  }
+  if ("knitr" %in% loadedNamespaces()) {
+    .register_knit_print(ns)
+  }
+  setHook(packageEvent("knitr", "onLoad"), function(...) .register_knit_print(ns))
+
   invisible()
 }
 
@@ -32,7 +59,7 @@ for (.generic_name in c(
   .generic <- get(.generic_name)
   local({
     .name <- .generic_name
-    S7::method(.generic, plotit_composite) <<- function(plot, ...) {
+    S7::method(.generic, plotit_composite) <- function(plot, ...) {
       cli::cli_abort(c(
         "{.fn {.name}} is not supported for {.cls plotit_composite} objects.",
         "i" = "Apply it to individual sub-plots before composing."

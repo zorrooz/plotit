@@ -50,6 +50,34 @@ S7::method(print, plotit_class) <- function(x, ...) {
   } else {
     print(x@gg)
   }
+  invisible(x)
+}
+
+# S3 print method — reaches knitr/vignette contexts where S7 dispatch doesn't fire
+#' @export
+print.plotit <- function(x, ...) {
+  if (is.null(attr(x@meta, "plotit_theme_managed", exact = TRUE))) {
+    x@gg <- x@gg + .theme_default()
+    attr(x@meta, "plotit_theme_managed") <- TRUE
+  }
+  x <- ._sync_labels(x)
+  print(x@gg)
+  invisible(x)
+}
+
+# ---- knit_print ----
+# S3 methods for knitr to capture plotit plots in vignettes / R Markdown.
+# Renders the underlying ggplot to knitr's active device.
+#' @export
+knit_print.plotit <- function(x, ...) {
+  x <- ._sync_labels(x)
+  print(x@gg)
+  invisible(x)
+}
+
+#' @export
+knit_print.plotit_composite <- function(x, ...) {
+  x@gg <- ._apply_annotations(x)
   print(x@gg)
   invisible(x)
 }

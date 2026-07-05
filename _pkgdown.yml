@@ -5,6 +5,9 @@ template:
 title: plotit
 subtitle: Declarative Plotting with ggplot2
 
+development:
+  mode: auto
+
 navbar:
   structure:
     left:  [intro, reference, articles, news]
@@ -31,6 +34,7 @@ navbar:
     github:
       icon: fab fa-github
       href: https://github.com/zorrooz/plotit
+      aria-label: GitHub repository
 
 reference:
 - title: Plot Construction
@@ -67,3 +71,9 @@ reference:
   - style
   - style_default
   - export
+
+# Don't render dev-only markdown files as pages
+exclude:
+- AGENTS.md
+- AGENTS.new.md
+- README_ZH.md

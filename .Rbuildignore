@@ -4,6 +4,8 @@
 ^playground\.R$
 ^scratch/
 ^AGENTS\.md$
+^AGENTS\.new\.md$
+^README_ZH\.md$
 ^iris_plot\.svg$
 ^Rplots\.pdf$
 ^tests/testthat/Rplots\.pdf$

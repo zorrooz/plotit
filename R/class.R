@@ -101,10 +101,12 @@ plotit_composite <- S7::new_class(
     annotations = S7::class_list
   ),
   constructor = function(gg, plots, layout, annotations) {
-    S7::new_object(
+    out <- S7::new_object(
       plotit_class(gg = gg, meta = plotit_metadata(autofit = TRUE)),
       plots = plots, layout = layout, annotations = annotations
     )
+    class(out) <- c(class(out), "plotit_composite")
+    out
   },
   validator = function(self) {
     if (!inherits(self@gg, "ggplot")) {
