@@ -41,6 +41,13 @@ NULL
   }
   setHook(packageEvent("knitr", "onLoad"), function(...) .register_knit_print(ns))
 
+  # Re-register format method for install contexts.
+  tryCatch({
+    s7_fmt <- S7::format
+    S7::method(s7_fmt, ns$plotit_class) <- function(x, ...) ""
+    S7::method(s7_fmt, ns$plotit_composite) <- function(x, ...) ""
+  }, error = function(e) NULL)
+
   invisible()
 }
 

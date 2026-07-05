@@ -54,5 +54,5 @@ report figures.  Pipe the result to \code{label_title()} / \code{style()} /
 \examples{
 p1 <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
 p2 <- plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot()
-compose_grid(p1, p2)
+compose_grid(p1, p2) |> get_plot()
 }

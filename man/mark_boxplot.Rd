@@ -39,5 +39,5 @@ Modified plotit object
 Generic for adding a boxplot layer
 }
 \examples{
-plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot()
+plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot() |> get_plot()
 }

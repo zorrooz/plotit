@@ -118,7 +118,7 @@ NULL
 #' @examples
 #' p1 <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
 #' p2 <- plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot()
-#' compose_grid(p1, p2)
+#' compose_grid(p1, p2) |> get_plot()
 #' @export
 compose_grid <- function(
   ...,
@@ -191,7 +191,7 @@ compose_grid <- function(
 #' @examples
 #' p1 <- plotit(mtcars, encode(x = wt, y = mpg)) |> mark_point()
 #' p2 <- plotit(mtcars, encode(x = factor(cyl))) |> mark_bar()
-#' compose_inset(p1, p2, left = 0.6, bottom = 0.6, right = 0.95, top = 0.95)
+#' compose_inset(p1, p2, left = 0.6, bottom = 0.6, right = 0.95, top = 0.95) |> get_plot()
 #' @export
 compose_inset <- function(
   base,
@@ -274,7 +274,7 @@ compose_inset <- function(
 #' right <- plotit(iris, encode(x = Sepal.Length, fill = Species)) |>
 #'   mark_histogram(bins = 15, alpha = 0.5) |>
 #'   project_cartesian(flip = TRUE)
-#' compose_marginal(main, top, right)
+#' compose_marginal(main, top, right) |> get_plot()
 #' @export
 compose_marginal <- function(
   main,

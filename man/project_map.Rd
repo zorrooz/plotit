@@ -38,5 +38,5 @@ string is provided (requires \pkg{mapproj}).
 # requires the sf package
 nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
 plotit(nc, encode()) |> project_map()
-}
+} |> get_plot()
 }

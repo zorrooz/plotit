@@ -13,6 +13,18 @@ NULL
   )
 }
 
+# ---- format ----
+# Suppress S7 text output so pkgdown reference examples capture rendered plots.
+#' @noRd
+S7::method(format, plotit_class) <- function(x, ...) ""
+S7::method(format, plotit_composite) <- function(x, ...) ""
+
+# ---- get_plot ----
+# Extract the underlying ggplot.  The returned ggplot auto-prints correctly
+# in pkgdown reference examples, bypassing S4 show() dispatch entirely.
+#' @export
+get_plot <- function(x) x@gg
+
 # ---- print ----
 #' Print a plotit object (automatically render the plot)
 #'

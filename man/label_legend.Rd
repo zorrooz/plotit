@@ -29,5 +29,5 @@ Generic for setting legend title(s)
 plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
   mark_point() |>
   scale_color() |>
-  label_legend(text = "Species", aes = "colour")
+  label_legend(text = "Species", aes = "colour") |> get_plot()
 }

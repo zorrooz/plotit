@@ -24,5 +24,5 @@ Modified plotit object
 Generic for setting plot title
 }
 \examples{
-plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> label_title("My Title")
+plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> label_title("My Title") |> get_plot()
 }

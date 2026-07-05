@@ -40,5 +40,5 @@ Initialize a plotit object
 }
 \examples{
 plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
-plotit(mtcars, encode(x = wt, y = mpg, colour = cyl))
+plotit(mtcars, encode(x = wt, y = mpg, colour = cyl)) |> get_plot()
 }

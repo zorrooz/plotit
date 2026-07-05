@@ -313,7 +313,7 @@ NULL
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
 #'   mark_point() |>
-#'   scale_color(range = "viridis")
+#'   scale_color(range = "viridis") |> get_plot()
 #' @export
 scale_color <- S7::new_generic(
   "scale_color", "plot",
@@ -361,7 +361,7 @@ S7::method(scale_color, plotit_class) <- function(plot, name = ggplot2::waiver()
 #' @examples
 #' plotit(iris, encode(x = Species, fill = Species)) |>
 #'   mark_bar() |>
-#'   scale_fill(range = "viridis")
+#'   scale_fill(range = "viridis") |> get_plot()
 #' @export
 scale_fill <- S7::new_generic(
   "scale_fill", "plot",
@@ -408,7 +408,7 @@ S7::method(scale_fill, plotit_class) <- function(plot, name = ggplot2::waiver(),
 #' @examples
 #' plotit(mtcars, encode(x = wt, y = mpg, size = hp)) |>
 #'   mark_point() |>
-#'   scale_size(range = c(1, 6))
+#'   scale_size(range = c(1, 6)) |> get_plot()
 #' @export
 scale_size <- S7::new_generic(
   "scale_size", "plot",
@@ -454,7 +454,7 @@ S7::method(scale_size, plotit_class) <- function(plot, name = ggplot2::waiver(),
 #' @examples
 #' plotit(mtcars, encode(x = wt, y = mpg, alpha = hp)) |>
 #'   mark_point() |>
-#'   scale_alpha()
+#'   scale_alpha() |> get_plot()
 #' @export
 scale_alpha <- S7::new_generic(
   "scale_alpha", "plot",
@@ -500,7 +500,7 @@ S7::method(scale_alpha, plotit_class) <- function(plot, name = ggplot2::waiver()
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, shape = Species)) |>
 #'   mark_point() |>
-#'   scale_shape()
+#'   scale_shape() |> get_plot()
 #' @export
 scale_shape <- S7::new_generic(
   "scale_shape", "plot",
@@ -543,7 +543,7 @@ S7::method(scale_shape, plotit_class) <- function(plot, name = ggplot2::waiver()
 #' @examples
 #' plotit(ggplot2::economics, encode(x = date, y = unemploy)) |>
 #'   mark_line() |>
-#'   scale_linetype()
+#'   scale_linetype() |> get_plot()
 #' @export
 scale_linetype <- S7::new_generic(
   "scale_linetype", "plot",
@@ -586,7 +586,7 @@ S7::method(scale_linetype, plotit_class) <- function(plot, name = ggplot2::waive
 #' @examples
 #' plotit(mtcars, encode(x = wt, y = mpg)) |>
 #'   mark_point() |>
-#'   scale_x(trans = "log10")
+#'   scale_x(trans = "log10") |> get_plot()
 #' @export
 scale_x <- S7::new_generic(
   "scale_x", "plot",
@@ -625,7 +625,7 @@ S7::method(scale_x, plotit_class) <- function(plot, name = ggplot2::waiver(),
 #' @examples
 #' plotit(mtcars, encode(x = wt, y = mpg)) |>
 #'   mark_point() |>
-#'   scale_y(limits = c(0, 40))
+#'   scale_y(limits = c(0, 40)) |> get_plot()
 #' @export
 scale_y <- S7::new_generic(
   "scale_y", "plot",

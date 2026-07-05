@@ -228,7 +228,7 @@ NULL
 #' @param ... Currently unused
 #' @return Modified plotit object
 #' @examples
-#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> label_title("My Title")
+#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> label_title("My Title") |> get_plot()
 #' @export
 label_title <- S7::new_generic(
   "label_title",
@@ -253,7 +253,7 @@ S7::method(label_title, plotit_class) <- function(plot, text = NULL, hide = FALS
 #' @param ... Currently unused
 #' @return Modified plotit object
 #' @examples
-#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> label_subtitle("Subtitle")
+#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> label_subtitle("Subtitle") |> get_plot()
 #' @export
 label_subtitle <- S7::new_generic(
   "label_subtitle",
@@ -278,7 +278,7 @@ S7::method(label_subtitle, plotit_class) <- function(plot, text = NULL, hide = F
 #' @param ... Currently unused
 #' @return Modified plotit object
 #' @examples
-#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> label_caption("Caption")
+#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> label_caption("Caption") |> get_plot()
 #' @export
 label_caption <- S7::new_generic(
   "label_caption",
@@ -306,7 +306,7 @@ S7::method(label_caption, plotit_class) <- function(plot, text = NULL, hide = FA
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
 #'   label_axis(text = "Width", aes = "x") |>
-#'   label_axis(text = "Length", aes = "y")
+#'   label_axis(text = "Length", aes = "y") |> get_plot()
 #' @export
 label_axis <- S7::new_generic(
   "label_axis",
@@ -353,7 +353,7 @@ S7::method(label_axis, plotit_class) <- function(plot, text = NULL, aes = NULL,
 #' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
 #'   mark_point() |>
 #'   scale_color() |>
-#'   label_legend(text = "Species", aes = "colour")
+#'   label_legend(text = "Species", aes = "colour") |> get_plot()
 #' @export
 label_legend <- S7::new_generic(
   "label_legend",

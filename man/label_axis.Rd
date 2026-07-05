@@ -28,5 +28,5 @@ Generic for setting axis titles
 \examples{
 plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
   label_axis(text = "Width", aes = "x") |>
-  label_axis(text = "Length", aes = "y")
+  label_axis(text = "Length", aes = "y") |> get_plot()
 }

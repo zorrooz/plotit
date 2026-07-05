@@ -39,5 +39,5 @@ Modified plotit object
 Generic for adding a point layer
 }
 \examples{
-plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
+plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point() |> get_plot()
 }
