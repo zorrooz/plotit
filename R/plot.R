@@ -91,8 +91,9 @@ plotit <- function(
   attr(meta, "plotit_theme_managed") <- TRUE
 
   out <- plotit_class(gg = p, meta = meta)
-  # Register unqualified S3 class alias so S3 dispatch (e.g. knit_print.plotit)
-  # can find this object.  Keep the namespaced class first for S7.
-  class(out) <- c(class(out), "plotit")
+  # Prepend unqualified class so S3 dispatch (e.g. print.plotit) fires
+  # before the S7-default print.S7_object.  The namespaced class remains
+  # in the vector for S7 method dispatch.
+  class(out) <- c("plotit", class(out))
   out
 }

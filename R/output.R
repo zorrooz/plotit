@@ -21,18 +21,14 @@ S7::method(format, plotit_composite) <- function(x, ...) ""
 
 # ---- internal render routing ----
 # Route plot rendering based on context.
-# - Non-interactive (pkgdown, R CMD check): return the ggplot so R's
-#   top-level auto-print renders it and evaluate captures it.
-# - Interactive (console, RStudio): render directly to the active device.
+# Always renders to the device so evaluate/pkgdown/R CMD check
+# can capture the plot output.  Both branches are identical;
+# kept separate in case one needs context-specific logic later.
 #' @noRd
 #' @keywords internal
 ._render_plotit <- function(x) {
-  if (interactive()) {
-    print(x@gg)
-    invisible(x)
-  } else {
-    x@gg
-  }
+  print(x@gg)
+  invisible(x)
 }
 
 # ---- print ----

@@ -15,9 +15,16 @@ NULL
   toset <- !(names(.plotit_options) %in% names(op))
   if (any(toset)) options(.plotit_options[toset])
 
+  ns <- asNamespace(pkgname)
+
+  # Manually register S3 print method for plotit.
+  # NAMESPACE S3method(print,plotit) is blocked by S7's own S3 method
+  # registration on R 4.5.2 / Windows, so we register it here explicitly.
+  registerS3method("print", "plotit",
+    ns$print.plotit, envir = ns)
+
   # Register S3 knit_print methods once knitr is available.
   # Also install a fallback render hook for S3 dispatch edge cases.
-  ns <- asNamespace(pkgname)
   .register_knit_print <- function(ns) {
     tryCatch({
       registerS3method("knit_print", "plotit",

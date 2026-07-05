@@ -1,6 +1,10 @@
 url: https://zorrooz.github.io/plotit/
 template:
   bootstrap: 5
+  includes:
+    in_header: |
+      <style>.r-plt { display: block; margin: 1rem 0; }
+      .r-plt img { display: block; max-width: 100%; height: auto; margin: 0 auto; background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }</style>
 
 title: plotit
 subtitle: Declarative Plotting with ggplot2

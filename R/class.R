@@ -105,7 +105,7 @@ plotit_composite <- S7::new_class(
       plotit_class(gg = gg, meta = plotit_metadata(autofit = TRUE)),
       plots = plots, layout = layout, annotations = annotations
     )
-    class(out) <- c(class(out), "plotit_composite")
+    class(out) <- c("plotit_composite", class(out))
     out
   },
   validator = function(self) {
