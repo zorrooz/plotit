@@ -2,7 +2,7 @@
 
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 
-<p align="center"><b>简体中文</b> | <a href="README.md">English</a></p>
+<p align="center"><b>简体中文</b> | <a href="index.html">English</a></p>
 
 
 **plotit** 是一个基于 [ggplot2](https://ggplot2.tidyverse.org) 的**声明式、管道友好**的 R 绘图包。统一的**动词前缀 API**，一条管道从数据直达出版级图表——开箱即美观，零样板代码。
