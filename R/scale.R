@@ -295,8 +295,9 @@ NULL
   if (discrete && reverse && is.null(limits)) {
     args$limits <- rev
   }
-  args <- args[!vapply(args, is.null, logical(1))]
-  plot@gg <- plot@gg + do.call(scale_fun, c(args, list(...)))
+  args <- ._strip_nulls(args)
+  extra_args <- ._strip_nulls(list(...))
+  plot@gg <- plot@gg + do.call(scale_fun, c(args, extra_args))
   plot
 }
 
