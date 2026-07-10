@@ -445,27 +445,201 @@ export(p, "output.pdf", dpi = 300)
 
 ---
 
-## 9. 现状评估与 1.0 路线图
+## 9. 1.0 开发路线图
 
-### 8.1 API 完成度
+> **优先级策略**：纯优先级排序，无固定时间线。四类 mark 并行推进，每阶段各取 1-2 个。
+> **推进顺序**：先固本（清债）→ 后扩展（mark）→ 最后收尾（文档+质量）。
 
-| 层级 | 函数族 | 规划 | 已实现 |
-|------|--------|------|--------|
-| 内层 | plotit() + encode() | 2 | 2 (100%) |
-| 内层 | mark_* | 22 | 6 (27%) | 基础 11 + 分布 5 + 关系 5 + 地理 1，见 §3.2 完整规划 |
-| 内层 | scale_* / project_* / split_* / label_* / style+export | 8+4+2+5+3=22 | 22 (100%) |
-| 最外层 | compose_* | 3 | 3 (100%) |
-| **总计** | | **~49** | **33 (67%)** |
+### 9.0 阶段总览
 
-### 8.2 1.0 前必做检查项
+| 阶段 | 名称 | 范围 | 状态 |
+|---|---|---|---|
+| 0 | 固本 | 架构清债 + 代码质量 | ⬜ 未开始 |
+| 1 | mark 首批 | area / text / violin / map | ⬜ 未开始 |
+| 2 | mark 第二批 | rect / rule / treemap | ⬜ 未开始 |
+| 3 | mark 第三批 | arc / path / sankey | ⬜ 未开始 |
+| 4 | mark 第四批 | tick / polygon / network / chord | ⬜ 未开始 |
+| 5 | 收尾 | 文档补齐、全量验证、发布准备 | ⬜ 未开始 |
 
-- [ ] mark_* 扩至至少 15 个（重点：area, text, rect, rule, arc, path, tick, violin, density → 当前 6/22，见 §3.2 完整规划表）
-- [x] 3 篇 vignette（"Getting Started" / "Customizing Plots" / "Composing Figures"）
-- [x] pkgdown 网站 + GitHub Actions CI
-- [ ] 所有导出函数补充 `@examples`
-- [x] BDD 测试覆盖率提到 ~55%
-- [x] S7 版本锁定
-- [x] styler + roxygenize 每次 PR 前执行
+---
+
+### 9.1 阶段 0：固本（基础设施清理）
+
+在扩展 mark 之前清理架构债务和代码质量问题，确立干净的基线。
+
+| # | 任务 | 优先级 | 说明 |
+|---|------|--------|------|
+| 0.1 | **Patchwork 剥离** | P0 | `@gg` 改为存储纯 ggplot（非 patchwork）。面板尺寸在 print/export 时通过 `ggplot_build()` + `grid` 修 gtable 实现。移除 `._reset_sizing()`、`._assemble_plots()` 中对 patchwork 的依赖。`plotit()` 构造函数简化（不再调用 `plot_layout()`）。**风险**：gtable 测量精度在不同 ggplot2 版本间可能漂移，需 ±1% 容差验证。 |
+| 0.2 | **`._sync_labels` 重构** | P1 | 5 个重复 if 块（title/subtitle/caption/x/y）抽象为循环或统一辅助函数 `._sync_one_label(plot, slot, theme_el, labs_el)`。不改行为，只消除重复。 |
+| 0.3 | **mark_* 工厂函数** | P1 | 创建 `._make_mark(name, geom_fun)` 工厂函数，生成 S7 泛型+方法。每个 mark 定义从 ~15 行缩减到 1 行调用。不改对外 API 和文档。 |
+| 0.4 | **补齐 `@examples`** | P2 | 当前所有导出函数补充可运行 `@examples`（需外部包如 sf/mapproj 的用 `\dontrun{}`，自包含的用 `\donttest{}`）。 |
+
+**验收标准**：
+
+| 任务 | 验收标准 |
+|---|---|
+| 0.1 | `@gg` 始终为纯 ggplot 对象；`plotit()` 不再依赖 patchwork；320 项已有测试全部通过 |
+| 0.2 | `._sync_labels` 无重复代码；320 项已有测试全部通过 |
+| 0.3 | 每个 mark 定义 ≤5 行；无新增 lintr 警告；测试通过 |
+| 0.4 | `R CMD check` 零 ERROR（允许 NOTE）；每个导出函数有 `@examples` |
+
+**风险点**：
+
+| 风险 | 缓解措施 |
+|---|---|
+| Patchwork 剥离导致 compose_* 需要重写 | 按照 §3.3.10 路线图分步实施；先在分支验证再合入 |
+| gtable 测量跨版本漂移 | 契约容差设为 ±3%（放宽至 ≥1.0 版本收紧为 ±1%） |
+| 工厂函数改变 S7 泛型的调试体验 | 保留 `@export` 标签让 roxygen2 正常生成文档 |
+
+---
+
+### 9.2 阶段 1–4：mark 类型扩展
+
+每阶段从四个类别中各选 1-2 个最高价值的 mark。每个 mark 附带：S7 泛型+方法、roxygen 文档（`@examples`）、BDD 测试（≥3 个 test_that）。
+
+**通用验收标准**（每个 mark）：
+
+- [ ] S7 泛型 + 方法注册正确，管道兼容
+- [ ] `@examples` 可独立运行（`\donttest{}` 或 `\dontrun{}` 按需）
+- [ ] BDD 测试 ≥3 个（正常路径 + 参数变体 + 错误路径）
+- [ ] `R CMD check` 零 ERROR
+- [ ] 新增 mark 添加到 AGENTS.md §3.2 已实现表
+
+---
+
+#### 阶段 1：area / text / violin / map
+
+| # | mark | 类别 | 依赖包 | 复杂度 | 对应实现 |
+|---|---|---|---|---|---|
+| 1.1 | `mark_area` | 基础几何 | ggplot2 | 低 | `geom_area`/`geom_ribbon` |
+| 1.2 | `mark_text` | 基础几何 | ggplot2（可选 ggrepel） | 中 | `geom_text`/`geom_label` |
+| 1.3 | `mark_violin` | 分布展示 | ggplot2 | 低 | `geom_violin` |
+| 1.4 | `mark_map` | 地理空间 | sf（可选） | 中 | `geom_sf` — 对标 VL `geoshape`/G2 `geoPath` |
+
+**阶段 1 风险**：
+
+| 风险 | 缓解措施 |
+|---|---|
+| `mark_text` 参数复杂（hjust/vjust/nudge_x/check_overlap 等） | 只封装常用参数，其余通过 `...` 透传 |
+| `mark_map` 依赖 sf → CRAN 上不是所有平台可用 | 设为 `Suggests`，示例用 `\dontrun{}` |
+
+---
+
+#### 阶段 2：rect / rule / treemap
+
+| # | mark | 类别 | 依赖包 | 复杂度 | 对应实现 |
+|---|---|---|---|---|---|
+| 2.1 | `mark_rect` | 基础几何 | ggplot2 | 低 | `geom_tile`/`geom_rect` |
+| 2.2 | `mark_rule` | 基础几何 | ggplot2 | 中 | `geom_hline`/`geom_vline`/`geom_abline`/`geom_segment` — 按 orientation 自动分发 |
+| 2.3 | `mark_treemap` | 关系层次 | treemapify（Suggests） | 中 | `treemapify::geom_treemap` |
+
+**阶段 2 风险**：
+
+| 风险 | 缓解措施 |
+|---|---|
+| `mark_rule` 需处理 4 种底层 geom → API 设计复杂 | 统一为 `mark_rule(orientation, intercept, ...)` 签名 |
+| treemapify 维护频率低（最后更新 2023） | 提供 fallback：无 treemapify 时 `mark_rect` + 数据预处理 |
+
+---
+
+#### 阶段 3：arc / path / sankey
+
+| # | mark | 类别 | 依赖包 | 复杂度 | 对应实现 |
+|---|---|---|---|---|---|
+| 3.1 | `mark_arc` | 基础几何 | ggplot2 + ggforce（可选） | 中 | `geom_bar`+`coord_polar`（饼图/环形图）或 `ggforce::geom_arc_bar`（玫瑰图） |
+| 3.2 | `mark_path` | 基础几何 | ggplot2 | 低 | `geom_path` |
+| 3.3 | `mark_sankey` | 关系层次 | ggsankey（Suggests） | 高 | `ggsankey::geom_sankey` |
+
+**阶段 3 风险**：
+
+| 风险 | 缓解措施 |
+|---|---|
+| `mark_arc` 与 `mark_bar`+`project_polar` 功能重叠 | 明确分工：`mark_arc` 用于 pre-aggregated 值域（Theta 映射），`mark_bar`+`project_polar` 用于已映射到 x 的原始数据 |
+| ggsankey API 不稳定 | 锁定最低版本，`mark_sankey` 只暴露稳定参数 |
+
+---
+
+#### 阶段 4：tick / polygon / network / chord
+
+| # | mark | 类别 | 依赖包 | 复杂度 | 对应实现 |
+|---|---|---|---|---|---|
+| 4.1 | `mark_tick` | 基础几何 | ggplot2 | 低 | `geom_rug` |
+| 4.2 | `mark_polygon` | 基础几何 | ggplot2 | 低 | `geom_polygon` |
+| 4.3 | `mark_network` | 关系层次 | ggraph + igraph（Suggests） | 高 | `ggraph::geom_edge_*` + `ggraph::geom_node_*` |
+| 4.4 | `mark_chord` | 关系层次 | circlize（Suggests） | 高 | `circlize::chordDiagram` 或纯 ggplot2 弦图实现 |
+
+**阶段 4 风险**：
+
+| 风险 | 缓解措施 |
+|---|---|
+| `mark_network` 依赖两个重包（ggraph + igraph） | 设为 Suggests，示例用 `\dontrun{}` |
+| circlize 使用 base R 图形系统非 ggplot2 → 集成复杂 | 评估用 `geom_segment` + `geom_polygon` 纯 ggplot2 实现替代 |
+
+---
+
+### 9.3 阶段 5：收尾
+
+| # | 任务 | 说明 |
+|---|------|------|
+| 5.1 | **全量 @examples 验证** | 所有导出函数 `@examples` 在 `R CMD check --as-cran` 下零 ERROR |
+| 5.2 | **Vignette 更新** | "Customizing Plots" vignette 覆盖新增的 mark 类型和典型组合场景 |
+| 5.3 | **README 更新** | README 用法表格反映当前 mark 总数 |
+| 5.4 | **全量检查** | `R CMD check` + `lintr::lint_package()` + `styler::style_pkg()` 零问题 |
+| 5.5 | **版本号** | DESCRIPTION 版本从 0.0.0.9000 → 1.0.0 |
+| 5.6 | **NEWS.md** | 汇总所有变更，按函数族分组 |
+
+**验收标准**：
+
+- [ ] 22 种 mark 至少 15 个已实现并测试通过（≥60% mark 覆盖率）
+- [ ] `R CMD check` 4 平台（Linux/macOS/Windows + R-devel）零 ERROR 零 WARNING
+- [ ] `lintr::lint_package()` 零 lint 问题
+- [ ] pkgdown 网站完整渲染所有函数参考页
+- [ ] 3 篇 vignette 内容与当前 API 一致
+
+---
+
+### 9.4 当前 API 完成度
+
+| 层级 | 函数族 | 1.0 目标 | 已实现 | 完成度 |
+|------|--------|----------|--------|--------|
+| 内层 | plotit + encode | 2 | 2 | 100% |
+| 内层 | mark_* | 22（目标 ≥15） | 6 | 27% |
+| 内层 | scale_* + project_* + split_* + label_* + style+export | 22 | 22 | 100% |
+| 最外层 | compose_* | 3 | 3 | 100% |
+| **总计** | | **~49** | **33** | **67%** |
+
+### 9.5 1.0 检查清单
+
+**阶段 0（固本）**：
+- [ ] Patchwork 剥离：`@gg` 为纯 ggplot
+- [ ] `._sync_labels` 无重复代码
+- [ ] mark_* 工厂函数：每个定义 ≤5 行
+- [ ] 所有导出函数有 `@examples`
+
+**阶段 1–4（mark 扩展）**：
+- [ ] mark_area ✅
+- [ ] mark_text ✅
+- [ ] mark_rect ✅
+- [ ] mark_rule ✅
+- [ ] mark_arc ✅
+- [ ] mark_polygon ✅
+- [ ] mark_path ✅
+- [ ] mark_tick ✅
+- [ ] mark_violin ✅
+- [ ] mark_treemap ✅
+- [ ] mark_sankey ✅
+- [ ] mark_network ✅
+- [ ] mark_chord ✅
+- [ ] mark_map ✅
+- [ ] mark_beeswarm（低优先级，可选）
+
+**阶段 5（收尾）**：
+- [ ] `R CMD check` 4 平台零 ERROR 零 WARNING
+- [ ] lintr 零问题
+- [ ] pkgdown 完整渲染
+- [ ] Vignette / README 更新
+- [ ] 版本号 1.0.0
+- [ ] NEWS.md 汇总
 
 ---
 
