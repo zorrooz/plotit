@@ -60,55 +60,71 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="plotit">plotit<a class="anchor" aria-label="anchor" href="#plotit"></a>
 </h1></div>
-<p><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental" class="external-link"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a></p>
+<!-- badges: start -->
+
 <p align="center">
 <a href="README_ZH.html">简体中文</a> | <b>English</b>
 </p>
-<p><strong>plotit</strong> is a declarative, pipeline-friendly plotting package built on <a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a>. It provides a unified <strong>verb-prefix API</strong> that turns data into publication-ready charts in a single pipeline — sensible defaults, zero boilerplate.</p>
+<blockquote>
+<p>⚠️ <strong>Early development stage.</strong><br>
+plotit is under active, pre-release development. Breaking changes are <strong>extremely likely</strong> with every update. The API is incomplete, many planned features are missing, and bugs are expected. Do not use in production. Use at your own risk. Feedback and contributions are welcome.</p>
+</blockquote>
+<hr>
+<div class="section level2">
+<h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
+</h2>
+<p><strong>plotit</strong> is a declarative, pipeline-first R package for creating publication-quality visualisations. Built on <a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a>, it replaces <code>+</code>-based layering with a unified <strong>verb-prefix API</strong> powered by the native pipe (<code>|&gt;</code>). Sensible defaults eliminate boilerplate — colour, theme, and sizing work out of the box.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/zorrooz/plotit" class="external-link">plotit</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">iris</span> <span class="op">|&gt;</span></span>
-<span> <span class="fu"><a href="reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Sepal.Width</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span>, colour <span class="op">=</span> <span class="va">Species</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span> <span class="fu"><a href="reference/mark_point.html">mark_point</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">2</span>, alpha <span class="op">=</span> <span class="fl">0.7</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span> <span class="fu"><a href="reference/scale_color.html">scale_color</a></span><span class="op">(</span>range <span class="op">=</span> <span class="st">"viridis"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span> <span class="fu"><a href="reference/label_title.html">label_title</a></span><span class="op">(</span><span class="st">"Iris Sepal Dimensions"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span> <span class="fu"><a href="reference/label_axis.html">label_axis</a></span><span class="op">(</span>text <span class="op">=</span> <span class="st">"Sepal Width"</span>, aes <span class="op">=</span> <span class="st">"x"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span> <span class="fu"><a href="reference/label_axis.html">label_axis</a></span><span class="op">(</span>text <span class="op">=</span> <span class="st">"Sepal Length"</span>, aes <span class="op">=</span> <span class="st">"y"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span> <span class="fu"><a href="reference/style.html">style</a></span><span class="op">(</span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">14</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span> <span class="fu"><a href="reference/export.html">export</a></span><span class="op">(</span><span class="st">"iris_plot.pdf"</span><span class="op">)</span></span></code></pre></div>
-<details><summary>
-vs base ggplot2
-</summary><div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># plotit — 4 lines</span></span>
-<span><span class="va">iris</span> <span class="op">|&gt;</span></span>
-<span> <span class="fu"><a href="reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Sepal.Width</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span>, colour <span class="op">=</span> <span class="va">Species</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span> <span class="fu"><a href="reference/mark_point.html">mark_point</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">2</span>, alpha <span class="op">=</span> <span class="fl">0.7</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span> <span class="fu"><a href="reference/scale_color.html">scale_color</a></span><span class="op">(</span>range <span class="op">=</span> <span class="st">"viridis"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span> <span class="fu"><a href="reference/label_title.html">label_title</a></span><span class="op">(</span><span class="st">"Iris Sepal Dimensions"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># base ggplot2 — 3 lines</span></span>
-<span><span class="fu">ggplot</span><span class="op">(</span><span class="va">iris</span>, <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">Sepal.Width</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span>, colour <span class="op">=</span> <span class="va">Species</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span> <span class="fu">geom_point</span><span class="op">(</span>size <span class="op">=</span> <span class="fl">2</span>, alpha <span class="op">=</span> <span class="fl">0.7</span><span class="op">)</span> <span class="op">+</span></span>
-<span> <span class="fu">scale_colour_viridis_d</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span> <span class="fu">labs</span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Iris Sepal Dimensions"</span><span class="op">)</span></span></code></pre></div>
-</details><hr>
+<span>  <span class="fu"><a href="reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Sepal.Width</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span>, colour <span class="op">=</span> <span class="va">Species</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/mark_point.html">mark_point</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">2</span>, alpha <span class="op">=</span> <span class="fl">0.7</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/scale_color.html">scale_color</a></span><span class="op">(</span>range <span class="op">=</span> <span class="st">"viridis"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/label_title.html">label_title</a></span><span class="op">(</span><span class="st">"Iris Sepal Dimensions"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/style.html">style</a></span><span class="op">(</span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">14</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/export.html">export</a></span><span class="op">(</span><span class="st">"iris_plot.pdf"</span><span class="op">)</span></span></code></pre></div>
+</div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<p>You can install the development version of plotit from GitHub:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"zorrooz/plotit"</span><span class="op">)</span></span></code></pre></div>
-<hr>
 </div>
 <div class="section level2">
-<h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
+<h2 id="quick-start">Quick start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
 </h2>
-<div class="section level3">
-<h3 id="pipeline-pattern">Pipeline pattern<a class="anchor" aria-label="anchor" href="#pipeline-pattern"></a>
-</h3>
-<p>plotit has two levels of operation:</p>
-<p><strong>Single-plot pipeline</strong> — build one chart from data:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/zorrooz/plotit" class="external-link">plotit</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Scatter plot with colour mapping</span></span>
+<span><span class="va">iris</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Sepal.Width</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span>, colour <span class="op">=</span> <span class="va">Species</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/mark_point.html">mark_point</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Bar chart of counts</span></span>
+<span><span class="va">mtcars</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/mark_bar.html">mark_bar</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Line chart for time series</span></span>
+<span><span class="fu">ggplot2</span><span class="fu">::</span><span class="va"><a href="https://ggplot2.tidyverse.org/reference/economics.html" class="external-link">economics</a></span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">date</span>, y <span class="op">=</span> <span class="va">unemploy</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/mark_line.html">mark_line</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Multi-plot dashboard</span></span>
+<span><span class="va">p1</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/plotit.html">plotit</a></span><span class="op">(</span><span class="va">iris</span>, <span class="fu"><a href="reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Sepal.Width</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/mark_point.html">mark_point</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">p2</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/plotit.html">plotit</a></span><span class="op">(</span><span class="va">iris</span>, <span class="fu"><a href="reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Species</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/mark_boxplot.html">mark_boxplot</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/compose_grid.html">compose_grid</a></span><span class="op">(</span><span class="va">p1</span>, <span class="va">p2</span>, tag_levels <span class="op">=</span> <span class="st">"A"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/label_title.html">label_title</a></span><span class="op">(</span><span class="st">"Iris Dashboard"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/export.html">export</a></span><span class="op">(</span><span class="st">"dashboard.png"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="the-pipeline">The pipeline<a class="anchor" aria-label="anchor" href="#the-pipeline"></a>
+</h2>
+<p>Every plotit chart follows a consistent pipeline:</p>
 <pre><code>data |&gt; plotit(encode(...)) |&gt; mark_*() |&gt; scale_*() |&gt; label_*() |&gt; project_*() |&gt; split_*() |&gt; style() |&gt; export()</code></pre>
 <table class="table">
 <colgroup>
@@ -118,24 +134,26 @@ vs base ggplot2
 </colgroup>
 <thead><tr>
 <th align="left">Step</th>
-<th align="left">Function</th>
-<th align="left">Job</th>
+<th align="left">Verb</th>
+<th align="left">Role</th>
 </tr></thead>
 <tbody>
 <tr>
-<td align="left">1. Create</td>
-<td align="left"><code><a href="reference/plotit.html">plotit()</a></code></td>
-<td align="left">Initialise the plot with data &amp; aesthetic mappings</td>
+<td align="left">1. Initialise</td>
+<td align="left">
+<code><a href="reference/plotit.html">plotit()</a></code> + <code><a href="reference/encode.html">encode()</a></code>
+</td>
+<td align="left">Bind data and aesthetic mappings</td>
 </tr>
 <tr>
 <td align="left">2. Layer</td>
 <td align="left"><code>mark_*()</code></td>
-<td align="left">Add geometric layers</td>
+<td align="left">Add geometric layers (points, lines, bars, …)</td>
 </tr>
 <tr>
 <td align="left">3. Scale</td>
 <td align="left"><code>scale_*()</code></td>
-<td align="left">Control data-to-visual mapping</td>
+<td align="left">Control how data maps to visual properties</td>
 </tr>
 <tr>
 <td align="left">4. Label</td>
@@ -145,7 +163,7 @@ vs base ggplot2
 <tr>
 <td align="left">5. Coordinate</td>
 <td align="left"><code>project_*()</code></td>
-<td align="left">Set coordinate system</td>
+<td align="left">Choose coordinate system (cartesian, polar, map)</td>
 </tr>
 <tr>
 <td align="left">6. Facet</td>
@@ -155,7 +173,7 @@ vs base ggplot2
 <tr>
 <td align="left">7. Theme</td>
 <td align="left"><code><a href="reference/style.html">style()</a></code></td>
-<td align="left">Apply a ggplot2 theme</td>
+<td align="left">Apply a complete theme</td>
 </tr>
 <tr>
 <td align="left">8. Export</td>
@@ -164,164 +182,21 @@ vs base ggplot2
 </tr>
 </tbody>
 </table>
-<p><strong>Multi-plot composition</strong> — assemble multiple <code>plotit</code> objects into one layout (outermost layer):</p>
+<p>Multi-plot compositions follow their own outermost pipeline:</p>
 <pre><code>compose_*(p1, p2, ...) |&gt; label_*() |&gt; style() |&gt; export()</code></pre>
-<table class="table">
-<colgroup>
-<col width="33%">
-<col width="33%">
-<col width="33%">
-</colgroup>
-<thead><tr>
-<th align="left">Step</th>
-<th align="left">Function</th>
-<th align="left">Job</th>
-</tr></thead>
-<tbody>
-<tr>
-<td align="left">1. Assemble</td>
-<td align="left"><code>compose_*()</code></td>
-<td align="left">Combine multiple <code>plotit</code> objects into a composite layout</td>
-</tr>
-<tr>
-<td align="left">2. Label</td>
-<td align="left">
-<code><a href="reference/label_title.html">label_title()</a></code> / <code><a href="reference/label_subtitle.html">label_subtitle()</a></code> / <code><a href="reference/label_caption.html">label_caption()</a></code>
-</td>
-<td align="left">Set composite-level titles</td>
-</tr>
-<tr>
-<td align="left">3. Theme</td>
-<td align="left"><code><a href="reference/style.html">style()</a></code></td>
-<td align="left">Apply a ggplot2 theme to the composite</td>
-</tr>
-<tr>
-<td align="left">4. Export</td>
-<td align="left"><code><a href="reference/export.html">export()</a></code></td>
-<td align="left">Render the composite to file</td>
-</tr>
-</tbody>
-</table>
-<blockquote>
-<p><strong>Key difference</strong>: Single-plot functions (<code>mark_*</code>, <code>scale_*</code>, <code>project_*</code>, <code>split_*</code>, <code>label_axis</code>, <code>label_legend</code>) operate on <strong>one <code>plotit</code> object with data</strong>. <code>compose_*</code> operates on <strong>multiple <code>plotit</code> objects</strong> and returns a <code>plotit_composite</code> — it is the outermost layer, applied after individual plots are built.</p>
-</blockquote>
-</div>
-<div class="section level3">
-<h3 id="function-families">Function families<a class="anchor" aria-label="anchor" href="#function-families"></a>
-</h3>
-<p><strong>Single-plot families</strong> (inner layer):</p>
-<table class="table">
-<colgroup>
-<col width="25%">
-<col width="25%">
-<col width="25%">
-<col width="25%">
-</colgroup>
-<thead><tr>
-<th align="left">Family</th>
-<th align="left">Prefix</th>
-<th align="left">Purpose</th>
-<th align="left">Examples</th>
-</tr></thead>
-<tbody>
-<tr>
-<td align="left">Create</td>
-<td align="left">
-<code><a href="reference/plotit.html">plotit()</a></code> + <code><a href="reference/encode.html">encode()</a></code>
-</td>
-<td align="left">Initialise plot with data &amp; aesthetic mappings</td>
-<td align="left"><code>plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))</code></td>
-</tr>
-<tr>
-<td align="left">Layer</td>
-<td align="left"><code>mark_*</code></td>
-<td align="left">Geometric layers</td>
-<td align="left">
-<code><a href="reference/mark_point.html">mark_point()</a></code>, <code><a href="reference/mark_line.html">mark_line()</a></code>, <code><a href="reference/mark_bar.html">mark_bar()</a></code>, <code><a href="reference/mark_boxplot.html">mark_boxplot()</a></code>, <code><a href="reference/mark_histogram.html">mark_histogram()</a></code>, <code><a href="reference/mark_density.html">mark_density()</a></code>
-</td>
-</tr>
-<tr>
-<td align="left">Scale</td>
-<td align="left"><code>scale_*</code></td>
-<td align="left">Data → visual mapping</td>
-<td align="left">
-<code>scale_x(trans = "log")</code>, <code>scale_color(range = "viridis")</code>
-</td>
-</tr>
-<tr>
-<td align="left">Label</td>
-<td align="left"><code>label_*</code></td>
-<td align="left">Titles, axis &amp; legend labels</td>
-<td align="left">
-<code>label_title("Title")</code>, <code>label_axis("X", aes = "x")</code>, <code>label_legend("Species", aes = "colour")</code>
-</td>
-</tr>
-<tr>
-<td align="left">Coordinate</td>
-<td align="left"><code>project_*</code></td>
-<td align="left">Coordinate systems</td>
-<td align="left">
-<code>project_cartesian(flip = TRUE)</code>, <code><a href="reference/project_polar.html">project_polar()</a></code>
-</td>
-</tr>
-<tr>
-<td align="left">Facet</td>
-<td align="left"><code>split_*</code></td>
-<td align="left">Facet layouts</td>
-<td align="left">
-<code>split_wrap(Species)</code>, <code>split_grid(rows = vars(cyl))</code>
-</td>
-</tr>
-<tr>
-<td align="left">Theme</td>
-<td align="left"><code><a href="reference/style.html">style()</a></code></td>
-<td align="left">Apply ggplot2 theme</td>
-<td align="left"><code>style(theme_minimal(base_size = 14))</code></td>
-</tr>
-<tr>
-<td align="left">Export</td>
-<td align="left"><code><a href="reference/export.html">export()</a></code></td>
-<td align="left">Render to file</td>
-<td align="left"><code>export("plot.pdf", dpi = 300)</code></td>
-</tr>
-</tbody>
-</table>
-<p><strong>Multi-plot composition</strong> (outermost layer — operates on <code>plotit</code> objects, not data):</p>
-<table class="table">
-<colgroup>
-<col width="25%">
-<col width="25%">
-<col width="25%">
-<col width="25%">
-</colgroup>
-<thead><tr>
-<th align="left">Family</th>
-<th align="left">Prefix</th>
-<th align="left">Purpose</th>
-<th align="left">Examples</th>
-</tr></thead>
-<tbody><tr>
-<td align="left">Compose</td>
-<td align="left"><code>compose_*</code></td>
-<td align="left">Assemble multiple <code>plotit</code> objects into one layout</td>
-<td align="left">
-<code><a href="reference/compose_grid.html">compose_grid()</a></code>, <code><a href="reference/compose_inset.html">compose_inset()</a></code>, <code><a href="reference/compose_marginal.html">compose_marginal()</a></code>
-</td>
-</tr></tbody>
-</table>
-<hr>
-</div>
 </div>
 <div class="section level2">
-<h2 id="mark_--geometric-layers">
-<code>mark_*</code> — Geometric Layers<a class="anchor" aria-label="anchor" href="#mark_--geometric-layers"></a>
+<h2 id="function-families">Function families<a class="anchor" aria-label="anchor" href="#function-families"></a>
 </h2>
-<p>Six mark functions, unified signature (<code>mapping</code>, <code>data</code>, <code>position</code>, <code>rasterize</code>, <code>...</code>).</p>
+<div class="section level3">
+<h3 id="mark_--geometric-layers">
+<code>mark_*</code> — Geometric layers<a class="anchor" aria-label="anchor" href="#mark_--geometric-layers"></a>
+</h3>
 <table class="table">
 <thead><tr>
 <th align="left">Function</th>
 <th align="left">ggplot2</th>
-<th align="left">Use for</th>
+<th align="left">Description</th>
 </tr></thead>
 <tbody>
 <tr>
@@ -332,7 +207,7 @@ vs base ggplot2
 <tr>
 <td align="left"><code><a href="reference/mark_line.html">mark_line()</a></code></td>
 <td align="left"><code>geom_line()</code></td>
-<td align="left">Lines, trends, time series</td>
+<td align="left">Lines and trends</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/mark_bar.html">mark_bar()</a></code></td>
@@ -344,7 +219,7 @@ vs base ggplot2
 <tr>
 <td align="left"><code><a href="reference/mark_boxplot.html">mark_boxplot()</a></code></td>
 <td align="left"><code>geom_boxplot()</code></td>
-<td align="left">Distributions by group</td>
+<td align="left">Box-and-whisker plots</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/mark_histogram.html">mark_histogram()</a></code></td>
@@ -354,261 +229,60 @@ vs base ggplot2
 <tr>
 <td align="left"><code><a href="reference/mark_density.html">mark_density()</a></code></td>
 <td align="left"><code>geom_density()</code></td>
-<td align="left">Density curves</td>
+<td align="left">Kernel density estimates</td>
 </tr>
 </tbody>
 </table>
-<hr>
 </div>
-<div class="section level2">
-<h2 id="scale_--data-to-visual-mapping">
-<code>scale_*</code> — Data-to-Visual Mapping<a class="anchor" aria-label="anchor" href="#scale_--data-to-visual-mapping"></a>
-</h2>
-<p>Eight functions with identical parameters — only the <code>trans</code> default varies.</p>
+<div class="section level3">
+<h3 id="scale_--data-to-visual-mapping">
+<code>scale_*</code> — Data-to-visual mapping<a class="anchor" aria-label="anchor" href="#scale_--data-to-visual-mapping"></a>
+</h3>
 <table class="table">
 <thead><tr>
 <th align="left">Function</th>
 <th align="left">Aesthetic</th>
-<th align="left">
-<code>trans</code> default</th>
 </tr></thead>
 <tbody>
 <tr>
 <td align="left"><code><a href="reference/scale_color.html">scale_color()</a></code></td>
 <td align="left">colour</td>
-<td align="left">
-<code>NULL</code> (auto-detect)</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/scale_fill.html">scale_fill()</a></code></td>
 <td align="left">fill</td>
-<td align="left">
-<code>NULL</code> (auto-detect)</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/scale_size.html">scale_size()</a></code></td>
 <td align="left">size</td>
-<td align="left">
-<code>NULL</code> (auto-detect)</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/scale_alpha.html">scale_alpha()</a></code></td>
 <td align="left">alpha</td>
-<td align="left">
-<code>NULL</code> (auto-detect)</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/scale_shape.html">scale_shape()</a></code></td>
 <td align="left">shape</td>
-<td align="left"><code>"discrete"</code></td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/scale_linetype.html">scale_linetype()</a></code></td>
 <td align="left">linetype</td>
-<td align="left"><code>"discrete"</code></td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/scale_x.html">scale_x()</a></code></td>
-<td align="left">x</td>
-<td align="left"><code>"identity"</code></td>
+<td align="left">x-axis</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/scale_y.html">scale_y()</a></code></td>
-<td align="left">y</td>
-<td align="left"><code>"identity"</code></td>
-</tr>
-</tbody>
-</table>
-<p>All accept <code>name</code>, <code>limits</code>, <code>range</code>, <code>breaks</code>, <code>labels</code>, <code>...</code>.</p>
-<table class="table">
-<colgroup>
-<col width="33%">
-<col width="33%">
-<col width="33%">
-</colgroup>
-<thead><tr>
-<th align="left">Parameter</th>
-<th align="left">Answers</th>
-<th align="left">Example</th>
-</tr></thead>
-<tbody>
-<tr>
-<td align="left"><code>range</code></td>
-<td align="left">Map to <strong>what</strong> visual values?</td>
-<td align="left">
-<code>"viridis"</code>, <code>c("blue","red")</code>
-</td>
-</tr>
-<tr>
-<td align="left"><code>trans</code></td>
-<td align="left">
-<strong>How</strong> to transform the data?</td>
-<td align="left">
-<code>"log"</code>, <code>"reverse"</code>, <code>"binned"</code>
-</td>
-</tr>
-<tr>
-<td align="left"><code>limits</code></td>
-<td align="left">What data range to include?</td>
-<td align="left"><code>c(0, 100)</code></td>
-</tr>
-<tr>
-<td align="left"><code>breaks</code></td>
-<td align="left">Where to place ticks / keys?</td>
-<td align="left"><code>c(2, 4, 6)</code></td>
-</tr>
-<tr>
-<td align="left"><code>labels</code></td>
-<td align="left">What to call them?</td>
-<td align="left"><code>c("low", "mid", "high")</code></td>
-</tr>
-<tr>
-<td align="left"><code>name</code></td>
-<td align="left">What to call the scale?</td>
-<td align="left"><code>"Engine Size"</code></td>
-</tr>
-</tbody>
-</table>
-<div class="section level3">
-<h3 id="range-quick-reference">
-<code>range</code> quick reference<a class="anchor" aria-label="anchor" href="#range-quick-reference"></a>
-</h3>
-<table class="table">
-<colgroup>
-<col width="25%">
-<col width="25%">
-<col width="25%">
-<col width="25%">
-</colgroup>
-<thead><tr>
-<th align="left">Aesthetic</th>
-<th align="left"><code>range = NULL</code></th>
-<th align="left"><code>range = "name"</code></th>
-<th align="left"><code>range = c(a, b)</code></th>
-</tr></thead>
-<tbody>
-<tr>
-<td align="left">colour, fill</td>
-<td align="left">auto (discrete→hue, continuous→viridis)</td>
-<td align="left">
-<code>"viridis"</code>, <code>"brewer"</code>, <code>"grey"</code>, <code>"hue"</code>
-</td>
-<td align="left"><code>c("blue", "red")</code></td>
-</tr>
-<tr>
-<td align="left">size</td>
-<td align="left"><code>c(1, 6)</code></td>
-<td align="left">—</td>
-<td align="left"><code>c(0.5, 10)</code></td>
-</tr>
-<tr>
-<td align="left">alpha</td>
-<td align="left"><code>c(0.1, 1)</code></td>
-<td align="left">—</td>
-<td align="left"><code>c(0, 0.8)</code></td>
-</tr>
-<tr>
-<td align="left">shape</td>
-<td align="left">default shapes</td>
-<td align="left">—</td>
-<td align="left"><code>c(1, 16)</code></td>
-</tr>
-<tr>
-<td align="left">linetype</td>
-<td align="left">default linetypes</td>
-<td align="left">—</td>
-<td align="left"><code>c("solid", "dashed")</code></td>
-</tr>
-<tr>
-<td align="left">x, y</td>
-<td align="left">data-driven</td>
-<td align="left">—</td>
-<td align="left"><code>c(0, 100)</code></td>
+<td align="left">y-axis</td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="section level3">
-<h3 id="trans-quick-reference">
-<code>trans</code> quick reference<a class="anchor" aria-label="anchor" href="#trans-quick-reference"></a>
+<h3 id="label_--text-labels">
+<code>label_*</code> — Text labels<a class="anchor" aria-label="anchor" href="#label_--text-labels"></a>
 </h3>
-<table class="table">
-<thead><tr>
-<th align="left"><code>trans</code></th>
-<th align="left">Effect</th>
-<th align="left">Works on</th>
-</tr></thead>
-<tbody>
-<tr>
-<td align="left"><code>"identity"</code></td>
-<td align="left">Linear (default)</td>
-<td align="left">All</td>
-</tr>
-<tr>
-<td align="left">
-<code>"log"</code>, <code>"log10"</code>, <code>"log2"</code>
-</td>
-<td align="left">Logarithmic</td>
-<td align="left">x, y</td>
-</tr>
-<tr>
-<td align="left"><code>"sqrt"</code></td>
-<td align="left">Square-root</td>
-<td align="left">x, y</td>
-</tr>
-<tr>
-<td align="left"><code>"reverse"</code></td>
-<td align="left">Reverse order</td>
-<td align="left">All</td>
-</tr>
-<tr>
-<td align="left"><code>"discrete"</code></td>
-<td align="left">Treat as categories</td>
-<td align="left">All</td>
-</tr>
-<tr>
-<td align="left"><code>"binned"</code></td>
-<td align="left">Bin, then discretize</td>
-<td align="left">All except shape, linetype</td>
-</tr>
-</tbody>
-</table>
-<hr>
-</div>
-</div>
-<div class="section level2">
-<h2 id="label_--text-labels">
-<code>label_*</code> — Text Labels<a class="anchor" aria-label="anchor" href="#label_--text-labels"></a>
-</h2>
-<p>Five functions with a three-parameter protocol:</p>
-<table class="table">
-<colgroup>
-<col width="50%">
-<col width="50%">
-</colgroup>
-<thead><tr>
-<th align="left">Call</th>
-<th align="left">Behaviour</th>
-</tr></thead>
-<tbody>
-<tr>
-<td align="left"><code>label_*(text = "str")</code></td>
-<td align="left">Set custom text</td>
-</tr>
-<tr>
-<td align="left"><code>label_*(hide = TRUE)</code></td>
-<td align="left">Remove element and its space</td>
-</tr>
-<tr>
-<td align="left"><code>label_*(reset = TRUE)</code></td>
-<td align="left">Restore variable name (axis/legend) or remove (title)</td>
-</tr>
-<tr>
-<td align="left"><em>(not called)</em></td>
-<td align="left">Preserve current state</td>
-</tr>
-</tbody>
-</table>
 <table class="table">
 <thead><tr>
 <th align="left">Function</th>
@@ -629,182 +303,129 @@ vs base ggplot2
 </tr>
 <tr>
 <td align="left"><code><a href="reference/label_axis.html">label_axis()</a></code></td>
-<td align="left">Axis titles — <code>aes = "x"</code> or <code>"y"</code> (required)</td>
+<td align="left">Axis titles</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/label_legend.html">label_legend()</a></code></td>
-<td align="left">Legend titles — <code>aes = "colour"</code>, <code>"fill"</code>, …</td>
+<td align="left">Legend titles</td>
 </tr>
 </tbody>
 </table>
-<hr>
 </div>
-<div class="section level2">
-<h2 id="project_--coordinate-systems">
-<code>project_*</code> — Coordinate Systems<a class="anchor" aria-label="anchor" href="#project_--coordinate-systems"></a>
-</h2>
+<div class="section level3">
+<h3 id="project_--coordinate-systems">
+<code>project_*</code> — Coordinate systems<a class="anchor" aria-label="anchor" href="#project_--coordinate-systems"></a>
+</h3>
 <table class="table">
-<colgroup>
-<col width="33%">
-<col width="33%">
-<col width="33%">
-</colgroup>
 <thead><tr>
 <th align="left">Function</th>
 <th align="left">Description</th>
-<th align="left">Key params</th>
 </tr></thead>
 <tbody>
 <tr>
 <td align="left"><code><a href="reference/project_cartesian.html">project_cartesian()</a></code></td>
-<td align="left">Cartesian (zoom, flip, fixed ratio, transform)</td>
-<td align="left">
-<code>xlim</code>, <code>ylim</code>, <code>expand</code>, <code>flip</code>, <code>fixed</code>, <code>coord_trans</code>, <code>clip</code>
-</td>
+<td align="left">Cartesian (zoom, flip, ratio, transform)</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/project_polar.html">project_polar()</a></code></td>
 <td align="left">Polar</td>
-<td align="left">
-<code>theta</code>, <code>start</code>, <code>direction</code>, <code>clip</code>
-</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/project_parallel.html">project_parallel()</a></code></td>
 <td align="left">Parallel coordinates</td>
-<td align="left">
-<code>columns</code>, <code>group</code>, <code>scale</code>, <code>alpha</code>, <code>size</code>
-</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/project_map.html">project_map()</a></code></td>
 <td align="left">Geographic projection</td>
-<td align="left">
-<code>projection</code>, <code>xlim</code>, <code>ylim</code>, <code>clip</code>
-</td>
 </tr>
 </tbody>
 </table>
 </div>
-<div class="section level2">
-<h2 id="split_--facets">
+<div class="section level3">
+<h3 id="split_--facets">
 <code>split_*</code> — Facets<a class="anchor" aria-label="anchor" href="#split_--facets"></a>
-</h2>
+</h3>
 <table class="table">
-<colgroup>
-<col width="33%">
-<col width="33%">
-<col width="33%">
-</colgroup>
 <thead><tr>
 <th align="left">Function</th>
 <th align="left">Description</th>
-<th align="left">Key params</th>
 </tr></thead>
 <tbody>
 <tr>
 <td align="left"><code><a href="reference/split_wrap.html">split_wrap()</a></code></td>
 <td align="left">Wrapped facets</td>
-<td align="left">
-<code>...</code> (variables), <code>ncol</code>, <code>nrow</code>, <code>scales</code>
-</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/split_grid.html">split_grid()</a></code></td>
 <td align="left">Grid facets</td>
-<td align="left">
-<code>rows</code>, <code>cols</code>, <code>scales</code>, <code>space</code>
-</td>
 </tr>
 </tbody>
 </table>
 </div>
-<div class="section level2">
-<h2 id="style--export">
-<code>style()</code> &amp; <code>export()</code>
-<a class="anchor" aria-label="anchor" href="#style--export"></a>
-</h2>
+<div class="section level3">
+<h3 id="compose_--multi-plot-assembly">
+<code>compose_*</code> — Multi-plot assembly<a class="anchor" aria-label="anchor" href="#compose_--multi-plot-assembly"></a>
+</h3>
 <table class="table">
-<colgroup>
-<col width="33%">
-<col width="33%">
-<col width="33%">
-</colgroup>
 <thead><tr>
 <th align="left">Function</th>
 <th align="left">Description</th>
-<th align="left">Key params</th>
-</tr></thead>
-<tbody>
-<tr>
-<td align="left"><code><a href="reference/style.html">style()</a></code></td>
-<td align="left">Apply ggplot2 theme</td>
-<td align="left">
-<code>...</code>, <code>base_size</code>, <code>base_family</code>, <code>base_theme</code>
-</td>
-</tr>
-<tr>
-<td align="left"><code><a href="reference/export.html">export()</a></code></td>
-<td align="left">Render to file</td>
-<td align="left">
-<code>filename</code>, <code>width</code>, <code>height</code>, <code>dpi</code>, <code>device</code>
-</td>
-</tr>
-</tbody>
-</table>
-<hr>
-</div>
-<div class="section level2">
-<h2 id="compose_--multi-plot-composition-outermost-layer">
-<code>compose_*</code> — Multi-Plot Composition (Outermost Layer)<a class="anchor" aria-label="anchor" href="#compose_--multi-plot-composition-outermost-layer"></a>
-</h2>
-<p>Assemble multiple <code>plotit</code> objects into compound layouts. Unlike single-plot functions that operate on data, <code>compose_*</code> takes <strong>already-built <code>plotit</code> objects</strong> as input and returns a <code>plotit_composite</code>. This is the <strong>outermost layer</strong> in the plotit architecture — build individual plots first, then compose them together.</p>
-<p>The returned composite pipes seamlessly into <code><a href="reference/label_title.html">label_title()</a></code> / <code><a href="reference/label_subtitle.html">label_subtitle()</a></code> / <code><a href="reference/label_caption.html">label_caption()</a></code> / <code><a href="reference/style.html">style()</a></code> / <code><a href="reference/export.html">export()</a></code>.</p>
-<table class="table">
-<colgroup>
-<col width="33%">
-<col width="33%">
-<col width="33%">
-</colgroup>
-<thead><tr>
-<th align="left">Function</th>
-<th align="left">Description</th>
-<th align="left">Key params</th>
 </tr></thead>
 <tbody>
 <tr>
 <td align="left"><code><a href="reference/compose_grid.html">compose_grid()</a></code></td>
 <td align="left">Grid arrangement</td>
-<td align="left">
-<code>...</code>, <code>ncol</code>, <code>nrow</code>, <code>widths</code>, <code>heights</code>, <code>guides</code>, <code>axes</code>, <code>tag_levels</code>
-</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/compose_inset.html">compose_inset()</a></code></td>
-<td align="left">Floating overlay</td>
-<td align="left">
-<code>base</code>, <code>inset</code>, <code>left</code>, <code>bottom</code>, <code>right</code>, <code>top</code>
-</td>
+<td align="left">Floating inset overlay</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/compose_marginal.html">compose_marginal()</a></code></td>
-<td align="left">Scatter + marginal distributions</td>
-<td align="left">
-<code>main</code>, <code>top</code>, <code>right</code>, <code>widths</code>, <code>heights</code>
-</td>
+<td align="left">Scatter with marginal distributions</td>
 </tr>
 </tbody>
 </table>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># 2×2 dashboard with auto-tags</span></span>
-<span><span class="fu"><a href="reference/compose_grid.html">compose_grid</a></span><span class="op">(</span><span class="va">p1</span>, <span class="va">p2</span>, <span class="va">p3</span>, <span class="va">p4</span>, ncol <span class="op">=</span> <span class="fl">2</span>, tag_levels <span class="op">=</span> <span class="st">"A"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span> <span class="fu"><a href="reference/label_title.html">label_title</a></span><span class="op">(</span><span class="st">"Dashboard"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span> <span class="fu"><a href="reference/export.html">export</a></span><span class="op">(</span><span class="st">"dashboard.png"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Scatter plot with marginal histograms</span></span>
-<span><span class="fu"><a href="reference/compose_marginal.html">compose_marginal</a></span><span class="op">(</span><span class="va">main</span>, <span class="va">top_hist</span>, <span class="va">right_hist</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span> <span class="fu"><a href="reference/label_title.html">label_title</a></span><span class="op">(</span><span class="st">"Iris"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span> <span class="fu"><a href="reference/export.html">export</a></span><span class="op">(</span><span class="st">"marginal.png"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="theme--export">Theme &amp; export<a class="anchor" aria-label="anchor" href="#theme--export"></a>
+</h3>
+<table class="table">
+<thead><tr>
+<th align="left">Function</th>
+<th align="left">Description</th>
+</tr></thead>
+<tbody>
+<tr>
+<td align="left"><code><a href="reference/style.html">style()</a></code></td>
+<td align="left">Apply a ggplot2 theme</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/style_default.html">style_default()</a></code></td>
+<td align="left">Restore plotit’s built-in theme</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/export.html">export()</a></code></td>
+<td align="left">Render to file (pdf, png, svg, …)</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section level2">
+<h2 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
+</h2>
+<p>Full documentation is available at <a href="https://zorrooz.github.io/plotit/">zorrooz.github.io/plotit</a>.</p>
+</div>
+<div class="section level2">
+<h2 id="contributing">Contributing<a class="anchor" aria-label="anchor" href="#contributing"></a>
+</h2>
+<p>plotit is in early development. Bug reports, feature requests, and pull requests are welcome on <a href="https://github.com/zorrooz/plotit/issues" class="external-link">GitHub Issues</a>.</p>
+</div>
+<div class="section level2">
+<h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
+</h2>
+<p>plotit is licensed under the MIT License. See <a href="LICENSE">LICENSE</a> for details.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
@@ -838,7 +459,15 @@ vs base ggplot2
 </ul>
 </div>
 
-
+<div class="dev-status">
+<h2 data-toc-skip>Dev status</h2>
+<ul class="list-unstyled">
+<li><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental" class="external-link"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a></li>
+<li><a href="https://github.com/zorrooz/plotit/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/zorrooz/plotit/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
+<li><a href="https://zorrooz.github.io/plotit/"><img src="https://github.com/zorrooz/plotit/actions/workflows/pkgdown.yaml/badge.svg" alt="pkgdown"></a></li>
+<li><a href="https://github.com/zorrooz/plotit/actions/workflows/lint.yaml" class="external-link"><img src="https://github.com/zorrooz/plotit/actions/workflows/lint.yaml/badge.svg" alt="lint"></a></li>
+</ul>
+</div>
 
   </aside>
 </div>
