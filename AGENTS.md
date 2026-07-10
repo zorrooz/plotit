@@ -1,0 +1,859 @@
+# plotit 开发约定
+
+## 1. 设计原则
+
+### 1.1 核心价值
+
+- **简化语法**：动词前缀命名（`mark_*`、`scale_*`、`project_*` 等），支持管道。
+- **默认美观**：预设主题、配色与尺寸，开箱即出版/报告可用。
+- **一致性**：统一的 API 风格、参数命名和错误处理策略。
+- **可扩展性**：基于 ggplot2 及其扩展包构造，通过 `...` 透传底层能力，不作过度封装。
+- **Mark 多样性**：对标 **Vega-Lite** / **AntV-G2** 的视觉通道丰富度，超越原生 ggplot2 几何图层类型范围。规划 20 种 mark 类型（§3.2），覆盖基础几何、分布展示、关系层次和地理空间四大领域。
+- **默认美观与低配置成本**：调色板（离散/连续/定性）精心选择并持续扩展。`scale_*` 的 `range` 参数保持 `"scheme_name"` 字符串接口简便性，用户无需掌握色彩理论即可产出出版可用图表。
+- **最小化实现**：能用已有原语组合实现的图表效果，不新增 mark。mark 是语法糖的最终边界——之前所有组合（mark + project + scale + split）都应该是有效的管道链。新增 mark 的唯一理由是无法用已有原语在合理管道内表达该视觉形态。
+
+### 1.1a 组合优先原则
+
+> **核心规则**：如果一个视觉效果可以通过 `mark_* + project_* + scale_* + split_*` 的管道组合实现，则**不新增 mark 类型**。
+>
+> **判断流程**：
+> 1. 目标视觉效果能否通过已有 mark + project 组合实现？
+> 2. 该组合能否保持在单条管道链内（`data |> plotit(encode(...)) |> mark_*(...) |> project_*(...) |> ...`）？
+> 3. 如果能 → 在 README/recipes 中提供组合示例，不新增 mark
+> 4. 如果不能（需要外部布局算法 / 非 ggplot2 原生渲染 / 新型数据表达）→ 考虑新增 mark
+>
+> **典型例子**：
+> - `mark_arc`（饼图/环形图/玫瑰图）→ **删除**。等价于 `mark_bar() |> project_polar(inner_radius = ...)`，不新增
+> - `mark_beeswarm` → **保留**。需要 `ggbeeswarm` 的碰撞检测排列算法，无法用已有 mark 模拟
+> - `mark_violin` → **保留**。`geom_violin` 的核密度估计形状无法由 `mark_area` 等价表达
+>
+> **组合收录**（§3.2c）：有价值的组合模式在约定中作为 recipe 记录，包含等价的 mark-free 管道示例。
+
+### 1.2 元数据集中管理
+
+所有图表配置（尺寸、autofit、单位、dodge 宽度、default_color、标签文本等）统一存储于 `meta` 组件。
+
+`label_*` 写入 `meta@labels` 并标记 dirty（惰性模式），不立即修改 `gg`。通过 `._sync_labels()` 在 `print()`/`export()` 时统一将 `meta@labels` 同步到 `gg$labels` 和 theme。直接操作 `plot@gg` 绕过 label 函数会导致 `meta$labels` 过时。
+
+### 1.3 分域验证
+
+- **包层自定义约束** → `cli::cli_abort`：`encode()` 类检查、`size_unit` 合法性、`autofit` 与 `width`/`height` 关联约束
+- **透传底层通用参数** → 交由 ggplot2 / grDevices 自然报错，包层不添加冗余验证
+
+### 1.4 契约分层
+
+| 层级 | 稳定性 | 内容 |
+|------|--------|------|
+| 核心契约 | 1.0 后主版本稳定 | 函数名（`plotit`、`encode`、`mark_*`、`scale_*`、`label_*`、`compose_*`、`style`、`export`）、返回类型 `plotit` 支持管道、`plotit()` 的 `data` 和 `mapping` 参数 |
+| 扩展契约 | 2.0 可调整 | `scale_*` 的 `trans` 合法值集合（可增加不删除）、`label_*` 参数协议（`text`/`hide`/`reset`）、`project_*`/`split_*` 参数签名 |
+| 可迭代 | 不破坏上述两层 | 默认主题参数、启发式算法、默认调色板、内部工具函数实现 |
+
+例外：1.x 期间发现扩展契约中的设计缺陷允许经弃用→警告→移除周期（跨至少一个次版本）修正，不视为破坏性变更。
+
+### 1.5 自动生成不手动维护
+
+| 自动 | 手动 |
+|---|---|
+| `NAMESPACE`（roxygen2 `@export`）、`man/*.Rd`（roxygen2）、DESCRIPTION Collate（`@include`） | `R/*.R` 源码、`tests/`、DESCRIPTION 元信息 |
+
+新建 `.R` 文件头部必须用 `@include` 声明内部依赖。每次增删文件或修改 roxygen 注释后执行 `roxygen2::roxygenize()`。
+
+### 1.6 约定文档动态更新
+
+实现与约定偏离时：判断偏离方向——实现改进则修约定，实现退化则修实现。以下情况必须同步更新：新增/删除/修改导出函数、修改参数签名或默认值、修改返回类型或管道行为、修改契约分层、引入/废止设计原则。
+
+---
+
+## 2. 技术选型
+
+- **OOP**：**S7**。核心类：`plotit_labels`（文本字段）、`plotit_metadata`（配置项）、`plotit`（持有 `gg` + `meta`）。若 S7 发生不兼容变更，锁定版本或评估迁移至 S3/R6。
+- **核心依赖**：ggplot2、S7、cli、patchwork。`ggrastr` 为可选增强（图层栅格化）。
+- **未来扩展**（按需引入）：ggrepel、ggbeeswarm、treemapify、ggsankey、sf。
+
+---
+
+## 3. API 约定
+
+### 3.1 函数族总览
+
+**内层**（单图管道，从数据构建一个图表）：
+
+| 函数族 | 职责 | ggplot2 对应 |
+|---|---|---|
+| `plotit()` | 初始化 | `ggplot()` |
+| `encode()` | 美学映射 | `aes()` |
+| `mark_*` | 几何图层 | `geom_*` |
+| `scale_*` | 数据→视觉映射 + 显示控制 | `scale_*`（Vega 四要素：`type`/`domain`/`range`/`scheme` → `trans`/`limits`/`range`/`name`） |
+| `project_*` | 坐标系变换 | `coord_*` |
+| `split_*` | 分面布局 | `facet_*` |
+| `label_*` | 文本标签 | `labs()` + `theme()` |
+| `style()` | 主题 | `theme()` |
+| `export()` | 图表导出 | `ggsave()` |
+
+**最外层**（多图组合，操作 `plotit` 对象而非数据）：
+
+| 函数族 | 职责 |
+|---|---|
+| `compose_*` | 组装多个 `plotit` 为多面板布局；返回 `plotit_composite`，支持 `label_title`/`label_subtitle`/`label_caption`/`style`/`export` 管道延续 |
+
+单图函数（`mark_*`/`scale_*`/`project_*`/`split_*`/`label_axis`/`label_legend`）不接受 `plotit_composite`——先分别构建各子图，最后用 `compose_*` 组合。
+
+### 3.2 `mark_*` 目录
+
+对标 Vega-Lite / AntV-G2 的视觉通道丰富度，不限于 ggplot2 原生几何。
+新 mark 按需引入，遵循统一 S7 泛型+方法模式（`mark_<type>` + `geom_<底层>`），支持 `rasterize`。
+
+**已实现**（6）：
+
+| 函数 | 对应 | 用途 |
+|---|---|---|
+| `mark_point` | `geom_point` | 散点 |
+| `mark_line` | `geom_line` | 折线/趋势 |
+| `mark_bar` | `geom_bar`/`geom_col` | 柱状图（有 y 映射→`geom_col`，无 y→`geom_bar`） |
+| `mark_boxplot` | `geom_boxplot` | 箱线图 |
+| `mark_histogram` | `geom_histogram` | 直方图 |
+| `mark_density` | `geom_density` | 密度曲线 |
+
+**完整规划**（20 种，对标 Vega-Lite 15 种 + AntV G2 30+ 种，经组合优先原则精简）：
+
+| # | 函数 | 类别 | 对应 R 包 / geom | 对标来源 | 用途 |
+|---|---|---|---|---|---|
+| | **基础几何** | | | | |
+| 1 | `mark_point` | 基础 | `geom_point` | VL `point`/G2 `point` | 散点/气泡 ✅ |
+| 2 | `mark_line` | 基础 | `geom_line` | VL `line`/G2 `line` | 折线/趋势/雷达线 ✅ |
+| 3 | `mark_area` | 基础 | `geom_area`/`geom_ribbon` | VL `area`/G2 `area` | 面积图/堆叠面积/河流图/误差带 |
+| 4 | `mark_bar` | 基础 | `geom_bar`/`geom_col` | VL `bar`/G2 `interval` | 柱状/条形图 ✅ |
+| 5 | `mark_rect` | 基础 | `geom_tile`/`geom_rect` | VL `rect`/G2 `cell` `rect` | 矩形/热力图单元格 |
+| 6 | `mark_polygon` | 基础 | `geom_polygon` | G2 `polygon` | 多边形/自定义形状/地图区域 |
+| 7 | `mark_text` | 基础 | `geom_text`/`ggrepel` | VL `text`/G2 `text` | 文本标签/标注/数据标签 |
+| 8 | `mark_rule` | 基础 | `geom_hline`/`geom_vline`/`geom_abline`/`geom_segment` | VL `rule`/G2 `lineX` `lineY` `rangeX` `rangeY` | 参考线/参考区域/误差线 |
+| 9 | `mark_path` | 基础 | `geom_path` | G2 `path`/VL（Vega `trail`） | 路径/轨迹 |
+| | **分布展示** | | | | |
+| 10 | `mark_histogram` | 分布 | `geom_histogram` | VL `bar`(binned)/G2 `interval`(histogram) | 直方图 ✅ |
+| 11 | `mark_density` | 分布 | `geom_density`/`geom_density_2d` | G2 `density` `heatmap` | 密度曲线/KDE/2D 密度热力图 ✅ |
+| 12 | `mark_boxplot` | 分布 | `geom_boxplot` | VL `boxplot`/G2 `boxplot` | 箱线图 ✅ |
+| 13 | `mark_violin` | 分布 | `geom_violin` | G2 `density`(violin shape) | 小提琴图 |
+| 14 | `mark_beeswarm` | 分布 | `ggbeeswarm::geom_beeswarm` | G2 `beeswarm` | 蜂群散点/分布散点 |
+| | **关系与层次** | | | | |
+| 15 | `mark_network` | 关系 | `ggraph`/`igraph` | G2 `forceGraph` | 网络/力导向图 |
+| 16 | `mark_sankey` | 关系 | `ggsankey` | G2 `sankey` | 桑基流向图 |
+| 17 | `mark_chord` | 关系 | `circlize` | G2 `chord` | 弦图/环形关系图 |
+| 18 | `mark_treemap` | 关系 | `treemapify` | G2 `treemap` `pack` | 矩形树图/圆形 packing |
+| | **地理空间** | | | | |
+| 19 | `mark_map` | 地理 | `sf`+`geom_sf` | VL `geoshape`/G2 `geoPath` | 地图/地理空间 |
+
+> **组合优先移除的 mark**（2 个）：
+> - ~~`mark_arc`~~（饼图/环形图/玫瑰图）→ `mark_bar() |> project_polar(inner_radius = ...)`，见 §3.2b
+> - ~~`mark_tick`~~（一维分布 strip plot）→ `mark_point() |> project_cartesian(expand = ...)` + `position_jitter()` 或 `geom_rug` 可通过 `scale_x/y(position=)` 替代
+> - ~~`mark_tree`~~（树图/冰柱图/旭日图）→ `mark_rect` + 层次树数据预处理 + `split_*` 分面可表达冰柱图；旭日图回退到 `mark_bar() |> project_polar()` 的极坐标层次表达
+
+### 3.2b 组合 Recipes
+
+按组合优先原则，以下视觉形态不新增 mark，通过已有原语组合实现：
+
+#### 饼图 / 环形图 / 玫瑰图（替代 `mark_arc`）
+
+```r
+# 饼图 — mark_bar + project_polar
+data |> plotit(encode(theta = count, colour = category)) |>
+  mark_bar(position = "stack", width = 1) |>
+  project_polar(theta = "y")
+
+# 环形图 — 加 inner_radius
+data |> plotit(encode(theta = count, colour = category)) |>
+  mark_bar(position = "stack", width = 1) |>
+  project_polar(theta = "y", inner_radius = 0.4)
+
+# 玫瑰图 / 南丁格尔玫瑰图 — 无堆叠 + project_polar
+data |> plotit(encode(x = category, y = value)) |>
+  mark_bar(width = 1) |>
+  project_polar()
+```
+
+#### 一维分布 strip plot（替代 `mark_tick`）
+
+```r
+# Strip plot — mark_point + position_jitter
+data |> plotit(encode(x = category, y = value)) |>
+  mark_point(position = "jitter", alpha = 0.5, size = 1.5)
+
+# Rug — 用 ggplot2::geom_rug 通过 mark 的 ... 透传
+# （若需要，可封装为 mark_rug，但属于 theme 辅助非核心 mark）
+```
+
+#### 雷达图
+
+```r
+# 雷达图 — mark_line + project_polar
+data |> plotit(encode(x = variable, y = value, colour = group)) |>
+  mark_line() |>
+  project_polar()
+```
+
+#### 树图 / 冰柱图（替代 `mark_tree`）
+
+```r
+# 冰柱图 — mark_bar + 层次树数据预处理
+# prepara_data |> plotit(encode(x = level, y = size, fill = category)) |>
+#   mark_bar(position = "stack") |>
+#   split_wrap(top_level_var, scales = "free_x")
+# 注：需要上游数据预处理将层次树展平为矩形数据
+
+# 旭日图 — mark_bar + project_polar（等价于环形图的分层版）
+# prepara_data |> plotit(encode(theta = size, fill = category)) |>
+#   mark_bar(position = "stack") |>
+#   project_polar(theta = "y") |>
+#   split_wrap(top_level_var)
+```
+
+### 3.3 函数签名概要
+
+#### 3.3.1 `plotit()` — 初始化
+
+```
+plotit(data, mapping = encode(), autofit = FALSE,
+       width = 7, height = 5, size_unit = "in",
+       dodge = NULL, default_color = "#4E79A7")
+```
+
+- `size_unit`：`"in"`/`"cm"`/`"mm"`，始终验证合法性，不受 `autofit` 影响
+- `dodge`：NULL 时离散 X/Y 自动设为 0.8（有离散映射才设，否则 0）
+- `default_color`：无 `colour`/`fill` 映射时同时注入两侧 + `guides(colour="none", fill="none")`。添加任何 colour/fill scale 后自动失效。清除逻辑统一为 `._clear_default_color()`（`utils.R`），mark_*/scale_*/project_parallel 三处共用。
+
+**尺寸优先级链**：显式传参 > meta 存储 > autofit 自适应。
+
+#### 3.3.2 `encode()` — 美学映射
+
+`encode(...)` 全部透传给 `aes()`，返回 `"plotit_encode"` 类。包层做类检查。
+
+#### 3.3.3 `mark_*` — 几何图层
+
+`mark_<type>(plot, mapping=NULL, data=NULL, position=NULL, ..., rasterize=FALSE, rasterize_dpi=300, rasterize_dev="cairo")`
+
+- 第一参数 `plot`，返回 `plotit`
+- `mapping`、`data`、`position`：`data=NULL` 继承全局数据；`position=NULL` 自动读取全局 dodge
+- `...` 透传底层 `geom_*`
+- `rasterize` 需 `ggrastr`
+- 内部通过 `._mark_impl()` 共享逻辑：resolve position、构建 geom、条件栅格化
+
+#### 3.3.4 `scale_*` — 比例尺
+
+设计对标 **Vega/Vega-Lite** 的 scale 模型（`type`/`domain`/`range`/`scheme` → `trans`/`limits`/`range`/`name`）。
+
+`scale_<aes>(p, name=waiver(), trans=<默认>, limits=NULL, range=NULL, breaks=NULL, labels=NULL, ...)`
+
+| 函数 | 默认 `trans` | `NULL` 含义 |
+|---|---|---|
+| `scale_x`/`scale_y` | `"identity"` | — |
+| `scale_color`/`scale_fill` | `NULL` | 自动检测（离散→`discrete`，连续→`identity`） |
+| `scale_size`/`scale_alpha` | `NULL` | 同上 |
+| `scale_shape`/`scale_linetype` | `"discrete"` | — |
+
+**`trans` 合法矩阵**：
+
+| `trans` | x/y（位置） | colour/fill/size/alpha（视觉连续） | shape/linetype（视觉离散） |
+|---|---|---|---|
+| `NULL` | → identity | auto-detect | → discrete |
+| `"identity"` | ✅ 默认 | ✅ 默认 | ❌ |
+| `"log"`/`"log10"`/`"log2"`/`"sqrt"` | ✅ | ❌ | ❌ |
+| `"reverse"` | ✅ | ✅ | ✅ |
+| `"discrete"` | ✅ | ✅ | ✅ 默认 |
+| `"binned"` | ✅ | ✅ | ❌ |
+
+不支持的组合给出 `cli::cli_abort` 定向错误。
+
+**`name` vs `label_*`**：`scale_*(name=)` 设置 scale 层默认名，`label_*` 设置最终显示名——后执行者胜。
+
+**`_cf` 辅助函数**：`._cf(aes, fun_c, fun_f)` 根据 `aes` 是 `colour` 还是 `fill` 选择对应版本 scale 函数，消除 aes 分支样板代码。17 处引用集中于 scale.R。
+
+内部校验矩阵：
+```
+trans_legal <- list(
+  positional   = c("identity", "log", "log10", "log2", "sqrt", "reverse", "discrete", "binned"),
+  visual_cont  = c("identity", "discrete", "binned", "reverse"),
+  visual_disc  = c("discrete", "reverse")
+)
+```
+
+**`trans` × `range` 协同**：包层根据组合选择底层 scale 函数。`trans="identity"/"binned"` + `range="viridis"` → `scale_colour_viridis_c/b()`；`trans="discrete"` + `range=c(...)` → `scale_colour_manual()`。
+
+**`range` 语义**（Vega-aligned：视觉输出值域）：
+
+| aesthetic | `range = NULL` | `range = "name"` | `range = c(a, b)` |
+|---|---|---|---|
+| colour/fill | 离散→hue，连续→viridis | `"viridis"` `"brewer"` `"grey"`(仅离散) `"hue"` | 颜色向量 |
+| size | `c(1, 6)` | — | 数值范围 |
+| alpha | `c(0.1, 1)` | — | 数值范围 |
+| shape | 默认形状集 | — | 形状编号 |
+| linetype | 默认线型集 | — | 线型名称 |
+| x/y | `c(0, 1)`（铺满面板） | — | 归一化面板占比 |
+
+x/y 的 `range` 表示数据在面板上的视觉占比，通过 `limits` + `expand=c(0,0)` 精确实现。
+
+**格式推断**：包层根据输入格式自动判断意图——单字符串→调色板方案，颜色向量→渐变，数值向量→值域，整数向量→形状编号，非颜色字符向量→线型。
+
+**x/y 的 `range`**：表示数据在面板上的视觉占比（Vega-aligned：`range: [0, width]`），而非数据值。通过 `limits` + `expand=c(0,0)` 精确实现。与 `limits` 同时非 NULL 时后设置者胜，冲突时警告。
+
+**`default_color` 覆盖**：任何用户提供的 `colour`/`fill` 映射都触发清除 `default_color` 注入的 `mapping$colour`/`mapping$fill` 和 `guides(colour="none", fill="none")`。当前三处清除点（`._clear_default_color()`）：mark_*（传入 layer mapping 时）、scale_color/fill（无条件）、project_parallel（group 引入 colour 时）。均已对称处理两侧，待统一收归（1.0 前待办）。
+
+#### 3.3.5 `project_*` — 坐标系
+
+| 函数 | 底层 | 关键参数 |
+|---|---|---|
+| `project_cartesian` | `coord_cartesian`/`coord_flip`/`coord_fixed`/`coord_trans` | `xlim`, `ylim`, `expand`, `flip`, `fixed`, `coord_trans`, `clip` |
+| `project_polar` | `coord_polar`/`coord_radial` | `theta`, `start`, `direction`, `inner_radius`, `r_axis_inside`, `clip` |
+| `project_parallel` | 数据重塑+`geom_line`/`geom_point` | `columns`, `group`, `scale`（`"std"`/`"global"`/`"none"`） |
+| `project_map` | `coord_sf`/`coord_map` | `projection`, `xlim`, `ylim`, `clip` |
+
+`project_parallel` 三模式：
+
+| 模式 | 归一化 | y 轴 | 每列轴 |
+|---|---|---|---|
+| `"std"` | 每列 min-max→[0,1] | 共享 `scale_y_continuous()` | 无 |
+| `"global"` | 全局 min-max→[0,1] | 共享 `scale_y_continuous()` | 无 |
+| `"none"` | 无 | 抑制原生 y 轴 | 每列手动渲染（`geom_vline`+`geom_segment`+`geom_text`） |
+
+`"none"` 模式已知局限：非原生 guide，轴线颜色/线宽/字体从 `._parallel_theme_props()` 提取当前主题 `axis.*` 元素，不保证 100% 像素一致。推荐优先使用 `"std"` 或 `"global"`。
+
+`project_map` 默认 `coord_sf()`，传 `projection` 时切换 `coord_map()`（需 mapproj）。`project_polar` 径向模式（`inner_radius>0` 或 `r_axis_inside=TRUE`）需 ggplot2 ≥ 3.5.0。
+
+#### 3.3.6 `split_*` — 分面
+
+`split_wrap(plot, ..., ncol=NULL, nrow=NULL, scales="fixed")`：`...` 无名参数=分面变量，命名参数透传 `facet_wrap`（如 `labeller`、`dir`）
+
+`split_grid(plot, ..., rows=NULL, cols=NULL, scales="fixed", space="fixed")`：`...` 无名= `rows` 简写；同时提供时以 `...` 为准并警告
+
+#### 3.3.7 `label_*` — 文本标签
+
+三参数协议（优先级：reset > hide > text）：
+
+| 优先级 | 参数 | 效果 |
+|---|---|---|
+| 1（最高） | `reset=TRUE` | 恢复变量名（轴/图例）或移除文本（标题/副标题/脚注）。无视 `text` 和 `hide`。 |
+| 2 | `hide=TRUE` | `element_blank()` 移除元素及占位空间。无视 `text`。 |
+| 3（最低） | `text="str"` | 设置自定义文本。仅前两者均为 FALSE 时生效。 |
+
+`text` 非 NULL 与 `reset=TRUE` 同时提供时报错。优先级规则消除了调用顺序依赖。
+
+| 函数 | 参数 | 用途 |
+|---|---|---|
+| `label_title(text, hide, reset)` | — | 主标题 |
+| `label_subtitle(text, hide, reset)` | — | 副标题 |
+| `label_caption(text, hide, reset)` | — | 脚注 |
+| `label_axis(text, aes, hide, reset)` | `aes="x"` 或 `"y"`（必填） | 轴标题 |
+| `label_legend(text, aes, hide, reset)` | `aes="colour"`/`"fill"` 等，`aes=NULL`=全局 | 图例标题 |
+
+**`label_legend(aes=NULL)` 全局模式**：`aes=NULL` 时写入 `meta$legend[["default"]]` 并应用到当前所有已映射美学；后续对单个 aes 的调用覆盖之（后执行者胜）。`meta$legend` 中 `"default"` 条目与具体 aes 条目共存但后者优先生效。
+
+#### 3.3.8 `style()` — 主题
+
+`style(plot, ..., base_size=NULL, base_family=NULL, base_theme=NULL)`：先应用基础主题（空时内部 `%||%` 分发到 `.theme_default(base_size=11, base_family="")`），再叠加 `theme(...)` 覆盖。`style_default()` 为便捷别名。
+
+#### 3.3.9 `export()` — 导出
+
+`export(plot, filename, width=NULL, height=NULL, dpi=300, device=NULL, ...)`
+
+尺寸优先级链：显式传参 > meta 存储值 > autofit 自适应。
+
+- `autofit=FALSE` + 未传尺寸：通过 gtable 测量获得总尺寸（面板尺寸来自 meta，通过 `._build_fixed_gtable()` 固定；轴/标签/图例由当前主题决定）
+- `autofit=TRUE` + 未传尺寸：回退 `getOption("plotit.default_width", 7)` / `getOption("plotit.default_height", 5)`（英寸）
+- 显式传入的 `width`/`height` 遵循 `plotit()` 时设定的 `size_unit` 换算。单位统一为英寸后传给 `ggsave()`
+- `device` 从文件名扩展名推断（`.pdf` / `.png` / `.svg` 等）
+
+#### 3.3.10 图片尺寸算法
+
+`plotit()` 的 `width`/`height` 指面板尺寸（非总尺寸）。`autofit=FALSE` 时通过 `patchwork::plot_layout()` 固定面板为绝对单位。
+
+**契约边界**：面板尺寸遵守 ±1% 浮点误差。总尺寸（面板+轴+标签+图例+边距）为衍生值，不在 API 契约内，可能随主题/字体/设备版本变化。
+
+> **Patchwork 剥离规划**（阶段 0.1，部分完成）：
+> 单图侧已实现：`plotit()` 不再调用 `plot_layout()`，`@gg` 为纯 ggplot 对象；`print()`/`export()` 通过 `._build_fixed_gtable()` 固定面板尺寸。
+> 组合图侧待实现：`compose_*` 仍依赖 `patchwork::wrap_plots()` / `plot_layout()`；`._reset_sizing()`、`._assemble_plots()` 仍以 patchwork 为核心。
+
+### 3.4 `compose_*` 组合
+
+全部返回 `plotit_composite`（`@gg` + `@plots` + `@layout` + `@annotations`）。
+
+**`compose_grid(..., ncol=NULL, nrow=NULL, byrow=TRUE, widths=NULL, heights=NULL, guides=NULL, axes="keep", tag_levels=NULL)`**
+- 默认 `ncol=NULL, nrow=NULL` → `ncol=1`（纵向堆叠）。仅设 `nrow=1` 则横向并排
+- `axes` 封装 `patchwork::plot_layout(axes=)`
+- 嵌套：接受 `plotit_composite`，组合可嵌套
+
+**`compose_inset(base, inset, left=0, bottom=0, right=1, top=1, align_to="panel", on_top=TRUE, ...)`**
+- base 的 `@gg` 在组装前调用 `._reset_sizing()` 剥除固定面板尺寸防止裁切
+- `align_to="panel"` 以面板为基准定位，`"plot"` 以整个绘图区域为基准
+
+**`compose_marginal(main, top, right, widths=c(4,1), heights=c(1,4), guides="collect")`**
+- 布局：`wrap_plots(design="AB\nCD")` 扁平 2×2（顶部直方图+角落空白 / 主散点+右侧直方图）
+- 组装前自动隐藏边际图的重复轴（X 轴只出现在主散点底部，Y 轴只出现在左侧）
+- 右侧直方图需用户调用 `project_cartesian(flip=TRUE)` 翻转以对齐 Y 轴
+- 图例默认合并（`"collect"`），可传 `"keep"` 独立
+
+`label_title`/`label_subtitle`/`label_caption` → 写入 `@annotations`，`print()`/`export()` 时通过 `plot_annotation()` 惰性渲染（消除调用顺序依赖）。不支持的操作：`mark_*`/`scale_*`/`project_*`/`split_*`/`label_axis`/`label_legend` 不接受 `plotit_composite`——先构建再组合。
+
+##### `compose_grid` 细节
+- 嵌套：接受 `plotit_composite`，组合可嵌套。单图：`compose_grid(p)` 合法。
+- `tag_levels` 存入 `@annotations`，惰性注入：`"A"`/`"a"`/`"1"`/`"i"` 或自定义字符向量。
+
+##### `compose_marginal` 细节
+- 布局：`wrap_plots(design="AB\nCD")` 扁平 2×2。共享坐标轴：组装前对边际图隐藏重复轴。
+- 右侧直方图需用户调用 `project_cartesian(flip=TRUE)` 翻转以对齐 Y 轴。
+
+---
+
+## 4. 代码风格
+
+### 4.1 文件结构
+
+```
+R/：class.R encode.R utils.R plot.R mark.R scale.R project.R split.R label.R style.R output.R compose.R
+tests/testthat/：test-<func>.R 按函数族分文件
+```
+
+playground.R 用于临时手动测试，不纳入版本管理。
+
+### 4.2 命名与格式
+
+snake_case，动词前缀统一。color/colour 等价接受，函数命名统一美式。缩进 2 空格，行宽 120（`line_length_linter(120)`）。Push 前执行 `styler::style_pkg()`（**最后一步执行**——修改格式后行号索引失效）。
+
+### 4.3 代码文本一律使用英文
+
+注释、roxygen、错误消息、警告信息、commit message 用英文。（AGENTS.md 本身用中文。）
+
+### 4.4 管道
+
+所有修改函数返回 `plotit`，支持 `|>`。每个管道步骤独立一行。
+
+### 4.5 错误信息
+
+主动验证点用 `cli::cli_abort()`。警告信息明确说哪个参数生效、哪个被忽略。
+
+### 4.6 命名空间与 ggplot2 交互
+
+显式 `pkg::fun()`。内部用 `%||%` 处理 NULL 默认值。
+
+**优先使用公开 API**：所有视觉修改首先尝试 `+ labs()`、`+ guides()`、`+ theme()`。
+
+**允许直接访问**：`gg$mapping`、`gg$data`、`gg$labels`、`gg$theme`（只读）。
+
+**禁止**：`gg$scales$scales` 等未文档化的内部结构。测试中也禁止检查这些。
+`gg$layers` 同样为 ggplot2 内部槽位不保证兼容——`._collect_aes_names` 中存在访问为已知例外，计划在 AD-2 中移除。
+
+**非标准求值只用 rlang**：`rlang::eval_tidy()`，禁止 `eval()` + `baseenv()`。
+
+### 4.7 Roxygen
+
+每个导出函数：标题+描述、`@param`（每个参数含合法取值）、`@return`、`@export`。
+
+### 4.8 测试
+
+按函数族分文件。覆盖合法值及关键组合、非法输入错误路径、管道链集成场景。
+
+**断言行为而非内部状态**：使用 `ggplot2::ggplot_build(p@gg)` 提取渲染数据断言。BDD 测试以 `[BDD]` 前缀标注。
+
+---
+
+## 5. 实现 Demo
+
+```r
+library(plotit)
+
+mapping <- encode(x = displ, y = hwy, colour = class)
+
+p <- plotit(mpg, mapping, autofit = FALSE, width = 6, height = 4, size_unit = "in")
+
+p <- p |>
+  mark_point(size = 2, alpha = 0.7) |>
+  scale_x(trans = "log10") |>
+  scale_color(range = "viridis") |>
+  label_title("Fuel Economy") |>
+  label_axis(text = "Displacement", aes = "x") |>
+  label_axis(text = "Highway MPG", aes = "y")
+
+p <- style(p, base_theme = ggplot2::theme_minimal(base_size = 12))
+
+export(p, "output.pdf", dpi = 300)
+```
+
+---
+
+## 6. 默认美观要求
+
+属于 §1.4 可迭代范围，具体参数可随版本调整。
+
+- **主题**：基于 `theme_minimal`，背景透明，无网格线，保留浅灰轴线，无衬线字体，层级分明字号。极坐标系自动关闭轴线/刻度线/轴文本。平行坐标系：`std`/`global` 模式共享原生 y 轴，`none` 模式每列渲染主题匹配轴线。
+- **调色板**：保持多样性与简便性并重。无映射时默认 Tableau 蓝 `#4E79A7`（同时 `colour`+`fill`，图例隐藏）。有映射默认 viridis（色盲友好）。`range="scheme_name"` 接口持续扩展（brewer/viridis/tableau/更多），最小配置成本获得美观默认值。
+- **图例**：右侧，背景透明，简洁边框。
+- **尺寸**：自适应关闭时默认约 7×5 英寸，导出 300 dpi。
+
+---
+
+## 7. 补充约定
+
+- **空数据与缺失值**：空 data.frame 由 ggplot2 决定。`NA` 由 ggplot2 默认静默移除。
+- **S7 槽位**：`plotit_labels`（title/subtitle/caption/x/y/legend/dirty）、`plotit_metadata`（autofit/width/height/dodge/unit/default_color/labels）、`plotit`（gg/meta）。
+- **打印与设备**：`print()` 交互模式通过 `grDevices::dev.new(noRStudioGD=TRUE)` 打开独立设备窗口保证面板尺寸物理呈现。`options(plotit.device)`：`"default"` / `"rstudio"` / `NULL`（禁用自动设备打开）。`export()` 从文件名推断设备。
+
+---
+
+## 8. Bug 审查原则
+
+| # | 原则 | 检查点 |
+|---|------|--------|
+| 0 | 区分特性与 Bug | 静默忽略若无注释说明意图→Bug。参数传入不生效是 Bug 的充分条件。 |
+| 1 | 参数全链路追踪 | 每个中转节点：直接转发/转换/被丢弃？ |
+| 2 | 枚举值分支穷举 | N 个合法值→N 条路径全部显式存在 |
+| 3 | 对称抽象一致性 | color↔fill, size↔alpha, shape↔linetype, x↔y |
+| 4 | 默认值分叉 | 新增条件分支→同步更新默认值逻辑 |
+| 5 | 底层接口兼容性 | 透传前确认底层接受该参数；不接受时切换函数 |
+| 6 | 内部概念不泄漏 | 包层参数名可能与底层同名但语义不同（如 `trans="binned"`） |
+| 7 | 有状态默认值对称清除 | `default_color` 双向注入 + 双向 `guides()`。`._clear_default_color()` 三处共用 |
+| 8 | 契约边界可验证 | 契约必须用用户可见指标定义（如面板尺寸 ±1%），不能用无法验证的免责声明。 |
+
+---
+
+## 9. 1.0 开发路线图
+
+> **优先级策略**：纯优先级排序，无固定时间线。四类 mark 并行推进，每阶段各取 1-2 个。
+> **推进顺序**：先固本（清债）→ 后扩展（mark）→ 最后收尾（文档+质量）。
+
+### 9.0 阶段总览
+
+| 阶段 | 名称 | 范围 | 状态 |
+|---|---|---|---|
+| 0 | 固本 | 架构清债 + 代码质量 | 🔄 进行中（单图侧 patchwork 剥离已完成；剩余：组合图、sync_labels、工厂函数、@examples） |
+| 1-4 | mark 扩展 | 13 种新 mark（20 种规划 − 6 已实现 − 1 已移除组合） | ⬜ 未开始 |
+| 5 | 收尾 | 文档补齐、全量验证、发布准备 | ⬜ 未开始 |
+
+---
+
+### 9.1 阶段 0：固本（基础设施清理）
+
+在扩展 mark 之前清理架构债务和代码质量问题，确立干净的基线。
+
+| # | 任务 | 优先级 | 说明 |
+|---|------|--------|------|
+| 0.1 | **Patchwork 剥离** | P0 | `@gg` 改为存储纯 ggplot（非 patchwork）。面板尺寸在 print/export 时通过 `ggplot_build()` + `grid` 修 gtable 实现。移除 `._reset_sizing()`、`._assemble_plots()` 中对 patchwork 的依赖。`plotit()` 构造函数简化（不再调用 `plot_layout()`）。**风险**：gtable 测量精度在不同 ggplot2 版本间可能漂移，需 ±1% 容差验证。 |
+| 0.2 | **`._sync_labels` 重构** | P1 | 5 个重复 if 块（title/subtitle/caption/x/y）抽象为循环或统一辅助函数 `._sync_one_label(plot, slot, theme_el, labs_el)`。不改行为，只消除重复。 |
+| 0.3 | **mark_* 工厂函数** | P1 | 创建 `._make_mark(name, geom_fun)` 工厂函数，生成 S7 泛型+方法。每个 mark 定义从 ~15 行缩减到 1 行调用。不改对外 API 和文档。 |
+| 0.4 | **补齐 `@examples`** | P2 | 当前所有导出函数补充可运行 `@examples`（需外部包如 sf/mapproj 的用 `\dontrun{}`，自包含的用 `\donttest{}`）。 |
+
+**验收标准**：
+
+| 任务 | 验收标准 |
+|---|---|
+| 0.1 | `@gg` 始终为纯 ggplot 对象；`plotit()` 不依赖 patchwork；所有已有测试全部通过 |
+| 0.2 | `._sync_labels` 无重复代码；所有已有测试全部通过 |
+| 0.3 | 每个 mark 定义 ≤5 行；无新增 lintr 警告；测试通过 |
+| 0.4 | `R CMD check` 零 ERROR（允许 NOTE）；每个导出函数有 `@examples` |
+
+**风险点**：
+
+| 风险 | 缓解措施 |
+|---|---|
+| Patchwork 剥离导致 compose_* 需要重写 | 按照 §3.3.10 路线图分步实施；先在分支验证再合入 |
+| gtable 测量跨版本漂移 | 契约容差设为 ±3%（放宽至 ≥1.0 版本收紧为 ±1%） |
+| 工厂函数改变 S7 泛型的调试体验 | 保留 `@export` 标签让 roxygen2 正常生成文档 |
+
+---
+
+### 9.2 阶段 1–4：mark 类型扩展
+
+每阶段从四个类别中各选 1-2 个最高价值的 mark。每个 mark 附带：S7 泛型+方法、roxygen 文档（`@examples`）、BDD 测试（≥3 个 test_that）。
+
+**通用验收标准**（每个 mark）：
+
+- [ ] S7 泛型 + 方法注册正确，管道兼容
+- [ ] `@examples` 可独立运行（`\donttest{}` 或 `\dontrun{}` 按需）
+- [ ] BDD 测试 ≥3 个（正常路径 + 参数变体 + 错误路径）
+- [ ] `R CMD check` 零 ERROR
+- [ ] 新增 mark 添加到 AGENTS.md §3.2 已实现表
+
+---
+
+#### 阶段 1：area / text / violin / map
+
+| # | mark | 类别 | 依赖包 | 复杂度 | 对应实现 |
+|---|---|---|---|---|---|
+| 1.1 | `mark_area` | 基础几何 | ggplot2 | 低 | `geom_area`/`geom_ribbon` |
+| 1.2 | `mark_text` | 基础几何 | ggplot2（可选 ggrepel） | 中 | `geom_text`/`geom_label` |
+| 1.3 | `mark_violin` | 分布展示 | ggplot2 | 低 | `geom_violin` |
+| 1.4 | `mark_map` | 地理空间 | sf（可选） | 中 | `geom_sf` — 对标 VL `geoshape`/G2 `geoPath` |
+
+**阶段 1 风险**：
+
+| 风险 | 缓解措施 |
+|---|---|
+| `mark_text` 参数复杂（hjust/vjust/nudge_x/check_overlap 等） | 只封装常用参数，其余通过 `...` 透传 |
+| `mark_map` 依赖 sf → CRAN 上不是所有平台可用 | 设为 `Suggests`，示例用 `\dontrun{}` |
+
+---
+
+#### 阶段 2：rect / rule / treemap
+
+| # | mark | 类别 | 依赖包 | 复杂度 | 对应实现 |
+|---|---|---|---|---|---|
+| 2.1 | `mark_rect` | 基础几何 | ggplot2 | 低 | `geom_tile`/`geom_rect` |
+| 2.2 | `mark_rule` | 基础几何 | ggplot2 | 中 | `geom_hline`/`geom_vline`/`geom_abline`/`geom_segment` — 按 orientation 自动分发 |
+| 2.3 | `mark_treemap` | 关系层次 | treemapify（Suggests） | 中 | `treemapify::geom_treemap` |
+
+**阶段 2 风险**：
+
+| 风险 | 缓解措施 |
+|---|---|
+| `mark_rule` 需处理 4 种底层 geom → API 设计复杂 | 统一为 `mark_rule(orientation, intercept, ...)` 签名 |
+| treemapify 维护频率低（最后更新 2023） | 提供 fallback：无 treemapify 时 `mark_rect` + 数据预处理 |
+
+---
+
+#### 阶段 3：path / sankey / polygon
+
+| # | mark | 类别 | 依赖包 | 复杂度 | 对应实现 |
+|---|---|---|---|---|---|
+| 3.1 | `mark_path` | 基础几何 | ggplot2 | 低 | `geom_path` |
+| 3.2 | `mark_polygon` | 基础几何 | ggplot2 | 低 | `geom_polygon` |
+| 3.3 | `mark_sankey` | 关系层次 | ggsankey（Suggests） | 高 | `ggsankey::geom_sankey` |
+
+**阶段 3 风险**：
+
+| 风险 | 缓解措施 |
+|---|---|
+| ggsankey API 不稳定 | 锁定最低版本，`mark_sankey` 只暴露稳定参数 |
+
+---
+
+#### 阶段 4：network / chord
+
+| # | mark | 类别 | 依赖包 | 复杂度 | 对应实现 |
+|---|---|---|---|---|---|
+| 4.1 | `mark_network` | 关系层次 | ggraph + igraph（Suggests） | 高 | `ggraph::geom_edge_*` + `ggraph::geom_node_*` |
+| 4.2 | `mark_chord` | 关系层次 | circlize（Suggests） | 高 | `circlize::chordDiagram` 或纯 ggplot2 弦图实现 |
+
+**阶段 4 风险**：
+
+| 风险 | 缓解措施 |
+|---|---|
+| `mark_network` 依赖两个重包（ggraph + igraph） | 设为 Suggests，示例用 `\dontrun{}` |
+| circlize 使用 base R 图形系统非 ggplot2 → 集成复杂 | 评估用 `geom_segment` + `geom_polygon` 纯 ggplot2 实现替代 |
+
+### 9.2a 组合收录（不新增 mark 的 recipe）
+
+以下视觉效果通过已有 mark + project 组合实现，不新增独立 mark：
+
+| 视觉效果 | 等价管道 | 说明 |
+|---|---|---|
+| 饼图/环形图/玫瑰图 | `mark_bar()` + `project_polar(inner_radius=...)` | 替代 VL `arc` / G2 `interval`(pie)。见 §3.2b 完整示例 |
+| 雷达图 | `mark_line()` + `project_polar()` | 多维数据对比，见 §3.2b |
+| 冰柱图/旭日图 | `mark_rect` / `mark_bar + project_polar()` + 层次树预处理 | 替代 G2 `tree`/`partition`。数据预处理方案见 §3.2b |
+| 一维 strip plot | `mark_point(position="jitter")` | 替代 VL `tick`。若有需求可后续添加 `mark_rug` 作为 theme 辅助 |
+
+---
+
+### 9.3 阶段 5：收尾
+
+| # | 任务 | 说明 |
+|---|------|------|
+| 5.1 | **全量 @examples 验证** | 所有导出函数 `@examples` 在 `R CMD check --as-cran` 下零 ERROR |
+| 5.2 | **Vignette 更新** | "Customizing Plots" vignette 覆盖新增的 mark 类型和典型组合场景 |
+| 5.3 | **README 更新** | README 用法表格反映当前 mark 总数 |
+| 5.4 | **全量检查** | `R CMD check` + `lintr::lint_package()` + `styler::style_pkg()` 零问题 |
+| 5.5 | **版本号** | DESCRIPTION 版本从 0.0.0.9000 → 1.0.0 |
+| 5.6 | **NEWS.md** | 汇总所有变更，按函数族分组 |
+
+**验收标准**：
+
+- [ ] 20 种 mark 至少 15 个已实现（≥75% mark 覆盖率）
+- [ ] `R CMD check` 4 平台（Linux/macOS/Windows + R-devel）零 ERROR 零 WARNING
+- [ ] `lintr::lint_package()` 零 lint 问题
+- [ ] pkgdown 网站完整渲染所有函数参考页
+- [ ] 3 篇 vignette 内容与当前 API 一致
+
+---
+
+### 9.4 当前 API 完成度
+
+| 层级 | 函数族 | 1.0 目标 | 已实现 | 完成度 |
+|------|--------|----------|--------|--------|
+| 内层 | plotit + encode | 2 | 2 | 100% |
+| 内层 | mark_* | 20（目标 ≥15） | 6 | 30% |
+| 内层 | scale_* + project_* + split_* + label_* + style+export | 22 | 22 | 100% |
+| 最外层 | compose_* | 3 | 3 | 100% |
+| **总计** | | **~49** | **33** | **67%** |
+
+### 9.5 1.0 检查清单
+
+**阶段 0（固本）**：
+- [ ] Patchwork 剥离：`@gg` 为纯 ggplot
+- [ ] `._sync_labels` 无重复代码
+- [ ] mark_* 工厂函数：每个定义 ≤5 行
+- [ ] 所有导出函数有 `@examples`
+
+**阶段 1–4（mark 扩展）**：
+- [ ] mark_area
+- [ ] mark_text
+- [ ] mark_rect
+- [ ] mark_rule
+- [ ] mark_polygon
+- [ ] mark_path
+- [ ] mark_violin
+- [ ] mark_beeswarm（低优先级，可选）
+- [ ] mark_treemap
+- [ ] mark_sankey
+- [ ] mark_network
+- [ ] mark_chord
+- [ ] mark_map
+
+**阶段 5（收尾）**：
+- [ ] `R CMD check` 4 平台零 ERROR 零 WARNING
+- [ ] lintr 零问题
+- [ ] pkgdown 完整渲染
+- [ ] Vignette / README 更新
+- [ ] 版本号 1.0.0
+- [ ] NEWS.md 汇总
+
+---
+
+## 10. 技术债务
+
+| # | 事项 | 优先级 | 状态 |
+|---|------|--------|------|
+| AD-1 | Patchwork 剥离（§3.3.10） | 中 | 单图侧已完成；组合图仍依赖 patchwork |
+| AD-2 | `._collect_aes_names` 访问内部 `gg$layers` | 低 | 违反 §4.6 禁止规则。移除后 label_legend(aes=NULL) 的图例标题不应用到图层级美学映射，需评估替代方案 |
+| AD-3 | `._sync_labels` 5 个几乎相同 if 块 | 低 | ✅ 已抽象为 `._sync_one_label()` + `._LABEL_SYNC_MAP` 查找表 |
+| AD-4 | S7 版本锁定 | 低 | DESCRIPTION 已限制 |
+| AD-5 | mark_* 样板代码 | 低 | ✅ 已引入 `._make_mark()` 工厂函数（`R/mark.R`），5 个标准 mark 从 ~200 行缩减为 5 行调用 |
+| DI-1 | @examples 缺失 | 中 | 每个导出函数缺少可运行示例 |
+| DI-2 | AGENTS.md 不生成 HTML | 低 | ✅ `_pkgdown.yml` exclude + CI 后处理移除 `docs/AGENTS*.html` |
+| DI-3 | roxygen 链接警告 | 低 | ✅ `[0,1]` 已包裹为 `\code{[0,1]}` |
+
+---
+
+## 11. 开发陷阱
+
+### 11.1 PowerShell 字符串展开
+
+`@"..."@` 展开 `$variable` 和 `` `e ``。使用 `@'...'@` **单引号** here-string 保留字面文本。少量文本中用 `` `$ `` 或 `$$` 转义。
+
+### 11.2 `-replace` 的 .NET 正则替换陷阱
+
+替换字符串中 `$` 被解释为组引用（`$labels`→`abels`）。替换中字面 `$` 用 `$$`。非正则替换优先用 `[string]::Replace()`。
+
+### 11.3 `git index.lock` 持久锁定
+
+前序 git 中断后 `.git/index.lock` 残留。`Remove-Item -Force .git/index.lock`。反复出现则 `Get-Process git | Stop-Process -Force`。
+
+### 11.4 S7 方法注册的加载顺序依赖
+
+引用尚未定义的 generic 时报错。调整 Collate 顺序或在 `.onLoad()` 中注册。
+
+### 11.5 styler 致代码结构变化
+
+styler 修改缩进/换行后行号索引失效。**作为最后一步执行**——所有逻辑修改完成后运行，验证测试通过，再提交。
+
+### 11.6 `c(0, 1)` vs roxygen 链接解析
+
+roxygen2 将 `c(0, 1)` 中的 `0,1` 误认为链接目标。使用 `\code{c(0, 1)}` 或在 backtick 换行前加空格。`[0,1]`（方括号）同理——包裹在 `` `[0,1]` `` 中。
+
+### 11.7 DCF 编码值不加引号
+
+`.lintr` 中 `encoding: UTF-8`（非 `"UTF-8"`）。DCF 格式中引号为字面值，`encoding: "UTF-8"` 实际编码变为 `"UTF-8"`（含引号）。
+
+### 11.8 `._` 前缀函数 lintr 配置
+
+`object_name_linter(regexes = c("^[a-z][a-z0-9._]*$", "^[.]_[a-z][a-z0-9._]*$"))`——第一个匹配普通 snake_case，第二个匹配 `._` 前缀内部函数。
+
+### 11.9 `line_length_linter` 放宽
+
+roxygen 示例中管道链天然超 80 字符，放宽至 120 字符。代码行（非注释）仍应尽量遵守 80 字符。
+
+### 11.10 `\donttest{}` vs `\dontrun{}` 在 R CMD check 中
+
+`\donttest{}` **仍然执行**（仅 CRAN 跳过），`\dontrun{}` **完全不执行**。需外部数据包（sf、mapproj）用 `\dontrun{}`。自包含示例（iris/mtcars）可用 `\donttest{}`。
+
+### 11.11 `is.element_blank()` 不存在
+
+ggplot2 无此导出函数。正确方式：`inherits(x, "element_blank")`。
+
+### 11.12 GitHub Actions Node.js 弃用
+
+`actions/checkout@v4` 依赖 Node 20（已弃用）。全部升级至 `v5`。`r-lib/actions` 当前最新为 `v2`。
+
+### 11.13 S7 `@export` 泛型 vs 方法
+
+`@export` 标记在 S7 方法上**只导出该方法**，不自动导出泛型。泛型定义（`new_generic`）需要自己单独的 `@export`。
+
+### 11.14 testthat 中访问内部函数
+
+`test_check()` 在包命名空间中运行——内部函数可直接访问（无需 `:::`）。`test_dir()` 在全局环境运行——需要 `:::`。测试中优先通过公开 API 验证行为。
+
+---
+
+## 12. CI/CD 通用实践
+
+### 12.1 CI 故障诊断树
+
+```
+CI 步骤失败？
+├─ 0 秒完成（startedAt≈completedAt）→ Action 初始化报错（检查 inputs 定义）
+├─ 比预期快得多 → 被跳过（条件 if: 提前退出 / 缓存命中）
+├─ 正常耗时但失败 → 读日志 / 缺 continue-on-error
+└─ 弃用警告 → GitHub Actions Node 版本升级
+```
+
+### 12.2 配置陷阱
+
+- **YAML 标量**：多行参数必须用 `|`（block scalar），不能用缩进列表
+- **continue-on-error 分层**：step 级（建议性检查）/ job 级（R-devel）。不要在 `steps:` 列表中间放置 job 级属性
+- **deploy 步骤**：只在 main 分支触发
+
+### 12.3 预提交本地验证 SOP
+
+**Layer 1（秒级语法检查）**：
+```
+git diff --name-only --cached -- *.R | ForEach-Object { Rscript -e "parse(file='$_')" }
+```
+**Layer 2（分钟级构建验证，改动 DESCRIPTION/NAMESPACE 时）**：
+```
+R CMD build . --no-build-vignettes
+R CMD INSTALL *.tar.gz --library=<tmp_lib> --no-staged-install
+```
+**Layer 3（可选：lint + 风格检查）**：
+```r
+lintr::lint_package()
+styler::style_pkg(dry = "on")
+```
+
+### 12.4 CI 预提交检查清单
+
+新增/修改 CI workflow 前对照：
+- [ ] `with:` 下的多行参数使用 `|`（block scalar）？
+- [ ] `continue-on-error: true` 不在 `steps:` 列表中间？
+- [ ] `on:` 的分支名与实际开发分支一致？
+- [ ] `actions/checkout` 使用 v5、`upload-artifact` 使用 v4？
+- [ ] 信息性 job（lint、coverage）使用 step 级 `continue-on-error: true`？
+- [ ] R-devel 矩阵项包含 `http-user-agent: release`？
+- [ ] deploy 步骤只在 main 分支触发？
+
+### 12.5 CI 日志获取
+
+```powershell
+gh run list --limit 5 --json name,conclusion,status
+gh api repos/{owner}/{repo}/actions/jobs/{job_id}/logs  # 不需要等整个 workflow 完成
+```
+
+### 12.6 Rd 示例解析错误定位
+
+```r
+tools::Rd2ex("man/<file>.Rd", "test.R")
+parse(file = "test.R")
+```
+
+### 12.7 本地与 CI 环境差异
+
+| 本地现象 | CI 相关性 | 原因 |
+|----------|-----------|------|
+| file.rename 失败 | 无关 | Windows Defender 拦截 staged install |
+| CRAN URL 检查失败 | 无关 | 公司代理拦截出站 |
+| 工作流触发失败 | 相关 | 用 act 本地模拟 |
+
+本地复现 CI 失败优先使用 `gh api` 获取真实日志（§12.5），不要在本地 Windows 直接运行 R CMD check——差异太多。
