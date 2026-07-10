@@ -63,7 +63,7 @@ A `plotit_composite` object.
 p1 <- plotit(mtcars, encode(x = wt, y = mpg)) |> mark_point()
 p2 <- plotit(mtcars, encode(x = factor(cyl))) |> mark_bar()
 compose_inset(p1, p2, left = 0.6, bottom = 0.6, right = 0.95, top = 0.95)
-#> <plotit::plotit_composite>
+#> <plotit_composite>
 #>  @ gg         :A patchwork composed of 2 patches
 #> - Autotagging is turned off
 #> - Guides are kept
@@ -90,7 +90,7 @@ compose_inset(p1, p2, left = 0.6, bottom = 0.6, right = 0.95, top = 0.95)
 #>  .. .. @ legend  : NULL
 #>  .. .. @ dirty   : list()
 #>  @ plots      :List of 2
-#>  .. $ : <plotit::plotit>
+#>  .. $ : <plotit>
 #>  ..  ..@ gg  : <ggplot2::ggplot>
 #>  .. .. .. @ data       :'data.frame':    32 obs. of  11 variables:
 #>  .. .. .. .. $ mpg : num [1:32] 21 21 22.8 21.4 18.7 18.1 14.3 24.4 22.8 19.2 ...
@@ -242,9 +242,9 @@ compose_inset(p1, p2, left = 0.6, bottom = 0.6, right = 0.95, top = 0.95)
 #>     super:  <ggproto object: Class Guides, gg> 
 #>  .. .. .. @ mapping    : <ggplot2::mapping> List of 4
 #>  .. .. .. .. $ x     : language ~wt
-#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce909c6538> 
+#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x55a3c4903158> 
 #>  .. .. .. .. $ y     : language ~mpg
-#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce909c6538> 
+#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x55a3c4903158> 
 #>  .. .. .. .. $ colour: 'AsIs' chr "#4E79A7"
 #>  .. .. .. .. $ fill  : 'AsIs' chr "#4E79A7"
 #>  .. .. .. @ theme      : <theme> List of 144
@@ -731,7 +731,7 @@ compose_inset(p1, p2, left = 0.6, bottom = 0.6, right = 0.95, top = 0.95)
 #>     super:  <ggproto object: Class Layout, gg> 
 #>  .. .. .. @ labels     : <ggplot2::labels>  Named list()
 #>  .. .. .. @ meta       : list()
-#>  .. .. .. @ plot_env   :<environment: 0x55ce909d6250> 
+#>  .. .. .. @ plot_env   :<environment: 0x55a3c48f4320> 
 #>  ..  ..@ meta: <plotit::plotit_metadata>
 #>  .. .. .. @ autofit      : logi FALSE
 #>  .. .. .. @ width        : num 7
@@ -747,7 +747,7 @@ compose_inset(p1, p2, left = 0.6, bottom = 0.6, right = 0.95, top = 0.95)
 #>  .. .. .. .. @ y       : NULL
 #>  .. .. .. .. @ legend  : NULL
 #>  .. .. .. .. @ dirty   : list()
-#>  .. $ : <plotit::plotit>
+#>  .. $ : <plotit>
 #>  ..  ..@ gg  : <ggplot2::ggplot>
 #>  .. .. .. @ data       :'data.frame':    32 obs. of  11 variables:
 #>  .. .. .. .. $ mpg : num [1:32] 21 21 22.8 21.4 18.7 18.1 14.3 24.4 22.8 19.2 ...
@@ -903,7 +903,7 @@ compose_inset(p1, p2, left = 0.6, bottom = 0.6, right = 0.95, top = 0.95)
 #>     super:  <ggproto object: Class Guides, gg> 
 #>  .. .. .. @ mapping    : <ggplot2::mapping> List of 3
 #>  .. .. .. .. $ x     : language ~factor(cyl)
-#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce909c6538> 
+#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x55a3c4903158> 
 #>  .. .. .. .. $ colour: 'AsIs' chr "#4E79A7"
 #>  .. .. .. .. $ fill  : 'AsIs' chr "#4E79A7"
 #>  .. .. .. @ theme      : <theme> List of 144
@@ -1390,7 +1390,7 @@ compose_inset(p1, p2, left = 0.6, bottom = 0.6, right = 0.95, top = 0.95)
 #>     super:  <ggproto object: Class Layout, gg> 
 #>  .. .. .. @ labels     : <ggplot2::labels>  Named list()
 #>  .. .. .. @ meta       : list()
-#>  .. .. .. @ plot_env   :<environment: 0x55ce8e0f6790> 
+#>  .. .. .. @ plot_env   :<environment: 0x55a3c8105c08> 
 #>  ..  ..@ meta: <plotit::plotit_metadata>
 #>  .. .. .. @ autofit      : logi FALSE
 #>  .. .. .. @ width        : num 7

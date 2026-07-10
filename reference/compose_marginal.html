@@ -3,7 +3,8 @@
 the top (x-axis distribution) and right (y-axis distribution).  The axes
 are shared so that the marginal bins align exactly with the scatter axes."><meta property="og:description" content="Arranges a main scatter plot with marginal histogram or density plots on
 the top (x-axis distribution) and right (y-axis distribution).  The axes
-are shared so that the marginal bins align exactly with the scatter axes."></head><body>
+are shared so that the marginal bins align exactly with the scatter axes."><style>.r-plt { display: block; margin: 1rem 0; }
+.r-plt img { display: block; max-width: 100%; height: auto; margin: 0 auto; background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }</style></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -111,7 +112,7 @@ panels.  Default <code>c(1, 4)</code> = top marginal is 1/5 of total height.</p>
 <span class="r-in"><span>  <span class="fu"><a href="mark_histogram.html">mark_histogram</a></span><span class="op">(</span>bins <span class="op">=</span> <span class="fl">15</span>, alpha <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="project_cartesian.html">project_cartesian</a></span><span class="op">(</span>flip <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">compose_marginal</span><span class="op">(</span><span class="va">main</span>, <span class="va">top</span>, <span class="va">right</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;plotit::plotit_composite&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;plotit_composite&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  @ gg         :A patchwork composed of 4 patches</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> - Autotagging is turned off</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> - Guides are collected</span>
@@ -140,7 +141,7 @@ panels.  Default <code>c(1, 4)</code> = top marginal is 1/5 of total height.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. @ legend  : NULL</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. @ dirty   : list()</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  @ plots      :List of 3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ : &lt;plotit::plotit&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ : &lt;plotit&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..@ gg  : &lt;ggplot2::ggplot&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ data       :'data.frame':	150 obs. of  5 variables:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. $ Sepal.Length: num [1:150] 5.1 4.9 4.7 4.6 5 5.4 4.6 5 4.4 4.9 ...</span>
@@ -286,11 +287,11 @@ panels.  Default <code>c(1, 4)</code> = top marginal is 1/5 of total height.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     super:  &lt;ggproto object: Class Guides, gg&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ mapping    : &lt;plotit_encode&gt; List of 3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. $ x     : language ~Sepal.Width</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. ..  ..- attr(*, ".Environment")=&lt;environment: 0x55ce90679158&gt; </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. ..  ..- attr(*, ".Environment")=&lt;environment: 0x55a3c4788a60&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. $ y     : language ~Sepal.Length</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. ..  ..- attr(*, ".Environment")=&lt;environment: 0x55ce90679158&gt; </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. ..  ..- attr(*, ".Environment")=&lt;environment: 0x55a3c4788a60&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. $ colour: language ~Species</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. ..  ..- attr(*, ".Environment")=&lt;environment: 0x55ce90679158&gt; </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. ..  ..- attr(*, ".Environment")=&lt;environment: 0x55a3c4788a60&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ theme      : &lt;theme&gt; List of 144</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. $ line                            : &lt;ggplot2::element_line&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. ..  ..@ colour       : chr "black"</span>
@@ -775,7 +776,7 @@ panels.  Default <code>c(1, 4)</code> = top marginal is 1/5 of total height.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     super:  &lt;ggproto object: Class Layout, gg&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ labels     : &lt;ggplot2::labels&gt;  Named list()</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ meta       : list()</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ plot_env   :&lt;environment: 0x55ce90682668&gt; </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ plot_env   :&lt;environment: 0x55a3c4767b38&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..@ meta: &lt;plotit::plotit_metadata&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ autofit      : logi FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ width        : num 7</span>
@@ -791,7 +792,7 @@ panels.  Default <code>c(1, 4)</code> = top marginal is 1/5 of total height.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. @ y       : NULL</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. @ legend  : NULL</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. @ dirty   : list()</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ : &lt;plotit::plotit&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ : &lt;plotit&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..@ gg  : &lt;ggplot2::ggplot&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ data       :'data.frame':	150 obs. of  5 variables:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. $ Sepal.Length: num [1:150] 5.1 4.9 4.7 4.6 5 5.4 4.6 5 4.4 4.9 ...</span>
@@ -941,9 +942,9 @@ panels.  Default <code>c(1, 4)</code> = top marginal is 1/5 of total height.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     super:  &lt;ggproto object: Class Guides, gg&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ mapping    : &lt;plotit_encode&gt; List of 2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. $ x   : language ~Sepal.Width</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. ..  ..- attr(*, ".Environment")=&lt;environment: 0x55ce90679158&gt; </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. ..  ..- attr(*, ".Environment")=&lt;environment: 0x55a3c4788a60&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. $ fill: language ~Species</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. ..  ..- attr(*, ".Environment")=&lt;environment: 0x55ce90679158&gt; </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. ..  ..- attr(*, ".Environment")=&lt;environment: 0x55a3c4788a60&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ theme      : &lt;theme&gt; List of 144</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. $ line                            : &lt;ggplot2::element_line&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. ..  ..@ colour       : chr "black"</span>
@@ -1428,7 +1429,7 @@ panels.  Default <code>c(1, 4)</code> = top marginal is 1/5 of total height.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     super:  &lt;ggproto object: Class Layout, gg&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ labels     : &lt;ggplot2::labels&gt;  Named list()</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ meta       : list()</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ plot_env   :&lt;environment: 0x55ce8e00ec60&gt; </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ plot_env   :&lt;environment: 0x55a3c82cba10&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..@ meta: &lt;plotit::plotit_metadata&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ autofit      : logi FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ width        : num 7</span>
@@ -1444,7 +1445,7 @@ panels.  Default <code>c(1, 4)</code> = top marginal is 1/5 of total height.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. @ y       : NULL</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. @ legend  : NULL</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. @ dirty   : list()</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ : &lt;plotit::plotit&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ : &lt;plotit&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..@ gg  : &lt;ggplot2::ggplot&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ data       :'data.frame':	150 obs. of  5 variables:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. $ Sepal.Length: num [1:150] 5.1 4.9 4.7 4.6 5 5.4 4.6 5 4.4 4.9 ...</span>
@@ -1594,9 +1595,9 @@ panels.  Default <code>c(1, 4)</code> = top marginal is 1/5 of total height.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     super:  &lt;ggproto object: Class Guides, gg&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ mapping    : &lt;plotit_encode&gt; List of 2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. $ x   : language ~Sepal.Length</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. ..  ..- attr(*, ".Environment")=&lt;environment: 0x55ce90679158&gt; </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. ..  ..- attr(*, ".Environment")=&lt;environment: 0x55a3c4788a60&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. $ fill: language ~Species</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. ..  ..- attr(*, ".Environment")=&lt;environment: 0x55ce90679158&gt; </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. ..  ..- attr(*, ".Environment")=&lt;environment: 0x55a3c4788a60&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ theme      : &lt;theme&gt; List of 144</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. $ line                            : &lt;ggplot2::element_line&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. ..  ..@ colour       : chr "black"</span>
@@ -2080,7 +2081,7 @@ panels.  Default <code>c(1, 4)</code> = top marginal is 1/5 of total height.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     super:  &lt;ggproto object: Class Layout, gg&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ labels     : &lt;ggplot2::labels&gt;  Named list()</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ meta       : list()</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ plot_env   :&lt;environment: 0x55ce906bcd60&gt; </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ plot_env   :&lt;environment: 0x55a3c47b7390&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..@ meta: &lt;plotit::plotit_metadata&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ autofit      : logi FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ width        : num 7</span>
@@ -2116,7 +2117,7 @@ panels.  Default <code>c(1, 4)</code> = top marginal is 1/5 of total height.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

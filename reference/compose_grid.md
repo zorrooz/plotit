@@ -83,7 +83,7 @@ A `plotit_composite` object. Pipe it to
 p1 <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
 p2 <- plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot()
 compose_grid(p1, p2)
-#> <plotit::plotit_composite>
+#> <plotit_composite>
 #>  @ gg         :A patchwork composed of 2 patches
 #> - Autotagging is turned off
 #> - Guides are kept
@@ -110,7 +110,7 @@ compose_grid(p1, p2)
 #>  .. .. @ legend  : NULL
 #>  .. .. @ dirty   : list()
 #>  @ plots      :List of 2
-#>  .. $ : <plotit::plotit>
+#>  .. $ : <plotit>
 #>  ..  ..@ gg  : <ggplot2::ggplot>
 #>  .. .. .. @ data       :'data.frame':    150 obs. of  5 variables:
 #>  .. .. .. .. $ Sepal.Length: num [1:150] 5.1 4.9 4.7 4.6 5 5.4 4.6 5 4.4 4.9 ...
@@ -256,9 +256,9 @@ compose_grid(p1, p2)
 #>     super:  <ggproto object: Class Guides, gg> 
 #>  .. .. .. @ mapping    : <ggplot2::mapping> List of 4
 #>  .. .. .. .. $ x     : language ~Sepal.Width
-#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce8affc5d0> 
+#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x55a3c3ed3bd8> 
 #>  .. .. .. .. $ y     : language ~Sepal.Length
-#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce8affc5d0> 
+#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x55a3c3ed3bd8> 
 #>  .. .. .. .. $ colour: 'AsIs' chr "#4E79A7"
 #>  .. .. .. .. $ fill  : 'AsIs' chr "#4E79A7"
 #>  .. .. .. @ theme      : <theme> List of 144
@@ -745,7 +745,7 @@ compose_grid(p1, p2)
 #>     super:  <ggproto object: Class Layout, gg> 
 #>  .. .. .. @ labels     : <ggplot2::labels>  Named list()
 #>  .. .. .. @ meta       : list()
-#>  .. .. .. @ plot_env   :<environment: 0x55ce8af31068> 
+#>  .. .. .. @ plot_env   :<environment: 0x55a3c3a37ca8> 
 #>  ..  ..@ meta: <plotit::plotit_metadata>
 #>  .. .. .. @ autofit      : logi FALSE
 #>  .. .. .. @ width        : num 7
@@ -761,7 +761,7 @@ compose_grid(p1, p2)
 #>  .. .. .. .. @ y       : NULL
 #>  .. .. .. .. @ legend  : NULL
 #>  .. .. .. .. @ dirty   : list()
-#>  .. $ : <plotit::plotit>
+#>  .. $ : <plotit>
 #>  ..  ..@ gg  : <ggplot2::ggplot>
 #>  .. .. .. @ data       :'data.frame':    150 obs. of  5 variables:
 #>  .. .. .. .. $ Sepal.Length: num [1:150] 5.1 4.9 4.7 4.6 5 5.4 4.6 5 4.4 4.9 ...
@@ -911,9 +911,9 @@ compose_grid(p1, p2)
 #>     super:  <ggproto object: Class Guides, gg> 
 #>  .. .. .. @ mapping    : <ggplot2::mapping> List of 4
 #>  .. .. .. .. $ x     : language ~Species
-#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce8affc5d0> 
+#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x55a3c3ed3bd8> 
 #>  .. .. .. .. $ y     : language ~Sepal.Length
-#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x55ce8affc5d0> 
+#>  .. .. .. ..  ..- attr(*, ".Environment")=<environment: 0x55a3c3ed3bd8> 
 #>  .. .. .. .. $ colour: 'AsIs' chr "#4E79A7"
 #>  .. .. .. .. $ fill  : 'AsIs' chr "#4E79A7"
 #>  .. .. .. @ theme      : <theme> List of 144
@@ -1400,7 +1400,7 @@ compose_grid(p1, p2)
 #>     super:  <ggproto object: Class Layout, gg> 
 #>  .. .. .. @ labels     : <ggplot2::labels>  Named list()
 #>  .. .. .. @ meta       : list()
-#>  .. .. .. @ plot_env   :<environment: 0x55ce8ecfc6a0> 
+#>  .. .. .. @ plot_env   :<environment: 0x55a3c8ab0238> 
 #>  ..  ..@ meta: <plotit::plotit_metadata>
 #>  .. .. .. @ autofit      : logi FALSE
 #>  .. .. .. @ width        : num 7

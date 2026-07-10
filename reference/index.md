@@ -12,17 +12,17 @@
 Add visual marks to your plot.
 
 - [`mark_bar()`](https://zorrooz.github.io/plotit/reference/mark_bar.md)
-  : Generic for adding a bar layer
+  : Bar layer
 - [`mark_boxplot()`](https://zorrooz.github.io/plotit/reference/mark_boxplot.md)
-  : Generic for adding a boxplot layer
+  : Boxplot layer
 - [`mark_density()`](https://zorrooz.github.io/plotit/reference/mark_density.md)
-  : Generic for adding a density layer
+  : Density layer
 - [`mark_histogram()`](https://zorrooz.github.io/plotit/reference/mark_histogram.md)
-  : Generic for adding a histogram layer
+  : Histogram layer
 - [`mark_line()`](https://zorrooz.github.io/plotit/reference/mark_line.md)
-  : Generic for adding a line layer
+  : Line layer
 - [`mark_point()`](https://zorrooz.github.io/plotit/reference/mark_point.md)
-  : Generic for adding a point layer
+  : Point layer
 
 ## Scales
 

@@ -5,7 +5,8 @@ report figures.  Pipe the result to label_title() / style() /
 export() just as with a single plotit."><meta property="og:description" content="compose_grid() arranges plotit or plotit_composite objects into a
 grid via patchwork::wrap_plots().  The default vertical stack (ncol = 1 when neither ncol nor nrow is given) is the most common layout for
 report figures.  Pipe the result to label_title() / style() /
-export() just as with a single plotit."></head><body>
+export() just as with a single plotit."><style>.r-plt { display: block; margin: 1rem 0; }
+.r-plt img { display: block; max-width: 100%; height: auto; margin: 0 auto; background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }</style></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -125,7 +126,7 @@ custom character vector (e.g. <code>c("(a)", "(b)")</code>).  <code>NULL</code> 
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">p1</span> <span class="op">&lt;-</span> <span class="fu"><a href="plotit.html">plotit</a></span><span class="op">(</span><span class="va">iris</span>, <span class="fu"><a href="encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Sepal.Width</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="mark_point.html">mark_point</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">p2</span> <span class="op">&lt;-</span> <span class="fu"><a href="plotit.html">plotit</a></span><span class="op">(</span><span class="va">iris</span>, <span class="fu"><a href="encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Species</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="mark_boxplot.html">mark_boxplot</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">compose_grid</span><span class="op">(</span><span class="va">p1</span>, <span class="va">p2</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;plotit::plotit_composite&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;plotit_composite&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  @ gg         :A patchwork composed of 2 patches</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> - Autotagging is turned off</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> - Guides are kept</span>
@@ -152,7 +153,7 @@ custom character vector (e.g. <code>c("(a)", "(b)")</code>).  <code>NULL</code> 
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. @ legend  : NULL</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. @ dirty   : list()</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  @ plots      :List of 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ : &lt;plotit::plotit&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ : &lt;plotit&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..@ gg  : &lt;ggplot2::ggplot&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ data       :'data.frame':	150 obs. of  5 variables:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. $ Sepal.Length: num [1:150] 5.1 4.9 4.7 4.6 5 5.4 4.6 5 4.4 4.9 ...</span>
@@ -298,9 +299,9 @@ custom character vector (e.g. <code>c("(a)", "(b)")</code>).  <code>NULL</code> 
 <span class="r-out co"><span class="r-pr">#&gt;</span>     super:  &lt;ggproto object: Class Guides, gg&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ mapping    : &lt;ggplot2::mapping&gt; List of 4</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. $ x     : language ~Sepal.Width</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. ..  ..- attr(*, ".Environment")=&lt;environment: 0x55ce8affc5d0&gt; </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. ..  ..- attr(*, ".Environment")=&lt;environment: 0x55a3c3ed3bd8&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. $ y     : language ~Sepal.Length</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. ..  ..- attr(*, ".Environment")=&lt;environment: 0x55ce8affc5d0&gt; </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. ..  ..- attr(*, ".Environment")=&lt;environment: 0x55a3c3ed3bd8&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. $ colour: 'AsIs' chr "#4E79A7"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. $ fill  : 'AsIs' chr "#4E79A7"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ theme      : &lt;theme&gt; List of 144</span>
@@ -787,7 +788,7 @@ custom character vector (e.g. <code>c("(a)", "(b)")</code>).  <code>NULL</code> 
 <span class="r-out co"><span class="r-pr">#&gt;</span>     super:  &lt;ggproto object: Class Layout, gg&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ labels     : &lt;ggplot2::labels&gt;  Named list()</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ meta       : list()</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ plot_env   :&lt;environment: 0x55ce8af31068&gt; </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ plot_env   :&lt;environment: 0x55a3c3a37ca8&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..@ meta: &lt;plotit::plotit_metadata&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ autofit      : logi FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ width        : num 7</span>
@@ -803,7 +804,7 @@ custom character vector (e.g. <code>c("(a)", "(b)")</code>).  <code>NULL</code> 
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. @ y       : NULL</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. @ legend  : NULL</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. @ dirty   : list()</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ : &lt;plotit::plotit&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ : &lt;plotit&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..@ gg  : &lt;ggplot2::ggplot&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ data       :'data.frame':	150 obs. of  5 variables:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. $ Sepal.Length: num [1:150] 5.1 4.9 4.7 4.6 5 5.4 4.6 5 4.4 4.9 ...</span>
@@ -953,9 +954,9 @@ custom character vector (e.g. <code>c("(a)", "(b)")</code>).  <code>NULL</code> 
 <span class="r-out co"><span class="r-pr">#&gt;</span>     super:  &lt;ggproto object: Class Guides, gg&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ mapping    : &lt;ggplot2::mapping&gt; List of 4</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. $ x     : language ~Species</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. ..  ..- attr(*, ".Environment")=&lt;environment: 0x55ce8affc5d0&gt; </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. ..  ..- attr(*, ".Environment")=&lt;environment: 0x55a3c3ed3bd8&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. $ y     : language ~Sepal.Length</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. ..  ..- attr(*, ".Environment")=&lt;environment: 0x55ce8affc5d0&gt; </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. ..  ..- attr(*, ".Environment")=&lt;environment: 0x55a3c3ed3bd8&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. $ colour: 'AsIs' chr "#4E79A7"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. $ fill  : 'AsIs' chr "#4E79A7"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ theme      : &lt;theme&gt; List of 144</span>
@@ -1442,7 +1443,7 @@ custom character vector (e.g. <code>c("(a)", "(b)")</code>).  <code>NULL</code> 
 <span class="r-out co"><span class="r-pr">#&gt;</span>     super:  &lt;ggproto object: Class Layout, gg&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ labels     : &lt;ggplot2::labels&gt;  Named list()</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ meta       : list()</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ plot_env   :&lt;environment: 0x55ce8ecfc6a0&gt; </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ plot_env   :&lt;environment: 0x55a3c8ab0238&gt; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..@ meta: &lt;plotit::plotit_metadata&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ autofit      : logi FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. @ width        : num 7</span>
@@ -1483,7 +1484,7 @@ custom character vector (e.g. <code>c("(a)", "(b)")</code>).  <code>NULL</code> 
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>
