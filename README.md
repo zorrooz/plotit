@@ -7,7 +7,7 @@
 [![lint](https://github.com/zorrooz/plotit/actions/workflows/lint.yaml/badge.svg)](https://github.com/zorrooz/plotit/actions/workflows/lint.yaml)
 <!-- badges: end -->
 
-<p align="center"><a href="README_ZH.html">简体中文</a> | <b>English</b></p>
+<p align="center"><a href="https://zorrooz.github.io/plotit/README_ZH.html">简体中文</a> | <b>English</b></p>
 
 > ⚠️ **Early development stage.**  
 > plotit is under active, pre-release development. Breaking changes are
