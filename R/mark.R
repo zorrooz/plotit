@@ -43,66 +43,150 @@ NULL
   plot
 }
 
-# ---- mark factory ----
-# Generates an S7 generic + method for a standard mark.
-# Standard = one geom function, no special dispatch (e.g. mark_bar does
-# its own geom_col vs geom_bar selection and is not built via the factory).
+# ---- mark method factory ----
+# Generates only the S7 method for a standard mark.  The S7 generic
+# (`new_generic`) stays hand-written with @export so roxygen2 can see it.
 #
-# name     : character, the mark function name (e.g. "mark_point")
+# generic  : the S7 generic object (e.g. mark_point)
 # geom_fun : the ggplot2 geom function (e.g. ggplot2::geom_point)
-#
-# Use `force()` to eagerly evaluate the arguments so the closure captures
-# their values rather than the factory's parameter bindings.
-#' Build a standard S7 mark generic + method pair.
+#' Register an S7 method for a standard mark.
 #' @noRd
 #' @keywords internal
-._make_mark <- function(name, geom_fun) {
-  force(name)
+._register_mark_method <- function(generic, geom_fun) {
+  force(generic)
   force(geom_fun)
 
-  # Build generic + method in the caller's environment so @export works
-  code <- sprintf(
-    '%s <- S7::new_generic(
-  "%s", "plot",
+  S7::method(generic, plotit_class) <- function(
+    plot, mapping = NULL, data = NULL, position = NULL, ...,
+    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+  ) {
+    ._mark_impl(plot, mapping, data, position, geom_fun,
+                rasterize, rasterize_dpi, rasterize_dev, ...)
+  }
+  invisible()
+}
+
+# ---- mark_point ----
+#' Point layer
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional data for this layer
+#' @param position Position adjustment; if `NULL` and global dodge is set, auto-applies `position_dodge()`.
+#' @param rasterize If `TRUE`, rasterize the layer via `ggrastr::rasterise()` (requires \pkg{ggrastr}).
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_point`
+#' @return Modified plotit object
+#' @examples
+#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
+#' @export
+mark_point <- S7::new_generic(
+  "mark_point", "plot",
   function(plot, mapping = NULL, data = NULL, position = NULL, ...,
            rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
     S7::S7_dispatch()
   }
 )
+._register_mark_method(mark_point, ggplot2::geom_point)
 
-S7::method(%s, plotit_class) <- function(
-  plot, mapping = NULL, data = NULL, position = NULL, ...,
-  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
-) {
-  ._mark_impl(plot, mapping, data, position, %s,
-              rasterize, rasterize_dpi, rasterize_dev, ...)
-}',
-    name, name, name, deparse(substitute(geom_fun))
-  )
-
-  eval(parse(text = code), envir = parent.frame())
-  invisible(get(name, envir = parent.frame()))
-}
-
-# ---- Standard marks (1-line factory calls; each has @export above) ----
-
+# ---- mark_line ----
+#' Line layer
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional data for this layer
+#' @param position Position adjustment; if `NULL` and global dodge is set, auto-applies `position_dodge()`.
+#' @param rasterize If `TRUE`, rasterize the layer via `ggrastr::rasterise()` (requires \pkg{ggrastr}).
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_line`
+#' @return Modified plotit object
+#' @examples
+#' plotit(ggplot2::economics, encode(x = date, y = unemploy)) |> mark_line()
 #' @export
-._make_mark("mark_point", ggplot2::geom_point)
+mark_line <- S7::new_generic(
+  "mark_line", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+._register_mark_method(mark_line, ggplot2::geom_line)
 
+# ---- mark_boxplot ----
+#' Boxplot layer
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional data for this layer
+#' @param position Position adjustment; if `NULL` and global dodge is set, auto-applies `position_dodge()`. Overrides `geom_boxplot` default (`"dodge2"`).
+#' @param rasterize If `TRUE`, rasterize the layer via `ggrastr::rasterise()` (requires \pkg{ggrastr}).
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_boxplot`
+#' @return Modified plotit object
+#' @examples
+#' plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot()
 #' @export
-._make_mark("mark_line", ggplot2::geom_line)
+mark_boxplot <- S7::new_generic(
+  "mark_boxplot", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+._register_mark_method(mark_boxplot, ggplot2::geom_boxplot)
 
+# ---- mark_histogram ----
+#' Histogram layer
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional data for this layer
+#' @param position Position adjustment; if `NULL` and global dodge is set, auto-applies `position_dodge()`.
+#' @param rasterize If `TRUE`, rasterize the layer via `ggrastr::rasterise()` (requires \pkg{ggrastr}).
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_histogram`
+#' @return Modified plotit object
+#' @examples
+#' plotit(iris, encode(x = Sepal.Width)) |> mark_histogram()
 #' @export
-._make_mark("mark_boxplot", ggplot2::geom_boxplot)
+mark_histogram <- S7::new_generic(
+  "mark_histogram", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+._register_mark_method(mark_histogram, ggplot2::geom_histogram)
 
+# ---- mark_density ----
+#' Density layer
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional data for this layer
+#' @param position Position adjustment; if `NULL` and global dodge is set, auto-applies `position_dodge()`.
+#' @param rasterize If `TRUE`, rasterize the layer via `ggrastr::rasterise()` (requires \pkg{ggrastr}).
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_density`
+#' @return Modified plotit object
+#' @examples
+#' plotit(iris, encode(x = Sepal.Width)) |> mark_density()
 #' @export
-._make_mark("mark_histogram", ggplot2::geom_histogram)
-
-#' @export
-._make_mark("mark_density", ggplot2::geom_density)
+mark_density <- S7::new_generic(
+  "mark_density", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+._register_mark_method(mark_density, ggplot2::geom_density)
 
 # ---- mark_bar (hand-written: geom_col vs geom_bar dispatch) ----
-
 #' Bar layer
 #'
 #' @param plot A plotit object
