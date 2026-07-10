@@ -41,8 +41,7 @@ S7::method(format, plotit_composite) <- function(x, ...) ""
 #' @exportS3Method pkgdown::pkgdown_print
 pkgdown_print.plotit <- function(x, visible = TRUE) {
   if (!visible) return(invisible())
-  x <- ._sync_labels(x)
-  ._render_plotit(x)
+  ._print_render(x)
 }
 
 #' @exportS3Method pkgdown::pkgdown_print
@@ -106,10 +105,18 @@ print.plotit <- function(x, ...) {
 # ---- knit_print ----
 # S3 methods for knitr to capture plotit plots in vignettes / R Markdown.
 # Renders the underlying ggplot to knitr's active device.
-#' @exportS3Method knitr::knit_print
-knit_print.plotit <- function(x, ...) {
+
+# Shared knit_print / pkgdown_print path: sync labels, render, suppress text.
+#' @noRd
+#' @keywords internal
+._print_render <- function(x) {
   x <- ._sync_labels(x)
   ._render_plotit(x)
+}
+
+#' @exportS3Method knitr::knit_print
+knit_print.plotit <- function(x, ...) {
+  ._print_render(x)
 }
 
 #' @exportS3Method knitr::knit_print
