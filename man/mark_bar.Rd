@@ -2,7 +2,7 @@
 % Please edit documentation in R/mark.R
 \name{mark_bar}
 \alias{mark_bar}
-\title{Generic for adding a bar layer}
+\title{Bar layer}
 \usage{
 mark_bar(
   plot,
@@ -36,7 +36,7 @@ mark_bar(
 Modified plotit object
 }
 \description{
-Generic for adding a bar layer
+Bar layer
 }
 \examples{
 plotit(mtcars, encode(x = factor(cyl))) |> mark_bar()
