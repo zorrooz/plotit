@@ -2,7 +2,7 @@
 % Please edit documentation in R/mark.R
 \name{mark_point}
 \alias{mark_point}
-\title{Generic for adding a point layer}
+\title{Point layer}
 \usage{
 mark_point(
   plot,
@@ -22,11 +22,12 @@ mark_point(
 
 \item{data}{Optional data for this layer}
 
-\item{position}{Position adjustment; if \code{NULL} and global dodge is set, auto-applies \code{position_dodge()}.}
+\item{position}{Position adjustment; if \code{NULL} and global dodge is set,
+auto-applies \code{position_dodge()}.}
 
 \item{...}{Other arguments passed to \code{geom_point}}
 
-\item{rasterize}{If \code{TRUE}, rasterize the layer via \code{ggrastr::rasterise()} (requires \pkg{ggrastr}).}
+\item{rasterize}{If \code{TRUE}, rasterize via \code{ggrastr::rasterise()}.}
 
 \item{rasterize_dpi}{DPI for rasterization (default 300).}
 
@@ -36,7 +37,7 @@ mark_point(
 Modified plotit object
 }
 \description{
-Generic for adding a point layer
+Adds a scatter plot layer.
 }
 \examples{
 plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()

@@ -107,6 +107,37 @@ NULL
 # ---- Synchronise meta@labels to gg (called at print/export time) ----
 # Applies the complete label state from meta to gg, overwriting any
 # previous gg modifications.  Only touches slots listed in dirty.
+
+# Internal: sync one text label slot.
+# slot_name: property name in plotit_labels (e.g. "title")
+# theme_el_name: gg theme element (e.g. "plot.title")
+# labs_name: gg labels name (e.g. "title")
+#' Sync one text label slot: hide / reset / set.
+#' @noRd
+#' @keywords internal
+._sync_one_label <- function(plot, slot_name, theme_el_name, labs_name) {
+  val <- S7::prop(plot@meta@labels, slot_name)
+  if (isTRUE(val == FALSE)) {
+    plot@gg <- plot@gg + ._theme_el(theme_el_name, ggplot2::element_blank())
+  } else if (is.null(val)) {
+    plot@gg <- plot@gg + ._theme_el(theme_el_name, NULL)
+    plot@gg$labels[[labs_name]] <- NULL
+  } else if (is.character(val)) {
+    plot@gg <- plot@gg + ._labs_el(labs_name, val)
+    plot@gg <- plot@gg + ._theme_el(theme_el_name, NULL)
+  }
+  plot
+}
+
+# Table mapping dirty slot → (theme element, labs name).
+._LABEL_SYNC_MAP <- list(
+  title    = list(theme = "plot.title",    labs = "title"),
+  subtitle = list(theme = "plot.subtitle", labs = "subtitle"),
+  caption  = list(theme = "plot.caption",  labs = "caption"),
+  x        = list(theme = "axis.title.x",  labs = "x"),
+  y        = list(theme = "axis.title.y",  labs = "y")
+)
+
 #' Sync meta@labels to gg at print/export time.
 #' Applies the complete label state (text, hide, reset) to gg.
 #' @noRd
@@ -118,77 +149,12 @@ NULL
     return(plot)
   }
 
-  # Title
-  if ("title" %in% dirty) {
-    val <- labels@title
-    if (isTRUE(val == FALSE)) {
-      plot@gg <- plot@gg + ._theme_el("plot.title", ggplot2::element_blank())
-    } else if (is.null(val)) {
-      plot@gg <- plot@gg + ._theme_el("plot.title", NULL)
-      plot@gg$labels$title <- NULL
-    } else if (is.character(val)) {
-      plot@gg <- plot@gg + ._labs_el("title", val)
-      plot@gg <- plot@gg + ._theme_el("plot.title", NULL)
-    }
+  for (slot in intersect(dirty, names(._LABEL_SYNC_MAP))) {
+    m <- ._LABEL_SYNC_MAP[[slot]]
+    plot <- ._sync_one_label(plot, slot, m$theme, m$labs)
   }
 
-  # Subtitle
-  if ("subtitle" %in% dirty) {
-    val <- labels@subtitle
-    if (isTRUE(val == FALSE)) {
-      plot@gg <- plot@gg + ._theme_el("plot.subtitle", ggplot2::element_blank())
-    } else if (is.null(val)) {
-      plot@gg <- plot@gg + ._theme_el("plot.subtitle", NULL)
-      plot@gg$labels$subtitle <- NULL
-    } else if (is.character(val)) {
-      plot@gg <- plot@gg + ._labs_el("subtitle", val)
-      plot@gg <- plot@gg + ._theme_el("plot.subtitle", NULL)
-    }
-  }
-
-  # Caption
-  if ("caption" %in% dirty) {
-    val <- labels@caption
-    if (isTRUE(val == FALSE)) {
-      plot@gg <- plot@gg + ._theme_el("plot.caption", ggplot2::element_blank())
-    } else if (is.null(val)) {
-      plot@gg <- plot@gg + ._theme_el("plot.caption", NULL)
-      plot@gg$labels$caption <- NULL
-    } else if (is.character(val)) {
-      plot@gg <- plot@gg + ._labs_el("caption", val)
-      plot@gg <- plot@gg + ._theme_el("plot.caption", NULL)
-    }
-  }
-
-  # X axis
-  if ("x" %in% dirty) {
-    val <- labels@x
-    if (isTRUE(val == FALSE)) {
-      plot@gg <- plot@gg + ._theme_el("axis.title.x", ggplot2::element_blank())
-    } else if (is.null(val)) {
-      plot@gg <- plot@gg + ._theme_el("axis.title.x", NULL)
-      plot@gg$labels$x <- NULL
-    } else if (is.character(val)) {
-      plot@gg <- plot@gg + ._labs_el("x", val)
-      plot@gg <- plot@gg + ._theme_el("axis.title.x", NULL)
-    }
-  }
-
-  # Y axis
-  if ("y" %in% dirty) {
-    val <- labels@y
-    if (isTRUE(val == FALSE)) {
-      plot@gg <- plot@gg + ._theme_el("axis.title.y", ggplot2::element_blank())
-    } else if (is.null(val)) {
-      plot@gg <- plot@gg + ._theme_el("axis.title.y", NULL)
-      plot@gg$labels$y <- NULL
-    } else if (is.character(val)) {
-      plot@gg <- plot@gg + ._labs_el("y", val)
-      plot@gg <- plot@gg + ._theme_el("axis.title.y", NULL)
-    }
-  }
-
-  # Legend entries
+  # Legend entries (non-uniform: state machine with default fallback)
   if ("legend" %in% dirty && length(labels@legend) > 0) {
     aes_names <- ._collect_aes_names(
       plot@gg,

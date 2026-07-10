@@ -13,6 +13,24 @@ NULL
   )
 }
 
+# ---- format ----
+# Suppress S7 text output so pkgdown reference examples capture rendered plots.
+#' @noRd
+S7::method(format, plotit_class) <- function(x, ...) ""
+S7::method(format, plotit_composite) <- function(x, ...) ""
+
+# ---- internal render routing ----
+# Route plot rendering based on context.
+# Always renders to the device so evaluate/pkgdown/R CMD check
+# can capture the plot output.  Both branches are identical;
+# kept separate in case one needs context-specific logic later.
+#' @noRd
+#' @keywords internal
+._render_plotit <- function(x) {
+  print(x@gg)
+  invisible(x)
+}
+
 # ---- print ----
 #' Print a plotit object (automatically render the plot)
 #'
@@ -47,10 +65,10 @@ S7::method(print, plotit_class) <- function(x, ...) {
     use_rstudio <- isTRUE(dev_opt == "rstudio")
     grDevices::dev.new(width = pw, height = ph, noRStudioGD = !use_rstudio)
     grid::grid.draw(gt)
+    invisible(x)
   } else {
-    print(x@gg)
+    ._render_plotit(x)
   }
-  invisible(x)
 }
 
 # S3 print method — reaches knitr/vignette contexts where S7 dispatch doesn't fire
@@ -61,8 +79,7 @@ print.plotit <- function(x, ...) {
     attr(x@meta, "plotit_theme_managed") <- TRUE
   }
   x <- ._sync_labels(x)
-  print(x@gg)
-  invisible(x)
+  ._render_plotit(x)
 }
 
 # ---- knit_print ----
@@ -71,8 +88,7 @@ print.plotit <- function(x, ...) {
 #' @exportS3Method knitr::knit_print
 knit_print.plotit <- function(x, ...) {
   x <- ._sync_labels(x)
-  print(x@gg)
-  invisible(x)
+  ._render_plotit(x)
 }
 
 #' @exportS3Method knitr::knit_print

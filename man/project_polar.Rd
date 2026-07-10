@@ -46,5 +46,6 @@ ggplot2 >= 3.5.0).
 }
 \examples{
 plotit(mtcars, encode(x = factor(cyl))) |>
-  mark_bar() |> project_polar()
+  mark_bar() |>
+  project_polar()
 }

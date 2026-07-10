@@ -25,6 +25,7 @@ jobs:
           extra-packages: |
             any::lintr
             any::styler
+            any::roxygen2
 
       - name: Lint
         continue-on-error: true
@@ -50,13 +51,17 @@ jobs:
         run: |
           changed <- tryCatch({
             styled <- styler::style_pkg(dry = "on")
-            if (!is.null(styled)) sum(styled$changed) else 0
+            if (!is.null(styled)) {
+              ch <- styled$changed
+              if (is.na(ch)) 0 else sum(ch)
+            } else 0
           }, error = function(e) {
             message("styler check skipped: ", conditionMessage(e))
-            0
+            NA_integer_
           })
-          if (changed > 0) {
-            message(sprintf("NOTE: %d file(s) need styling. Run styler::style_pkg().", changed))
+          if (is.na(changed) || changed > 0) {
+            if (is.na(changed)) message("NOTE: styler check failed — see warnings above.")
+            message(sprintf("NOTE: %d file(s) need styling. Run styler::style_pkg().", if (is.na(changed)) 0 else changed))
           } else {
             message("Code style: OK")
           }

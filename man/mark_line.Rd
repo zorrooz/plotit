@@ -2,7 +2,7 @@
 % Please edit documentation in R/mark.R
 \name{mark_line}
 \alias{mark_line}
-\title{Generic for adding a line layer}
+\title{Line layer}
 \usage{
 mark_line(
   plot,
@@ -22,11 +22,11 @@ mark_line(
 
 \item{data}{Optional data for this layer}
 
-\item{position}{Position adjustment; if \code{NULL} and global dodge is set, auto-applies \code{position_dodge()}.}
+\item{position}{Position adjustment.}
 
 \item{...}{Other arguments passed to \code{geom_line}}
 
-\item{rasterize}{If \code{TRUE}, rasterize the layer via \code{ggrastr::rasterise()} (requires \pkg{ggrastr}).}
+\item{rasterize}{If \code{TRUE}, rasterize via \code{ggrastr::rasterise()}.}
 
 \item{rasterize_dpi}{DPI for rasterization (default 300).}
 
@@ -36,7 +36,7 @@ mark_line(
 Modified plotit object
 }
 \description{
-Generic for adding a line layer
+Adds a connected line or trend layer.
 }
 \examples{
 plotit(ggplot2::economics, encode(x = date, y = unemploy)) |> mark_line()

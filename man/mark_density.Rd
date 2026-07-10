@@ -2,7 +2,7 @@
 % Please edit documentation in R/mark.R
 \name{mark_density}
 \alias{mark_density}
-\title{Generic for adding a density layer}
+\title{Density layer}
 \usage{
 mark_density(
   plot,
@@ -22,11 +22,11 @@ mark_density(
 
 \item{data}{Optional data for this layer}
 
-\item{position}{Position adjustment; if \code{NULL} and global dodge is set, auto-applies \code{position_dodge()}.}
+\item{position}{Position adjustment.}
 
 \item{...}{Other arguments passed to \code{geom_density}}
 
-\item{rasterize}{If \code{TRUE}, rasterize the layer via \code{ggrastr::rasterise()} (requires \pkg{ggrastr}).}
+\item{rasterize}{If \code{TRUE}, rasterize via \code{ggrastr::rasterise()}.}
 
 \item{rasterize_dpi}{DPI for rasterization (default 300).}
 
@@ -36,7 +36,7 @@ mark_density(
 Modified plotit object
 }
 \description{
-Generic for adding a density layer
+Adds a kernel density estimate layer.
 }
 \examples{
 plotit(iris, encode(x = Sepal.Width)) |> mark_density()

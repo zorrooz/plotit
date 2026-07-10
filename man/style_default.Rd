@@ -4,7 +4,7 @@
 \alias{style_default}
 \title{Apply the default plotit theme (convenience wrapper for style())}
 \usage{
-style_default(plot, base_size = NULL, base_family = NULL)
+style_default(plot, ..., base_size = NULL, base_family = NULL)
 }
 \arguments{
 \item{plot}{A plotit object.}

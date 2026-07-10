@@ -2,7 +2,7 @@
 % Please edit documentation in R/mark.R
 \name{mark_bar}
 \alias{mark_bar}
-\title{Generic for adding a bar layer}
+\title{Bar layer}
 \usage{
 mark_bar(
   plot,
@@ -22,11 +22,11 @@ mark_bar(
 
 \item{data}{Optional data for this layer}
 
-\item{position}{Position adjustment; if \code{NULL} and global dodge is set, auto-applies \code{position_dodge()}. Overrides \code{geom_bar}/\code{geom_col} default.}
+\item{position}{Position adjustment; overrides \code{geom_bar}/\code{geom_col} default.}
 
 \item{...}{Other arguments passed to \code{geom_bar} or \code{geom_col}}
 
-\item{rasterize}{If \code{TRUE}, rasterize the layer via \code{ggrastr::rasterise()} (requires \pkg{ggrastr}).}
+\item{rasterize}{If \code{TRUE}, rasterize via \code{ggrastr::rasterise()}.}
 
 \item{rasterize_dpi}{DPI for rasterization (default 300).}
 
@@ -36,7 +36,8 @@ mark_bar(
 Modified plotit object
 }
 \description{
-Generic for adding a bar layer
+Adds a bar layer. Automatically uses \code{geom_col()} when a y aesthetic is
+mapped, or \code{geom_bar()} for count-based bars.
 }
 \examples{
 plotit(mtcars, encode(x = factor(cyl))) |> mark_bar()
