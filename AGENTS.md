@@ -8,8 +8,26 @@
 - **默认美观**：预设主题、配色与尺寸，开箱即出版/报告可用。
 - **一致性**：统一的 API 风格、参数命名和错误处理策略。
 - **可扩展性**：基于 ggplot2 及其扩展包构造，通过 `...` 透传底层能力，不作过度封装。
-- **Mark 多样性**：对标 **Vega-Lite** / **AntV-G2** 的视觉通道丰富度，超越原生 ggplot2 几何图层类型范围。规划 22 种 mark 类型（§3.2），覆盖基础几何、分布展示、关系层次和地理空间四大领域。
+- **Mark 多样性**：对标 **Vega-Lite** / **AntV-G2** 的视觉通道丰富度，超越原生 ggplot2 几何图层类型范围。规划 20 种 mark 类型（§3.2），覆盖基础几何、分布展示、关系层次和地理空间四大领域。
 - **默认美观与低配置成本**：调色板（离散/连续/定性）精心选择并持续扩展。`scale_*` 的 `range` 参数保持 `"scheme_name"` 字符串接口简便性，用户无需掌握色彩理论即可产出出版可用图表。
+- **最小化实现**：能用已有原语组合实现的图表效果，不新增 mark。mark 是语法糖的最终边界——之前所有组合（mark + project + scale + split）都应该是有效的管道链。新增 mark 的唯一理由是无法用已有原语在合理管道内表达该视觉形态。
+
+### 1.1a 组合优先原则
+
+> **核心规则**：如果一个视觉效果可以通过 `mark_* + project_* + scale_* + split_*` 的管道组合实现，则**不新增 mark 类型**。
+>
+> **判断流程**：
+> 1. 目标视觉效果能否通过已有 mark + project 组合实现？
+> 2. 该组合能否保持在单条管道链内（`data |> plotit(encode(...)) |> mark_*(...) |> project_*(...) |> ...`）？
+> 3. 如果能 → 在 README/recipes 中提供组合示例，不新增 mark
+> 4. 如果不能（需要外部布局算法 / 非 ggplot2 原生渲染 / 新型数据表达）→ 考虑新增 mark
+>
+> **典型例子**：
+> - `mark_arc`（饼图/环形图/玫瑰图）→ **删除**。等价于 `mark_bar() |> project_polar(inner_radius = ...)`，不新增
+> - `mark_beeswarm` → **保留**。需要 `ggbeeswarm` 的碰撞检测排列算法，无法用已有 mark 模拟
+> - `mark_violin` → **保留**。`geom_violin` 的核密度估计形状无法由 `mark_area` 等价表达
+>
+> **组合收录**（§3.2c）：有价值的组合模式在约定中作为 recipe 记录，包含等价的 mark-free 管道示例。
 
 ### 1.2 元数据集中管理
 
@@ -96,7 +114,7 @@
 | `mark_histogram` | `geom_histogram` | 直方图 |
 | `mark_density` | `geom_density` | 密度曲线 |
 
-**完整规划**（22 种，对标 Vega-Lite 15 种 + AntV G2 30+ 种，去重取并集）：
+**完整规划**（20 种，对标 Vega-Lite 15 种 + AntV G2 30+ 种，经组合优先原则精简）：
 
 | # | 函数 | 类别 | 对应 R 包 / geom | 对标来源 | 用途 |
 |---|---|---|---|---|---|
@@ -106,37 +124,87 @@
 | 3 | `mark_area` | 基础 | `geom_area`/`geom_ribbon` | VL `area`/G2 `area` | 面积图/堆叠面积/河流图/误差带 |
 | 4 | `mark_bar` | 基础 | `geom_bar`/`geom_col` | VL `bar`/G2 `interval` | 柱状/条形图 ✅ |
 | 5 | `mark_rect` | 基础 | `geom_tile`/`geom_rect` | VL `rect`/G2 `cell` `rect` | 矩形/热力图单元格 |
-| 6 | `mark_arc` | 基础 | `geom_bar`+`coord_polar`/`ggforce` | VL `arc`/G2 `interval`(pie) | 饼图/环形图/玫瑰图 |
-| 7 | `mark_polygon` | 基础 | `geom_polygon` | G2 `polygon` | 多边形/自定义形状/地图区域 |
-| 8 | `mark_text` | 基础 | `geom_text`/`ggrepel` | VL `text`/G2 `text` | 文本标签/标注/数据标签 |
-| 9 | `mark_rule` | 基础 | `geom_hline`/`geom_vline`/`geom_abline`/`geom_segment` | VL `rule`/G2 `lineX` `lineY` `rangeX` `rangeY` | 参考线/参考区域/误差线 |
-| 10 | `mark_path` | 基础 | `geom_path` | G2 `path`/VL（Vega `trail`） | 路径/轨迹 |
-| 11 | `mark_tick` | 基础 | `geom_rug`/`geom_point`(strip) | VL `tick` | 刻度线/一维分布 strip plot |
+| 6 | `mark_polygon` | 基础 | `geom_polygon` | G2 `polygon` | 多边形/自定义形状/地图区域 |
+| 7 | `mark_text` | 基础 | `geom_text`/`ggrepel` | VL `text`/G2 `text` | 文本标签/标注/数据标签 |
+| 8 | `mark_rule` | 基础 | `geom_hline`/`geom_vline`/`geom_abline`/`geom_segment` | VL `rule`/G2 `lineX` `lineY` `rangeX` `rangeY` | 参考线/参考区域/误差线 |
+| 9 | `mark_path` | 基础 | `geom_path` | G2 `path`/VL（Vega `trail`） | 路径/轨迹 |
 | | **分布展示** | | | | |
-| 12 | `mark_histogram` | 分布 | `geom_histogram` | VL `bar`(binned)/G2 `interval`(histogram) | 直方图 ✅ |
-| 13 | `mark_density` | 分布 | `geom_density`/`geom_density_2d` | G2 `density` `heatmap` | 密度曲线/KDE/2D 密度热力图 ✅ |
-| 14 | `mark_boxplot` | 分布 | `geom_boxplot` | VL `boxplot`/G2 `boxplot` | 箱线图 ✅ |
-| 15 | `mark_violin` | 分布 | `geom_violin` | G2 `density`(violin shape) | 小提琴图 |
-| 16 | `mark_beeswarm` | 分布 | `ggbeeswarm::geom_beeswarm` | G2 `beeswarm` | 蜂群散点/分布散点 |
+| 10 | `mark_histogram` | 分布 | `geom_histogram` | VL `bar`(binned)/G2 `interval`(histogram) | 直方图 ✅ |
+| 11 | `mark_density` | 分布 | `geom_density`/`geom_density_2d` | G2 `density` `heatmap` | 密度曲线/KDE/2D 密度热力图 ✅ |
+| 12 | `mark_boxplot` | 分布 | `geom_boxplot` | VL `boxplot`/G2 `boxplot` | 箱线图 ✅ |
+| 13 | `mark_violin` | 分布 | `geom_violin` | G2 `density`(violin shape) | 小提琴图 |
+| 14 | `mark_beeswarm` | 分布 | `ggbeeswarm::geom_beeswarm` | G2 `beeswarm` | 蜂群散点/分布散点 |
 | | **关系与层次** | | | | |
-| 17 | `mark_network` | 关系 | `ggraph`/`igraph` | G2 `forceGraph` | 网络/力导向图 |
-| 18 | `mark_tree` | 关系 | `ggraph`(dendrogram/treemap) | G2 `tree` `partition` `sunburst` | 树图/冰柱图/旭日图 |
-| 19 | `mark_sankey` | 关系 | `ggsankey` | G2 `sankey` | 桑基流向图 |
-| 20 | `mark_chord` | 关系 | `circlize` | G2 `chord` | 弦图/环形关系图 |
-| 21 | `mark_treemap` | 关系 | `treemapify` | G2 `treemap` `pack` | 矩形树图/圆形 packing |
+| 15 | `mark_network` | 关系 | `ggraph`/`igraph` | G2 `forceGraph` | 网络/力导向图 |
+| 16 | `mark_sankey` | 关系 | `ggsankey` | G2 `sankey` | 桑基流向图 |
+| 17 | `mark_chord` | 关系 | `circlize` | G2 `chord` | 弦图/环形关系图 |
+| 18 | `mark_treemap` | 关系 | `treemapify` | G2 `treemap` `pack` | 矩形树图/圆形 packing |
 | | **地理空间** | | | | |
-| 22 | `mark_map` | 地理 | `sf`+`geom_sf` | VL `geoshape`/G2 `geoPath` | 地图/地理空间 |
+| 19 | `mark_map` | 地理 | `sf`+`geom_sf` | VL `geoshape`/G2 `geoPath` | 地图/地理空间 |
 
-> **Vega-Lite 对标说明**：Vega-Lite 提供 15 种 mark（`arc`/`area`/`bar`/`circle`/`point`/`square`/`line`/`rect`/`rule`/`text`/`tick`/`trail`/`geoshape`/`boxplot`/`errorband`/`errorbar`）。
-> 其中 `circle` 和 `square` 合并为 `mark_point`（通过 `shape` 参数区分）；`trail` 合并为 `mark_path`；`errorband`/`errorbar` 由 `mark_rule`/`mark_area` 覆盖。
->
-> **AntV G2 对标说明**：G2 v5 提供 30+ 种 mark（`interval`/`line`/`area`/`point`/`cell`/`rect`/`text`/`image`/`link`/`polygon`/`vector`/`box`/`path`/`shape`/`connector` + `lineX`/`lineY`/`rangeX`/`rangeY`/`range` + `density`/`heatmap`/`beeswarm`/`boxplot` + `sankey`/`treemap`/`pack`/`forceGraph`/`tree`/`chord`/`partition`/`gauge`/`liquid`/`wordCloud`/`sunburst`）。
-> 其中 `image`/`vector`/`shape`/`connector` 为底层图形原语不纳入；`gauge`/`liquid`/`wordCloud` 为专用图表低优先级备用；`link` 合并为 `mark_line`/`mark_rule`；`cell` 合并为 `mark_rect`。
->
-> **引用来源**：
-> - Vega-Lite: [Mark Types](https://vega.github.io/vega-lite/docs/mark.html)（v5, 12 primitive + 3 composite）
-> - AntV G2: [Marks and Shapes](https://g2.antv.antgroup.com/api/overview)（v5, corelib + graphlib + plotlib）
-> - Vega-Lite `arc` mark: [Arc](https://vega.github.io/vega-lite/docs/arc.html)（v4+, pie/donut/radial）
+> **组合优先移除的 mark**（2 个）：
+> - ~~`mark_arc`~~（饼图/环形图/玫瑰图）→ `mark_bar() |> project_polar(inner_radius = ...)`，见 §3.2b
+> - ~~`mark_tick`~~（一维分布 strip plot）→ `mark_point() |> project_cartesian(expand = ...)` + `position_jitter()` 或 `geom_rug` 可通过 `scale_x/y(position=)` 替代
+> - ~~`mark_tree`~~（树图/冰柱图/旭日图）→ `mark_rect` + 层次树数据预处理 + `split_*` 分面可表达冰柱图；旭日图回退到 `mark_bar() |> project_polar()` 的极坐标层次表达
+
+### 3.2b 组合 Recipes
+
+按组合优先原则，以下视觉形态不新增 mark，通过已有原语组合实现：
+
+#### 饼图 / 环形图 / 玫瑰图（替代 `mark_arc`）
+
+```r
+# 饼图 — mark_bar + project_polar
+data |> plotit(encode(theta = count, colour = category)) |>
+  mark_bar(position = "stack", width = 1) |>
+  project_polar(theta = "y")
+
+# 环形图 — 加 inner_radius
+data |> plotit(encode(theta = count, colour = category)) |>
+  mark_bar(position = "stack", width = 1) |>
+  project_polar(theta = "y", inner_radius = 0.4)
+
+# 玫瑰图 / 南丁格尔玫瑰图 — 无堆叠 + project_polar
+data |> plotit(encode(x = category, y = value)) |>
+  mark_bar(width = 1) |>
+  project_polar()
+```
+
+#### 一维分布 strip plot（替代 `mark_tick`）
+
+```r
+# Strip plot — mark_point + position_jitter
+data |> plotit(encode(x = category, y = value)) |>
+  mark_point(position = "jitter", alpha = 0.5, size = 1.5)
+
+# Rug — 用 ggplot2::geom_rug 通过 mark 的 ... 透传
+# （若需要，可封装为 mark_rug，但属于 theme 辅助非核心 mark）
+```
+
+#### 雷达图
+
+```r
+# 雷达图 — mark_line + project_polar
+data |> plotit(encode(x = variable, y = value, colour = group)) |>
+  mark_line() |>
+  project_polar()
+```
+
+#### 树图 / 冰柱图（替代 `mark_tree`）
+
+```r
+# 冰柱图 — mark_bar + 层次树数据预处理
+# prepara_data |> plotit(encode(x = level, y = size, fill = category)) |>
+#   mark_bar(position = "stack") |>
+#   split_wrap(top_level_var, scales = "free_x")
+# 注：需要上游数据预处理将层次树展平为矩形数据
+
+# 旭日图 — mark_bar + project_polar（等价于环形图的分层版）
+# prepara_data |> plotit(encode(theta = size, fill = category)) |>
+#   mark_bar(position = "stack") |>
+#   project_polar(theta = "y") |>
+#   split_wrap(top_level_var)
+```
 
 ### 3.3 函数签名概要
 
@@ -454,7 +522,7 @@ export(p, "output.pdf", dpi = 300)
 | 阶段 | 名称 | 范围 | 状态 |
 |---|---|---|---|
 | 0 | 固本 | 架构清债 + 代码质量 | 🔄 进行中（单图侧 patchwork 剥离已完成；剩余：组合图、sync_labels、工厂函数、@examples） |
-| 1-4 | mark 扩展 | 14 种新 mark | ⬜ 未开始 |
+| 1-4 | mark 扩展 | 13 种新 mark（20 种规划 − 6 已实现 − 1 已移除组合） | ⬜ 未开始 |
 | 5 | 收尾 | 文档补齐、全量验证、发布准备 | ⬜ 未开始 |
 
 ---
@@ -538,31 +606,28 @@ export(p, "output.pdf", dpi = 300)
 
 ---
 
-#### 阶段 3：arc / path / sankey
+#### 阶段 3：path / sankey / polygon
 
 | # | mark | 类别 | 依赖包 | 复杂度 | 对应实现 |
 |---|---|---|---|---|---|
-| 3.1 | `mark_arc` | 基础几何 | ggplot2 + ggforce（可选） | 中 | `geom_bar`+`coord_polar`（饼图/环形图）或 `ggforce::geom_arc_bar`（玫瑰图） |
-| 3.2 | `mark_path` | 基础几何 | ggplot2 | 低 | `geom_path` |
+| 3.1 | `mark_path` | 基础几何 | ggplot2 | 低 | `geom_path` |
+| 3.2 | `mark_polygon` | 基础几何 | ggplot2 | 低 | `geom_polygon` |
 | 3.3 | `mark_sankey` | 关系层次 | ggsankey（Suggests） | 高 | `ggsankey::geom_sankey` |
 
 **阶段 3 风险**：
 
 | 风险 | 缓解措施 |
 |---|---|
-| `mark_arc` 与 `mark_bar`+`project_polar` 功能重叠 | 明确分工：`mark_arc` 用于 pre-aggregated 值域（Theta 映射），`mark_bar`+`project_polar` 用于已映射到 x 的原始数据 |
 | ggsankey API 不稳定 | 锁定最低版本，`mark_sankey` 只暴露稳定参数 |
 
 ---
 
-#### 阶段 4：tick / polygon / network / chord
+#### 阶段 4：network / chord
 
 | # | mark | 类别 | 依赖包 | 复杂度 | 对应实现 |
 |---|---|---|---|---|---|
-| 4.1 | `mark_tick` | 基础几何 | ggplot2 | 低 | `geom_rug` |
-| 4.2 | `mark_polygon` | 基础几何 | ggplot2 | 低 | `geom_polygon` |
-| 4.3 | `mark_network` | 关系层次 | ggraph + igraph（Suggests） | 高 | `ggraph::geom_edge_*` + `ggraph::geom_node_*` |
-| 4.4 | `mark_chord` | 关系层次 | circlize（Suggests） | 高 | `circlize::chordDiagram` 或纯 ggplot2 弦图实现 |
+| 4.1 | `mark_network` | 关系层次 | ggraph + igraph（Suggests） | 高 | `ggraph::geom_edge_*` + `ggraph::geom_node_*` |
+| 4.2 | `mark_chord` | 关系层次 | circlize（Suggests） | 高 | `circlize::chordDiagram` 或纯 ggplot2 弦图实现 |
 
 **阶段 4 风险**：
 
@@ -570,6 +635,17 @@ export(p, "output.pdf", dpi = 300)
 |---|---|
 | `mark_network` 依赖两个重包（ggraph + igraph） | 设为 Suggests，示例用 `\dontrun{}` |
 | circlize 使用 base R 图形系统非 ggplot2 → 集成复杂 | 评估用 `geom_segment` + `geom_polygon` 纯 ggplot2 实现替代 |
+
+### 9.2a 组合收录（不新增 mark 的 recipe）
+
+以下视觉效果通过已有 mark + project 组合实现，不新增独立 mark：
+
+| 视觉效果 | 等价管道 | 说明 |
+|---|---|---|
+| 饼图/环形图/玫瑰图 | `mark_bar()` + `project_polar(inner_radius=...)` | 替代 VL `arc` / G2 `interval`(pie)。见 §3.2b 完整示例 |
+| 雷达图 | `mark_line()` + `project_polar()` | 多维数据对比，见 §3.2b |
+| 冰柱图/旭日图 | `mark_rect` / `mark_bar + project_polar()` + 层次树预处理 | 替代 G2 `tree`/`partition`。数据预处理方案见 §3.2b |
+| 一维 strip plot | `mark_point(position="jitter")` | 替代 VL `tick`。若有需求可后续添加 `mark_rug` 作为 theme 辅助 |
 
 ---
 
@@ -586,7 +662,7 @@ export(p, "output.pdf", dpi = 300)
 
 **验收标准**：
 
-- [ ] 22 种 mark 至少 15 个已实现并测试通过（≥60% mark 覆盖率）
+- [ ] 20 种 mark 至少 15 个已实现（≥75% mark 覆盖率）
 - [ ] `R CMD check` 4 平台（Linux/macOS/Windows + R-devel）零 ERROR 零 WARNING
 - [ ] `lintr::lint_package()` 零 lint 问题
 - [ ] pkgdown 网站完整渲染所有函数参考页
@@ -599,7 +675,7 @@ export(p, "output.pdf", dpi = 300)
 | 层级 | 函数族 | 1.0 目标 | 已实现 | 完成度 |
 |------|--------|----------|--------|--------|
 | 内层 | plotit + encode | 2 | 2 | 100% |
-| 内层 | mark_* | 22（目标 ≥15） | 6 | 27% |
+| 内层 | mark_* | 20（目标 ≥15） | 6 | 30% |
 | 内层 | scale_* + project_* + split_* + label_* + style+export | 22 | 22 | 100% |
 | 最外层 | compose_* | 3 | 3 | 100% |
 | **总计** | | **~49** | **33** | **67%** |
@@ -613,22 +689,19 @@ export(p, "output.pdf", dpi = 300)
 - [ ] 所有导出函数有 `@examples`
 
 **阶段 1–4（mark 扩展）**：
-- [ ] mark_area ✅
-- [ ] mark_text ✅
-- [ ] mark_rect ✅
-- [ ] mark_rule ✅
-- [ ] mark_arc ✅
-- [ ] mark_polygon ✅
-- [ ] mark_path ✅
-- [ ] mark_tick ✅
-- [ ] mark_violin ✅
-- [ ] mark_treemap ✅
-- [ ] mark_sankey ✅
-- [ ] mark_network ✅
-- [ ] mark_chord ✅
-- [ ] mark_tree ✅
-- [ ] mark_map ✅
+- [ ] mark_area
+- [ ] mark_text
+- [ ] mark_rect
+- [ ] mark_rule
+- [ ] mark_polygon
+- [ ] mark_path
+- [ ] mark_violin
 - [ ] mark_beeswarm（低优先级，可选）
+- [ ] mark_treemap
+- [ ] mark_sankey
+- [ ] mark_network
+- [ ] mark_chord
+- [ ] mark_map
 
 **阶段 5（收尾）**：
 - [ ] `R CMD check` 4 平台零 ERROR 零 WARNING
