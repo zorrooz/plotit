@@ -22,11 +22,11 @@ mark_density(
 
 \item{data}{Optional data for this layer}
 
-\item{position}{Position adjustment; if \code{NULL} and global dodge is set, auto-applies \code{position_dodge()}.}
+\item{position}{Position adjustment.}
 
 \item{...}{Other arguments passed to \code{geom_density}}
 
-\item{rasterize}{If \code{TRUE}, rasterize the layer via \code{ggrastr::rasterise()} (requires \pkg{ggrastr}).}
+\item{rasterize}{If \code{TRUE}, rasterize via \code{ggrastr::rasterise()}.}
 
 \item{rasterize_dpi}{DPI for rasterization (default 300).}
 
@@ -36,7 +36,7 @@ mark_density(
 Modified plotit object
 }
 \description{
-Density layer
+Adds a kernel density estimate layer.
 }
 \examples{
 plotit(iris, encode(x = Sepal.Width)) |> mark_density()

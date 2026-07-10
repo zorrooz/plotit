@@ -22,11 +22,11 @@ mark_boxplot(
 
 \item{data}{Optional data for this layer}
 
-\item{position}{Position adjustment; if \code{NULL} and global dodge is set, auto-applies \code{position_dodge()}. Overrides \code{geom_boxplot} default (\code{"dodge2"}).}
+\item{position}{Position adjustment; overrides \code{geom_boxplot} default.}
 
 \item{...}{Other arguments passed to \code{geom_boxplot}}
 
-\item{rasterize}{If \code{TRUE}, rasterize the layer via \code{ggrastr::rasterise()} (requires \pkg{ggrastr}).}
+\item{rasterize}{If \code{TRUE}, rasterize via \code{ggrastr::rasterise()}.}
 
 \item{rasterize_dpi}{DPI for rasterization (default 300).}
 
@@ -36,7 +36,7 @@ mark_boxplot(
 Modified plotit object
 }
 \description{
-Boxplot layer
+Adds a box-and-whisker distribution layer.
 }
 \examples{
 plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot()

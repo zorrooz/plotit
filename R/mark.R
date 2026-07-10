@@ -69,11 +69,14 @@ NULL
 # ---- mark_point ----
 #' Point layer
 #'
+#' Adds a scatter plot layer.
+#'
 #' @param plot A plotit object
 #' @param mapping Optional new aesthetics
 #' @param data Optional data for this layer
-#' @param position Position adjustment; if `NULL` and global dodge is set, auto-applies `position_dodge()`.
-#' @param rasterize If `TRUE`, rasterize the layer via `ggrastr::rasterise()` (requires \pkg{ggrastr}).
+#' @param position Position adjustment; if `NULL` and global dodge is set,
+#'   auto-applies `position_dodge()`.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
 #' @param rasterize_dpi DPI for rasterization (default 300).
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_point`
@@ -93,11 +96,13 @@ mark_point <- S7::new_generic(
 # ---- mark_line ----
 #' Line layer
 #'
+#' Adds a connected line or trend layer.
+#'
 #' @param plot A plotit object
 #' @param mapping Optional new aesthetics
 #' @param data Optional data for this layer
-#' @param position Position adjustment; if `NULL` and global dodge is set, auto-applies `position_dodge()`.
-#' @param rasterize If `TRUE`, rasterize the layer via `ggrastr::rasterise()` (requires \pkg{ggrastr}).
+#' @param position Position adjustment.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
 #' @param rasterize_dpi DPI for rasterization (default 300).
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_line`
@@ -117,11 +122,13 @@ mark_line <- S7::new_generic(
 # ---- mark_boxplot ----
 #' Boxplot layer
 #'
+#' Adds a box-and-whisker distribution layer.
+#'
 #' @param plot A plotit object
 #' @param mapping Optional new aesthetics
 #' @param data Optional data for this layer
-#' @param position Position adjustment; if `NULL` and global dodge is set, auto-applies `position_dodge()`. Overrides `geom_boxplot` default (`"dodge2"`).
-#' @param rasterize If `TRUE`, rasterize the layer via `ggrastr::rasterise()` (requires \pkg{ggrastr}).
+#' @param position Position adjustment; overrides `geom_boxplot` default.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
 #' @param rasterize_dpi DPI for rasterization (default 300).
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_boxplot`
@@ -141,11 +148,13 @@ mark_boxplot <- S7::new_generic(
 # ---- mark_histogram ----
 #' Histogram layer
 #'
+#' Adds a histogram layer with automatic binning.
+#'
 #' @param plot A plotit object
 #' @param mapping Optional new aesthetics
 #' @param data Optional data for this layer
-#' @param position Position adjustment; if `NULL` and global dodge is set, auto-applies `position_dodge()`.
-#' @param rasterize If `TRUE`, rasterize the layer via `ggrastr::rasterise()` (requires \pkg{ggrastr}).
+#' @param position Position adjustment.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
 #' @param rasterize_dpi DPI for rasterization (default 300).
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_histogram`
@@ -165,11 +174,13 @@ mark_histogram <- S7::new_generic(
 # ---- mark_density ----
 #' Density layer
 #'
+#' Adds a kernel density estimate layer.
+#'
 #' @param plot A plotit object
 #' @param mapping Optional new aesthetics
 #' @param data Optional data for this layer
-#' @param position Position adjustment; if `NULL` and global dodge is set, auto-applies `position_dodge()`.
-#' @param rasterize If `TRUE`, rasterize the layer via `ggrastr::rasterise()` (requires \pkg{ggrastr}).
+#' @param position Position adjustment.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
 #' @param rasterize_dpi DPI for rasterization (default 300).
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_density`
@@ -189,11 +200,14 @@ mark_density <- S7::new_generic(
 # ---- mark_bar (hand-written: geom_col vs geom_bar dispatch) ----
 #' Bar layer
 #'
+#' Adds a bar layer. Automatically uses `geom_col()` when a y aesthetic is
+#' mapped, or `geom_bar()` for count-based bars.
+#'
 #' @param plot A plotit object
 #' @param mapping Optional new aesthetics
 #' @param data Optional data for this layer
-#' @param position Position adjustment; if `NULL` and global dodge is set, auto-applies `position_dodge()`. Overrides `geom_bar`/`geom_col` default.
-#' @param rasterize If `TRUE`, rasterize the layer via `ggrastr::rasterise()` (requires \pkg{ggrastr}).
+#' @param position Position adjustment; overrides `geom_bar`/`geom_col` default.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
 #' @param rasterize_dpi DPI for rasterization (default 300).
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_bar` or `geom_col`
@@ -215,8 +229,6 @@ S7::method(mark_bar, plotit_class) <- function(plot, mapping = NULL, data = NULL
                                                position = NULL, ...,
                                                rasterize = FALSE, rasterize_dpi = 300,
                                                rasterize_dev = "cairo") {
-  # If layer mapping is provided, trust it (even if y = NULL).
-  # Only fall back to global mapping when no layer mapping is given.
   has_y <- if (!is.null(mapping)) {
     !is.null(mapping$y)
   } else {
