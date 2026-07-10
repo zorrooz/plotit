@@ -6,7 +6,7 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 [![pkgdown](https://github.com/zorrooz/plotit/actions/workflows/pkgdown.yaml/badge.svg)](https://zorrooz.github.io/plotit/)
 [![lint](https://github.com/zorrooz/plotit/actions/workflows/lint.yaml/badge.svg)](https://github.com/zorrooz/plotit/actions/workflows/lint.yaml)
 
-**简体中文** \| [English](https://zorrooz.github.io/plotit/README.md)
+**简体中文** \| [English](https://zorrooz.github.io/plotit/index.md)
 
 > ⚠️ **早期开发阶段**  
 > plotit 处于活跃的预发布开发中。每次更新都**极有可能**带来破坏性变更。
