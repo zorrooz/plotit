@@ -33,7 +33,7 @@
 
 所有图表配置（尺寸、autofit、单位、dodge 宽度、default_color、标签文本等）统一存储于 `meta` 组件。
 
-`label_*` 写入 `meta@labels` 并标记 dirty（惰性模式），不立即修改 `gg`。通过 `._sync_labels()` 在 `print()`/`export()` 时统一将 `meta@labels` 同步到 `gg$labels` 和 theme。直接操作 `plot@gg` 绕过 label 函数会导致 `meta$labels` 过时。当前 `._sync_labels()` 含 5 个几乎相同的 if 块处理 title/subtitle/caption/x/y，后续可抽象为循环（AD-3）。
+`label_*` 写入 `meta@labels` 并标记 dirty（惰性模式），不立即修改 `gg`。通过 `._sync_labels()` 在 `print()`/`export()` 时统一将 `meta@labels` 同步到 `gg$labels` 和 theme。直接操作 `plot@gg` 绕过 label 函数会导致 `meta$labels` 过时。
 
 ### 1.3 分域验证
 
@@ -719,7 +719,7 @@ export(p, "output.pdf", dpi = 300)
 |---|------|--------|------|
 | AD-1 | Patchwork 剥离（§3.3.10） | 中 | 单图侧已完成；组合图仍依赖 patchwork |
 | AD-2 | `._collect_aes_names` 访问内部 `gg$layers` | 低 | 违反 §4.6 禁止规则。移除后 label_legend(aes=NULL) 的图例标题不应用到图层级美学映射，需评估替代方案 |
-| AD-3 | `._sync_labels` 5 个几乎相同 if 块 | 低 | 可抽象为循环 |
+| AD-3 | `._sync_labels` 5 个几乎相同 if 块 | 低 | ✅ 已抽象为 `._sync_one_label()` + `._LABEL_SYNC_MAP` 查找表 |
 | AD-4 | S7 版本锁定 | 低 | DESCRIPTION 已限制 |
 | AD-5 | mark_* 样板代码 | 低 | 每个 ~15 行 S7 泛型+方法，可用代码生成简化 |
 | DI-1 | @examples 缺失 | 中 | 每个导出函数缺少可运行示例 |
