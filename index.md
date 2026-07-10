@@ -1,6 +1,7 @@
 # plotit
 
-[简体中文](https://zorrooz.github.io/plotit/README_ZH.md) \| **English**
+[简体中文](https://zorrooz.github.io/plotit/README_ZH.html) \|
+**English**
 
 > ⚠️ **Early development stage.**  
 > plotit is under active, pre-release development. Breaking changes are
