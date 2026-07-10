@@ -1,251 +1,178 @@
 # plotit
 
+<!-- badges: start -->
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![R-CMD-check](https://github.com/zorrooz/plotit/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/zorrooz/plotit/actions/workflows/R-CMD-check.yaml)
+[![pkgdown](https://github.com/zorrooz/plotit/actions/workflows/pkgdown.yaml/badge.svg)](https://zorrooz.github.io/plotit/)
+[![lint](https://github.com/zorrooz/plotit/actions/workflows/lint.yaml/badge.svg)](https://github.com/zorrooz/plotit/actions/workflows/lint.yaml)
+<!-- badges: end -->
 
-<p align="center"><b>简体中文</b> | <a href="index.html">English</a></p>
+<p align="center"><b>简体中文</b> | <a href="README.html">English</a></p>
 
+> ⚠️ **早期开发阶段**  
+> plotit 处于活跃的预发布开发中。每次更新都**极有可能**带来破坏性变更。
+> API 实现不完整，大量计划功能尚未实现，可能存在许多 bug。请勿用于生产环境。
+> 使用风险自负。欢迎反馈和贡献。
 
-**plotit** 是一个基于 [ggplot2](https://ggplot2.tidyverse.org) 的**声明式、管道友好**的 R 绘图包。统一的**动词前缀 API**，一条管道从数据直达出版级图表——开箱即美观，零样板代码。
+---
+
+## 概述
+
+**plotit** 是一个基于 [ggplot2](https://ggplot2.tidyverse.org) 的声明式、管道优先
+R 绘图包。它用统一的**动词前缀 API** 替代了基于 `+` 的图层叠加，支持原生管道
+（`|>`）。合理的默认设置消除了样板代码——颜色、主题和尺寸开箱即用。
 
 ```r
 library(plotit)
 
 iris |>
- plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
- mark_point(size = 2, alpha = 0.7) |>
- scale_color(range = "viridis") |>
- label_title("Iris Sepal Dimensions") |>
- label_axis(text = "Sepal Width", aes = "x") |>
- label_axis(text = "Sepal Length", aes = "y") |>
- style(ggplot2::theme_minimal(base_size = 14)) |>
- export("iris_plot.pdf")
+  plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+  mark_point(size = 2, alpha = 0.7) |>
+  scale_color(range = "viridis") |>
+  label_title("Iris Sepal Dimensions") |>
+  style(ggplot2::theme_minimal(base_size = 14)) |>
+  export("iris_plot.pdf")
 ```
-
-<details>
-<summary>对比原生 ggplot2</summary>
-
-```r
-# plotit — 4 行
-iris |>
- plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
- mark_point(size = 2, alpha = 0.7) |>
- scale_color(range = "viridis") |>
- label_title("Iris Sepal Dimensions")
-
-# 原生 ggplot2 — 3 行
-ggplot(iris, aes(x = Sepal.Width, y = Sepal.Length, colour = Species)) +
- geom_point(size = 2, alpha = 0.7) +
- scale_colour_viridis_d() +
- labs(title = "Iris Sepal Dimensions")
-```
-</details>
-
----
 
 ## 安装
+
+你可以直接从 GitHub 安装 plotit 的开发版本：
 
 ```r
 # install.packages("pak")
 pak::pak("zorrooz/plotit")
 ```
 
----
+## 快速入门
 
-## 使用指南
+```r
+library(plotit)
 
-### 管道模式
+# 带颜色映射的散点图
+iris |>
+  plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+  mark_point()
 
-plotit 有两层操作：
+# 计数柱状图
+mtcars |>
+  plotit(encode(x = factor(cyl))) |>
+  mark_bar()
 
-**单图管道** — 从数据构建一个图表：
+# 时间序列折线图
+ggplot2::economics |>
+  plotit(encode(x = date, y = unemploy)) |>
+  mark_line()
+
+# 多图仪表盘
+p1 <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
+p2 <- plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot()
+compose_grid(p1, p2, tag_levels = "A") |>
+  label_title("Iris Dashboard") |>
+  export("dashboard.png")
+```
+
+## 管道模式
+
+每个 plotit 图表都遵循一致的管道：
 
 ```
 data |> plotit(encode(...)) |> mark_*() |> scale_*() |> label_*() |> project_*() |> split_*() |> style() |> export()
 ```
 
-| 步骤 | 函数 | 职责 |
+| 步骤 | 动词 | 职责 |
 |:---|:---|:---|
-| 1. 创建 | `plotit()` | 初始化图表，传入数据与美学映射 |
-| 2. 图层 | `mark_*()` | 添加几何图层 |
+| 1. 初始化 | `plotit()` + `encode()` | 绑定数据与美学映射 |
+| 2. 图层 | `mark_*()` | 添加几何图层（点、线、柱等） |
 | 3. 标度 | `scale_*()` | 控制数据到视觉属性的映射 |
-| 4. 标签 | `label_*()` | 设置标题、轴名、图例名 |
-| 5. 坐标系 | `project_*()` | 设置坐标系 |
+| 4. 标签 | `label_*()` | 设置标题、轴标签、图例标题 |
+| 5. 坐标 | `project_*()` | 选择坐标系（笛卡尔、极坐标、地图） |
 | 6. 分面 | `split_*()` | 拆分为小倍数图 |
-| 7. 主题 | `style()` | 应用 ggplot2 主题 |
+| 7. 主题 | `style()` | 应用完整主题 |
 | 8. 导出 | `export()` | 渲染为文件 |
 
-**多图组合** — 将多个 `plotit` 对象组装为一个布局（最外层）：
+多图组合遵循最外层管道：
 
 ```
 compose_*(p1, p2, ...) |> label_*() |> style() |> export()
 ```
 
-| 步骤 | 函数 | 职责 |
-|:---|:---|:---|
-| 1. 组装 | `compose_*()` | 将多个 `plotit` 对象组合为复合布局 |
-| 2. 标签 | `label_title()` / `label_subtitle()` / `label_caption()` | 设置组合级标题 |
-| 3. 主题 | `style()` | 对组合应用 ggplot2 主题 |
-| 4. 导出 | `export()` | 将组合渲染为文件 |
+## 函数族
 
-> **关键区别**：单图函数（`mark_*`、`scale_*`、`project_*`、`split_*`、`label_axis`、`label_legend`）操作**一个包含数据的 `plotit` 对象**。`compose_*` 操作**多个 `plotit` 对象**并返回 `plotit_composite`——它是最外层，在各子图构建完成后才应用。
+### `mark_*` — 几何图层
 
-### 函数族速览
-
-**单图函数族**（内层）：
-
-| 家族 | 前缀 | 职责 | 示例 |
-|:---|:---|:---|:---|
-| 创建 | `plotit()` + `encode()` | 初始化图表，传入数据与美学映射 | `plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))` |
-| 图层 | `mark_*` | 几何图层 | `mark_point()`, `mark_line()`, `mark_bar()`, `mark_boxplot()`, `mark_histogram()`, `mark_density()` |
-| 标度 | `scale_*` | 数据 → 视觉映射 | `scale_x(trans = "log")`, `scale_color(range = "viridis")` |
-| 标签 | `label_*` | 标题与轴/图例标注 | `label_title("标题")`, `label_axis("X轴", aes = "x")`, `label_legend("种类", aes = "colour")` |
-| 坐标系 | `project_*` | 坐标变换 | `project_cartesian(flip = TRUE)`, `project_polar()` |
-| 分面 | `split_*` | 分面布局 | `split_wrap(Species)`, `split_grid(rows = vars(cyl))` |
-| 主题 | `style()` | 应用 ggplot2 主题 | `style(theme_minimal(base_size = 14))` |
-| 导出 | `export()` | 渲染为文件 | `export("plot.pdf", dpi = 300)` |
-
-**多图组合**（最外层——操作 `plotit` 对象，而非数据）：
-
-| 家族 | 前缀 | 职责 | 示例 |
-|:---|:---|:---|:---|
-| 组合 | `compose_*` | 将多个 `plotit` 对象组装为一个布局 | `compose_grid()`, `compose_inset()`, `compose_marginal()` |
-
----
-
-## `mark_*` — 几何图层
-
-六个 mark 函数，统一签名（`mapping`, `data`, `position`, `rasterize`, `...`）。
-
-| 函数 | ggplot2 | 用途 |
+| 函数 | ggplot2 | 说明 |
 |:---|:---|:---|
 | `mark_point()` | `geom_point()` | 散点图 |
-| `mark_line()` | `geom_line()` | 折线、趋势线、时间序列 |
+| `mark_line()` | `geom_line()` | 折线与趋势线 |
 | `mark_bar()` | `geom_bar()` / `geom_col()` | 柱状图 |
-| `mark_boxplot()` | `geom_boxplot()` | 分组分布展示 |
+| `mark_boxplot()` | `geom_boxplot()` | 箱线图 |
 | `mark_histogram()` | `geom_histogram()` | 直方图 |
-| `mark_density()` | `geom_density()` | 密度曲线 |
+| `mark_density()` | `geom_density()` | 核密度估计 |
 
----
+### `scale_*` — 数据到视觉的映射
 
-## `scale_*` — 数据到视觉的映射
-
-八个函数，参数完全一致——仅 `trans` 默认值不同。
-
-| 函数 | 美学属性 | `trans` 默认值 |
-|:---|:---|:---|
-| `scale_color()` | colour | `NULL`（自动检测） |
-| `scale_fill()` | fill | `NULL`（自动检测） |
-| `scale_size()` | size | `NULL`（自动检测） |
-| `scale_alpha()` | alpha | `NULL`（自动检测） |
-| `scale_shape()` | shape | `"discrete"` |
-| `scale_linetype()` | linetype | `"discrete"` |
-| `scale_x()` | x | `"identity"` |
-| `scale_y()` | y | `"identity"` |
-
-均接受 `name`, `limits`, `range`, `breaks`, `labels`, `...`。
-
-| 参数 | 回答的问题 | 示例 |
-|:---|:---|:---|
-| `range` | 映射到**什么**视觉值？ | `"viridis"`, `c("blue","red")` |
-| `trans` | **如何**变换数据？ | `"log"`, `"reverse"`, `"binned"` |
-| `limits` | 包含哪些数据范围？ | `c(0, 100)` |
-| `breaks` | 刻度/图例键放在哪里？ | `c(2, 4, 6)` |
-| `labels` | 刻度/图例键叫什么？ | `c("低", "中", "高")` |
-| `name` | 标度/坐标轴叫什么？ | `"发动机排量"` |
-
-### `range` 速查
-
-| 美学属性 | `range = NULL` | `range = "name"` | `range = c(a, b)` |
-|:---|:---|:---|:---|
-| colour, fill | 自动（离散→hue，连续→viridis） | `"viridis"`, `"brewer"`, `"grey"`, `"hue"` | `c("blue", "red")` |
-| size | `c(1, 6)` | — | `c(0.5, 10)` |
-| alpha | `c(0.1, 1)` | — | `c(0, 0.8)` |
-| shape | 默认形状集 | — | `c(1, 16)` |
-| linetype | 默认线型集 | — | `c("solid", "dashed")` |
-| x, y | 数据自身范围 | — | `c(0, 100)` |
-
-### `trans` 速查
-
-| `trans` | 效果 | 适用范围 |
-|:---|:---|:---|
-| `"identity"` | 线性（默认） | 全部 |
-| `"log"`, `"log10"`, `"log2"` | 对数 | x, y |
-| `"sqrt"` | 平方根 | x, y |
-| `"reverse"` | 翻转顺序 | 全部 |
-| `"discrete"` | 按分类处理 | 全部 |
-| `"binned"` | 分箱后离散化 | 除 shape, linetype 外全部 |
-
----
-
-## `label_*` — 文本标签
-
-五个函数，三参数协议：
-
-| 调用方式 | 行为 |
+| 函数 | 美学属性 |
 |:---|:---|
-| `label_*(text = "字符串")` | 设置自定义文本 |
-| `label_*(hide = TRUE)` | 移除元素及占位空间 |
-| `label_*(reset = TRUE)` | 恢复为变量名（轴/图例）或移除（标题） |
-| _不调用_ | 保持当前状态 |
+| `scale_color()` | 颜色 |
+| `scale_fill()` | 填充 |
+| `scale_size()` | 大小 |
+| `scale_alpha()` | 透明度 |
+| `scale_shape()` | 形状 |
+| `scale_linetype()` | 线型 |
+| `scale_x()` | x 轴 |
+| `scale_y()` | y 轴 |
+
+### `label_*` — 文本标签
 
 | 函数 | 作用范围 |
 |:---|:---|
 | `label_title()` | 主标题 |
 | `label_subtitle()` | 副标题 |
 | `label_caption()` | 脚注 |
-| `label_axis()` | 轴标题 — 必须指定 `aes = "x"` 或 `"y"` |
-| `label_legend()` | 图例标题 — `aes = "colour"`, `"fill"` 等 |
+| `label_axis()` | 轴标题 |
+| `label_legend()` | 图例标题 |
 
----
+### `project_*` — 坐标系
 
-## `project_*` — 坐标系
+| 函数 | 说明 |
+|:---|:---|
+| `project_cartesian()` | 笛卡尔（缩放、翻转、比例、变换） |
+| `project_polar()` | 极坐标 |
+| `project_parallel()` | 平行坐标 |
+| `project_map()` | 地理投影 |
 
-| 函数 | 说明 | 关键参数 |
-|:---|:---|:---|
-| `project_cartesian()` | 笛卡尔（缩放/翻转/固定比例/坐标变换） | `xlim`, `ylim`, `expand`, `flip`, `fixed`, `coord_trans`, `clip` |
-| `project_polar()` | 极坐标 | `theta`, `start`, `direction`, `clip` |
-| `project_parallel()` | 平行坐标 | `columns`, `group`, `scale`, `alpha`, `size` |
-| `project_map()` | 地理投影 | `projection`, `xlim`, `ylim`, `clip` |
+### `split_*` — 分面
 
-## `split_*` — 分面
+| 函数 | 说明 |
+|:---|:---|
+| `split_wrap()` | 环绕分面 |
+| `split_grid()` | 网格分面 |
 
-| 函数 | 说明 | 关键参数 |
-|:---|:---|:---|
-| `split_wrap()` | 环绕分面 | `...`（分面变量）, `ncol`, `nrow`, `scales` |
-| `split_grid()` | 网格分面 | `rows`, `cols`, `scales`, `space` |
+### `compose_*` — 多图组合
 
-## `style()` & `export()`
+| 函数 | 说明 |
+|:---|:---|
+| `compose_grid()` | 网格排列 |
+| `compose_inset()` | 浮动嵌入 |
+| `compose_marginal()` | 散点 + 边际分布 |
 
-| 函数 | 说明 | 关键参数 |
-|:---|:---|:---|
-| `style()` | 应用 ggplot2 主题 | `...`, `base_size`, `base_family`, `base_theme` |
-| `export()` | 渲染为文件 | `filename`, `width`, `height`, `dpi`, `device` |
+### 主题与导出
 
----
+| 函数 | 说明 |
+|:---|:---|
+| `style()` | 应用 ggplot2 主题 |
+| `style_default()` | 恢复 plotit 内置主题 |
+| `export()` | 渲染为文件（pdf、png、svg 等） |
 
-## `compose_*` — 多图组合（最外层）
+## 文档
 
-将多个 `plotit` 对象组装为复合布局。与操作数据的单图函数不同，
-`compose_*` 接收**已构建好的 `plotit` 对象**作为输入，返回 `plotit_composite`。
-这是 plotit 架构中的**最外层**——先分别构建各子图，再组合到一起。
+完整文档见 [zorrooz.github.io/plotit](https://zorrooz.github.io/plotit/)。
 
-返回的复合对象支持管道连接到 `label_title()` / `label_subtitle()` /
-`label_caption()` / `style()` / `export()`。
+## 贡献
 
-| 函数 | 说明 | 关键参数 |
-|:---|:---|:---|
-| `compose_grid()` | 网格排列 | `...`, `ncol`, `nrow`, `widths`, `heights`, `guides`, `axes`, `tag_levels` |
-| `compose_inset()` | 浮动嵌入 | `base`, `inset`, `left`, `bottom`, `right`, `top` |
-| `compose_marginal()` | 散点 + 边际分布 | `main`, `top`, `right`, `widths`, `heights` |
+plotit 处于早期开发阶段。欢迎在 [GitHub Issues](https://github.com/zorrooz/plotit/issues)
+上提交 bug 报告、功能请求和 Pull Request。
 
-```r
-# 2×2 仪表盘 + 自动子图标签
-compose_grid(p1, p2, p3, p4, ncol = 2, tag_levels = "A") |>
- label_title("仪表盘") |>
- export("dashboard.png")
+## 许可证
 
-# 散点图 + 边际直方图
-compose_marginal(main, top_hist, right_hist) |>
- label_title("Iris") |>
- export("marginal.png")
-```
+plotit 基于 MIT 许可证发布。详见 [LICENSE](LICENSE)。
