@@ -150,8 +150,13 @@ NULL
   binned <- trans == "binned"
   reverse <- trans == "reverse" || force_reverse
 
+  # Collect args passed through `...` and strip NULLs so that `breaks = NULL`
+  # does not coerce ggplot2 scales into guide = "none".
+  extra_args <- list(...)
+  extra_args <- extra_args[!vapply(extra_args, is.null, logical(1L))]
+
   if (is.character(range) && length(range) >= 2) {
-    ._scale_custom(aes, range, discrete, binned, reverse, ...)
+    do.call(._scale_custom, c(list(aes, range, discrete, binned, reverse), extra_args))
   } else {
     scheme <- range %||% if (binned) "viridis" else if (discrete) "hue" else "viridis"
     # Single color name -> helpful error instead of "unknown scheme"
@@ -161,7 +166,7 @@ NULL
         "i" = "Use {.code range = c({range})} for a single custom colour, or one of: viridis, brewer, grey, hue."
       ))
     }
-    ._scale_scheme(aes, scheme, discrete, binned, reverse, ...)
+    do.call(._scale_scheme, c(list(aes, scheme, discrete, binned, reverse), extra_args))
   }
 }
 
