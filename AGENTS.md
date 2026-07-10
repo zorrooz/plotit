@@ -8,7 +8,7 @@
 - **默认美观**：预设主题、配色与尺寸，开箱即出版/报告可用。
 - **一致性**：统一的 API 风格、参数命名和错误处理策略。
 - **可扩展性**：基于 ggplot2 及其扩展包构造，通过 `...` 透传底层能力，不作过度封装。
-- **Mark 多样性**：对标 **Vega-Lite** / **AntV-G2** 的视觉通道丰富度，超越原生 ggplot2 几何图层类型范围。规划 22+ 种 mark 类型（§3.2），覆盖基础几何、分布展示、关系层次和地理空间四大领域。
+- **Mark 多样性**：对标 **Vega-Lite** / **AntV-G2** 的视觉通道丰富度，超越原生 ggplot2 几何图层类型范围。规划 22 种 mark 类型（§3.2），覆盖基础几何、分布展示、关系层次和地理空间四大领域。
 - **默认美观与低配置成本**：调色板（离散/连续/定性）精心选择并持续扩展。`scale_*` 的 `range` 参数保持 `"scheme_name"` 字符串接口简便性，用户无需掌握色彩理论即可产出出版可用图表。
 
 ### 1.2 元数据集中管理
@@ -279,7 +279,7 @@ x/y 的 `range` 表示数据在面板上的视觉占比，通过 `limits` + `exp
 
 #### 3.3.8 `style()` — 主题
 
-`style(plot, ..., base_size=11, base_family="", base_theme=<定制theme_minimal>)`：先应用基础主题，再叠加 `theme(...)` 覆盖。`style_default()` 为便捷别名。
+`style(plot, ..., base_size=NULL, base_family=NULL, base_theme=NULL)`：先应用基础主题（空时内部 `%||%` 分发到 `.theme_default(base_size=11, base_family="")`），再叠加 `theme(...)` 覆盖。`style_default()` 为便捷别名。
 
 #### 3.3.9 `export()` — 导出
 
@@ -287,7 +287,7 @@ x/y 的 `range` 表示数据在面板上的视觉占比，通过 `limits` + `exp
 
 尺寸优先级链：显式传参 > meta 存储值 > autofit 自适应。
 
-- `autofit=FALSE` + 未传尺寸：通过 gtable 测量获得总尺寸（面板尺寸来自 meta，已在构造时由 `plot_layout()` 固定；轴/标签/图例由当前主题决定）
+- `autofit=FALSE` + 未传尺寸：通过 gtable 测量获得总尺寸（面板尺寸来自 meta，通过 `._build_fixed_gtable()` 固定；轴/标签/图例由当前主题决定）
 - `autofit=TRUE` + 未传尺寸：回退 `getOption("plotit.default_width", 7)` / `getOption("plotit.default_height", 5)`（英寸）
 - 显式传入的 `width`/`height` 遵循 `plotit()` 时设定的 `size_unit` 换算。单位统一为英寸后传给 `ggsave()`
 - `device` 从文件名扩展名推断（`.pdf` / `.png` / `.svg` 等）
@@ -298,11 +298,9 @@ x/y 的 `range` 表示数据在面板上的视觉占比，通过 `limits` + `exp
 
 **契约边界**：面板尺寸遵守 ±1% 浮点误差。总尺寸（面板+轴+标签+图例+边距）为衍生值，不在 API 契约内，可能随主题/字体/设备版本变化。
 
-> **Patchwork 剥离规划**（设计文档）：
-> 当前 `autofit=FALSE` 时 `@gg` 存储 `patchwork` 对象而非纯 `ggplot`，违背"完全基于 ggplot2 构造"的声明。
-> 1. 单图：`plotit()` 不再调用 `plot_layout()`。改为 `export()`/`print()` 时通过 `ggplot_build()` 获得 gtable，用 `grid` 锁定面板尺寸。
-> 2. 组合图：`compose_*` 改用 `grid` 纯组装，替代 `patchwork::wrap_plots()`。
-> 3. 影响：`._reset_sizing()` 和 `._assemble_plots()` 需移除；`compose_*` 核心重写。
+> **Patchwork 剥离规划**（阶段 0.1，部分完成）：
+> 单图侧已实现：`plotit()` 不再调用 `plot_layout()`，`@gg` 为纯 ggplot 对象；`print()`/`export()` 通过 `._build_fixed_gtable()` 固定面板尺寸。
+> 组合图侧待实现：`compose_*` 仍依赖 `patchwork::wrap_plots()` / `plot_layout()`；`._reset_sizing()`、`._assemble_plots()` 仍以 patchwork 为核心。
 
 ### 3.4 `compose_*` 组合
 
@@ -370,7 +368,8 @@ snake_case，动词前缀统一。color/colour 等价接受，函数命名统一
 
 **允许直接访问**：`gg$mapping`、`gg$data`、`gg$labels`、`gg$theme`（只读）。
 
-**禁止**：`gg$scales$scales`、`gg$layers` 等未文档化的内部结构。测试中也禁止检查这些。
+**禁止**：`gg$scales$scales` 等未文档化的内部结构。测试中也禁止检查这些。
+`gg$layers` 同样为 ggplot2 内部槽位不保证兼容——`._collect_aes_names` 中存在访问为已知例外，计划在 AD-2 中移除。
 
 **非标准求值只用 rlang**：`rlang::eval_tidy()`，禁止 `eval()` + `baseenv()`。
 
@@ -403,7 +402,7 @@ p <- p |>
   label_axis(text = "Displacement", aes = "x") |>
   label_axis(text = "Highway MPG", aes = "y")
 
-p <- style(p, ggplot2::theme_minimal(base_size = 12))
+p <- style(p, base_theme = ggplot2::theme_minimal(base_size = 12))
 
 export(p, "output.pdf", dpi = 300)
 ```
@@ -424,7 +423,7 @@ export(p, "output.pdf", dpi = 300)
 ## 7. 补充约定
 
 - **空数据与缺失值**：空 data.frame 由 ggplot2 决定。`NA` 由 ggplot2 默认静默移除。
-- **S7 槽位**：`plotit_labels`（title/subtitle/caption/x/y/legend）、`plotit_metadata`（autofit/width/height/dodge/unit/default_color/labels）、`plotit`（gg/meta）。
+- **S7 槽位**：`plotit_labels`（title/subtitle/caption/x/y/legend/dirty）、`plotit_metadata`（autofit/width/height/dodge/unit/default_color/labels）、`plotit`（gg/meta）。
 - **打印与设备**：`print()` 交互模式通过 `grDevices::dev.new(noRStudioGD=TRUE)` 打开独立设备窗口保证面板尺寸物理呈现。`options(plotit.device)`：`"default"` / `"rstudio"` / `NULL`（禁用自动设备打开）。`export()` 从文件名推断设备。
 
 ---
@@ -454,11 +453,8 @@ export(p, "output.pdf", dpi = 300)
 
 | 阶段 | 名称 | 范围 | 状态 |
 |---|---|---|---|
-| 0 | 固本 | 架构清债 + 代码质量 | ⬜ 未开始 |
-| 1 | mark 首批 | area / text / violin / map | ⬜ 未开始 |
-| 2 | mark 第二批 | rect / rule / treemap | ⬜ 未开始 |
-| 3 | mark 第三批 | arc / path / sankey | ⬜ 未开始 |
-| 4 | mark 第四批 | tick / polygon / network / chord | ⬜ 未开始 |
+| 0 | 固本 | 架构清债 + 代码质量 | 🔄 进行中（单图侧 patchwork 剥离已完成；剩余：组合图、sync_labels、工厂函数、@examples） |
+| 1-4 | mark 扩展 | 14 种新 mark | ⬜ 未开始 |
 | 5 | 收尾 | 文档补齐、全量验证、发布准备 | ⬜ 未开始 |
 
 ---
@@ -478,8 +474,8 @@ export(p, "output.pdf", dpi = 300)
 
 | 任务 | 验收标准 |
 |---|---|
-| 0.1 | `@gg` 始终为纯 ggplot 对象；`plotit()` 不再依赖 patchwork；320 项已有测试全部通过 |
-| 0.2 | `._sync_labels` 无重复代码；320 项已有测试全部通过 |
+| 0.1 | `@gg` 始终为纯 ggplot 对象；`plotit()` 不依赖 patchwork；所有已有测试全部通过 |
+| 0.2 | `._sync_labels` 无重复代码；所有已有测试全部通过 |
 | 0.3 | 每个 mark 定义 ≤5 行；无新增 lintr 警告；测试通过 |
 | 0.4 | `R CMD check` 零 ERROR（允许 NOTE）；每个导出函数有 `@examples` |
 
@@ -630,6 +626,7 @@ export(p, "output.pdf", dpi = 300)
 - [ ] mark_sankey ✅
 - [ ] mark_network ✅
 - [ ] mark_chord ✅
+- [ ] mark_tree ✅
 - [ ] mark_map ✅
 - [ ] mark_beeswarm（低优先级，可选）
 
@@ -647,8 +644,8 @@ export(p, "output.pdf", dpi = 300)
 
 | # | 事项 | 优先级 | 状态 |
 |---|------|--------|------|
-| AD-1 | Patchwork 剥离（§3.3.10） | 中 | 路线图已设计，未实施 |
-| AD-2 | `._collect_aes_names` 不再扫描 layers | 低 | label_legend(aes=NULL) 的图例标题不应用到图层级美学映射 |
+| AD-1 | Patchwork 剥离（§3.3.10） | 中 | 单图侧已完成；组合图仍依赖 patchwork |
+| AD-2 | `._collect_aes_names` 访问内部 `gg$layers` | 低 | 违反 §4.6 禁止规则。移除后 label_legend(aes=NULL) 的图例标题不应用到图层级美学映射，需评估替代方案 |
 | AD-3 | `._sync_labels` 5 个几乎相同 if 块 | 低 | 可抽象为循环 |
 | AD-4 | S7 版本锁定 | 低 | DESCRIPTION 已限制 |
 | AD-5 | mark_* 样板代码 | 低 | 每个 ~15 行 S7 泛型+方法，可用代码生成简化 |
@@ -660,59 +657,59 @@ export(p, "output.pdf", dpi = 300)
 
 ## 11. 开发陷阱
 
-### 10.1 PowerShell 字符串展开
+### 11.1 PowerShell 字符串展开
 
 `@"..."@` 展开 `$variable` 和 `` `e ``。使用 `@'...'@` **单引号** here-string 保留字面文本。少量文本中用 `` `$ `` 或 `$$` 转义。
 
-### 10.2 `-replace` 的 .NET 正则替换陷阱
+### 11.2 `-replace` 的 .NET 正则替换陷阱
 
 替换字符串中 `$` 被解释为组引用（`$labels`→`abels`）。替换中字面 `$` 用 `$$`。非正则替换优先用 `[string]::Replace()`。
 
-### 10.3 `git index.lock` 持久锁定
+### 11.3 `git index.lock` 持久锁定
 
 前序 git 中断后 `.git/index.lock` 残留。`Remove-Item -Force .git/index.lock`。反复出现则 `Get-Process git | Stop-Process -Force`。
 
-### 10.4 S7 方法注册的加载顺序依赖
+### 11.4 S7 方法注册的加载顺序依赖
 
 引用尚未定义的 generic 时报错。调整 Collate 顺序或在 `.onLoad()` 中注册。
 
-### 10.5 styler 致代码结构变化
+### 11.5 styler 致代码结构变化
 
 styler 修改缩进/换行后行号索引失效。**作为最后一步执行**——所有逻辑修改完成后运行，验证测试通过，再提交。
 
-### 10.6 `c(0, 1)` vs roxygen 链接解析
+### 11.6 `c(0, 1)` vs roxygen 链接解析
 
 roxygen2 将 `c(0, 1)` 中的 `0,1` 误认为链接目标。使用 `\code{c(0, 1)}` 或在 backtick 换行前加空格。`[0,1]`（方括号）同理——包裹在 `` `[0,1]` `` 中。
 
-### 10.7 DCF 编码值不加引号
+### 11.7 DCF 编码值不加引号
 
 `.lintr` 中 `encoding: UTF-8`（非 `"UTF-8"`）。DCF 格式中引号为字面值，`encoding: "UTF-8"` 实际编码变为 `"UTF-8"`（含引号）。
 
-### 10.8 `._` 前缀函数 lintr 配置
+### 11.8 `._` 前缀函数 lintr 配置
 
 `object_name_linter(regexes = c("^[a-z][a-z0-9._]*$", "^[.]_[a-z][a-z0-9._]*$"))`——第一个匹配普通 snake_case，第二个匹配 `._` 前缀内部函数。
 
-### 10.9 `line_length_linter` 放宽
+### 11.9 `line_length_linter` 放宽
 
 roxygen 示例中管道链天然超 80 字符，放宽至 120 字符。代码行（非注释）仍应尽量遵守 80 字符。
 
-### 10.10 `\donttest{}` vs `\dontrun{}` 在 R CMD check 中
+### 11.10 `\donttest{}` vs `\dontrun{}` 在 R CMD check 中
 
 `\donttest{}` **仍然执行**（仅 CRAN 跳过），`\dontrun{}` **完全不执行**。需外部数据包（sf、mapproj）用 `\dontrun{}`。自包含示例（iris/mtcars）可用 `\donttest{}`。
 
-### 10.11 `is.element_blank()` 不存在
+### 11.11 `is.element_blank()` 不存在
 
 ggplot2 无此导出函数。正确方式：`inherits(x, "element_blank")`。
 
-### 10.12 GitHub Actions Node.js 弃用
+### 11.12 GitHub Actions Node.js 弃用
 
 `actions/checkout@v4` 依赖 Node 20（已弃用）。全部升级至 `v5`。`r-lib/actions` 当前最新为 `v2`。
 
-### 10.13 S7 `@export` 泛型 vs 方法
+### 11.13 S7 `@export` 泛型 vs 方法
 
 `@export` 标记在 S7 方法上**只导出该方法**，不自动导出泛型。泛型定义（`new_generic`）需要自己单独的 `@export`。
 
-### 10.14 testthat 中访问内部函数
+### 11.14 testthat 中访问内部函数
 
 `test_check()` 在包命名空间中运行——内部函数可直接访问（无需 `:::`）。`test_dir()` 在全局环境运行——需要 `:::`。测试中优先通过公开 API 验证行为。
 
@@ -720,7 +717,7 @@ ggplot2 无此导出函数。正确方式：`inherits(x, "element_blank")`。
 
 ## 12. CI/CD 通用实践
 
-### 11.1 CI 故障诊断树
+### 12.1 CI 故障诊断树
 
 ```
 CI 步骤失败？
@@ -730,13 +727,13 @@ CI 步骤失败？
 └─ 弃用警告 → GitHub Actions Node 版本升级
 ```
 
-### 11.2 配置陷阱
+### 12.2 配置陷阱
 
 - **YAML 标量**：多行参数必须用 `|`（block scalar），不能用缩进列表
 - **continue-on-error 分层**：step 级（建议性检查）/ job 级（R-devel）。不要在 `steps:` 列表中间放置 job 级属性
 - **deploy 步骤**：只在 main 分支触发
 
-### 11.3 预提交本地验证 SOP
+### 12.3 预提交本地验证 SOP
 
 **Layer 1（秒级语法检查）**：
 ```
@@ -753,7 +750,7 @@ lintr::lint_package()
 styler::style_pkg(dry = "on")
 ```
 
-### 11.4 CI 预提交检查清单
+### 12.4 CI 预提交检查清单
 
 新增/修改 CI workflow 前对照：
 - [ ] `with:` 下的多行参数使用 `|`（block scalar）？
@@ -764,21 +761,21 @@ styler::style_pkg(dry = "on")
 - [ ] R-devel 矩阵项包含 `http-user-agent: release`？
 - [ ] deploy 步骤只在 main 分支触发？
 
-### 11.4 CI 日志获取
+### 12.5 CI 日志获取
 
 ```powershell
 gh run list --limit 5 --json name,conclusion,status
 gh api repos/{owner}/{repo}/actions/jobs/{job_id}/logs  # 不需要等整个 workflow 完成
 ```
 
-### 11.5 Rd 示例解析错误定位
+### 12.6 Rd 示例解析错误定位
 
 ```r
 tools::Rd2ex("man/<file>.Rd", "test.R")
 parse(file = "test.R")
 ```
 
-### 11.6 本地与 CI 环境差异
+### 12.7 本地与 CI 环境差异
 
 | 本地现象 | CI 相关性 | 原因 |
 |----------|-----------|------|
@@ -786,4 +783,4 @@ parse(file = "test.R")
 | CRAN URL 检查失败 | 无关 | 公司代理拦截出站 |
 | 工作流触发失败 | 相关 | 用 act 本地模拟 |
 
-本地复现 CI 失败优先使用 `gh api` 获取真实日志（§11.4），不要在本地 Windows 直接运行 R CMD check——差异太多。
+本地复现 CI 失败优先使用 `gh api` 获取真实日志（§12.5），不要在本地 Windows 直接运行 R CMD check——差异太多。
