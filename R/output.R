@@ -35,18 +35,19 @@ S7::method(format, plotit_composite) <- function(x, ...) ""
 # pkgdown evaluates @examples via evaluate::evaluate(), which calls
 # pkgdown_print(value) as the output_handler `value` callback.  S7 objects
 # hit pkgdown_print.default() → print.S7_object() → str.S7_object(), which
-# dumps the full ggproto tree.  Intercept with a S3 method that renders the
-# plot to the device so evaluate records it, then returns invisible to suppress
-# the text dump.
+# dumps the full ggproto tree.  Intercept with S3 methods that render the
+# plot to the device so evaluate records it, then return invisible to
+# suppress the text dump.
 #' @exportS3Method pkgdown::pkgdown_print
 pkgdown_print.plotit <- function(x, visible = TRUE) {
+  if (!visible) return(invisible())
   x <- ._sync_labels(x)
-  print(x@gg)
-  invisible()
+  ._render_plotit(x)
 }
 
 #' @exportS3Method pkgdown::pkgdown_print
 pkgdown_print.plotit_composite <- function(x, visible = TRUE) {
+  if (!visible) return(invisible())
   ._apply_annotations(x) |> print()
   invisible()
 }
