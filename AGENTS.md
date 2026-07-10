@@ -82,7 +82,8 @@
 
 ### 3.2 `mark_*` 目录
 
-对标 Vega-Lite / AntV-G2 的视觉通道丰富度，不限于 ggplot2 原生几何。新 mark 按需引入，遵循统一 S7 泛型+方法模式（`mark_<type>` + `geom_<底层>`），支持 `rasterize`。
+对标 Vega-Lite / AntV-G2 的视觉通道丰富度，不限于 ggplot2 原生几何。
+新 mark 按需引入，遵循统一 S7 泛型+方法模式（`mark_<type>` + `geom_<底层>`），支持 `rasterize`。
 
 **已实现**（6）：
 
@@ -95,7 +96,47 @@
 | `mark_histogram` | `geom_histogram` | 直方图 |
 | `mark_density` | `geom_density` | 密度曲线 |
 
-**规划中**：基础几何（area/path/rect/tile/polygon/text/rule）、分布展示（violin/beeswarm）、关系层次（network/tree/sankey/chord/treemap/sunburst/circlepacking/venn）、地理空间（map/link）
+**完整规划**（22 种，对标 Vega-Lite 15 种 + AntV G2 30+ 种，去重取并集）：
+
+| # | 函数 | 类别 | 对应 R 包 / geom | 对标来源 | 用途 |
+|---|---|---|---|---|---|
+| | **基础几何** | | | | |
+| 1 | `mark_point` | 基础 | `geom_point` | VL `point`/G2 `point` | 散点/气泡 ✅ |
+| 2 | `mark_line` | 基础 | `geom_line` | VL `line`/G2 `line` | 折线/趋势/雷达线 ✅ |
+| 3 | `mark_area` | 基础 | `geom_area`/`geom_ribbon` | VL `area`/G2 `area` | 面积图/堆叠面积/河流图/误差带 |
+| 4 | `mark_bar` | 基础 | `geom_bar`/`geom_col` | VL `bar`/G2 `interval` | 柱状/条形图 ✅ |
+| 5 | `mark_rect` | 基础 | `geom_tile`/`geom_rect` | VL `rect`/G2 `cell` `rect` | 矩形/热力图单元格 |
+| 6 | `mark_arc` | 基础 | `geom_bar`+`coord_polar`/`ggforce` | VL `arc`/G2 `interval`(pie) | 饼图/环形图/玫瑰图 |
+| 7 | `mark_polygon` | 基础 | `geom_polygon` | G2 `polygon` | 多边形/自定义形状/地图区域 |
+| 8 | `mark_text` | 基础 | `geom_text`/`ggrepel` | VL `text`/G2 `text` | 文本标签/标注/数据标签 |
+| 9 | `mark_rule` | 基础 | `geom_hline`/`geom_vline`/`geom_abline`/`geom_segment` | VL `rule`/G2 `lineX` `lineY` `rangeX` `rangeY` | 参考线/参考区域/误差线 |
+| 10 | `mark_path` | 基础 | `geom_path` | G2 `path`/VL（Vega `trail`） | 路径/轨迹 |
+| 11 | `mark_tick` | 基础 | `geom_rug`/`geom_point`(strip) | VL `tick` | 刻度线/一维分布 strip plot |
+| | **分布展示** | | | | |
+| 12 | `mark_histogram` | 分布 | `geom_histogram` | VL `bar`(binned)/G2 `interval`(histogram) | 直方图 ✅ |
+| 13 | `mark_density` | 分布 | `geom_density`/`geom_density_2d` | G2 `density` `heatmap` | 密度曲线/KDE/2D 密度热力图 ✅ |
+| 14 | `mark_boxplot` | 分布 | `geom_boxplot` | VL `boxplot`/G2 `boxplot` | 箱线图 ✅ |
+| 15 | `mark_violin` | 分布 | `geom_violin` | G2 `density`(violin shape) | 小提琴图 |
+| 16 | `mark_beeswarm` | 分布 | `ggbeeswarm::geom_beeswarm` | G2 `beeswarm` | 蜂群散点/分布散点 |
+| | **关系与层次** | | | | |
+| 17 | `mark_network` | 关系 | `ggraph`/`igraph` | G2 `forceGraph` | 网络/力导向图 |
+| 18 | `mark_tree` | 关系 | `ggraph`(dendrogram/treemap) | G2 `tree` `partition` `sunburst` | 树图/冰柱图/旭日图 |
+| 19 | `mark_sankey` | 关系 | `ggsankey` | G2 `sankey` | 桑基流向图 |
+| 20 | `mark_chord` | 关系 | `circlize` | G2 `chord` | 弦图/环形关系图 |
+| 21 | `mark_treemap` | 关系 | `treemapify` | G2 `treemap` `pack` | 矩形树图/圆形 packing |
+| | **地理空间** | | | | |
+| 22 | `mark_map` | 地理 | `sf`+`geom_sf` | VL `geoshape`/G2 `geoPath` | 地图/地理空间 |
+
+> **Vega-Lite 对标说明**：Vega-Lite 提供 15 种 mark（`arc`/`area`/`bar`/`circle`/`point`/`square`/`line`/`rect`/`rule`/`text`/`tick`/`trail`/`geoshape`/`boxplot`/`errorband`/`errorbar`）。
+> 其中 `circle` 和 `square` 合并为 `mark_point`（通过 `shape` 参数区分）；`trail` 合并为 `mark_path`；`errorband`/`errorbar` 由 `mark_rule`/`mark_area` 覆盖。
+>
+> **AntV G2 对标说明**：G2 v5 提供 30+ 种 mark（`interval`/`line`/`area`/`point`/`cell`/`rect`/`text`/`image`/`link`/`polygon`/`vector`/`box`/`path`/`shape`/`connector` + `lineX`/`lineY`/`rangeX`/`rangeY`/`range` + `density`/`heatmap`/`beeswarm`/`boxplot` + `sankey`/`treemap`/`pack`/`forceGraph`/`tree`/`chord`/`partition`/`gauge`/`liquid`/`wordCloud`/`sunburst`）。
+> 其中 `image`/`vector`/`shape`/`connector` 为底层图形原语不纳入；`gauge`/`liquid`/`wordCloud` 为专用图表低优先级备用；`link` 合并为 `mark_line`/`mark_rule`；`cell` 合并为 `mark_rect`。
+>
+> **引用来源**：
+> - Vega-Lite: [Mark Types](https://vega.github.io/vega-lite/docs/mark.html)（v5, 12 primitive + 3 composite）
+> - AntV G2: [Marks and Shapes](https://g2.antv.antgroup.com/api/overview)（v5, corelib + graphlib + plotlib）
+> - Vega-Lite `arc` mark: [Arc](https://vega.github.io/vega-lite/docs/arc.html)（v4+, pie/donut/radial）
 
 ### 3.3 函数签名概要
 
@@ -411,14 +452,14 @@ export(p, "output.pdf", dpi = 300)
 | 层级 | 函数族 | 规划 | 已实现 |
 |------|--------|------|--------|
 | 内层 | plotit() + encode() | 2 | 2 (100%) |
-| 内层 | mark_* | 22 | 6 (27%) |
+| 内层 | mark_* | 22 | 6 (27%) | 基础 11 + 分布 5 + 关系 5 + 地理 1，见 §3.2 完整规划 |
 | 内层 | scale_* / project_* / split_* / label_* / style+export | 8+4+2+5+3=22 | 22 (100%) |
 | 最外层 | compose_* | 3 | 3 (100%) |
 | **总计** | | **~49** | **33 (67%)** |
 
 ### 8.2 1.0 前必做检查项
 
-- [ ] mark_* 扩至至少 15 个（重点：area, violin, text, tile, path）
+- [ ] mark_* 扩至至少 15 个（重点：area, text, rect, rule, arc, path, tick, violin, density → 当前 6/22，见 §3.2 完整规划表）
 - [x] 3 篇 vignette（"Getting Started" / "Customizing Plots" / "Composing Figures"）
 - [x] pkgdown 网站 + GitHub Actions CI
 - [ ] 所有导出函数补充 `@examples`
