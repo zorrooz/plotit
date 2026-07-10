@@ -88,8 +88,7 @@ print.plotit <- function(x, ...) {
 #' @exportS3Method knitr::knit_print
 knit_print.plotit <- function(x, ...) {
   x <- ._sync_labels(x)
-  print(x@gg)
-  invisible(x)
+  ._render_plotit(x)
 }
 
 #' @exportS3Method knitr::knit_print

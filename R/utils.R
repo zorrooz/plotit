@@ -37,7 +37,14 @@ NULL
       plot@gg$mapping$fill <- NULL
       plot@gg <- plot@gg + ggplot2::guides(fill = ggplot2::waiver())
     }
-    S7::prop(plot@meta, "default_color") <- NULL
+    # Only clear the meta marker when *both* colour and fill defaults
+    # have been individually removed by layer mappings.  Prematurely
+    # setting it to NULL would cause the next mark_* call that provides
+    # the OTHER aesthetic to return early, leaving a residual default in
+    # the global mapping that suppresses that legend.
+    if (is.null(plot@gg$mapping$colour) && is.null(plot@gg$mapping$fill)) {
+      S7::prop(plot@meta, "default_color") <- NULL
+    }
     return(plot)
   }
   # Called from scale_*: unconditional clear (user explicitly manages colour/fill)

@@ -21,27 +21,39 @@ NULL
   # NAMESPACE S3method(print,plotit) is blocked by S7's own S3 method
   # registration on R 4.5.2 / Windows, so we register it here explicitly.
   registerS3method("print", "plotit",
-    ns$print.plotit, envir = ns)
+    ns$print.plotit,
+    envir = ns
+  )
 
   # Register S3 knit_print methods once knitr is available.
   # Also install a fallback render hook for S3 dispatch edge cases.
   .register_knit_print <- function(ns) {
-    tryCatch({
-      registerS3method("knit_print", "plotit",
-        ns$knit_print.plotit, envir = ns)
-      registerS3method("knit_print", "plotit_composite",
-        ns$knit_print.plotit_composite, envir = ns)
-    }, error = function(e) NULL)
+    tryCatch(
+      {
+        registerS3method("knit_print", "plotit",
+          ns$knit_print.plotit,
+          envir = ns
+        )
+        registerS3method("knit_print", "plotit_composite",
+          ns$knit_print.plotit_composite,
+          envir = ns
+        )
+      },
+      error = function(e) NULL
+    )
     # Install render hook fallback: catches plotit objects S3 dispatch missed
-    tryCatch({
-      knitr::knit_hooks$set(render = function(x, options) {
-        if (inherits(x, "plotit") || inherits(x, "plotit_composite")) {
-          ns$knit_print.plotit(x)
-        } else {
-          knitr::knit_print(x)
-        }
-      })
-    }, error = function(e) NULL)
+    tryCatch(
+      {
+        knitr::knit_hooks$set(render = function(x, options) {
+          if (inherits(x, "plotit") || inherits(x, "plotit_composite")) {
+            ns$knit_print.plotit(x)
+          } else {
+            knitr::knit_print(x)
+          }
+        })
+      },
+      error = function(e) NULL
+    )
   }
   if ("knitr" %in% loadedNamespaces()) {
     .register_knit_print(ns)

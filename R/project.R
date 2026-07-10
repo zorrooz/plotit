@@ -22,7 +22,8 @@ NULL
 #' @return Modified plotit object.
 #' @examples
 #' plotit(iris, encode(x = Species, y = Sepal.Length)) |>
-#'   mark_boxplot() |> project_cartesian(flip = TRUE)
+#'   mark_boxplot() |>
+#'   project_cartesian(flip = TRUE)
 #' @export
 project_cartesian <- S7::new_generic(
   "project_cartesian",
@@ -107,7 +108,8 @@ S7::method(project_cartesian, plotit_class) <- function(
 #' @return Modified plotit object.
 #' @examples
 #' plotit(mtcars, encode(x = factor(cyl))) |>
-#'   mark_bar() |> project_polar()
+#'   mark_bar() |>
+#'   project_polar()
 #' @export
 project_polar <- S7::new_generic(
   "project_polar",

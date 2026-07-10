@@ -44,5 +44,6 @@ ratio, and coordinate transformations -- all through parameters.
 }
 \examples{
 plotit(iris, encode(x = Species, y = Sepal.Length)) |>
-  mark_boxplot() |> project_cartesian(flip = TRUE)
+  mark_boxplot() |>
+  project_cartesian(flip = TRUE)
 }

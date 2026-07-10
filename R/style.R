@@ -90,7 +90,7 @@ S7::method(style, plotit_class) <- function(
 style_default <- S7::new_generic(
   "style_default",
   "plot",
-  function(plot, base_size = NULL, base_family = NULL) {
+  function(plot, ..., base_size = NULL, base_family = NULL) {
     S7::S7_dispatch()
   }
 )
@@ -99,7 +99,8 @@ style_default <- S7::new_generic(
 S7::method(style_default, plotit_class) <- function(
   plot,
   base_size = NULL,
-  base_family = NULL
+  base_family = NULL,
+  ...
 ) {
-  style(plot, base_size = base_size, base_family = base_family)
+  style(plot, ..., base_size = base_size, base_family = base_family)
 }

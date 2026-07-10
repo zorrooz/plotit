@@ -498,7 +498,8 @@ S7::method(style, plotit_composite) <- function(
 S7::method(style_default, plotit_composite) <- function(
   plot,
   base_size = NULL,
-  base_family = NULL
+  base_family = NULL,
+  ...
 ) {
-  style(plot, base_size = base_size, base_family = base_family)
+  style(plot, ..., base_size = base_size, base_family = base_family)
 }
