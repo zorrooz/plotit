@@ -339,3 +339,133 @@ test_that("mark_rule supports rasterize", {
               rasterize = TRUE, rasterize_dpi = 72)
   expect_s3_class(p, "plotit::plotit")
 })
+
+# ---- mark_path ----
+test_that("[BDD] mark_path adds path layer", {
+  df <- data.frame(x = 1:10, y = cumsum(runif(10, -1, 1)))
+  p <- plotit(df, encode(x = x, y = y)) |> mark_path()
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("[BDD] mark_path supports group aesthetic", {
+  set.seed(1)
+  df <- data.frame(
+    x = rep(1:5, 2),
+    y = rnorm(10),
+    g = rep(c("A", "B"), each = 5)
+  )
+  p <- plotit(df, encode(x = x, y = y, colour = g)) |> mark_path()
+  built <- .built(p)
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(built$data, 1)
+})
+
+test_that("mark_path passes line params via dots", {
+  df <- data.frame(x = 1:10, y = cumsum(runif(10, -1, 1)))
+  p <- plotit(df, encode(x = x, y = y)) |>
+    mark_path(linewidth = 1.5, linetype = "dashed")
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_polygon ----
+test_that("[BDD] mark_polygon adds polygon layer", {
+  tri <- data.frame(x = c(0, 1, 0.5), y = c(0, 0, 1))
+  p <- plotit(tri, encode(x = x, y = y)) |> mark_polygon(fill = "skyblue")
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("[BDD] mark_polygon supports multiple groups", {
+  df <- rbind(
+    data.frame(x = c(0, 1, 0.5), y = c(0, 0, 1), g = "A"),
+    data.frame(x = c(2, 3, 2.5) + 1, y = c(0, 0, 1) + 1, g = "B")
+  )
+  p <- plotit(df, encode(x = x, y = y, fill = g)) |> mark_polygon()
+  built <- .built(p)
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(built$data, 1)
+})
+
+test_that("mark_polygon supports colour aesthetic", {
+  tri <- data.frame(x = c(0, 1, 0.5), y = c(0, 0, 1))
+  p <- plotit(tri, encode(x = x, y = y)) |>
+    mark_polygon(fill = "skyblue", colour = "navy")
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_smooth ----
+test_that("[BDD] mark_smooth adds smooth layer", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg)) |> mark_smooth()
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("mark_smooth supports linear method", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
+    mark_smooth(method = "lm", se = FALSE)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_smooth supports colour aesthetic", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg, colour = factor(cyl))) |>
+    mark_smooth()
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_hex ----
+test_that("[BDD] mark_hex adds hex bin layer", {
+  p <- plotit(ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 1000), ],
+              encode(x = carat, y = price)) |> mark_hex(bins = 15)
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("mark_hex supports bins parameter", {
+  p <- plotit(ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 500), ],
+              encode(x = carat, y = price)) |> mark_hex(bins = 10)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_hex supports local data", {
+  sub <- ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 300), ]
+  p <- plotit(sub, encode(x = carat, y = price)) |> mark_hex(data = sub)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_density_2d ----
+test_that("[BDD] mark_density_2d adds contour layer", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_density_2d()
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("mark_density_2d supports filled mode", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_density_2d(filled = TRUE, bins = 6)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_density_2d supports bins parameter", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_density_2d(bins = 10)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_corr ----
+test_that("[BDD] mark_corr adds correlation heatmap", {
+  p <- plotit(mtcars, encode()) |> mark_corr()
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("mark_corr supports spearman method", {
+  p <- plotit(mtcars, encode()) |> mark_corr(method = "spearman")
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_corr supports no-reorder", {
+  p <- plotit(mtcars, encode()) |> mark_corr(reorder = FALSE)
+  expect_s3_class(p, "plotit::plotit")
+})

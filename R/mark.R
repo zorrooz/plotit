@@ -498,6 +498,285 @@ S7::method(mark_rule, plotit_class) <- function(
   )
 }
 
+# ---- mark_path ----
+#' Path layer
+#'
+#' Adds a path layer connecting observations in their original order.
+#' Use for trajectories, time-ordered connected points, or custom
+#' drawing orders.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_path`
+#' @return Modified plotit object
+#' @references
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/path}{Path}
+#' @examples
+#' df <- data.frame(x = 1:10, y = cumsum(runif(10, -1, 1)))
+#' plotit(df, encode(x = x, y = y)) |> mark_path()
+#' @export
+mark_path <- S7::new_generic(
+  "mark_path", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+._register_mark_method(mark_path, ggplot2::geom_path)
+
+# ---- mark_polygon ----
+#' Polygon layer
+#'
+#' Adds a filled polygon layer. Each group forms one polygon;
+#' subgroups are separated by `NA` rows or the `group` aesthetic.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_polygon`
+#' @return Modified plotit object
+#' @references
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/polygon}{Polygon}
+#' @examples
+#' tri <- data.frame(x = c(0, 1, 0.5), y = c(0, 0, 1))
+#' plotit(tri, encode(x = x, y = y)) |> mark_polygon(fill = "skyblue")
+#' @export
+mark_polygon <- S7::new_generic(
+  "mark_polygon", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+._register_mark_method(mark_polygon, ggplot2::geom_polygon)
+
+# ---- mark_smooth ----
+#' Smoothed conditional mean layer
+#'
+#' Adds a smoothed conditional mean line with a confidence band.
+#' Aids the eye in seeing patterns in the presence of overplotting.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param method Smoothing method: `"auto"` (loess for n<1000, gam otherwise),
+#'   `"lm"`, `"glm"`, `"gam"`, or `"loess"`.
+#' @param formula Formula to use in the smoothing function.
+#' @param se If `TRUE` (default), display confidence interval around smooth.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_smooth`
+#' @return Modified plotit object
+#' @references
+#' Vega-Lite: achieved via \code{layer(point) + layer(line) + transform(regression)}
+#'
+#' AntV G2: achieved via transform pipeline
+#' @examples
+#' plotit(mtcars, encode(x = wt, y = mpg)) |> mark_smooth()
+#' @export
+mark_smooth <- S7::new_generic(
+  "mark_smooth", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           method = NULL, formula = NULL, se = NULL,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_smooth, plotit_class) <- function(
+    plot, mapping = NULL, data = NULL, position = NULL, ...,
+    method = NULL, formula = NULL, se = NULL,
+    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  params <- rlang::list2(...)
+  params$method <- method
+  params$formula <- formula
+  params$se <- se
+  do.call(function(...) {
+    ._mark_impl(plot, mapping, data, position, ggplot2::geom_smooth,
+                rasterize, rasterize_dpi, rasterize_dev, ...)
+  }, params)
+}
+
+# ---- mark_hex ----
+#' Hexagonal heatmap layer
+#'
+#' Divides the x-y plane into hexagonal bins and fills each by the
+#' count (or other aggregation) of observations in that bin.
+#' Ideal for visualizing overplotting in large datasets.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param bins Number of bins along both axes (default 30).
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_hex`
+#' @return Modified plotit object
+#' @references
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/heatmap}{Heatmap} (corelib)
+#' @examples
+#' plotit(diamonds[sample(nrow(diamonds), 1000), ],
+#'        encode(x = carat, y = price)) |> mark_hex(bins = 20)
+#' @export
+mark_hex <- S7::new_generic(
+  "mark_hex", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           bins = NULL,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_hex, plotit_class) <- function(
+    plot, mapping = NULL, data = NULL, position = NULL, ...,
+    bins = NULL,
+    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  params <- rlang::list2(...)
+  params$bins <- bins
+  do.call(function(...) {
+    ._mark_impl(plot, mapping, data, position, ggplot2::geom_hex,
+                rasterize, rasterize_dpi, rasterize_dev, ...)
+  }, params)
+}
+
+# ---- mark_density_2d ----
+#' 2D density contour layer
+#'
+#' Adds 2D kernel density estimate contours. Use `filled = TRUE`
+#' for filled density bands via [ggplot2::geom_density_2d_filled].
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param filled If `TRUE`, use filled density contours.
+#' @param bins Number of contour bins (for filled mode).
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to the underlying geom
+#' @return Modified plotit object
+#' @references
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/density}{Density} (corelib, contour mode)
+#' @examples
+#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+#'   mark_density_2d()
+#' @export
+mark_density_2d <- S7::new_generic(
+  "mark_density_2d", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           filled = FALSE, bins = NULL,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_density_2d, plotit_class) <- function(
+    plot, mapping = NULL, data = NULL, position = NULL, ...,
+    filled = FALSE, bins = NULL,
+    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  geom_fun <- if (filled) ggplot2::geom_density_2d_filled else ggplot2::geom_density_2d
+  dots <- rlang::list2(...)
+  if (!is.null(bins)) dots$bins <- bins
+  # Only clear default_color when the layer provides colour/fill
+  if (!is.null(mapping) && (!is.null(mapping$colour) || !is.null(mapping$fill))) {
+    plot <- ._clear_default_color(plot, mapping)
+  }
+  pos <- position
+  if (is.null(pos) && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
+    pos <- ggplot2::position_dodge(plot@meta@dodge)
+  }
+  geom <- if (is.null(pos)) {
+    do.call(geom_fun, c(list(mapping = mapping, data = data), dots))
+  } else {
+    do.call(geom_fun, c(list(mapping = mapping, data = data, position = pos), dots))
+  }
+  .add_geom(plot, geom,
+    rasterize = rasterize, rasterize_dpi = rasterize_dpi,
+    rasterize_dev = rasterize_dev
+  )
+}
+
+# ---- mark_corr ----
+#' Correlation matrix heatmap
+#'
+#' Computes a correlation matrix from numeric data columns, optionally
+#' reorders by hierarchical clustering, and renders it as a tile heatmap.
+#'
+#' @param plot A plotit object. Numeric columns are extracted from the
+#'   plot data for correlation computation.
+#' @param method Correlation method: `"pearson"` (default), `"spearman"`,
+#'   or `"kendall"`.
+#' @param reorder If `TRUE` (default), reorder rows and columns by
+#'   hierarchical clustering.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_tile`
+#' @return Modified plotit object
+#' @references
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/cell}{Cell} (correlation matrix expression)
+#' @examples
+#' plotit(mtcars, encode()) |> mark_corr()
+#' @export
+mark_corr <- S7::new_generic(
+  "mark_corr", "plot",
+  function(plot, method = c("pearson", "spearman", "kendall"),
+           reorder = TRUE, ...,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_corr, plotit_class) <- function(
+    plot, method = c("pearson", "spearman", "kendall"),
+    reorder = TRUE, ...,
+    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  method <- match.arg(method)
+  # Extract numeric columns from plot data
+  raw_data <- plot@gg$data
+  num_cols <- vapply(raw_data, is.numeric, logical(1))
+  if (sum(num_cols) < 2) {
+    cli::cli_abort("{.fn mark_corr} requires at least 2 numeric columns.")
+  }
+  mat <- stats::cor(raw_data[, num_cols, drop = FALSE], method = method)
+  # Hierarchical clustering reorder
+  if (reorder) {
+    ord <- stats::hclust(stats::as.dist(1 - abs(mat)))$order
+    mat <- mat[ord, ord]
+  }
+  # Melt to long form
+  df <- expand.grid(
+    Var1 = factor(rownames(mat), levels = rownames(mat)),
+    Var2 = factor(colnames(mat), levels = colnames(mat))
+  )
+  df$value <- as.vector(mat)
+  # Build tile
+  mapping <- encode(x = Var1, y = Var2, fill = value)
+  geom <- ggplot2::geom_tile(mapping = mapping, data = df, ...)
+  .add_geom(plot, geom,
+    rasterize = rasterize, rasterize_dpi = rasterize_dpi,
+    rasterize_dev = rasterize_dev
+  )
+}
+
 # ---- mark_bar (hand-written: geom_col vs geom_bar dispatch) ----
 #' Bar layer
 #'
