@@ -144,16 +144,22 @@ NULL
   }
 }
 
+# Internal helper: strip NULL entries from a list so that `breaks = NULL`
+# and friends do not coerce downstream ggplot2 scales into guide = "none".
+#' Strip NULL entries from a list.
+#' @noRd
+#' @keywords internal
+._strip_nulls <- function(args) {
+  args[!vapply(args, is.null, logical(1L))]
+}
+
 # Pick the right scale function for colour/fill given trans + range
 .scale_colour_fun <- function(aes, trans, range, ..., force_reverse = FALSE) {
   discrete <- trans == "discrete"
   binned <- trans == "binned"
   reverse <- trans == "reverse" || force_reverse
 
-  # Collect args passed through `...` and strip NULLs so that `breaks = NULL`
-  # does not coerce ggplot2 scales into guide = "none".
-  extra_args <- list(...)
-  extra_args <- extra_args[!vapply(extra_args, is.null, logical(1L))]
+  extra_args <- ._strip_nulls(list(...))
 
   if (is.character(range) && length(range) >= 2) {
     do.call(._scale_custom, c(list(aes, range, discrete, binned, reverse), extra_args))
@@ -192,7 +198,7 @@ NULL
       alpha = ggplot2::scale_alpha_continuous
     )
   }
-  args <- list(...)
+  args <- ._strip_nulls(list(...))
   # Explicit defaults per AGENTS.md <U+00A7>3.3.4
   if (is.null(range) && !binned && !discrete) {
     range <- switch(aes,
@@ -210,7 +216,7 @@ NULL
 # Pick shape/linetype scale function
 .scale_discrete_fun <- function(aes, trans, range, ...) {
   reverse <- trans == "reverse"
-  args <- list(...)
+  args <- ._strip_nulls(list(...))
   if (reverse && !is.null(range)) range <- rev(range)
   if (!is.null(range)) {
     args$values <- range
@@ -289,8 +295,9 @@ NULL
   if (discrete && reverse && is.null(limits)) {
     args$limits <- rev
   }
-  args <- args[!vapply(args, is.null, logical(1))]
-  plot@gg <- plot@gg + do.call(scale_fun, c(args, list(...)))
+  args <- ._strip_nulls(args)
+  extra_args <- ._strip_nulls(list(...))
+  plot@gg <- plot@gg + do.call(scale_fun, c(args, extra_args))
   plot
 }
 

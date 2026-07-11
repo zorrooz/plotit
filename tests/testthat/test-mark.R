@@ -182,3 +182,89 @@ test_that("[BDD] mark_density adds density layer", {
   expect_s3_class(p, "plotit::plotit")
   expect_length(.built(p)$data, 1)
 })
+
+# ---- mark_area ----
+test_that("[BDD] mark_area adds area layer", {
+  p <- plotit(ggplot2::economics, encode(x = date, y = unemploy)) |>
+    mark_area(alpha = 0.5)
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("[BDD] mark_area supports local mapping and data", {
+  p <- plotit(ggplot2::economics, encode(x = date, y = unemploy))
+  sub <- ggplot2::economics[1:100, ]
+  p <- mark_area(p, data = sub, mapping = encode(x = date, y = unemploy))
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("mark_area supports fill aesthetic", {
+  p <- plotit(ggplot2::economics, encode(x = date, y = unemploy, fill = "blue")) |>
+    mark_area()
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_text ----
+test_that("[BDD] mark_text adds text layer", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg, label = rownames(mtcars))) |>
+    mark_text(size = 3)
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("[BDD] mark_text supports local mapping", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
+    mark_text(mapping = encode(label = rownames(mtcars)), size = 3)
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("mark_text passes extra params via dots", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg, label = rownames(mtcars))) |>
+    mark_text(size = 3, check_overlap = TRUE, vjust = -1)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_violin ----
+test_that("[BDD] mark_violin adds violin layer", {
+  p <- plotit(iris, encode(x = Species, y = Sepal.Length)) |>
+    mark_violin(draw_quantiles = 0.5)
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("[BDD] mark_violin supports local data", {
+  p <- plotit(iris, encode(x = Species, y = Sepal.Length)) |>
+    mark_violin(data = iris[iris$Species == "setosa", ])
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("[BDD] mark_violin auto-dodges with fill", {
+  p <- plotit(iris, encode(x = Species, y = Sepal.Length, fill = Species)) |>
+    mark_violin()
+  built <- .built(p)
+  expect_length(built$data, 1)
+})
+
+# ---- mark_map ----
+test_that("mark_map errors on non-sf data", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
+  expect_error(mark_map(p), "sf")
+})
+
+test_that("[BDD] mark_map renders with sf data", {
+  skip_if_not_installed("sf")
+  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  p <- plotit(nc, encode(geometry = geometry)) |> mark_map()
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("mark_map supports fill mapping", {
+  skip_if_not_installed("sf")
+  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  p <- plotit(nc, encode(geometry = geometry, fill = AREA)) |> mark_map()
+  expect_s3_class(p, "plotit::plotit")
+})

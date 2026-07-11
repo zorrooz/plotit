@@ -197,6 +197,169 @@ mark_density <- S7::new_generic(
 )
 ._register_mark_method(mark_density, ggplot2::geom_density)
 
+# ---- mark_area ----
+#' Area layer
+#'
+#' Adds a filled area layer. Use for stacked area charts, stream graphs,
+#' or error bands.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_area`
+#' @return Modified plotit object
+#' @examples
+#' plotit(ggplot2::economics, encode(x = date, y = unemploy)) |>
+#'   mark_area(alpha = 0.5)
+#' @export
+mark_area <- S7::new_generic(
+  "mark_area", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+._register_mark_method(mark_area, ggplot2::geom_area)
+
+# ---- mark_text ----
+#' Text layer
+#'
+#' Adds a text label layer. For automatic label placement with collision
+#' avoidance, install the optional \pkg{ggrepel} package and set
+#' `repel = TRUE`.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics (e.g. `encode(label = ...)`)
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param repel If `TRUE`, use `ggrepel::geom_text_repel` instead of
+#'   `geom_text`. Requires the \pkg{ggrepel} package.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_text` or `geom_text_repel`
+#' @return Modified plotit object
+#' @examples
+#' plotit(mtcars, encode(x = wt, y = mpg, label = rownames(mtcars))) |>
+#'   mark_text(size = 3)
+#' @export
+mark_text <- S7::new_generic(
+  "mark_text", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           repel = FALSE,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_text, plotit_class) <- function(
+    plot, mapping = NULL, data = NULL, position = NULL, ...,
+    repel = FALSE,
+    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  if (repel) {
+    if (!requireNamespace("ggrepel", quietly = TRUE)) {
+      cli::cli_abort("{.arg repel = TRUE} requires the {.pkg ggrepel} package.")
+    }
+    geom_fun <- ggrepel::geom_text_repel
+  } else {
+    geom_fun <- ggplot2::geom_text
+  }
+  if (!is.null(mapping) && !is.null(mapping$colour)) {
+    plot <- ._clear_default_color(plot, mapping)
+  }
+  ._mark_impl(
+    plot, mapping, data, position, geom_fun,
+    rasterize, rasterize_dpi, rasterize_dev, ...
+  )
+}
+
+# ---- mark_violin ----
+#' Violin layer
+#'
+#' Adds a violin plot layer showing the kernel density estimate of the data
+#' at each position.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_violin`
+#' @return Modified plotit object
+#' @examples
+#' plotit(iris, encode(x = Species, y = Sepal.Length)) |>
+#'   mark_violin(draw_quantiles = 0.5)
+#' @export
+mark_violin <- S7::new_generic(
+  "mark_violin", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+._register_mark_method(mark_violin, ggplot2::geom_violin)
+
+# ---- mark_map ----
+#' Map layer
+#'
+#' Adds a geographic map layer for \pkg{sf} spatial data frames.
+#' Requires the \pkg{sf} package.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional sf data frame for this layer
+#' @param position Position adjustment.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_sf`
+#' @return Modified plotit object
+#' @examples
+#' \dontrun{
+#' nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+#' plotit(nc, encode(geometry = geometry)) |> mark_map()
+#' }
+#' @export
+mark_map <- S7::new_generic(
+  "mark_map", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_map, plotit_class) <- function(
+    plot, mapping = NULL, data = NULL, position = NULL, ...,
+    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  if (!requireNamespace("sf", quietly = TRUE)) {
+    cli::cli_abort("{.fn mark_map} requires the {.pkg sf} package.")
+  }
+  layer_data <- data %||% plot@gg$data
+  if (!inherits(layer_data, "sf")) {
+    cli::cli_abort(c(
+      "{.fn mark_map} requires {.pkg sf} spatial data.",
+      "i" = "Use {.fn plotit} with an {.cls sf} data frame."
+    ))
+  }
+  # geom_sf does not support position adjustment; ignore dodge
+  if (!is.null(mapping) && !is.null(mapping$colour)) {
+    plot <- ._clear_default_color(plot, mapping)
+  }
+  geom <- ggplot2::geom_sf(mapping = mapping, data = data, ...)
+  .add_geom(plot, geom,
+    rasterize = rasterize, rasterize_dpi = rasterize_dpi,
+    rasterize_dev = rasterize_dev
+  )
+}
+
 # ---- mark_bar (hand-written: geom_col vs geom_bar dispatch) ----
 #' Bar layer
 #'

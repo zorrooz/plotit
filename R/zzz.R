@@ -67,7 +67,8 @@ NULL
 # Registered here (loaded last) so all S7 generics exist.
 for (.generic_name in c(
   "mark_point", "mark_line", "mark_bar", "mark_boxplot",
-  "mark_histogram", "mark_density",
+  "mark_histogram", "mark_density", "mark_area", "mark_text",
+  "mark_violin", "mark_map",
   "scale_color", "scale_fill", "scale_size", "scale_alpha",
   "scale_shape", "scale_linetype", "scale_x", "scale_y",
   "project_cartesian", "project_polar", "project_parallel",

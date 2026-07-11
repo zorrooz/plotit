@@ -35,18 +35,18 @@ S7::method(format, plotit_composite) <- function(x, ...) ""
 # pkgdown evaluates @examples via evaluate::evaluate(), which calls
 # pkgdown_print(value) as the output_handler `value` callback.  S7 objects
 # hit pkgdown_print.default() → print.S7_object() → str.S7_object(), which
-# dumps the full ggproto tree.  Intercept with a S3 method that renders the
-# plot to the device so evaluate records it, then returns invisible to suppress
-# the text dump.
+# dumps the full ggproto tree.  Intercept with S3 methods that render the
+# plot to the device so evaluate records it, then return invisible to
+# suppress the text dump.
 #' @exportS3Method pkgdown::pkgdown_print
 pkgdown_print.plotit <- function(x, visible = TRUE) {
-  x <- ._sync_labels(x)
-  print(x@gg)
-  invisible()
+  if (!visible) return(invisible())
+  ._print_render(x)
 }
 
 #' @exportS3Method pkgdown::pkgdown_print
 pkgdown_print.plotit_composite <- function(x, visible = TRUE) {
+  if (!visible) return(invisible())
   ._apply_annotations(x) |> print()
   invisible()
 }
@@ -105,10 +105,18 @@ print.plotit <- function(x, ...) {
 # ---- knit_print ----
 # S3 methods for knitr to capture plotit plots in vignettes / R Markdown.
 # Renders the underlying ggplot to knitr's active device.
-#' @exportS3Method knitr::knit_print
-knit_print.plotit <- function(x, ...) {
+
+# Shared knit_print / pkgdown_print path: sync labels, render, suppress text.
+#' @noRd
+#' @keywords internal
+._print_render <- function(x) {
   x <- ._sync_labels(x)
   ._render_plotit(x)
+}
+
+#' @exportS3Method knitr::knit_print
+knit_print.plotit <- function(x, ...) {
+  ._print_render(x)
 }
 
 #' @exportS3Method knitr::knit_print
