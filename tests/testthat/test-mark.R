@@ -204,3 +204,24 @@ test_that("mark_area supports fill aesthetic", {
     mark_area()
   expect_s3_class(p, "plotit::plotit")
 })
+
+# ---- mark_text ----
+test_that("[BDD] mark_text adds text layer", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg, label = rownames(mtcars))) |>
+    mark_text(size = 3)
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("[BDD] mark_text supports local mapping", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
+    mark_text(mapping = encode(label = rownames(mtcars)), size = 3)
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("mark_text passes extra params via dots", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg, label = rownames(mtcars))) |>
+    mark_text(size = 3, check_overlap = TRUE, vjust = -1)
+  expect_s3_class(p, "plotit::plotit")
+})

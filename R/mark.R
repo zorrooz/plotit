@@ -225,6 +225,59 @@ mark_area <- S7::new_generic(
 )
 ._register_mark_method(mark_area, ggplot2::geom_area)
 
+# ---- mark_text ----
+#' Text layer
+#'
+#' Adds a text label layer. For automatic label placement with collision
+#' avoidance, install the optional \pkg{ggrepel} package and set
+#' `repel = TRUE`.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics (e.g. `encode(label = ...)`)
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param repel If `TRUE`, use `ggrepel::geom_text_repel` instead of
+#'   `geom_text`. Requires the \pkg{ggrepel} package.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_text` or `geom_text_repel`
+#' @return Modified plotit object
+#' @examples
+#' plotit(mtcars, encode(x = wt, y = mpg, label = rownames(mtcars))) |>
+#'   mark_text(size = 3)
+#' @export
+mark_text <- S7::new_generic(
+  "mark_text", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           repel = FALSE,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_text, plotit_class) <- function(
+    plot, mapping = NULL, data = NULL, position = NULL, ...,
+    repel = FALSE,
+    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  if (repel) {
+    if (!requireNamespace("ggrepel", quietly = TRUE)) {
+      cli::cli_abort("{.arg repel = TRUE} requires the {.pkg ggrepel} package.")
+    }
+    geom_fun <- ggrepel::geom_text_repel
+  } else {
+    geom_fun <- ggplot2::geom_text
+  }
+  if (!is.null(mapping) && !is.null(mapping$colour)) {
+    plot <- ._clear_default_color(plot, mapping)
+  }
+  ._mark_impl(
+    plot, mapping, data, position, geom_fun,
+    rasterize, rasterize_dpi, rasterize_dev, ...
+  )
+}
+
 # ---- mark_bar (hand-written: geom_col vs geom_bar dispatch) ----
 #' Bar layer
 #'
