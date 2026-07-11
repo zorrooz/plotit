@@ -33,13 +33,10 @@ Thumbs.db
 
 # Package-specific
 playground.R
-CLAUDE.md
-AGENTS.md
 iris_plot.svg
 scratch/
 *.Rproj.user/
 Rplots*.pdf
-a.pdf
 
 # pkgdown local build (deployed from CI to gh-pages branch)
 docs/
