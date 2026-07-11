@@ -11,6 +11,8 @@
 
 Add visual marks to your plot.
 
+- [`mark_area()`](https://zorrooz.github.io/plotit/reference/mark_area.md)
+  : Area layer
 - [`mark_bar()`](https://zorrooz.github.io/plotit/reference/mark_bar.md)
   : Bar layer
 - [`mark_boxplot()`](https://zorrooz.github.io/plotit/reference/mark_boxplot.md)
@@ -21,8 +23,14 @@ Add visual marks to your plot.
   : Histogram layer
 - [`mark_line()`](https://zorrooz.github.io/plotit/reference/mark_line.md)
   : Line layer
+- [`mark_map()`](https://zorrooz.github.io/plotit/reference/mark_map.md)
+  : Map layer
 - [`mark_point()`](https://zorrooz.github.io/plotit/reference/mark_point.md)
   : Point layer
+- [`mark_text()`](https://zorrooz.github.io/plotit/reference/mark_text.md)
+  : Text layer
+- [`mark_violin()`](https://zorrooz.github.io/plotit/reference/mark_violin.md)
+  : Violin layer
 
 ## Scales
 

@@ -78,17 +78,17 @@ compose_grid(p1, p2, tag_levels = "A") |>
 
 每个 plotit 图表都遵循一致的管道：
 
-    data |> plotit(encode(...)) |> mark_*() |> scale_*() |> label_*() |> project_*() |> split_*() |> style() |> export()
+    data |> plotit(encode(...)) |> mark_*() |> scale_*() |> split_*() |> project_*() |> label_*() |> style() |> export()
 
 | 步骤 | 动词 | 职责 |
 |:---|:---|:---|
 | 1\. 初始化 | [`plotit()`](https://zorrooz.github.io/plotit/reference/plotit.md) + [`encode()`](https://zorrooz.github.io/plotit/reference/encode.md) | 绑定数据与美学映射 |
 | 2\. 图层 | `mark_*()` | 添加几何图层（点、线、柱等） |
 | 3\. 标度 | `scale_*()` | 控制数据到视觉属性的映射 |
-| 4\. 标签 | `label_*()` | 设置标题、轴标签、图例标题 |
+| 4\. 分面 | `split_*()` | 拆分为小倍数图 |
 | 5\. 坐标 | `project_*()` | 选择坐标系（笛卡尔、极坐标、地图） |
-| 6\. 分面 | `split_*()` | 拆分为小倍数图 |
-| 7\. 主题 | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | 应用完整主题 |
+| 6\. 标签 | `label_*()` | 设置标题、轴标签、图例标题 |
+| 7\. 主题 | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | 应用主题样式 |
 | 8\. 导出 | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | 渲染为文件 |
 
 多图组合遵循最外层管道：
@@ -103,10 +103,14 @@ compose_grid(p1, p2, tag_levels = "A") |>
 |:---|:---|:---|
 | [`mark_point()`](https://zorrooz.github.io/plotit/reference/mark_point.md) | `geom_point()` | 散点图 |
 | [`mark_line()`](https://zorrooz.github.io/plotit/reference/mark_line.md) | `geom_line()` | 折线与趋势线 |
+| [`mark_area()`](https://zorrooz.github.io/plotit/reference/mark_area.md) | `geom_area()` | 面积图/河流图 |
 | [`mark_bar()`](https://zorrooz.github.io/plotit/reference/mark_bar.md) | `geom_bar()` / `geom_col()` | 柱状图 |
+| [`mark_text()`](https://zorrooz.github.io/plotit/reference/mark_text.md) | `geom_text()` / `ggrepel` | 文本标签与数据标注 |
 | [`mark_boxplot()`](https://zorrooz.github.io/plotit/reference/mark_boxplot.md) | `geom_boxplot()` | 箱线图 |
 | [`mark_histogram()`](https://zorrooz.github.io/plotit/reference/mark_histogram.md) | `geom_histogram()` | 直方图 |
-| [`mark_density()`](https://zorrooz.github.io/plotit/reference/mark_density.md) | `geom_density()` | 核密度估计 |
+| [`mark_density()`](https://zorrooz.github.io/plotit/reference/mark_density.md) | `geom_density()` | 1D 核密度估计 |
+| [`mark_violin()`](https://zorrooz.github.io/plotit/reference/mark_violin.md) | `geom_violin()` | 小提琴图 |
+| [`mark_map()`](https://zorrooz.github.io/plotit/reference/mark_map.md) | `geom_sf()` | 地图/地理空间 |
 
 ### `scale_*` — 数据到视觉的映射
 
@@ -162,6 +166,13 @@ compose_grid(p1, p2, tag_levels = "A") |>
 | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | 应用 ggplot2 主题 |
 | [`style_default()`](https://zorrooz.github.io/plotit/reference/style_default.md) | 恢复 plotit 内置主题 |
 | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | 渲染为文件（pdf、png、svg 等） |
+
+### 自定义扩展
+
+| 函数           | 说明                                  |
+|:---------------|:--------------------------------------|
+| `make_mark()`  | 基于任意 ggplot2 geom 注册自定义 Mark |
+| `make_theme()` | 创建可复用的主题预设函数              |
 
 ## 文档
 

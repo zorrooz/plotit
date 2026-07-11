@@ -1,5 +1,6 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://zorrooz.github.io/plotit/404.html</loc></url>
+<url><loc>https://zorrooz.github.io/plotit/AGENTS.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/LICENSE-text.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/LICENSE.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/README_ZH.html</loc></url>
@@ -22,12 +23,16 @@
 <url><loc>https://zorrooz.github.io/plotit/reference/label_legend.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/label_subtitle.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/label_title.html</loc></url>
+<url><loc>https://zorrooz.github.io/plotit/reference/mark_area.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/mark_bar.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/mark_boxplot.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/mark_density.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/mark_histogram.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/mark_line.html</loc></url>
+<url><loc>https://zorrooz.github.io/plotit/reference/mark_map.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/mark_point.html</loc></url>
+<url><loc>https://zorrooz.github.io/plotit/reference/mark_text.html</loc></url>
+<url><loc>https://zorrooz.github.io/plotit/reference/mark_violin.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/plotit-class.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/plotit.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/project_cartesian.html</loc></url>

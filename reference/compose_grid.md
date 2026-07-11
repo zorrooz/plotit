@@ -81,8 +81,6 @@ A `plotit_composite` object. Pipe it to
 
 ``` r
 p1 <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
-
 p2 <- plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot()
-
 compose_grid(p1, p2)
 ```

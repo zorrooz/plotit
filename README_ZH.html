@@ -102,7 +102,7 @@ plotit 处于活跃的预发布开发中。每次更新都<strong>极有可能</
 <div class="section level2">
 <h2 id="管道模式">管道模式<a class="anchor" aria-label="anchor" href="#%E7%AE%A1%E9%81%93%E6%A8%A1%E5%BC%8F"></a></h2>
 <p>每个 plotit 图表都遵循一致的管道：</p>
-<pre><code>data |&gt; plotit(encode(...)) |&gt; mark_*() |&gt; scale_*() |&gt; label_*() |&gt; project_*() |&gt; split_*() |&gt; style() |&gt; export()</code></pre>
+<pre><code>data |&gt; plotit(encode(...)) |&gt; mark_*() |&gt; scale_*() |&gt; split_*() |&gt; project_*() |&gt; label_*() |&gt; style() |&gt; export()</code></pre>
 <table class="table"><thead><tr><th align="left">步骤</th>
 <th align="left">动词</th>
 <th align="left">职责</th>
@@ -117,18 +117,18 @@ plotit 处于活跃的预发布开发中。每次更新都<strong>极有可能</
 </tr><tr><td align="left">3. 标度</td>
 <td align="left"><code>scale_*()</code></td>
 <td align="left">控制数据到视觉属性的映射</td>
-</tr><tr><td align="left">4. 标签</td>
-<td align="left"><code>label_*()</code></td>
-<td align="left">设置标题、轴标签、图例标题</td>
+</tr><tr><td align="left">4. 分面</td>
+<td align="left"><code>split_*()</code></td>
+<td align="left">拆分为小倍数图</td>
 </tr><tr><td align="left">5. 坐标</td>
 <td align="left"><code>project_*()</code></td>
 <td align="left">选择坐标系（笛卡尔、极坐标、地图）</td>
-</tr><tr><td align="left">6. 分面</td>
-<td align="left"><code>split_*()</code></td>
-<td align="left">拆分为小倍数图</td>
+</tr><tr><td align="left">6. 标签</td>
+<td align="left"><code>label_*()</code></td>
+<td align="left">设置标题、轴标签、图例标题</td>
 </tr><tr><td align="left">7. 主题</td>
 <td align="left"><code><a href="reference/style.html">style()</a></code></td>
-<td align="left">应用完整主题</td>
+<td align="left">应用主题样式</td>
 </tr><tr><td align="left">8. 导出</td>
 <td align="left"><code><a href="reference/export.html">export()</a></code></td>
 <td align="left">渲染为文件</td>
@@ -149,11 +149,19 @@ plotit 处于活跃的预发布开发中。每次更新都<strong>极有可能</
 </tr><tr><td align="left"><code><a href="reference/mark_line.html">mark_line()</a></code></td>
 <td align="left"><code>geom_line()</code></td>
 <td align="left">折线与趋势线</td>
+</tr><tr><td align="left"><code><a href="reference/mark_area.html">mark_area()</a></code></td>
+<td align="left"><code>geom_area()</code></td>
+<td align="left">面积图/河流图</td>
 </tr><tr><td align="left"><code><a href="reference/mark_bar.html">mark_bar()</a></code></td>
 <td align="left">
 <code>geom_bar()</code> / <code>geom_col()</code>
 </td>
 <td align="left">柱状图</td>
+</tr><tr><td align="left"><code><a href="reference/mark_text.html">mark_text()</a></code></td>
+<td align="left">
+<code>geom_text()</code> / <code>ggrepel</code>
+</td>
+<td align="left">文本标签与数据标注</td>
 </tr><tr><td align="left"><code><a href="reference/mark_boxplot.html">mark_boxplot()</a></code></td>
 <td align="left"><code>geom_boxplot()</code></td>
 <td align="left">箱线图</td>
@@ -162,7 +170,13 @@ plotit 处于活跃的预发布开发中。每次更新都<strong>极有可能</
 <td align="left">直方图</td>
 </tr><tr><td align="left"><code><a href="reference/mark_density.html">mark_density()</a></code></td>
 <td align="left"><code>geom_density()</code></td>
-<td align="left">核密度估计</td>
+<td align="left">1D 核密度估计</td>
+</tr><tr><td align="left"><code><a href="reference/mark_violin.html">mark_violin()</a></code></td>
+<td align="left"><code>geom_violin()</code></td>
+<td align="left">小提琴图</td>
+</tr><tr><td align="left"><code><a href="reference/mark_map.html">mark_map()</a></code></td>
+<td align="left"><code>geom_sf()</code></td>
+<td align="left">地图/地理空间</td>
 </tr></tbody></table></div>
 <div class="section level3">
 <h3 id="scale_--数据到视觉的映射">
@@ -248,6 +262,15 @@ plotit 处于活跃的预发布开发中。每次更新都<strong>极有可能</
 <td align="left">恢复 plotit 内置主题</td>
 </tr><tr><td align="left"><code><a href="reference/export.html">export()</a></code></td>
 <td align="left">渲染为文件（pdf、png、svg 等）</td>
+</tr></tbody></table></div>
+<div class="section level3">
+<h3 id="自定义扩展">自定义扩展<a class="anchor" aria-label="anchor" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E6%89%A9%E5%B1%95"></a></h3>
+<table class="table"><thead><tr><th align="left">函数</th>
+<th align="left">说明</th>
+</tr></thead><tbody><tr><td align="left"><code>make_mark()</code></td>
+<td align="left">基于任意 ggplot2 geom 注册自定义 Mark</td>
+</tr><tr><td align="left"><code>make_theme()</code></td>
+<td align="left">创建可复用的主题预设函数</td>
 </tr></tbody></table></div>
 </div>
 <div class="section level2">

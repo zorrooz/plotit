@@ -125,7 +125,7 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <h2 id="the-pipeline">The pipeline<a class="anchor" aria-label="anchor" href="#the-pipeline"></a>
 </h2>
 <p>Every plotit chart follows a consistent pipeline:</p>
-<pre><code>data |&gt; plotit(encode(...)) |&gt; mark_*() |&gt; scale_*() |&gt; label_*() |&gt; project_*() |&gt; split_*() |&gt; style() |&gt; export()</code></pre>
+<pre><code>data |&gt; plotit(encode(...)) |&gt; mark_*() |&gt; scale_*() |&gt; split_*() |&gt; project_*() |&gt; label_*() |&gt; style() |&gt; export()</code></pre>
 <table class="table">
 <colgroup>
 <col width="33%">
@@ -156,9 +156,9 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <td align="left">Control how data maps to visual properties</td>
 </tr>
 <tr>
-<td align="left">4. Label</td>
-<td align="left"><code>label_*()</code></td>
-<td align="left">Set titles, axis labels, legend titles</td>
+<td align="left">4. Facet</td>
+<td align="left"><code>split_*()</code></td>
+<td align="left">Split into small multiples</td>
 </tr>
 <tr>
 <td align="left">5. Coordinate</td>
@@ -166,9 +166,9 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <td align="left">Choose coordinate system (cartesian, polar, map)</td>
 </tr>
 <tr>
-<td align="left">6. Facet</td>
-<td align="left"><code>split_*()</code></td>
-<td align="left">Split into small multiples</td>
+<td align="left">6. Label</td>
+<td align="left"><code>label_*()</code></td>
+<td align="left">Set titles, axis labels, legend titles</td>
 </tr>
 <tr>
 <td align="left">7. Theme</td>
@@ -193,6 +193,11 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <code>mark_*</code> — Geometric layers<a class="anchor" aria-label="anchor" href="#mark_--geometric-layers"></a>
 </h3>
 <table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
 <thead><tr>
 <th align="left">Function</th>
 <th align="left">ggplot2</th>
@@ -210,11 +215,23 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <td align="left">Lines and trends</td>
 </tr>
 <tr>
+<td align="left"><code><a href="reference/mark_area.html">mark_area()</a></code></td>
+<td align="left"><code>geom_area()</code></td>
+<td align="left">Filled area / stream graph</td>
+</tr>
+<tr>
 <td align="left"><code><a href="reference/mark_bar.html">mark_bar()</a></code></td>
 <td align="left">
 <code>geom_bar()</code> / <code>geom_col()</code>
 </td>
 <td align="left">Bar charts</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_text.html">mark_text()</a></code></td>
+<td align="left">
+<code>geom_text()</code> / <code>ggrepel</code>
+</td>
+<td align="left">Text labels and annotations</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/mark_boxplot.html">mark_boxplot()</a></code></td>
@@ -229,7 +246,17 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <tr>
 <td align="left"><code><a href="reference/mark_density.html">mark_density()</a></code></td>
 <td align="left"><code>geom_density()</code></td>
-<td align="left">Kernel density estimates</td>
+<td align="left">1D kernel density</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_violin.html">mark_violin()</a></code></td>
+<td align="left"><code>geom_violin()</code></td>
+<td align="left">Violin plots</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_map.html">mark_map()</a></code></td>
+<td align="left"><code>geom_sf()</code></td>
+<td align="left">Geographic maps</td>
 </tr>
 </tbody>
 </table>
@@ -407,6 +434,26 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <tr>
 <td align="left"><code><a href="reference/export.html">export()</a></code></td>
 <td align="left">Render to file (pdf, png, svg, …)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level3">
+<h3 id="custom-extensions">Custom extensions<a class="anchor" aria-label="anchor" href="#custom-extensions"></a>
+</h3>
+<table class="table">
+<thead><tr>
+<th align="left">Function</th>
+<th align="left">Description</th>
+</tr></thead>
+<tbody>
+<tr>
+<td align="left"><code>make_mark()</code></td>
+<td align="left">Register a custom mark from any ggplot2 geom</td>
+</tr>
+<tr>
+<td align="left"><code>make_theme()</code></td>
+<td align="left">Create a reusable theme preset function</td>
 </tr>
 </tbody>
 </table>

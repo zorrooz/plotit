@@ -61,8 +61,6 @@ A `plotit_composite` object.
 
 ``` r
 p1 <- plotit(mtcars, encode(x = wt, y = mpg)) |> mark_point()
-
 p2 <- plotit(mtcars, encode(x = factor(cyl))) |> mark_bar()
-
 compose_inset(p1, p2, left = 0.6, bottom = 0.6, right = 0.95, top = 0.95)
 ```

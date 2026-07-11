@@ -77,16 +77,16 @@ compose_grid(p1, p2, tag_levels = "A") |>
 
 Every plotit chart follows a consistent pipeline:
 
-    data |> plotit(encode(...)) |> mark_*() |> scale_*() |> label_*() |> project_*() |> split_*() |> style() |> export()
+    data |> plotit(encode(...)) |> mark_*() |> scale_*() |> split_*() |> project_*() |> label_*() |> style() |> export()
 
 | Step | Verb | Role |
 |:---|:---|:---|
 | 1\. Initialise | [`plotit()`](https://zorrooz.github.io/plotit/reference/plotit.md) + [`encode()`](https://zorrooz.github.io/plotit/reference/encode.md) | Bind data and aesthetic mappings |
 | 2\. Layer | `mark_*()` | Add geometric layers (points, lines, bars, …) |
 | 3\. Scale | `scale_*()` | Control how data maps to visual properties |
-| 4\. Label | `label_*()` | Set titles, axis labels, legend titles |
+| 4\. Facet | `split_*()` | Split into small multiples |
 | 5\. Coordinate | `project_*()` | Choose coordinate system (cartesian, polar, map) |
-| 6\. Facet | `split_*()` | Split into small multiples |
+| 6\. Label | `label_*()` | Set titles, axis labels, legend titles |
 | 7\. Theme | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | Apply a complete theme |
 | 8\. Export | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | Render to file |
 
@@ -102,10 +102,14 @@ Multi-plot compositions follow their own outermost pipeline:
 |:---|:---|:---|
 | [`mark_point()`](https://zorrooz.github.io/plotit/reference/mark_point.md) | `geom_point()` | Scatter plots |
 | [`mark_line()`](https://zorrooz.github.io/plotit/reference/mark_line.md) | `geom_line()` | Lines and trends |
+| [`mark_area()`](https://zorrooz.github.io/plotit/reference/mark_area.md) | `geom_area()` | Filled area / stream graph |
 | [`mark_bar()`](https://zorrooz.github.io/plotit/reference/mark_bar.md) | `geom_bar()` / `geom_col()` | Bar charts |
+| [`mark_text()`](https://zorrooz.github.io/plotit/reference/mark_text.md) | `geom_text()` / `ggrepel` | Text labels and annotations |
 | [`mark_boxplot()`](https://zorrooz.github.io/plotit/reference/mark_boxplot.md) | `geom_boxplot()` | Box-and-whisker plots |
 | [`mark_histogram()`](https://zorrooz.github.io/plotit/reference/mark_histogram.md) | `geom_histogram()` | Histograms |
-| [`mark_density()`](https://zorrooz.github.io/plotit/reference/mark_density.md) | `geom_density()` | Kernel density estimates |
+| [`mark_density()`](https://zorrooz.github.io/plotit/reference/mark_density.md) | `geom_density()` | 1D kernel density |
+| [`mark_violin()`](https://zorrooz.github.io/plotit/reference/mark_violin.md) | `geom_violin()` | Violin plots |
+| [`mark_map()`](https://zorrooz.github.io/plotit/reference/mark_map.md) | `geom_sf()` | Geographic maps |
 
 ### `scale_*` — Data-to-visual mapping
 
@@ -162,6 +166,13 @@ Multi-plot compositions follow their own outermost pipeline:
 | [`style_default()`](https://zorrooz.github.io/plotit/reference/style_default.md) | Restore plotit’s built-in theme |
 | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | Render to file (pdf, png, svg, …) |
 
+### Custom extensions
+
+| Function       | Description                                  |
+|:---------------|:---------------------------------------------|
+| `make_mark()`  | Register a custom mark from any ggplot2 geom |
+| `make_theme()` | Create a reusable theme preset function      |
+
 ## Documentation
 
 Full documentation is available at
@@ -191,6 +202,8 @@ plotit is licensed under the MIT License. See
 
 Add visual marks to your plot.
 
+- [`mark_area()`](https://zorrooz.github.io/plotit/reference/mark_area.md)
+  : Area layer
 - [`mark_bar()`](https://zorrooz.github.io/plotit/reference/mark_bar.md)
   : Bar layer
 - [`mark_boxplot()`](https://zorrooz.github.io/plotit/reference/mark_boxplot.md)
@@ -201,8 +214,14 @@ Add visual marks to your plot.
   : Histogram layer
 - [`mark_line()`](https://zorrooz.github.io/plotit/reference/mark_line.md)
   : Line layer
+- [`mark_map()`](https://zorrooz.github.io/plotit/reference/mark_map.md)
+  : Map layer
 - [`mark_point()`](https://zorrooz.github.io/plotit/reference/mark_point.md)
   : Point layer
+- [`mark_text()`](https://zorrooz.github.io/plotit/reference/mark_text.md)
+  : Text layer
+- [`mark_violin()`](https://zorrooz.github.io/plotit/reference/mark_violin.md)
+  : Violin layer
 
 ## Scales
 
