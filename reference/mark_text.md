@@ -43,8 +43,9 @@ mark_text(
 
 - repel:
 
-  If `TRUE`, use `ggrepel::geom_text_repel` instead of `geom_text`.
-  Requires the ggrepel package.
+  If `TRUE`, use
+  [`ggrepel::geom_text_repel`](https://ggrepel.slowkow.com/reference/geom_text_repel.html)
+  instead of `geom_text`. Requires the ggrepel package.
 
 - rasterize:
 
