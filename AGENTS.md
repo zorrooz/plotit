@@ -103,7 +103,7 @@
 对标 Vega-Lite / AntV-G2 的视觉通道丰富度，不限于 ggplot2 原生几何。
 新 mark 按需引入，遵循统一 S7 泛型+方法模式（`mark_<type>` + `geom_<底层>`），支持 `rasterize`。
 
-**已实现**（6）：
+**已实现**（10）：
 
 | 函数 | 对应 | 用途 |
 |---|---|---|
@@ -113,6 +113,10 @@
 | `mark_boxplot` | `geom_boxplot` | 箱线图 |
 | `mark_histogram` | `geom_histogram` | 直方图 |
 | `mark_density` | `geom_density` | 密度曲线 |
+| `mark_area` | `geom_area` | 面积图/堆叠面积 |
+| `mark_text` | `geom_text`/`geom_text_repel` | 文本标签/数据标注 |
+| `mark_violin` | `geom_violin` | 小提琴图 |
+| `mark_map` | `geom_sf` | 地图/地理空间 |
 
 **完整规划**（20 种，对标 Vega-Lite 15 种 + AntV G2 30+ 种，经组合优先原则精简）：
 
@@ -571,16 +575,16 @@ export(p, "output.pdf", dpi = 300)
 
 ---
 
-#### 阶段 1：area / text / violin / map
+#### 阶段 1：area / text / violin / map ✅ 已完成
 
-| # | mark | 类别 | 依赖包 | 复杂度 | 对应实现 |
+| # | mark | 类别 | 依赖包 | 复杂度 | 状态 |
 |---|---|---|---|---|---|
-| 1.1 | `mark_area` | 基础几何 | ggplot2 | 低 | `geom_area`/`geom_ribbon` |
-| 1.2 | `mark_text` | 基础几何 | ggplot2（可选 ggrepel） | 中 | `geom_text`/`geom_label` |
-| 1.3 | `mark_violin` | 分布展示 | ggplot2 | 低 | `geom_violin` |
-| 1.4 | `mark_map` | 地理空间 | sf（可选） | 中 | `geom_sf` — 对标 VL `geoshape`/G2 `geoPath` |
+| 1.1 | `mark_area` | 基础几何 | ggplot2 | 低 | ✅ |
+| 1.2 | `mark_text` | 基础几何 | ggplot2（可选 ggrepel） | 中 | ✅ |
+| 1.3 | `mark_violin` | 分布展示 | ggplot2 | 低 | ✅ |
+| 1.4 | `mark_map` | 地理空间 | sf（可选） | 中 | ✅ |
 
-**阶段 1 风险**：
+**阶段 1 风险**（已关闭）：
 
 | 风险 | 缓解措施 |
 |---|---|
