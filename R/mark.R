@@ -364,6 +364,40 @@ S7::method(mark_map, plotit_class) <- function(
   )
 }
 
+# ---- mark_rect ----
+#' Rectangle layer
+#'
+#' Adds a rectangle or tile layer. Use for heatmaps, grid cells,
+#' Gantt charts, or any plot where both x and y span a range.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_tile`
+#' @return Modified plotit object
+#' @references
+#' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/rect.html}{Rect}
+#'
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/cell}{Cell} /
+#' \href{https://g2.antv.antgroup.com/en/api/mark/rect}{Rect}
+#' @examples
+#' df <- expand.grid(x = 1:5, y = 1:5)
+#' df$z <- df$x * df$y
+#' plotit(df, encode(x = x, y = y, fill = z)) |> mark_rect()
+#' @export
+mark_rect <- S7::new_generic(
+  "mark_rect", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+._register_mark_method(mark_rect, ggplot2::geom_tile)
+
 # ---- mark_bar (hand-written: geom_col vs geom_bar dispatch) ----
 #' Bar layer
 #'

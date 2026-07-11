@@ -268,3 +268,28 @@ test_that("mark_map supports fill mapping", {
   p <- plotit(nc, encode(geometry = geometry, fill = AREA)) |> mark_map()
   expect_s3_class(p, "plotit::plotit")
 })
+
+# ---- mark_rect ----
+test_that("[BDD] mark_rect adds tile layer", {
+  df <- expand.grid(x = 1:5, y = 1:5)
+  df$z <- df$x * df$y
+  p <- plotit(df, encode(x = x, y = y, fill = z)) |> mark_rect()
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("mark_rect supports local data", {
+  df <- expand.grid(x = 1:3, y = 1:3)
+  df$z <- runif(9)
+  p <- plotit(data.frame(), encode(x = x, y = y)) |>
+    mark_rect(data = df, mapping = encode(x = x, y = y, fill = z))
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_rect passes width/height via dots", {
+  df <- expand.grid(x = 1:3, y = 1:3)
+  df$z <- 1:9
+  p <- plotit(df, encode(x = x, y = y, fill = z)) |>
+    mark_rect(width = 0.8, height = 0.8, colour = "white")
+  expect_s3_class(p, "plotit::plotit")
+})
