@@ -11,6 +11,7 @@ RoxygenNote: 7.3.3
 URL: https://github.com/zorrooz/plotit, https://zorrooz.github.io/plotit/
 BugReports: https://github.com/zorrooz/plotit/issues
 Suggests:
+    ggrepel,
     testthat (>= 3.0.0),
     ggrastr,
     mapproj,
