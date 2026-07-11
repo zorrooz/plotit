@@ -247,3 +247,24 @@ test_that("[BDD] mark_violin auto-dodges with fill", {
   built <- .built(p)
   expect_length(built$data, 1)
 })
+
+# ---- mark_map ----
+test_that("mark_map errors on non-sf data", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
+  expect_error(mark_map(p), "sf")
+})
+
+test_that("[BDD] mark_map renders with sf data", {
+  skip_if_not_installed("sf")
+  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  p <- plotit(nc, encode(geometry = geometry)) |> mark_map()
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("mark_map supports fill mapping", {
+  skip_if_not_installed("sf")
+  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  p <- plotit(nc, encode(geometry = geometry, fill = AREA)) |> mark_map()
+  expect_s3_class(p, "plotit::plotit")
+})

@@ -306,6 +306,60 @@ mark_violin <- S7::new_generic(
 )
 ._register_mark_method(mark_violin, ggplot2::geom_violin)
 
+# ---- mark_map ----
+#' Map layer
+#'
+#' Adds a geographic map layer for \pkg{sf} spatial data frames.
+#' Requires the \pkg{sf} package.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional sf data frame for this layer
+#' @param position Position adjustment.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_sf`
+#' @return Modified plotit object
+#' @examples
+#' \dontrun{
+#' nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+#' plotit(nc, encode(geometry = geometry)) |> mark_map()
+#' }
+#' @export
+mark_map <- S7::new_generic(
+  "mark_map", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_map, plotit_class) <- function(
+    plot, mapping = NULL, data = NULL, position = NULL, ...,
+    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  if (!requireNamespace("sf", quietly = TRUE)) {
+    cli::cli_abort("{.fn mark_map} requires the {.pkg sf} package.")
+  }
+  layer_data <- data %||% plot@gg$data
+  if (!inherits(layer_data, "sf")) {
+    cli::cli_abort(c(
+      "{.fn mark_map} requires {.pkg sf} spatial data.",
+      "i" = "Use {.fn plotit} with an {.cls sf} data frame."
+    ))
+  }
+  # geom_sf does not support position adjustment; ignore dodge
+  if (!is.null(mapping) && !is.null(mapping$colour)) {
+    plot <- ._clear_default_color(plot, mapping)
+  }
+  geom <- ggplot2::geom_sf(mapping = mapping, data = data, ...)
+  .add_geom(plot, geom,
+    rasterize = rasterize, rasterize_dpi = rasterize_dpi,
+    rasterize_dev = rasterize_dev
+  )
+}
+
 # ---- mark_bar (hand-written: geom_col vs geom_bar dispatch) ----
 #' Bar layer
 #'
