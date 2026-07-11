@@ -69,11 +69,14 @@ reference:
   desc: Combine multiple plots into layouts.
   contents:
   - starts_with("compose_")
-- title: Theme & Export
-  desc: Style and save your plots.
+- title: Theme
+  desc: Style your plots with built-in or custom themes.
   contents:
   - style
   - style_default
+- title: Export
+  desc: Render and save your plots to files.
+  contents:
   - export
 
 # Exclude from search, sitemap, and navbar.
