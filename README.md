@@ -163,12 +163,17 @@ compose_*(p1, p2, ...) |> label_*() |> style() |> export()
 | `compose_inset()` | Floating inset overlay |
 | `compose_marginal()` | Scatter with marginal distributions |
 
-### Theme & export
+### Theme
 
 | Function | Description |
 |:---|:---|
 | `style()` | Apply a ggplot2 theme |
 | `style_default()` | Restore plotit's built-in theme |
+
+### Export
+
+| Function | Description |
+|:---|:---|
 | `export()` | Render to file (pdf, png, svg, …) |
 
 ### Custom extensions

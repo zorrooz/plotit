@@ -160,12 +160,17 @@ compose_*(p1, p2, ...) |> label_*() |> style() |> export()
 | `compose_inset()` | 浮动嵌入 |
 | `compose_marginal()` | 散点 + 边际分布 |
 
-### 主题与导出
+### 主题
 
 | 函数 | 说明 |
 |:---|:---|
 | `style()` | 应用 ggplot2 主题 |
 | `style_default()` | 恢复 plotit 内置主题 |
+
+### 导出
+
+| 函数 | 说明 |
+|:---|:---|
 | `export()` | 渲染为文件（pdf、png、svg 等） |
 
 ### 自定义扩展
