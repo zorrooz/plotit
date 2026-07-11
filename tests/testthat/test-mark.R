@@ -469,3 +469,34 @@ test_that("mark_corr supports no-reorder", {
   p <- plotit(mtcars, encode()) |> mark_corr(reorder = FALSE)
   expect_s3_class(p, "plotit::plotit")
 })
+
+# ---- make_mark / make_theme ----
+test_that("make_mark creates a usable custom mark", {
+  generic <- make_mark("mark_tile_test", ggplot2::geom_tile)
+  df <- expand.grid(x = 1:3, y = 1:3)
+  df$z <- 1:9
+  p <- generic(plotit(df, encode(x = x, y = y, fill = z)))
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("make_mark warns on non-mark_ name", {
+  expect_warning(make_mark("foo_bar", ggplot2::geom_point))
+})
+
+test_that("make_theme creates a usable theme function", {
+  style_test <- make_theme("style_test",
+    plot.title = ggplot2::element_text(colour = "blue"))
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |> label_title("Test") |> style_test()
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("make_theme with custom base theme works", {
+  style_custom <- make_theme("style_custom",
+    panel.grid.major = ggplot2::element_line(colour = "grey90"),
+    base_theme = ggplot2::theme_bw)
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |> style_custom()
+  expect_s3_class(p, "plotit::plotit")
+})
