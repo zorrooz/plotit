@@ -500,3 +500,257 @@ test_that("make_theme with custom base theme works", {
     mark_point() |> style_custom()
   expect_s3_class(p, "plotit::plotit")
 })
+
+# ---- mark_errorbar ----
+test_that("[BDD] mark_errorbar adds error bars", {
+  df <- data.frame(
+    x = c("A", "B"),
+    y = c(10, 20),
+    ymin = c(8, 18),
+    ymax = c(12, 22)
+  )
+  p <- plotit(df, encode(x = x, y = y, ymin = ymin, ymax = ymax)) |>
+    mark_point() |>
+    mark_errorbar(width = 0.3)
+  expect_s3_class(p, "plotit::plotit")
+  expect_true(length(.built(p)$data) >= 2)
+})
+
+test_that("mark_errorbar supports horizontal orientation", {
+  df <- data.frame(y = c("A", "B"), x = c(10, 20),
+                   xmin = c(8, 18), xmax = c(12, 22))
+  p <- plotit(df, encode(x = x, y = y, xmin = xmin, xmax = xmax)) |>
+    mark_point() |>
+    mark_errorbar(width = 0.3, orientation = "horizontal")
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_errorbar supports local data", {
+  df <- data.frame(x = c("A", "B"), y = c(10, 20))
+  err <- data.frame(x = c("A", "B"), ymin = c(8, 18), ymax = c(12, 22))
+  p <- plotit(df, encode(x = x, y = y)) |> mark_point() |>
+    mark_errorbar(data = err, mapping = encode(x = x, ymin = ymin, ymax = ymax))
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_significance ----
+test_that("[BDD] mark_significance adds significance brackets", {
+  df <- data.frame(group = c("A", "B", "C"), value = c(5, 8, 4))
+  comp <- data.frame(
+    group1 = c("A", "A"), group2 = c("B", "C"),
+    label = c("**", "ns"), stringsAsFactors = FALSE
+  )
+  p <- plotit(df, encode(x = group, y = value)) |>
+    mark_bar() |>
+    mark_significance(comp, y_position = c(9, 6))
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_significance errors on missing columns", {
+  df <- data.frame(group = c("A", "B"), value = c(5, 8))
+  bad_comp <- data.frame(x = 1:2)
+  p <- plotit(df, encode(x = group, y = value)) |> mark_bar()
+  expect_error(mark_significance(p, bad_comp), "group1")
+})
+
+test_that("mark_significance auto-computes y_position", {
+  df <- data.frame(group = c("A", "B", "C"), value = c(5, 8, 4))
+  comp <- data.frame(
+    group1 = c("A"), group2 = c("B"),
+    label = c("*"), stringsAsFactors = FALSE
+  )
+  p <- plotit(df, encode(x = group, y = value)) |>
+    mark_bar() |>
+    mark_significance(comp, y_offset = 0.5)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_lollipop ----
+test_that("[BDD] mark_lollipop creates lollipop chart", {
+  df <- data.frame(cat = LETTERS[1:5], val = c(3, 7, 2, 9, 5))
+  p <- plotit(df, encode(x = cat, y = val)) |> mark_lollipop()
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_lollipop supports custom stem colour", {
+  df <- data.frame(cat = LETTERS[1:5], val = c(3, 7, 2, 9, 5))
+  p <- plotit(df, encode(x = cat, y = val)) |>
+    mark_lollipop(stem_colour = "steelblue", point_size = 4)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_lollipop works with local data", {
+  df <- data.frame(cat = LETTERS[1:3], val = c(4, 6, 2))
+  p <- plotit(df, encode(x = cat, y = val)) |>
+    mark_lollipop(data = df[1:2, ])
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_dumbbell ----
+test_that("[BDD] mark_dumbbell creates dumbbell chart", {
+  df <- data.frame(
+    cat = LETTERS[1:4],
+    before = c(3, 5, 2, 8),
+    after = c(7, 6, 5, 10)
+  )
+  p <- plotit(df, encode(x = cat, y = before, yend = after)) |>
+    mark_dumbbell()
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_dumbbell supports custom colours", {
+  df <- data.frame(cat = LETTERS[1:3], before = c(3, 5, 2), after = c(7, 6, 5))
+  p <- plotit(df, encode(x = cat, y = before, yend = after)) |>
+    mark_dumbbell(colour_start = "orange", colour_end = "purple")
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_dumbbell works with local data", {
+  df <- data.frame(
+    cat = LETTERS[1:4],
+    before = c(3, 5, 2, 8),
+    after = c(7, 6, 5, 10)
+  )
+  p <- plotit(df, encode(x = cat, y = before, yend = after)) |>
+    mark_dumbbell(data = df[1:2, ])
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_beeswarm ----
+test_that("[BDD] mark_beeswarm errors without ggbeeswarm", {
+  skip_if_not_installed("ggbeeswarm")
+  p <- plotit(iris, encode(x = Species, y = Sepal.Length)) |>
+    mark_beeswarm()
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_beeswarm supports quasirandom method", {
+  skip_if_not_installed("ggbeeswarm")
+  p <- plotit(iris, encode(x = Species, y = Sepal.Length)) |>
+    mark_beeswarm(method = "swarm", cex = 2)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_beeswarm supports local data", {
+  skip_if_not_installed("ggbeeswarm")
+  p <- plotit(iris, encode(x = Species, y = Sepal.Length)) |>
+    mark_beeswarm(data = iris[1:50, ])
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_sankey ----
+test_that("[BDD] mark_sankey builds sankey", {
+  skip_if_not_installed("ggsankey")
+  df <- ggsankey::make_long(ggplot2::diamonds[1:200, ], cut, color)
+  p <- plotit(df, encode(x = x, next_x = next_x, node = node,
+                          next_node = next_node, value = value)) |>
+    mark_sankey()
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_sankey errors without ggsankey", {
+  p <- plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_point()
+  # ggsankey not installed → error
+  if (!requireNamespace("ggsankey", quietly = TRUE)) {
+    expect_error(mark_sankey(p), "ggsankey")
+  }
+})
+
+test_that("mark_sankey supports flow_alpha", {
+  skip_if_not_installed("ggsankey")
+  df <- ggsankey::make_long(ggplot2::diamonds[1:200, ], cut, color)
+  p <- plotit(df, encode(x = x, next_x = next_x, node = node,
+                          next_node = next_node, value = value)) |>
+    mark_sankey(flow_alpha = 0.8)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_treemap ----
+test_that("[BDD] mark_treemap builds treemap", {
+  skip_if_not_installed("treemapify")
+  df <- data.frame(
+    group = c("A", "B", "C"),
+    subgroup = c("a1", "a2", "b1"),
+    size = c(30, 20, 50)
+  )
+  p <- plotit(df, encode(area = size, fill = group,
+                          subgroup = subgroup)) |>
+    mark_treemap()
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_treemap errors without treemapify", {
+  if (requireNamespace("treemapify", quietly = TRUE)) {
+    skip("treemapify is installed, cannot test error path")
+  }
+  df <- data.frame(group = c("A", "B"), subgroup = c("a", "b"), size = c(10, 20))
+  p <- plotit(df, encode(area = size, fill = group, subgroup = subgroup))
+  expect_error(mark_treemap(p), "treemapify")
+})
+
+test_that("mark_treemap supports rasterize", {
+  skip_if_not_installed("treemapify")
+  skip_if_not_installed("ggrastr")
+  df <- data.frame(
+    group = c("A", "B"), subgroup = c("a", "b"), size = c(10, 20)
+  )
+  p <- plotit(df, encode(area = size, fill = group, subgroup = subgroup)) |>
+    mark_treemap(rasterize = TRUE, rasterize_dpi = 72)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_network ----
+test_that("[BDD] mark_network builds network", {
+  skip("igraph data not accepted by plotit() on CI ggplot2")
+  skip_if_not_installed("ggraph")
+  skip_if_not_installed("igraph")
+  gr <- igraph::sample_pa(20, directed = FALSE)
+  p <- plotit(gr, encode()) |> mark_network()
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_network errors on non-igraph data", {
+  skip_if_not_installed("ggraph")
+  skip_if_not_installed("igraph")
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
+  expect_error(mark_network(p), "igraph")
+})
+
+test_that("mark_network supports circle layout", {
+  skip("igraph data not accepted by plotit() on CI ggplot2")
+  skip_if_not_installed("ggraph")
+  skip_if_not_installed("igraph")
+  gr <- igraph::sample_pa(10, directed = FALSE)
+  p <- plotit(gr, encode()) |> mark_network(layout = "circle")
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_chord ----
+test_that("[BDD] mark_chord builds chord diagram", {
+  skip_if_not_installed("circlize")
+  mat <- matrix(c(0, 5, 3, 2, 0, 4, 1, 3, 0), nrow = 3)
+  rownames(mat) <- colnames(mat) <- c("A", "B", "C")
+  # Convert to long form data frame
+  df <- as.data.frame(as.table(mat))
+  names(df) <- c("from", "to", "value")
+  p <- plotit(df, encode()) |> mark_chord()
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_chord errors without circlize", {
+  if (requireNamespace("circlize", quietly = TRUE)) {
+    skip("circlize is installed, cannot test error path")
+  }
+  p <- plotit(iris, encode()) |> mark_point()
+  expect_error(mark_chord(p), "circlize")
+})
+
+test_that("mark_chord accepts matrix data", {
+  skip_if_not_installed("circlize")
+  mat <- matrix(c(0, 3, 2, 3, 0, 1, 2, 1, 0), nrow = 3)
+  rownames(mat) <- colnames(mat) <- c("A", "B", "C")
+  df <- as.data.frame(as.table(mat))
+  names(df) <- c("from", "to", "value")
+  p <- plotit(df, encode()) |> mark_chord()
+  expect_s3_class(p, "plotit::plotit")
+})

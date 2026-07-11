@@ -11,6 +11,12 @@ RoxygenNote: 7.3.3
 URL: https://github.com/zorrooz/plotit, https://zorrooz.github.io/plotit/
 BugReports: https://github.com/zorrooz/plotit/issues
 Suggests:
+    ggbeeswarm,
+    ggsankey (>= 0.0.4),
+    treemapify,
+    ggraph,
+    igraph,
+    circlize,
     ggrepel,
     testthat (>= 3.0.0),
     ggrastr,
@@ -18,6 +24,8 @@ Suggests:
     sf,
     knitr,
     rmarkdown
+Remotes:
+    davidsjoberg/ggsankey
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Imports: 

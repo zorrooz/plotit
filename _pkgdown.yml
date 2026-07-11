@@ -78,6 +78,11 @@ reference:
   desc: Render and save your plots to files.
   contents:
   - export
+- title: Customization
+  desc: Extend plotit with custom marks and themes.
+  contents:
+  - make_mark
+  - make_theme
 
 # Exclude from search, sitemap, and navbar.
 # pkgdown's build_home() always renders root .md files; CI workflow

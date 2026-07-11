@@ -629,8 +629,10 @@ S7::method(mark_smooth, plotit_class) <- function(
 #' @references
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/heatmap}{Heatmap} (corelib)
 #' @examples
-#' plotit(diamonds[sample(nrow(diamonds), 1000), ],
-#'        encode(x = carat, y = price)) |> mark_hex(bins = 20)
+#' if (requireNamespace("ggplot2", quietly = TRUE)) {
+#'   plotit(ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 1000), ],
+#'          encode(x = carat, y = price)) |> mark_hex(bins = 20)
+#' }
 #' @export
 mark_hex <- S7::new_generic(
   "mark_hex", "plot",
@@ -775,6 +777,672 @@ S7::method(mark_corr, plotit_class) <- function(
     rasterize = rasterize, rasterize_dpi = rasterize_dpi,
     rasterize_dev = rasterize_dev
   )
+}
+
+# ---- mark_errorbar ----
+#' Error bar layer
+#'
+#' Adds error bars showing confidence intervals, standard errors,
+#' or other variability measures. Data should include columns for
+#' `ymin`/`ymax` (vertical) or `xmin`/`xmax` (horizontal).
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics (must include `ymin`/`ymax`
+#'   or `xmin`/`xmax`)
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param width Width of the error bar caps (default 0.5).
+#' @param orientation `"vertical"` (default) or `"horizontal"`.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to the underlying geom
+#' @return Modified plotit object
+#' @references
+#' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/errorbar.html}{Errorbar} (composite mark)
+#' @examples
+#' df <- data.frame(
+#'   x = c("A", "B"), y = c(10, 20), ymin = c(8, 18), ymax = c(12, 22))
+#' plotit(df, encode(x = x, y = y, ymin = ymin, ymax = ymax)) |>
+#'   mark_errorbar(width = 0.3)
+#' @export
+mark_errorbar <- S7::new_generic(
+  "mark_errorbar", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           width = 0.5, orientation = c("vertical", "horizontal"),
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_errorbar, plotit_class) <- function(
+    plot, mapping = NULL, data = NULL, position = NULL, ...,
+    width = 0.5, orientation = c("vertical", "horizontal"),
+    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  orientation <- match.arg(orientation)
+  geom_fun <- if (orientation == "horizontal") {
+    ggplot2::geom_errorbarh
+  } else {
+    ggplot2::geom_errorbar
+  }
+  params <- rlang::list2(...)
+  params$width <- width
+  do.call(function(...) {
+    ._mark_impl(plot, mapping, data, position, geom_fun,
+                rasterize, rasterize_dpi, rasterize_dev, ...)
+  }, params)
+}
+
+# ---- mark_significance ----
+#' Significance annotation layer
+#'
+#' Adds statistical significance brackets and labels between groups.
+#' This is a **syntax-sugar composite mark** that combines
+#' `mark_rule` and `mark_text` internally.
+#'
+#' Equivalent expansion:
+#' \preformatted{
+#'   p |> mark_rule(x = comp$group1, xend = comp$group2,
+#'                  y = comp$y_position, yend = comp$y_position) |>
+#'        mark_text(x = midpoint, y = comp$y_position + y_offset,
+#'                  label = comp$label)
+#' }
+#'
+#' @param plot A plotit object
+#' @param comparisons A data frame with columns: `group1`, `group2`,
+#'   `label`, and optionally `y_position`. Character columns are
+#'   matched against the x-axis variable.
+#' @param y_position Numeric vector of y-positions for the brackets.
+#'   If omitted, auto-computed from data range.
+#' @param y_offset Text offset above the bracket line (default 0.5).
+#'   In data units.
+#' @param line_colour Colour for the bracket lines (default `"grey30"`).
+#' @param line_width Width of bracket lines (default 0.3).
+#' @param text_size Size of significance label text (default 3.5).
+#' @param tip_length Length of bracket end-tick lines (default 0.02
+#'   as fraction of x-axis range).
+#' @param ... Additional arguments passed to `mark_text()`
+#' @return Modified plotit object
+#' @examples
+#' df <- data.frame(group = c("A", "B", "C"), value = c(5, 8, 4))
+#' comp <- data.frame(
+#'   group1 = c("A", "A"), group2 = c("B", "C"),
+#'   label = c("**", "ns"))
+#' plotit(df, encode(x = group, y = value)) |>
+#'   mark_bar() |>
+#'   mark_significance(comp, y_position = c(9, 6))
+#' @export
+mark_significance <- S7::new_generic(
+  "mark_significance", "plot",
+  function(plot, comparisons, y_position = NULL, y_offset = NULL,
+           line_colour = "grey30", line_width = 0.3,
+           text_size = 3.5, tip_length = 0.02, ...) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_significance, plotit_class) <- function(
+    plot, comparisons, y_position = NULL, y_offset = NULL,
+    line_colour = "grey30", line_width = 0.3,
+    text_size = 3.5, tip_length = 0.02, ...) {
+  if (!is.data.frame(comparisons)) {
+    cli::cli_abort("{.arg comparisons} must be a data frame.")
+  }
+  required <- c("group1", "group2", "label")
+  missing_cols <- setdiff(required, names(comparisons))
+  if (length(missing_cols) > 0) {
+    cli::cli_abort(
+      "{.arg comparisons} must have columns: {.val {required}}."
+    )
+  }
+  # Extract data range for auto y_position
+  d <- plot@gg$data
+  y_var <- rlang::eval_tidy(plot@gg$mapping$y, d)
+  y_range <- range(y_var, na.rm = TRUE)
+  y_span <- diff(y_range)
+  if (is.null(y_offset)) y_offset <- y_span * 0.02
+  # Auto-compute y_position if not provided
+  if (is.null(y_position)) {
+    y_position <- y_range[2] + y_span * 0.1 + seq_len(nrow(comparisons)) * y_span * 0.08
+  }
+  # Get x positions (handle factor/character group1/group2)
+  x_var <- rlang::eval_tidy(plot@gg$mapping$x, d)
+  x_levels <- if (is.factor(x_var)) levels(x_var) else sort(unique(as.character(x_var)))
+  x_positions <- seq_along(x_levels)
+  names(x_positions) <- x_levels
+  # Draw brackets
+  for (i in seq_len(nrow(comparisons))) {
+    g1 <- as.character(comparisons$group1[i])
+    g2 <- as.character(comparisons$group2[i])
+    x1 <- if (g1 %in% names(x_positions)) x_positions[[g1]] else as.numeric(g1)
+    x2 <- if (g2 %in% names(x_positions)) x_positions[[g2]] else as.numeric(g2)
+    if (is.na(x1) || is.na(x2)) next
+    y_pos <- if (i <= length(y_position)) y_position[i] else y_position[1] + (i - 1) * y_span * 0.08
+    # Bracket line
+    geome <- ggplot2::geom_segment(
+      mapping = encode(x = x1, xend = x2, y = y_pos, yend = y_pos),
+      colour = line_colour, linewidth = line_width
+    )
+    plot <- .add_geom(plot, geome)
+    # Left tick
+    tick_len <- if (is.factor(x_var)) tip_length * length(x_levels) else tip_length * diff(range(x_positions))
+    geome <- ggplot2::geom_segment(
+      mapping = encode(
+        x = x1, xend = x1, y = y_pos - tick_len, yend = y_pos
+      ),
+      colour = line_colour, linewidth = line_width
+    )
+    plot <- .add_geom(plot, geome)
+    # Right tick
+    geome <- ggplot2::geom_segment(
+      mapping = encode(
+        x = x2, xend = x2, y = y_pos - tick_len, yend = y_pos
+      ),
+      colour = line_colour, linewidth = line_width
+    )
+    plot <- .add_geom(plot, geome)
+    # Label
+    geome <- ggplot2::geom_text(
+      mapping = encode(
+        x = (x1 + x2) / 2, y = y_pos + y_offset, label = comparisons$label[i]
+      ),
+      size = text_size, ...
+    )
+    plot <- .add_geom(plot, geome)
+  }
+  plot
+}
+
+# ---- mark_lollipop ----
+#' Lollipop chart layer
+#'
+#' Creates a lollipop chart: a point anchored by a stem to a reference
+#' line. This is a **syntax-sugar composite mark** combining
+#' `geom_segment` and `geom_point`.
+#'
+#' Equivalent expansion:
+#' \preformatted{
+#'   p |> mark_rule(x = x, xend = x, y = ref, yend = y) |>
+#'        mark_point(x = x, y = y)
+#' }
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional data for this layer
+#' @param stem_colour Colour for the stem lines (default `"grey50"`).
+#' @param stem_width Line width for stems (default 0.5).
+#' @param point_size Point size for the lollipop head (default 3).
+#' @param ... Other arguments passed to `mark_point()`
+#' @return Modified plotit object
+#' @examples
+#' df <- data.frame(cat = LETTERS[1:5], val = c(3, 7, 2, 9, 5))
+#' plotit(df, encode(x = cat, y = val)) |>
+#'   mark_lollipop(point_size = 4, stem_colour = "grey70")
+#' @export
+mark_lollipop <- S7::new_generic(
+  "mark_lollipop", "plot",
+  function(plot, mapping = NULL, data = NULL,
+           stem_colour = "grey50", stem_width = 0.5,
+           point_size = 3, ...) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_lollipop, plotit_class) <- function(
+    plot, mapping = NULL, data = NULL,
+    stem_colour = "grey50", stem_width = 0.5,
+    point_size = 3, ...) {
+  d <- data %||% plot@gg$data
+  m <- mapping %||% plot@gg$mapping
+  # Extract x and y from mapping
+  x_col <- rlang::eval_tidy(m$x, d)
+  y_col <- rlang::eval_tidy(m$y, d)
+  # Stem: segment from 0 to y
+  stem_mapping <- encode(x = x_col, xend = x_col, y = 0, yend = y_col)
+  geome <- ggplot2::geom_segment(
+    mapping = stem_mapping,
+    colour = stem_colour, linewidth = stem_width
+  )
+  plot <- .add_geom(plot, geome)
+  # Point at the top
+  point_mapping <- encode(x = x_col, y = y_col)
+  # Determine fill from mapping or default
+  fill_val <- if (!is.null(m$fill)) {
+    rlang::eval_tidy(m$fill, d)
+  } else {
+    NULL
+  }
+  plot <- plot |> mark_point(
+    mapping = m, data = d, size = point_size, ...
+  )
+  plot
+}
+
+# ---- mark_dumbbell ----
+#' Dumbbell comparison chart layer
+#'
+#' Creates a dumbbell chart with two connected points showing before/after
+#' or paired comparisons. This is a **syntax-sugar composite mark**
+#' combining two `mark_point` calls and a `geom_segment`.
+#'
+#' Equivalent expansion:
+#' \preformatted{
+#'   p |> mark_rule(x = x, xend = x, y = y_start, yend = y_end) |>
+#'        mark_point(x = x, y = y_start, colour = colour_start) |>
+#'        mark_point(x = x, y = y_end, colour = colour_end)
+#' }
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional data for this layer
+#' @param colour_start Colour for the start point (default `"#4E79A7"`).
+#' @param colour_end Colour for the end point (default `"#E15759"`).
+#' @param line_colour Colour for the connecting line (default `"grey50"`).
+#' @param point_size Size for both dumbbell points (default 3).
+#' @param line_width Width for the connecting line (default 1).
+#' @param ... Other arguments passed to `mark_point()` calls
+#' @return Modified plotit object
+#' @examples
+#' df <- data.frame(cat = LETTERS[1:5], before = c(3, 5, 2, 8, 4),
+#'                  after = c(7, 6, 5, 10, 6))
+#' plotit(df, encode(x = cat, y = before, yend = after)) |>
+#'   mark_dumbbell()
+#' @export
+mark_dumbbell <- S7::new_generic(
+  "mark_dumbbell", "plot",
+  function(plot, mapping = NULL, data = NULL,
+           colour_start = "#4E79A7", colour_end = "#E15759",
+           line_colour = "grey50", point_size = 3,
+           line_width = 1, ...) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_dumbbell, plotit_class) <- function(
+    plot, mapping = NULL, data = NULL,
+    colour_start = "#4E79A7", colour_end = "#E15759",
+    line_colour = "grey50", point_size = 3,
+    line_width = 1, ...) {
+  d <- data %||% plot@gg$data
+  m <- mapping %||% plot@gg$mapping
+  x_col <- rlang::eval_tidy(m$x, d)
+  y_col <- rlang::eval_tidy(m$y, d)
+  yend_col <- rlang::eval_tidy(m$yend, d)
+  # Connecting line
+  segment_mapping <- encode(
+    x = x_col, xend = x_col,
+    y = y_col, yend = yend_col
+  )
+  geome <- ggplot2::geom_segment(
+    mapping = segment_mapping,
+    colour = line_colour, linewidth = line_width
+  )
+  plot <- .add_geom(plot, geome)
+  # Start point
+  start_mapping <- encode(x = x_col, y = y_col)
+  plot <- plot |>
+    mark_point(mapping = start_mapping, data = d,
+               colour = colour_start, size = point_size, ...)
+  # End point
+  end_mapping <- encode(x = x_col, y = yend_col)
+  plot <- plot |>
+    mark_point(mapping = end_mapping, data = d,
+               colour = colour_end, size = point_size, ...)
+  plot
+}
+
+# ---- mark_beeswarm ----
+#' Beeswarm plot layer
+#'
+#' Adds a beeswarm (quasirandom scatter) layer to avoid overplotting
+#' for one-dimensional distributions. Requires the
+#' \pkg{ggbeeswarm} package.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param method Method for point placement:
+#'   `"swarm"`, `"compactswarm"`, `"hex"`, `"square"`,
+#'   `"center"`, or `"centre"`.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_beeswarm`
+#' @return Modified plotit object
+#' @references
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/beeswarm}{Beeswarm} (corelib)
+#' @examples
+#' \dontrun{
+#' if (requireNamespace("ggbeeswarm", quietly = TRUE)) {
+#'   plotit(iris, encode(x = Species, y = Sepal.Length)) |>
+#'     mark_beeswarm()
+#' }
+#' }
+#' @export
+mark_beeswarm <- S7::new_generic(
+  "mark_beeswarm", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           method = c("swarm", "compactswarm", "hex", "square", "center", "centre"),
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_beeswarm, plotit_class) <- function(
+    plot, mapping = NULL, data = NULL, position = NULL, ...,
+    method = c("swarm", "compactswarm", "hex", "square", "center", "centre"),
+    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  if (!requireNamespace("ggbeeswarm", quietly = TRUE)) {
+    cli::cli_abort("{.fn mark_beeswarm} requires the {.pkg ggbeeswarm} package.")
+  }
+  method <- match.arg(method)
+  params <- rlang::list2(...)
+  params$method <- method[1]
+  do.call(function(...) {
+    ._mark_impl(plot, mapping, data, position, ggbeeswarm::geom_beeswarm,
+                rasterize, rasterize_dpi, rasterize_dev, ...)
+  }, params)
+}
+
+# ---- mark_sankey ----
+#' Sankey flow diagram layer
+#'
+#' Creates a Sankey diagram showing directed flows between nodes.
+#' Requires the \pkg{ggsankey} package. Data should contain
+#' `x`, `next_x`, `node`, and `next_node` columns as generated by
+#' \code{ggsankey::make_long}.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics. The default expects
+#'   `x`, `next_x`, `node`, `next_node`, and optionally `value`.
+#' @param data Optional data for this layer
+#' @param position Position adjustment (rarely used for Sankey).
+#' @param node_colour Colour for node rectangles (default `"grey30"`).
+#' @param flow_alpha Alpha transparency for flow ribbons (default 0.5).
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_sankey`
+#' @return Modified plotit object
+#' @references
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/sankey}{Sankey} (graphlib)
+#' @examples
+#' \dontrun{
+#' if (requireNamespace("ggsankey", quietly = TRUE)) {
+#'   df <- ggsankey::make_long(ggplot2::diamonds, cut, color)
+#'   plotit(df, encode(x = x, next_x = next_x, node = node,
+#'                     next_node = next_node, value = value)) |>
+#'     mark_sankey()
+#' }
+#' }
+#' @export
+mark_sankey <- S7::new_generic(
+  "mark_sankey", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           node_colour = "grey30", flow_alpha = 0.5,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_sankey, plotit_class) <- function(
+    plot, mapping = NULL, data = NULL, position = NULL, ...,
+    node_colour = "grey30", flow_alpha = 0.5,
+    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  if (!requireNamespace("ggsankey", quietly = TRUE)) {
+    cli::cli_abort("{.fn mark_sankey} requires the {.pkg ggsankey} package.")
+  }
+  if (!is.null(mapping) && !is.null(mapping$colour)) {
+    plot <- ._clear_default_color(plot, mapping)
+  }
+  pos <- position
+  if (is.null(pos) && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
+    pos <- ggplot2::position_dodge(plot@meta@dodge)
+  }
+  # Sankey requires both a geom_sankey flow + a geom_sankey_text layer
+  # Add flow ribbon
+  geom_flow <- if (is.null(pos)) {
+    ggsankey::geom_sankey(mapping = mapping, data = data,
+                          node.fill = node_colour, alpha = flow_alpha, ...)
+  } else {
+    ggsankey::geom_sankey(mapping = mapping, data = data, position = pos,
+                          node.fill = node_colour, alpha = flow_alpha, ...)
+  }
+  plot <- .add_geom(plot, geom_flow,
+    rasterize = rasterize, rasterize_dpi = rasterize_dpi,
+    rasterize_dev = rasterize_dev
+  )
+  # Add node labels
+  plot <- plot |>
+    mark_text(mapping = mapping, data = data, repel = FALSE,
+              check_overlap = FALSE, size = 3)
+  plot
+}
+
+# ---- mark_treemap ----
+#' Treemap layer
+#'
+#' Creates a treemap showing hierarchical data as nested rectangles.
+#' Requires the \pkg{treemapify} package. Data should contain
+#' `area`, `subgroup`, and optionally `subgroup2` columns.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics. Must include `area` for
+#'   rectangle sizing.
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_treemap`
+#' @return Modified plotit object
+#' @references
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/treemap}{Treemap} (graphlib)
+#' @examples
+#' \dontrun{
+#' if (requireNamespace("treemapify", quietly = TRUE)) {
+#'   df <- data.frame(
+#'     group = c("A", "B", "C"),
+#'     subgroup = c("a1", "a2", "b1"),
+#'     size = c(30, 20, 50))
+#'   plotit(df, encode(area = size, fill = group,
+#'                     subgroup = subgroup)) |>
+#'     mark_treemap()
+#' }
+#' }
+#' @export
+mark_treemap <- S7::new_generic(
+  "mark_treemap", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_treemap, plotit_class) <- function(
+    plot, mapping = NULL, data = NULL, position = NULL, ...,
+    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  if (!requireNamespace("treemapify", quietly = TRUE)) {
+    cli::cli_abort("{.fn mark_treemap} requires the {.pkg treemapify} package.")
+  }
+  if (!is.null(mapping) && !is.null(mapping$fill)) {
+    plot <- ._clear_default_color(plot, mapping)
+  }
+  pos <- position
+  if (is.null(pos) && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
+    pos <- ggplot2::position_dodge(plot@meta@dodge)
+  }
+  geom <- if (is.null(pos)) {
+    treemapify::geom_treemap(mapping = mapping, data = data, ...)
+  } else {
+    treemapify::geom_treemap(mapping = mapping, data = data, position = pos, ...)
+  }
+  plot <- .add_geom(plot, geom,
+    rasterize = rasterize, rasterize_dpi = rasterize_dpi,
+    rasterize_dev = rasterize_dev
+  )
+  plot
+}
+
+# ---- mark_network ----
+#' Network / force-directed graph layer
+#'
+#' Creates a network visualization with nodes and edges.
+#' Requires the \pkg{ggraph} and \pkg{igraph} packages.
+#'
+#' @param plot A plotit object. The data should be an `igraph`
+#'   object.
+#' @param layout Layout algorithm: `"auto"` (default, uses
+#'   `layout_with_fr`), `"circle"`, `"linear"`, `"bipartite"`,
+#'   or `"manual"`.
+#' @param edge_colour Colour for edges (default `"grey70"`).
+#' @param edge_width Width for edges (default 0.5).
+#' @param node_colour Fill colour for nodes (default `"#4E79A7"`).
+#' @param node_size Size for nodes (default 5).
+#' @param ... Other arguments passed to `ggraph::geom_edge_link`
+#'   and `ggraph::geom_node_point`
+#' @return Modified plotit object
+#' @references
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/force-graph}{ForceGraph} (graphlib)
+#' @examples
+#' \dontrun{
+#' if (requireNamespace("ggraph", quietly = TRUE) &&
+#'     requireNamespace("igraph", quietly = TRUE)) {
+#'   gr <- igraph::sample_pa(30)
+#'   plotit(gr, encode()) |> mark_network()
+#' }
+#' }
+#' @export
+mark_network <- S7::new_generic(
+  "mark_network", "plot",
+  function(plot,
+           layout = c("auto", "circle", "linear", "bipartite", "manual"),
+           edge_colour = "grey70", edge_width = 0.5,
+           node_colour = "#4E79A7", node_size = 5, ...) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_network, plotit_class) <- function(
+    plot,
+    layout = c("auto", "circle", "linear", "bipartite", "manual"),
+    edge_colour = "grey70", edge_width = 0.5,
+    node_colour = "#4E79A7", node_size = 5, ...) {
+  if (!requireNamespace("ggraph", quietly = TRUE)) {
+    cli::cli_abort("{.fn mark_network} requires the {.pkg ggraph} package.")
+  }
+  if (!requireNamespace("igraph", quietly = TRUE)) {
+    cli::cli_abort("{.fn mark_network} requires the {.pkg igraph} package.")
+  }
+  layout <- match.arg(layout)
+  graph_data <- plot@gg$data
+  if (!inherits(graph_data, "igraph")) {
+    cli::cli_abort(
+      "{.fn mark_network} requires an {.cls igraph} object as plot data."
+    )
+  }
+  layout_fun <- switch(layout,
+    auto = igraph::layout_with_fr,
+    circle = igraph::layout_in_circle,
+    linear = igraph::layout_on_line,
+    bipartite = igraph::layout_as_bipartite,
+    manual = igraph::layout_nicely
+  )
+  gg <- ggraph::ggraph(graph_data, layout = layout_fun) +
+    ggplot2::theme_void() +
+    ggraph::geom_edge_link(edge_colour = edge_colour,
+                            edge_width = edge_width, ...) +
+    ggraph::geom_node_point(fill = node_colour, size = node_size)
+  plot@gg <- gg
+  plot
+}
+
+# ---- mark_chord ----
+#' Chord diagram layer
+#'
+#' Creates a chord diagram showing pairwise relationships between groups.
+#' Requires the \pkg{circlize} package. Data should be an adjacency matrix
+#' or a data frame with `from`, `to`, and `value` columns.
+#'
+#' @param plot A plotit object
+#' @param gap_width Gap between sectors in degrees (default 4).
+#' @param grid_colour Colour for the outer grid (default `"grey80"`).
+#' @param link_colour Colour for the chord links (default `"grey30"`).
+#' @param link_alpha Alpha transparency for links (default 0.5).
+#' @param ... Other arguments passed to `circlize::chordDiagram`
+#' @return Modified plotit object
+#' @references
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/chord}{Chord} (graphlib)
+#' @examples
+#' \dontrun{
+#' if (requireNamespace("circlize", quietly = TRUE)) {
+#'   mat <- matrix(c(0, 5, 3, 2, 0, 4, 1, 3, 0), nrow = 3)
+#'   rownames(mat) <- colnames(mat) <- c("A", "B", "C")
+#'   plotit(as.data.frame(as.table(mat)), encode()) |>
+#'     mark_chord()
+#' }
+#' }
+#' @export
+mark_chord <- S7::new_generic(
+  "mark_chord", "plot",
+  function(plot, gap_width = 4, grid_colour = "grey80",
+           link_colour = "grey30", link_alpha = 0.5, ...) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_chord, plotit_class) <- function(
+    plot, gap_width = 4, grid_colour = "grey80",
+    link_colour = "grey30", link_alpha = 0.5, ...) {
+  if (!requireNamespace("circlize", quietly = TRUE)) {
+    cli::cli_abort("{.fn mark_chord} requires the {.pkg circlize} package.")
+  }
+  d <- plot@gg$data
+  # Expect adjacency matrix or from-to-value data frame
+  if (is.data.frame(d)) {
+    if (all(c("Var1", "Var2", "Freq") %in% names(d))) {
+      # Convert table-as-dataframe to matrix
+      mat <- xtabs(Freq ~ Var1 + Var2, data = d)
+    } else if (all(c("from", "to", "value") %in% names(d))) {
+      mat <- xtabs(value ~ from + to, data = d)
+    } else {
+      cli::cli_abort(
+        "{.fn mark_chord} expects data with columns Var1/Var2/Freq or from/to/value."
+      )
+    }
+  } else if (is.matrix(d)) {
+    mat <- d
+  } else {
+    cli::cli_abort(
+      "{.fn mark_chord} expects a matrix or data frame as plot data."
+    )
+  }
+  # Build a new ggplot with a custom drawing layer
+  chord_grob <- function(...) {
+    circlize::chordDiagram(mat, ...)
+  }
+  # Use annotation layer since circlize draws directly
+  gg <- ggplot2::ggplot() + ggplot2::theme_void()
+  plot@gg <- gg
+  # Draw chord via a custom annotation
+  circlize::chordDiagram(mat,
+    transparency = 1 - link_alpha,
+    grid.col = grid_colour,
+    annotationTrack = "grid",
+    preAllocateTracks = list(track.height = 0.1),
+    ...
+  )
+  plot
 }
 
 # ---- mark_bar (hand-written: geom_col vs geom_bar dispatch) ----
