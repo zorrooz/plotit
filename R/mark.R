@@ -1357,13 +1357,11 @@ S7::method(mark_network, plotit_class) <- function(
     bipartite = igraph::layout_as_bipartite,
     manual = igraph::layout_nicely
   )
-  gg <- ggraph::ggraph(graph_data, layout = layout_fun)
-  gg <- gg + ggplot2::theme_void()
-  # Edge layer
-  gg <- gg + ggraph::geom_edge_link(edge_colour = edge_colour,
-                                     edge_width = edge_width, ...)
-  # Node layer
-  gg <- gg + ggraph::geom_node_point(fill = node_colour, size = node_size)
+  gg <- ggraph::ggraph(graph_data, layout = layout_fun) +
+    ggplot2::theme_void() +
+    ggraph::geom_edge_link(edge_colour = edge_colour,
+                            edge_width = edge_width, ...) +
+    ggraph::geom_node_point(fill = node_colour, size = node_size)
   plot@gg <- gg
   plot
 }

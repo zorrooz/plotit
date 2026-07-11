@@ -746,6 +746,9 @@ test_that("mark_chord errors without circlize", {
 test_that("mark_chord accepts matrix data", {
   skip_if_not_installed("circlize")
   mat <- matrix(c(0, 3, 2, 3, 0, 1, 2, 1, 0), nrow = 3)
-  p <- plotit(mat, encode()) |> mark_chord()
+  rownames(mat) <- colnames(mat) <- c("A", "B", "C")
+  df <- as.data.frame(as.table(mat))
+  names(df) <- c("from", "to", "value")
+  p <- plotit(df, encode()) |> mark_chord()
   expect_s3_class(p, "plotit::plotit")
 })
