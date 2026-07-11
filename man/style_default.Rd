@@ -9,6 +9,8 @@ style_default(plot, ..., base_size = NULL, base_family = NULL)
 \arguments{
 \item{plot}{A plotit object.}
 
+\item{...}{Ignored.}
+
 \item{base_size}{Base font size in pts (default 11).}
 
 \item{base_family}{Base font family (default \code{""} = system sans-serif).}

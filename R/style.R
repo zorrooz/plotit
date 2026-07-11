@@ -79,6 +79,7 @@ S7::method(style, plotit_class) <- function(
 #' Apply the default plotit theme (convenience wrapper for style())
 #'
 #' @param plot A plotit object.
+#' @param ... Ignored.
 #' @param base_size Base font size in pts (default 11).
 #' @param base_family Base font family (default `""` = system sans-serif).
 #' @return Modified plotit object.

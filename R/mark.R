@@ -629,8 +629,10 @@ S7::method(mark_smooth, plotit_class) <- function(
 #' @references
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/heatmap}{Heatmap} (corelib)
 #' @examples
-#' plotit(diamonds[sample(nrow(diamonds), 1000), ],
-#'        encode(x = carat, y = price)) |> mark_hex(bins = 20)
+#' if (requireNamespace("ggplot2", quietly = TRUE)) {
+#'   plotit(ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 1000), ],
+#'          encode(x = carat, y = price)) |> mark_hex(bins = 20)
+#' }
 #' @export
 mark_hex <- S7::new_generic(
   "mark_hex", "plot",
