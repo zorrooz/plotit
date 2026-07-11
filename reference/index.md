@@ -101,13 +101,18 @@ Combine multiple plots into layouts.
 - [`compose_marginal()`](https://zorrooz.github.io/plotit/reference/compose_marginal.md)
   : Scatter plot with marginal distributions
 
-## Theme & Export
+## Theme
 
-Style and save your plots.
+Style your plots with built-in or custom themes.
 
 - [`style()`](https://zorrooz.github.io/plotit/reference/style.md) :
   Modify plot theme (aligns with ggplot2::theme)
 - [`style_default()`](https://zorrooz.github.io/plotit/reference/style_default.md)
   : Apply the default plotit theme (convenience wrapper for style())
+
+## Export
+
+Render and save your plots to files.
+
 - [`export()`](https://zorrooz.github.io/plotit/reference/export.md) :
   Export a plotit object to a file
