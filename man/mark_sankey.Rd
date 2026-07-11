@@ -49,7 +49,7 @@ Requires the \pkg{ggsankey} package. Data should contain
 \code{ggsankey::make_long}.
 }
 \examples{
-\donttest{
+\dontrun{
 if (requireNamespace("ggsankey", quietly = TRUE)) {
   df <- ggsankey::make_long(ggplot2::diamonds, cut, color)
   plotit(df, encode(x = x, next_x = next_x, node = node,

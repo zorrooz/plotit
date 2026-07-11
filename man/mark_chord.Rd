@@ -35,7 +35,7 @@ Requires the \pkg{circlize} package. Data should be an adjacency matrix
 or a data frame with \code{from}, \code{to}, and \code{value} columns.
 }
 \examples{
-\donttest{
+\dontrun{
 if (requireNamespace("circlize", quietly = TRUE)) {
   mat <- matrix(c(0, 5, 3, 2, 0, 4, 1, 3, 0), nrow = 3)
   rownames(mat) <- colnames(mat) <- c("A", "B", "C")

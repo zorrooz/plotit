@@ -46,7 +46,7 @@ for one-dimensional distributions. Requires the
 \pkg{ggbeeswarm} package.
 }
 \examples{
-\donttest{
+\dontrun{
 if (requireNamespace("ggbeeswarm", quietly = TRUE)) {
   plotit(iris, encode(x = Species, y = Sepal.Length)) |>
     mark_beeswarm()

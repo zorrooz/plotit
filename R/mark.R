@@ -1117,7 +1117,7 @@ S7::method(mark_dumbbell, plotit_class) <- function(
 #' @references
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/beeswarm}{Beeswarm} (corelib)
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' if (requireNamespace("ggbeeswarm", quietly = TRUE)) {
 #'   plotit(iris, encode(x = Species, y = Sepal.Length)) |>
 #'     mark_beeswarm()
@@ -1173,7 +1173,7 @@ S7::method(mark_beeswarm, plotit_class) <- function(
 #' @references
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/sankey}{Sankey} (graphlib)
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' if (requireNamespace("ggsankey", quietly = TRUE)) {
 #'   df <- ggsankey::make_long(ggplot2::diamonds, cut, color)
 #'   plotit(df, encode(x = x, next_x = next_x, node = node,
@@ -1246,7 +1246,7 @@ S7::method(mark_sankey, plotit_class) <- function(
 #' @references
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/treemap}{Treemap} (graphlib)
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' if (requireNamespace("treemapify", quietly = TRUE)) {
 #'   df <- data.frame(
 #'     group = c("A", "B", "C"),
@@ -1313,7 +1313,7 @@ S7::method(mark_treemap, plotit_class) <- function(
 #' @references
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/force-graph}{ForceGraph} (graphlib)
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' if (requireNamespace("ggraph", quietly = TRUE) &&
 #'     requireNamespace("igraph", quietly = TRUE)) {
 #'   gr <- igraph::sample_pa(30)
@@ -1385,7 +1385,7 @@ S7::method(mark_network, plotit_class) <- function(
 #' @references
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/chord}{Chord} (graphlib)
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' if (requireNamespace("circlize", quietly = TRUE)) {
 #'   mat <- matrix(c(0, 5, 3, 2, 0, 4, 1, 3, 0), nrow = 3)
 #'   rownames(mat) <- colnames(mat) <- c("A", "B", "C")

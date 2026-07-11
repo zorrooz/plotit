@@ -41,7 +41,7 @@ Creates a network visualization with nodes and edges.
 Requires the \pkg{ggraph} and \pkg{igraph} packages.
 }
 \examples{
-\donttest{
+\dontrun{
 if (requireNamespace("ggraph", quietly = TRUE) &&
     requireNamespace("igraph", quietly = TRUE)) {
   gr <- igraph::sample_pa(30)

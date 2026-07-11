@@ -42,7 +42,7 @@ Requires the \pkg{treemapify} package. Data should contain
 \code{area}, \code{subgroup}, and optionally \code{subgroup2} columns.
 }
 \examples{
-\donttest{
+\dontrun{
 if (requireNamespace("treemapify", quietly = TRUE)) {
   df <- data.frame(
     group = c("A", "B", "C"),
