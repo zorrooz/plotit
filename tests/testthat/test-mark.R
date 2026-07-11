@@ -615,3 +615,137 @@ test_that("mark_dumbbell works with local data", {
     mark_dumbbell(data = df[1:2, ])
   expect_s3_class(p, "plotit::plotit")
 })
+
+# ---- mark_beeswarm ----
+test_that("[BDD] mark_beeswarm errors without ggbeeswarm", {
+  skip_if_not_installed("ggbeeswarm")
+  p <- plotit(iris, encode(x = Species, y = Sepal.Length)) |>
+    mark_beeswarm()
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_beeswarm supports quasirandom method", {
+  skip_if_not_installed("ggbeeswarm")
+  p <- plotit(iris, encode(x = Species, y = Sepal.Length)) |>
+    mark_beeswarm(method = "swarm", cex = 2)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_beeswarm supports local data", {
+  skip_if_not_installed("ggbeeswarm")
+  p <- plotit(iris, encode(x = Species, y = Sepal.Length)) |>
+    mark_beeswarm(data = iris[1:50, ])
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_sankey ----
+test_that("[BDD] mark_sankey builds sankey", {
+  skip_if_not_installed("ggsankey")
+  df <- ggsankey::make_long(ggplot2::diamonds[1:200, ], cut, color)
+  p <- plotit(df, encode(x = x, next_x = next_x, node = node,
+                          next_node = next_node, value = value)) |>
+    mark_sankey()
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_sankey errors without ggsankey", {
+  p <- plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_point()
+  # ggsankey not installed → error
+  if (!requireNamespace("ggsankey", quietly = TRUE)) {
+    expect_error(mark_sankey(p), "ggsankey")
+  }
+})
+
+test_that("mark_sankey supports flow_alpha", {
+  skip_if_not_installed("ggsankey")
+  df <- ggsankey::make_long(ggplot2::diamonds[1:200, ], cut, color)
+  p <- plotit(df, encode(x = x, next_x = next_x, node = node,
+                          next_node = next_node, value = value)) |>
+    mark_sankey(flow_alpha = 0.8)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_treemap ----
+test_that("[BDD] mark_treemap builds treemap", {
+  skip_if_not_installed("treemapify")
+  df <- data.frame(
+    group = c("A", "B", "C"),
+    subgroup = c("a1", "a2", "b1"),
+    size = c(30, 20, 50)
+  )
+  p <- plotit(df, encode(area = size, fill = group,
+                          subgroup = subgroup)) |>
+    mark_treemap()
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_treemap errors without treemapify", {
+  if (requireNamespace("treemapify", quietly = TRUE)) {
+    skip("treemapify is installed, cannot test error path")
+  }
+  df <- data.frame(group = c("A", "B"), subgroup = c("a", "b"), size = c(10, 20))
+  p <- plotit(df, encode(area = size, fill = group, subgroup = subgroup))
+  expect_error(mark_treemap(p), "treemapify")
+})
+
+test_that("mark_treemap supports rasterize", {
+  skip_if_not_installed("treemapify")
+  skip_if_not_installed("ggrastr")
+  df <- data.frame(
+    group = c("A", "B"), subgroup = c("a", "b"), size = c(10, 20)
+  )
+  p <- plotit(df, encode(area = size, fill = group, subgroup = subgroup)) |>
+    mark_treemap(rasterize = TRUE, rasterize_dpi = 72)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_network ----
+test_that("[BDD] mark_network builds network", {
+  skip_if_not_installed("ggraph")
+  skip_if_not_installed("igraph")
+  gr <- igraph::sample_pa(20, directed = FALSE)
+  p <- plotit(gr, encode()) |> mark_network()
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_network errors on non-igraph data", {
+  skip_if_not_installed("ggraph")
+  skip_if_not_installed("igraph")
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
+  expect_error(mark_network(p), "igraph")
+})
+
+test_that("mark_network supports circle layout", {
+  skip_if_not_installed("ggraph")
+  skip_if_not_installed("igraph")
+  gr <- igraph::sample_pa(10, directed = FALSE)
+  p <- plotit(gr, encode()) |> mark_network(layout = "circle")
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_chord ----
+test_that("[BDD] mark_chord builds chord diagram", {
+  skip_if_not_installed("circlize")
+  mat <- matrix(c(0, 5, 3, 2, 0, 4, 1, 3, 0), nrow = 3)
+  rownames(mat) <- colnames(mat) <- c("A", "B", "C")
+  # Convert to long form data frame
+  df <- as.data.frame(as.table(mat))
+  names(df) <- c("from", "to", "value")
+  p <- plotit(df, encode()) |> mark_chord()
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_chord errors without circlize", {
+  if (requireNamespace("circlize", quietly = TRUE)) {
+    skip("circlize is installed, cannot test error path")
+  }
+  p <- plotit(iris, encode()) |> mark_point()
+  expect_error(mark_chord(p), "circlize")
+})
+
+test_that("mark_chord accepts matrix data", {
+  skip_if_not_installed("circlize")
+  mat <- matrix(c(0, 3, 2, 3, 0, 1, 2, 1, 0), nrow = 3)
+  p <- plotit(mat, encode()) |> mark_chord()
+  expect_s3_class(p, "plotit::plotit")
+})

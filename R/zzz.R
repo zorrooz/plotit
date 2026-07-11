@@ -73,6 +73,8 @@ for (.generic_name in c(
   "mark_density_2d", "mark_corr",
   "mark_errorbar", "mark_significance",
   "mark_lollipop", "mark_dumbbell",
+  "mark_beeswarm", "mark_sankey", "mark_treemap",
+  "mark_network", "mark_chord",
   "scale_color", "scale_fill", "scale_size", "scale_alpha",
   "scale_shape", "scale_linetype", "scale_x", "scale_y",
   "project_cartesian", "project_polar", "project_parallel",
