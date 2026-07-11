@@ -293,3 +293,49 @@ test_that("mark_rect passes width/height via dots", {
     mark_rect(width = 0.8, height = 0.8, colour = "white")
   expect_s3_class(p, "plotit::plotit")
 })
+
+# ---- mark_rule ----
+test_that("[BDD] mark_rule with xintercept adds vertical line", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |>
+    mark_rule(xintercept = 3, colour = "red")
+  built <- .built(p)
+  expect_s3_class(p, "plotit::plotit")
+  expect_true(length(built$data) >= 2)  # point + rule
+})
+
+test_that("[BDD] mark_rule with yintercept adds horizontal line", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |>
+    mark_rule(yintercept = 5)
+  built <- .built(p)
+  expect_s3_class(p, "plotit::plotit")
+  expect_true(length(built$data) >= 2)
+})
+
+test_that("[BDD] mark_rule with slope+intercept adds abline", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |>
+    mark_rule(slope = 1, intercept = 0)
+  built <- .built(p)
+  expect_s3_class(p, "plotit::plotit")
+  expect_true(length(built$data) >= 2)
+})
+
+test_that("[BDD] mark_rule with x+xend+y+yend adds segment", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |>
+    mark_rule(x = 2, xend = 4, y = 5, yend = 7)
+  built <- .built(p)
+  expect_s3_class(p, "plotit::plotit")
+  expect_true(length(built$data) >= 2)
+})
+
+test_that("mark_rule supports rasterize", {
+  skip_if_not_installed("ggrastr")
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |>
+    mark_rule(xintercept = median(iris$Sepal.Width),
+              rasterize = TRUE, rasterize_dpi = 72)
+  expect_s3_class(p, "plotit::plotit")
+})

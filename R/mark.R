@@ -398,6 +398,106 @@ mark_rect <- S7::new_generic(
 )
 ._register_mark_method(mark_rect, ggplot2::geom_tile)
 
+# ---- mark_rule ----
+#' Reference line / segment layer
+#'
+#' Adds one or more reference lines or segments to a plot. Dispatches
+#' to the appropriate ggplot2 geom based on the parameters supplied:
+#'
+#' - `xintercept` → [ggplot2::geom_vline]
+#' - `yintercept` → [ggplot2::geom_hline]
+#' - `slope` + `intercept` → [ggplot2::geom_abline]
+#' - `x`/`xend`/`y`/`yend` → [ggplot2::geom_segment]
+#'
+#' Dispatch priority: vline/hline > abline > segment.
+#'
+#' @param plot A plotit object
+#' @param xintercept x-intercept for vertical line(s)
+#' @param yintercept y-intercept for horizontal line(s)
+#' @param slope Line slope for abline
+#' @param intercept Line intercept for abline
+#' @param x Start x coordinate(s) for segment
+#' @param xend End x coordinate(s) for segment
+#' @param y Start y coordinate(s) for segment
+#' @param yend End y coordinate(s) for segment
+#' @param colour Line colour
+#' @param linetype Line type
+#' @param linewidth Line width in mm
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to the underlying geom
+#' @return Modified plotit object
+#' @references
+#' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/rule.html}{Rule}
+#'
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/line-x}{LineX} /
+#' \href{https://g2.antv.antgroup.com/en/api/mark/line-y}{LineY} /
+#' \href{https://g2.antv.antgroup.com/en/api/mark/range}{Range}
+#' @examples
+#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+#'   mark_rule(xintercept = 3, colour = "red", linetype = "dashed")
+#' @export
+mark_rule <- S7::new_generic(
+  "mark_rule", "plot",
+  function(plot,
+           xintercept = NULL, yintercept = NULL,
+           slope = NULL, intercept = NULL,
+           x = NULL, xend = NULL, y = NULL, yend = NULL,
+           colour = NULL, linetype = NULL, linewidth = NULL,
+           ...,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_rule, plotit_class) <- function(
+    plot,
+    xintercept = NULL, yintercept = NULL,
+    slope = NULL, intercept = NULL,
+    x = NULL, xend = NULL, y = NULL, yend = NULL,
+    colour = NULL, linetype = NULL, linewidth = NULL,
+    ...,
+    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  # Build named list of non-NULL params for the geom call
+  params <- rlang::list2(...)
+  if (!is.null(colour))    params$colour    <- colour
+  if (!is.null(linetype))  params$linetype  <- linetype
+  if (!is.null(linewidth)) params$linewidth <- linewidth
+
+  # Dispatch by param combination
+  if (!is.null(xintercept)) {
+    params$xintercept <- xintercept
+    geom_call <- do.call(ggplot2::geom_vline, params)
+  } else if (!is.null(yintercept)) {
+    params$yintercept <- yintercept
+    geom_call <- do.call(ggplot2::geom_hline, params)
+  } else if (!is.null(slope) || !is.null(intercept)) {
+    if (!is.null(slope))     params$slope     <- slope
+    if (!is.null(intercept)) params$intercept <- intercept
+    geom_call <- do.call(ggplot2::geom_abline, params)
+  } else if (!is.null(x) && !is.null(xend) && !is.null(y) && !is.null(yend)) {
+    params$x    <- x
+    params$xend <- xend
+    params$y    <- y
+    params$yend <- yend
+    geom_call <- do.call(ggplot2::geom_segment, params)
+  } else {
+    cli::cli_abort(c(
+      "{.fn mark_rule} requires one of:",
+      "*" = "{.arg xintercept} or {.arg yintercept}",
+      "*" = "{.arg slope} + {.arg intercept}",
+      "*" = "{.arg x} + {.arg xend} + {.arg y} + {.arg yend}"
+    ))
+  }
+
+  .add_geom(plot, geom_call,
+    rasterize = rasterize, rasterize_dpi = rasterize_dpi,
+    rasterize_dev = rasterize_dev
+  )
+}
+
 # ---- mark_bar (hand-written: geom_col vs geom_bar dispatch) ----
 #' Bar layer
 #'
