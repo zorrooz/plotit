@@ -315,16 +315,20 @@ mark_violin <- S7::new_generic(
 #' @param plot A plotit object
 #' @param mapping Optional new aesthetics
 #' @param data Optional sf data frame for this layer
-#' @param position Position adjustment.
+#' @param position Position adjustment (ignored for sf layers).
 #' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
 #' @param rasterize_dpi DPI for rasterization (default 300).
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_sf`
 #' @return Modified plotit object
+#' @references
+#' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/geoshape.html}{Geoshape}
+#'
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/geo-path}{GeoPath}
 #' @examples
-#' \dontrun{
-#' nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
-#' plotit(nc, encode(geometry = geometry)) |> mark_map()
+#' if (requireNamespace("sf", quietly = TRUE)) {
+#'   nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+#'   plotit(nc, encode(geometry = geometry)) |> mark_map()
 #' }
 #' @export
 mark_map <- S7::new_generic(
