@@ -103,20 +103,28 @@
 对标 Vega-Lite / AntV-G2 的视觉通道丰富度，不限于 ggplot2 原生几何。
 新 mark 按需引入，遵循统一 S7 泛型+方法模式（`mark_<type>` + `geom_<底层>`），支持 `rasterize`。
 
-**已实现**（10）：
+**已实现**（18）：
 
 | 函数 | 对应 | 用途 |
 |---|---|---|
-| `mark_point` | `geom_point` | 散点 |
-| `mark_line` | `geom_line` | 折线/趋势 |
-| `mark_bar` | `geom_bar`/`geom_col` | 柱状图（有 y 映射→`geom_col`，无 y→`geom_bar`） |
-| `mark_boxplot` | `geom_boxplot` | 箱线图 |
-| `mark_histogram` | `geom_histogram` | 直方图 |
-| `mark_density` | `geom_density` | 密度曲线 |
-| `mark_area` | `geom_area` | 面积图/堆叠面积 |
-| `mark_text` | `geom_text`/`geom_text_repel` | 文本标签/数据标注 |
-| `mark_violin` | `geom_violin` | 小提琴图 |
-| `mark_map` | `geom_sf` | 地图/地理空间 |
+| `mark_point` | `geom_point` | 散点 ✅ |
+| `mark_line` | `geom_line` | 折线/趋势 ✅ |
+| `mark_bar` | `geom_bar`/`geom_col` | 柱状图 ✅ |
+| `mark_boxplot` | `geom_boxplot` | 箱线图 ✅ |
+| `mark_histogram` | `geom_histogram` | 直方图 ✅ |
+| `mark_density` | `geom_density` | 密度曲线 ✅ |
+| `mark_area` | `geom_area` | 面积图 ✅ |
+| `mark_text` | `geom_text`/`geom_text_repel` | 文本标签 ✅ |
+| `mark_violin` | `geom_violin` | 小提琴图 ✅ |
+| `mark_map` | `geom_sf` | 地图 ✅ |
+| `mark_rect` | `geom_tile` | 矩形/热力图 ✅ |
+| `mark_rule` | `geom_hline/vline/abline/segment` | 参考线/参考区域 ✅ |
+| `mark_path` | `geom_path` | 路径/轨迹 ✅ |
+| `mark_polygon` | `geom_polygon` | 多边形 ✅ |
+| `mark_smooth` | `geom_smooth` | 回归平滑+置信带 ✅ |
+| `mark_hex` | `geom_hex` | 2D 六边形热力图 ✅ |
+| `mark_density_2d` | `geom_density_2d`/`geom_density_2d_filled` | 2D 密度等高线 ✅ |
+| `mark_corr` | `geom_tile` + corr 预处理 | 相关性矩阵热力图 ✅ |
 
 #### Vega-Lite vs AntV G2 复合 Mark 全量对比
 

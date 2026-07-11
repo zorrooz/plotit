@@ -268,3 +268,235 @@ test_that("mark_map supports fill mapping", {
   p <- plotit(nc, encode(geometry = geometry, fill = AREA)) |> mark_map()
   expect_s3_class(p, "plotit::plotit")
 })
+
+# ---- mark_rect ----
+test_that("[BDD] mark_rect adds tile layer", {
+  df <- expand.grid(x = 1:5, y = 1:5)
+  df$z <- df$x * df$y
+  p <- plotit(df, encode(x = x, y = y, fill = z)) |> mark_rect()
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("mark_rect supports local data", {
+  df <- expand.grid(x = 1:3, y = 1:3)
+  df$z <- runif(9)
+  p <- plotit(data.frame(), encode(x = x, y = y)) |>
+    mark_rect(data = df, mapping = encode(x = x, y = y, fill = z))
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_rect passes width/height via dots", {
+  df <- expand.grid(x = 1:3, y = 1:3)
+  df$z <- 1:9
+  p <- plotit(df, encode(x = x, y = y, fill = z)) |>
+    mark_rect(width = 0.8, height = 0.8, colour = "white")
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_rule ----
+test_that("[BDD] mark_rule with xintercept adds vertical line", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |>
+    mark_rule(xintercept = 3, colour = "red")
+  built <- .built(p)
+  expect_s3_class(p, "plotit::plotit")
+  expect_true(length(built$data) >= 2)  # point + rule
+})
+
+test_that("[BDD] mark_rule with yintercept adds horizontal line", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |>
+    mark_rule(yintercept = 5)
+  built <- .built(p)
+  expect_s3_class(p, "plotit::plotit")
+  expect_true(length(built$data) >= 2)
+})
+
+test_that("[BDD] mark_rule with slope+intercept adds abline", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |>
+    mark_rule(slope = 1, intercept = 0)
+  built <- .built(p)
+  expect_s3_class(p, "plotit::plotit")
+  expect_true(length(built$data) >= 2)
+})
+
+test_that("[BDD] mark_rule with x+xend+y+yend adds segment", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |>
+    mark_rule(x = 2, xend = 4, y = 5, yend = 7)
+  built <- .built(p)
+  expect_s3_class(p, "plotit::plotit")
+  expect_true(length(built$data) >= 2)
+})
+
+test_that("mark_rule supports rasterize", {
+  skip_if_not_installed("ggrastr")
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |>
+    mark_rule(xintercept = median(iris$Sepal.Width),
+              rasterize = TRUE, rasterize_dpi = 72)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_path ----
+test_that("[BDD] mark_path adds path layer", {
+  df <- data.frame(x = 1:10, y = cumsum(runif(10, -1, 1)))
+  p <- plotit(df, encode(x = x, y = y)) |> mark_path()
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("[BDD] mark_path supports group aesthetic", {
+  set.seed(1)
+  df <- data.frame(
+    x = rep(1:5, 2),
+    y = rnorm(10),
+    g = rep(c("A", "B"), each = 5)
+  )
+  p <- plotit(df, encode(x = x, y = y, colour = g)) |> mark_path()
+  built <- .built(p)
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(built$data, 1)
+})
+
+test_that("mark_path passes line params via dots", {
+  df <- data.frame(x = 1:10, y = cumsum(runif(10, -1, 1)))
+  p <- plotit(df, encode(x = x, y = y)) |>
+    mark_path(linewidth = 1.5, linetype = "dashed")
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_polygon ----
+test_that("[BDD] mark_polygon adds polygon layer", {
+  tri <- data.frame(x = c(0, 1, 0.5), y = c(0, 0, 1))
+  p <- plotit(tri, encode(x = x, y = y)) |> mark_polygon(fill = "skyblue")
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("[BDD] mark_polygon supports multiple groups", {
+  df <- rbind(
+    data.frame(x = c(0, 1, 0.5), y = c(0, 0, 1), g = "A"),
+    data.frame(x = c(2, 3, 2.5) + 1, y = c(0, 0, 1) + 1, g = "B")
+  )
+  p <- plotit(df, encode(x = x, y = y, fill = g)) |> mark_polygon()
+  built <- .built(p)
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(built$data, 1)
+})
+
+test_that("mark_polygon supports colour aesthetic", {
+  tri <- data.frame(x = c(0, 1, 0.5), y = c(0, 0, 1))
+  p <- plotit(tri, encode(x = x, y = y)) |>
+    mark_polygon(fill = "skyblue", colour = "navy")
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_smooth ----
+test_that("[BDD] mark_smooth adds smooth layer", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg)) |> mark_smooth()
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("mark_smooth supports linear method", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
+    mark_smooth(method = "lm", se = FALSE)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_smooth supports colour aesthetic", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg, colour = factor(cyl))) |>
+    mark_smooth()
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_hex ----
+test_that("[BDD] mark_hex adds hex bin layer", {
+  p <- plotit(ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 1000), ],
+              encode(x = carat, y = price)) |> mark_hex(bins = 15)
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("mark_hex supports bins parameter", {
+  p <- plotit(ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 500), ],
+              encode(x = carat, y = price)) |> mark_hex(bins = 10)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_hex supports local data", {
+  sub <- ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 300), ]
+  p <- plotit(sub, encode(x = carat, y = price)) |> mark_hex(data = sub)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_density_2d ----
+test_that("[BDD] mark_density_2d adds contour layer", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_density_2d()
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("mark_density_2d supports filled mode", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_density_2d(filled = TRUE, bins = 6)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_density_2d supports bins parameter", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_density_2d(bins = 10)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_corr ----
+test_that("[BDD] mark_corr adds correlation heatmap", {
+  p <- plotit(mtcars, encode()) |> mark_corr()
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("mark_corr supports spearman method", {
+  p <- plotit(mtcars, encode()) |> mark_corr(method = "spearman")
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_corr supports no-reorder", {
+  p <- plotit(mtcars, encode()) |> mark_corr(reorder = FALSE)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- make_mark / make_theme ----
+test_that("make_mark creates a usable custom mark", {
+  generic <- make_mark("mark_tile_test", ggplot2::geom_tile)
+  df <- expand.grid(x = 1:3, y = 1:3)
+  df$z <- 1:9
+  p <- generic(plotit(df, encode(x = x, y = y, fill = z)))
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("make_mark warns on non-mark_ name", {
+  expect_warning(make_mark("foo_bar", ggplot2::geom_point))
+})
+
+test_that("make_theme creates a usable theme function", {
+  style_test <- make_theme("style_test",
+    plot.title = ggplot2::element_text(colour = "blue"))
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |> label_title("Test") |> style_test()
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("make_theme with custom base theme works", {
+  style_custom <- make_theme("style_custom",
+    panel.grid.major = ggplot2::element_line(colour = "grey90"),
+    base_theme = ggplot2::theme_bw)
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |> style_custom()
+  expect_s3_class(p, "plotit::plotit")
+})

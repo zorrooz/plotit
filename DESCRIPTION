@@ -26,7 +26,7 @@ Imports:
     S7 (>= 0.1.0),
     cli,
     patchwork
-Collate: 
+Collate:
     'class.R'
     'utils.R'
     'style.R'
@@ -35,6 +35,7 @@ Collate:
     'compose.R'
     'encode.R'
     'mark.R'
+    'factory.R'
     'plot.R'
     'project.R'
     'scale.R'

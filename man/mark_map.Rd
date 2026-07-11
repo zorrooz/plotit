@@ -22,7 +22,7 @@ mark_map(
 
 \item{data}{Optional sf data frame for this layer}
 
-\item{position}{Position adjustment.}
+\item{position}{Position adjustment (ignored for sf layers).}
 
 \item{...}{Other arguments passed to \code{geom_sf}}
 
@@ -40,8 +40,13 @@ Adds a geographic map layer for \pkg{sf} spatial data frames.
 Requires the \pkg{sf} package.
 }
 \examples{
-\dontrun{
-nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
-plotit(nc, encode(geometry = geometry)) |> mark_map()
+if (requireNamespace("sf", quietly = TRUE)) {
+  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  plotit(nc, encode(geometry = geometry)) |> mark_map()
 }
+}
+\references{
+Vega-Lite: \href{https://vega.github.io/vega-lite/docs/geoshape.html}{Geoshape}
+
+AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/geo-path}{GeoPath}
 }
