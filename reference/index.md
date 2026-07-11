@@ -15,20 +15,54 @@ Add visual marks to your plot.
   : Area layer
 - [`mark_bar()`](https://zorrooz.github.io/plotit/reference/mark_bar.md)
   : Bar layer
+- [`mark_beeswarm()`](https://zorrooz.github.io/plotit/reference/mark_beeswarm.md)
+  : Beeswarm plot layer
 - [`mark_boxplot()`](https://zorrooz.github.io/plotit/reference/mark_boxplot.md)
   : Boxplot layer
+- [`mark_chord()`](https://zorrooz.github.io/plotit/reference/mark_chord.md)
+  : Chord diagram layer
+- [`mark_corr()`](https://zorrooz.github.io/plotit/reference/mark_corr.md)
+  : Correlation matrix heatmap
 - [`mark_density()`](https://zorrooz.github.io/plotit/reference/mark_density.md)
   : Density layer
+- [`mark_density_2d()`](https://zorrooz.github.io/plotit/reference/mark_density_2d.md)
+  : 2D density contour layer
+- [`mark_dumbbell()`](https://zorrooz.github.io/plotit/reference/mark_dumbbell.md)
+  : Dumbbell comparison chart layer
+- [`mark_errorbar()`](https://zorrooz.github.io/plotit/reference/mark_errorbar.md)
+  : Error bar layer
+- [`mark_hex()`](https://zorrooz.github.io/plotit/reference/mark_hex.md)
+  : Hexagonal heatmap layer
 - [`mark_histogram()`](https://zorrooz.github.io/plotit/reference/mark_histogram.md)
   : Histogram layer
 - [`mark_line()`](https://zorrooz.github.io/plotit/reference/mark_line.md)
   : Line layer
+- [`mark_lollipop()`](https://zorrooz.github.io/plotit/reference/mark_lollipop.md)
+  : Lollipop chart layer
 - [`mark_map()`](https://zorrooz.github.io/plotit/reference/mark_map.md)
   : Map layer
+- [`mark_network()`](https://zorrooz.github.io/plotit/reference/mark_network.md)
+  : Network / force-directed graph layer
+- [`mark_path()`](https://zorrooz.github.io/plotit/reference/mark_path.md)
+  : Path layer
 - [`mark_point()`](https://zorrooz.github.io/plotit/reference/mark_point.md)
   : Point layer
+- [`mark_polygon()`](https://zorrooz.github.io/plotit/reference/mark_polygon.md)
+  : Polygon layer
+- [`mark_rect()`](https://zorrooz.github.io/plotit/reference/mark_rect.md)
+  : Rectangle layer
+- [`mark_rule()`](https://zorrooz.github.io/plotit/reference/mark_rule.md)
+  : Reference line / segment layer
+- [`mark_sankey()`](https://zorrooz.github.io/plotit/reference/mark_sankey.md)
+  : Sankey flow diagram layer
+- [`mark_significance()`](https://zorrooz.github.io/plotit/reference/mark_significance.md)
+  : Significance annotation layer
+- [`mark_smooth()`](https://zorrooz.github.io/plotit/reference/mark_smooth.md)
+  : Smoothed conditional mean layer
 - [`mark_text()`](https://zorrooz.github.io/plotit/reference/mark_text.md)
   : Text layer
+- [`mark_treemap()`](https://zorrooz.github.io/plotit/reference/mark_treemap.md)
+  : Treemap layer
 - [`mark_violin()`](https://zorrooz.github.io/plotit/reference/mark_violin.md)
   : Violin layer
 
@@ -116,3 +150,12 @@ Render and save your plots to files.
 
 - [`export()`](https://zorrooz.github.io/plotit/reference/export.md) :
   Export a plotit object to a file
+
+## Customization
+
+Extend plotit with custom marks and themes.
+
+- [`make_mark()`](https://zorrooz.github.io/plotit/reference/make_mark.md)
+  : Create a custom mark
+- [`make_theme()`](https://zorrooz.github.io/plotit/reference/make_theme.md)
+  : Create a reusable theme preset

@@ -173,10 +173,10 @@ Multi-plot compositions follow their own outermost pipeline:
 
 ### Custom extensions
 
-| Function       | Description                                  |
-|:---------------|:---------------------------------------------|
-| `make_mark()`  | Register a custom mark from any ggplot2 geom |
-| `make_theme()` | Create a reusable theme preset function      |
+| Function | Description |
+|:---|:---|
+| [`make_mark()`](https://zorrooz.github.io/plotit/reference/make_mark.md) | Register a custom mark from any ggplot2 geom |
+| [`make_theme()`](https://zorrooz.github.io/plotit/reference/make_theme.md) | Create a reusable theme preset function |
 
 ## Documentation
 

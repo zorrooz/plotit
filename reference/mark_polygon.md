@@ -1,12 +1,12 @@
-# Map layer
+# Polygon layer
 
-Adds a geographic map layer for sf spatial data frames. Requires the sf
-package.
+Adds a filled polygon layer. Each group forms one polygon; subgroups are
+separated by `NA` rows or the `group` aesthetic.
 
 ## Usage
 
 ``` r
-mark_map(
+mark_polygon(
   plot,
   mapping = NULL,
   data = NULL,
@@ -30,15 +30,15 @@ mark_map(
 
 - data:
 
-  Optional sf data frame for this layer
+  Optional data for this layer
 
 - position:
 
-  Position adjustment (ignored for sf layers).
+  Position adjustment.
 
 - ...:
 
-  Other arguments passed to `geom_sf`
+  Other arguments passed to `geom_polygon`
 
 - rasterize:
 
@@ -59,16 +59,11 @@ Modified plotit object
 
 ## References
 
-Vega-Lite:
-[Geoshape](https://vega.github.io/vega-lite/docs/geoshape.html)
-
-AntV G2: [GeoPath](https://g2.antv.antgroup.com/en/api/mark/geo-path)
+AntV G2: [Polygon](https://g2.antv.antgroup.com/en/api/mark/polygon)
 
 ## Examples
 
 ``` r
-if (requireNamespace("sf", quietly = TRUE)) {
-  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
-  plotit(nc, encode(geometry = geometry)) |> mark_map()
-}
+tri <- data.frame(x = c(0, 1, 0.5), y = c(0, 0, 1))
+plotit(tri, encode(x = x, y = y)) |> mark_polygon(fill = "skyblue")
 ```

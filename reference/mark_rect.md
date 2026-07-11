@@ -1,12 +1,12 @@
-# Map layer
+# Rectangle layer
 
-Adds a geographic map layer for sf spatial data frames. Requires the sf
-package.
+Adds a rectangle or tile layer. Use for heatmaps, grid cells, Gantt
+charts, or any plot where both x and y span a range.
 
 ## Usage
 
 ``` r
-mark_map(
+mark_rect(
   plot,
   mapping = NULL,
   data = NULL,
@@ -30,15 +30,15 @@ mark_map(
 
 - data:
 
-  Optional sf data frame for this layer
+  Optional data for this layer
 
 - position:
 
-  Position adjustment (ignored for sf layers).
+  Position adjustment.
 
 - ...:
 
-  Other arguments passed to `geom_sf`
+  Other arguments passed to `geom_tile`
 
 - rasterize:
 
@@ -59,16 +59,15 @@ Modified plotit object
 
 ## References
 
-Vega-Lite:
-[Geoshape](https://vega.github.io/vega-lite/docs/geoshape.html)
+Vega-Lite: [Rect](https://vega.github.io/vega-lite/docs/rect.html)
 
-AntV G2: [GeoPath](https://g2.antv.antgroup.com/en/api/mark/geo-path)
+AntV G2: [Cell](https://g2.antv.antgroup.com/en/api/mark/cell) /
+[Rect](https://g2.antv.antgroup.com/en/api/mark/rect)
 
 ## Examples
 
 ``` r
-if (requireNamespace("sf", quietly = TRUE)) {
-  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
-  plotit(nc, encode(geometry = geometry)) |> mark_map()
-}
+df <- expand.grid(x = 1:5, y = 1:5)
+df$z <- df$x * df$y
+plotit(df, encode(x = x, y = y, fill = z)) |> mark_rect()
 ```

@@ -174,10 +174,10 @@ compose_grid(p1, p2, tag_levels = "A") |>
 
 ### 自定义扩展
 
-| 函数           | 说明                                  |
-|:---------------|:--------------------------------------|
-| `make_mark()`  | 基于任意 ggplot2 geom 注册自定义 Mark |
-| `make_theme()` | 创建可复用的主题预设函数              |
+| 函数 | 说明 |
+|:---|:---|
+| [`make_mark()`](https://zorrooz.github.io/plotit/reference/make_mark.md) | 基于任意 ggplot2 geom 注册自定义 Mark |
+| [`make_theme()`](https://zorrooz.github.io/plotit/reference/make_theme.md) | 创建可复用的主题预设函数 |
 
 ## 文档
 
