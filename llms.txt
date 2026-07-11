@@ -158,12 +158,17 @@ Multi-plot compositions follow their own outermost pipeline:
 | [`compose_inset()`](https://zorrooz.github.io/plotit/reference/compose_inset.md) | Floating inset overlay |
 | [`compose_marginal()`](https://zorrooz.github.io/plotit/reference/compose_marginal.md) | Scatter with marginal distributions |
 
-### Theme & export
+### Theme
 
 | Function | Description |
 |:---|:---|
 | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | Apply a ggplot2 theme |
 | [`style_default()`](https://zorrooz.github.io/plotit/reference/style_default.md) | Restore plotit’s built-in theme |
+
+### Export
+
+| Function | Description |
+|:---|:---|
 | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | Render to file (pdf, png, svg, …) |
 
 ### Custom extensions

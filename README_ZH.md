@@ -159,12 +159,17 @@ compose_grid(p1, p2, tag_levels = "A") |>
 | [`compose_inset()`](https://zorrooz.github.io/plotit/reference/compose_inset.md) | 浮动嵌入 |
 | [`compose_marginal()`](https://zorrooz.github.io/plotit/reference/compose_marginal.md) | 散点 + 边际分布 |
 
-### 主题与导出
+### 主题
 
 | 函数 | 说明 |
 |:---|:---|
 | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | 应用 ggplot2 主题 |
 | [`style_default()`](https://zorrooz.github.io/plotit/reference/style_default.md) | 恢复 plotit 内置主题 |
+
+### 导出
+
+| 函数 | 说明 |
+|:---|:---|
 | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | 渲染为文件（pdf、png、svg 等） |
 
 ### 自定义扩展
