@@ -118,33 +118,64 @@
 | `mark_violin` | `geom_violin` | 小提琴图 |
 | `mark_map` | `geom_sf` | 地图/地理空间 |
 
-**完整规划**（20 种，对标 Vega-Lite 15 种 + AntV G2 30+ 种，经组合优先原则精简）：
+#### Vega-Lite vs AntV G2 复合 Mark 全量对比
 
-| # | 函数 | 类别 | 对应 R 包 / geom | 对标来源 | 用途 |
-|---|---|---|---|---|---|
-| | **基础几何** | | | | |
-| 1 | `mark_point` | 基础 | `geom_point` | VL `point`/G2 `point` | 散点/气泡 ✅ |
-| 2 | `mark_line` | 基础 | `geom_line` | VL `line`/G2 `line` | 折线/趋势/雷达线 ✅ |
-| 3 | `mark_area` | 基础 | `geom_area`/`geom_ribbon` | VL `area`/G2 `area` | 面积图/堆叠面积/河流图/误差带 |
-| 4 | `mark_bar` | 基础 | `geom_bar`/`geom_col` | VL `bar`/G2 `interval` | 柱状/条形图 ✅ |
-| 5 | `mark_rect` | 基础 | `geom_tile`/`geom_rect` | VL `rect`/G2 `cell` `rect` | 矩形/热力图单元格 |
-| 6 | `mark_polygon` | 基础 | `geom_polygon` | G2 `polygon` | 多边形/自定义形状/地图区域 |
-| 7 | `mark_text` | 基础 | `geom_text`/`ggrepel` | VL `text`/G2 `text` | 文本标签/标注/数据标签 |
-| 8 | `mark_rule` | 基础 | `geom_hline`/`geom_vline`/`geom_abline`/`geom_segment` | VL `rule`/G2 `lineX` `lineY` `rangeX` `rangeY` | 参考线/参考区域/误差线 |
-| 9 | `mark_path` | 基础 | `geom_path` | G2 `path`/VL（Vega `trail`） | 路径/轨迹 |
-| | **分布展示** | | | | |
-| 10 | `mark_histogram` | 分布 | `geom_histogram` | VL `bar`(binned)/G2 `interval`(histogram) | 直方图 ✅ |
-| 11 | `mark_density` | 分布 | `geom_density`/`geom_density_2d` | G2 `density` `heatmap` | 密度曲线/KDE/2D 密度热力图 ✅ |
-| 12 | `mark_boxplot` | 分布 | `geom_boxplot` | VL `boxplot`/G2 `boxplot` | 箱线图 ✅ |
-| 13 | `mark_violin` | 分布 | `geom_violin` | G2 `density`(violin shape) | 小提琴图 |
-| 14 | `mark_beeswarm` | 分布 | `ggbeeswarm::geom_beeswarm` | G2 `beeswarm` | 蜂群散点/分布散点 |
-| | **关系与层次** | | | | |
-| 15 | `mark_network` | 关系 | `ggraph`/`igraph` | G2 `forceGraph` | 网络/力导向图 |
-| 16 | `mark_sankey` | 关系 | `ggsankey` | G2 `sankey` | 桑基流向图 |
-| 17 | `mark_chord` | 关系 | `circlize` | G2 `chord` | 弦图/环形关系图 |
-| 18 | `mark_treemap` | 关系 | `treemapify` | G2 `treemap` `pack` | 矩形树图/圆形 packing |
-| | **地理空间** | | | | |
-| 19 | `mark_map` | 地理 | `sf`+`geom_sf` | VL `geoshape`/G2 `geoPath` | 地图/地理空间 |
+Vega-Lite 和 AntV G2 采用不同策略处理统计/复合 Mark，plotit 取两者之长：
+
+| 引擎 | 基础 Mark 数量 | 复合/统计 Mark 策略 | 典型复合 Mark |
+|---|---|---|---|
+| **Vega-Lite** | 11 原语 (`area`/`bar`/`line`/`point`/`rect`/`rule`/`text`/`tick`/`circle`/`square`/`geoshape`) | 3 个复合 Mark 宏观展开为多层原语 | `boxplot`(5 层)、`errorbar`(2 层)、`errorband`(2 层) |
+| **AntV G2 5.0** | 24 基础 (corelib) | 3 层库体系：基础→统计(3)→复合(10) | `boxplot`/`gauge`/`liquid`(plotlib) + `sankey`/`treemap`/`chord`/`forceGraph` 等(graphlib) |
+| **plotit** | 10 已实现 | **三层体系**：基础 Mark → 统计 Mark → 复合 Mark（语法糖） | 见下表 |
+
+G2 的每个复合 Mark 内部展开为 2-5 个基础 Mark 的组合，这与 plotit "组合优先"原则一致。参考两方经验，plotit 新增两类：
+
+- **统计 Mark**：对标 Vega-Lite 复合 Mark (`boxplot`/`errorbar`/`errorband`)的统计聚合能力 + G2 corelib 的 `density`/`heatmap`/`beeswarm`
+- **复合 Mark**：对标 Vega-Lite `layer` 运算符和 G2 graphlib/plotlib 的组合模式，封装 2+ 已有 Mark 的固定搭配
+
+**完整规划**（28 种，对标 Vega-Lite 15+ 种 + AntV G2 30+ 种，三层体系：基础 → 统计 → 复合）：
+
+| # | 层级 | 函数 | 类别 | 底层 R 实现 | 对标来源 | 用途 |
+|---|---|---|---|---|---|---|
+| | **第一层：基础 Mark** | | | | | |
+| 1 | 基础 | `mark_point` | 几何 | `geom_point` | VL `point`/G2 `point` | 散点/气泡 ✅ |
+| 2 | 基础 | `mark_line` | 几何 | `geom_line` | VL `line`/G2 `line` | 折线/趋势 ✅ |
+| 3 | 基础 | `mark_area` | 几何 | `geom_area`/`geom_ribbon` | VL `area`/G2 `area` | 面积图/堆叠面积 ✅ |
+| 4 | 基础 | `mark_bar` | 几何 | `geom_bar`/`geom_col` | VL `bar`/G2 `interval` | 柱状/条形图 ✅ |
+| 5 | 基础 | `mark_rect` | 几何 | `geom_tile`/`geom_rect` | VL `rect`/G2 `cell` `rect` | 矩形/热力图单元格 |
+| 6 | 基础 | `mark_polygon` | 几何 | `geom_polygon` | G2 `polygon` | 多边形/自定义形状 |
+| 7 | 基础 | `mark_text` | 几何 | `geom_text`/`ggrepel` | VL `text`/G2 `text` | 文本标签/数据标注 ✅ |
+| 8 | 基础 | `mark_rule` | 几何 | `geom_hline`/`geom_vline`/`geom_abline`/`geom_segment` | VL `rule`/G2 `lineX` `lineY` `rangeX` `rangeY` | 参考线/参考区域/误差线 |
+| 9 | 基础 | `mark_path` | 几何 | `geom_path` | G2 `path` | 路径/轨迹 |
+| 10 | 基础 | `mark_histogram` | 分布 | `geom_histogram` | VL `bar`(binned) | 直方图 ✅ |
+| 11 | 基础 | `mark_density` | 分布 | `geom_density` | G2 `density` | 1D 核密度曲线 ✅ |
+| 12 | 基础 | `mark_boxplot` | 分布 | `geom_boxplot` | VL `boxplot`/G2 `boxplot` | 箱线图 ✅ |
+| 13 | 基础 | `mark_violin` | 分布 | `geom_violin` | G2 `density`(violin) | 小提琴图 ✅ |
+| 14 | 基础 | `mark_map` | 地理 | `sf`+`geom_sf` | VL `geoshape`/G2 `geoPath` | 地图/地理空间 ✅ |
+| | **第二层：统计 Mark** | | | | | |
+| 15 | 统计 | `mark_smooth` | 统计 | `geom_smooth` | VL: layer组合/G2: transform | 回归平滑+置信带 |
+| 16 | 统计 | `mark_hex` | 统计 | `geom_hex` | G2 `heatmap`(corelib) | 2D 六边形分箱热力图 |
+| 17 | 统计 | `mark_density_2d` | 统计 | `geom_density_2d`/`geom_density_2d_filled` | G2 `density`(contour) | 2D 密度等高线 |
+| 18 | 统计 | `mark_corr` | 统计 | `geom_tile` + corr预处理 | G2 `cell`(相关性矩阵) | 相关性矩阵热力图 |
+| | **第三层：复合 Mark** | | | | | |
+| 19 | 复合 | `mark_significance` | 标注 | `mark_rule` + `mark_text` 语法糖 | VL: layer组合 | 显著性标记（括号+星号） |
+| 20 | 复合 | `mark_errorbar` | 标注 | `mark_rule` + `mark_line` 语法糖 | VL `errorbar`(复合Mark) | 误差棒 |
+| 21 | 复合 | `mark_lollipop` | 图表 | `mark_point` + `mark_line` 语法糖 | — | 棒棒糖图 |
+| 22 | 复合 | `mark_dumbbell` | 图表 | `mark_point`×2 + `mark_line` 语法糖 | G2 `link`(corelib) | 哑铃对比图 |
+| | **第三层（关系）** | | | | | |
+| 23 | 复合 | `mark_beeswarm` | 分布 | `ggbeeswarm::geom_beeswarm` | G2 `beeswarm`(corelib) | 蜂群散点（碰撞检测） |
+| 24 | 复合 | `mark_sankey` | 关系 | `ggsankey` | G2 `sankey`(graphlib) | 桑基流向图 |
+| 25 | 复合 | `mark_treemap` | 关系 | `treemapify` | G2 `treemap`(graphlib) | 矩形树图 |
+| 26 | 复合 | `mark_network` | 关系 | `ggraph`/`igraph` | G2 `forceGraph`(graphlib) | 力导向网络图 |
+| 27 | 复合 | `mark_chord` | 关系 | `circlize` | G2 `chord`(graphlib) | 弦图 |
+
+**三层判断规则**：
+
+| 层级 | 可以新增 | 不可新增 |
+|---|---|---|
+| **基础 Mark** | 底层 `geom` 没有 plotit 封装，通过 `._register_mark_method` 标准化 | 已有 Mark 能表达；或纯坐标/分面变化效果 |
+| **统计 Mark** | `geom+stat` 自带非平凡算法（回归/KDE/分箱），对标 VL 复合Mark 或 G2 统计Mark | 单纯 `stat_summary()` → 用户可直接 `mark_point(stat="summary")` |
+| **复合 Mark** | 2+ 已有 Mark 的固定组合模式，显著减少 3+ 层管道，必须标注"语法糖"并在文档注明等价展开 | 组合仅用于一次 edge case、或 `scale_*`/`project_*` 可替代 |
 
 > **组合优先移除的 mark**（2 个）：
 > - ~~`mark_arc`~~（饼图/环形图/玫瑰图）→ `mark_bar() |> project_polar(inner_radius = ...)`，见 §3.2b
@@ -239,6 +270,97 @@ plotit(data, mapping = encode(), autofit = FALSE,
 - `...` 透传底层 `geom_*`
 - `rasterize` 需 `ggrastr`
 - 内部通过 `._mark_impl()` 共享逻辑：resolve position、构建 geom、条件栅格化
+
+#### 3.3.3a `make_mark()` / `make_theme()` — 用户可扩展工厂
+
+plotit 暴露两个工厂函数，允许用户在不修改包源码的情况下自定义 Mark 和 Theme：
+
+**`make_mark(name, geom_fun)`** — 创建自定义 Mark
+
+```r
+make_mark <- function(name, geom_fun) {
+  # name: 字符，Mark 名（如 "mark_spoke"）
+  # geom_fun: ggplot2 geom 函数（如 ggplot2::geom_spoke）
+  # 返回: 注册 S7 泛型 + 方法，全局可用
+}
+
+# 示例：创建 mark_spoke（径向线段图）
+make_mark("mark_spoke", ggplot2::geom_spoke)
+# 现在可以在管道中使用：
+# df |> plotit(encode(x=x, y=y, radius=r, angle=a)) |> mark_spoke()
+```
+
+- 自动注册 S7 泛型 + 方法（与内置 Mark 共享 `._register_mark_method`）
+- 支持 `rasterize` 参数（与内置 Mark 一致）
+- `name` 必须 `mark_` 前缀；否则 `cli::cli_warn`
+- 不写入 NAMESPACE（在用户命名空间中注册）
+
+**`make_theme(name, ..., base_theme)`** — 创建自定义 Theme 预设
+
+```r
+make_theme <- function(name, ..., base_theme = ggplot2::theme_minimal) {
+  # name: 字符，函数名（如 "style_dark"）
+  # ...: ggplot2::theme() 元素
+  # base_theme: 基础主题（默认 theme_minimal）
+  # 返回: 创建并注册的函数到调用者环境
+}
+
+# 示例：暗色主题
+style_dark <- make_theme("style_dark",
+  plot.background = ggplot2::element_rect(fill = "#1a1a1a"),
+  text = ggplot2::element_text(colour = "white"))
+# df |> plotit(encode(...)) |> mark_point() |> style_dark()
+```
+
+- 函数创建到调用者环境（`parent.frame()`）
+- 与内置 `style()` 相同签名：`function(plot, base_size=NULL, base_family=NULL)`
+- 返回修改后的 plotit 对象
+
+**设计理由**：
+- Vega-Lite/G2 均支持自定义 Mark 注册（VL 的 `config.mark` 扩展、G2 的 `Chart.register`），plotit 的 `make_mark` 与之对齐
+- 避免用户深入 S7 泛型注册细节
+- 自定义 Mark 与内置 Mark 行为完全一致（position 解析、栅格化等共享逻辑）
+
+#### 3.3.3b 统计 Mark 与 复合 Mark 详细约定
+
+**第二层：统计 Mark（封装 geom + stat）**
+
+这些 Mark 的底层 `geom` 自带统计算法，对标 Vega-Lite 的复合 Mark（`boxplot`/`errorbar`/`errorband`）和 G2 corelib 的统计 Mark（`density`/`heatmap`/`beeswarm`）：
+
+| 统计 Mark | 自带算法 | Vega-Lite 对标 | G2 对标 | 输入 | 输出 |
+|---|---|---|---|---|---|
+| `mark_smooth` | `stat_smooth`（loess/lm/glm/gam） | 无原生，需 `layer` 组合 `point` + `line` + `transform(regression)` | 无原生，需 transform | x, y | 回归线 + 置信带 |
+| `mark_hex` | `stat_bin_hex`（2D 六边形分箱） | 无原生，需 `rect` + `transform(bin2d)` | `mark.heatmap`(corelib) | x, y | 六边形计数/聚合网格 |
+| `mark_density_2d` | `stat_density_2d`（2D KDE） | 无原生，需 `line` + `transform(density2d)` | `mark.density`(corelib, contour) | x, y | 密度等高线 |
+| `mark_corr` | `geom_tile` + 内部 corr 预处理 | 无原生，需 `rect` + 外部计算 | `mark.cell`（相关性矩阵表达式） | 数值矩阵/df | 重新排序的相关矩阵热力图 |
+
+**第三层：复合 Mark（语法糖，组合已有 Mark）**
+
+这些 Mark **不引入新 geom**，内部组合 2+ 已有 Mark 和用户提供的注释数据：
+
+| 复合 Mark | 展开等价管道 | 对标来源 | 典型参数 |
+|---|---|---|---|
+| `mark_significance` | `mark_rule(x=x, xend=x2, y=y, yend=y)` + `mark_text(x=mid(x,x2), y=y+offset, label=sig)` | Vega-Lite: layer(bar+rule+text) 社区惯用模式 | `comparisons`(data.frame), `y_positions`, `labels` |
+| `mark_errorbar` | `mark_rule(x=x, ymin=.., ymax=..)` + 可选 tick 端点 | Vega-Lite `errorbar`（3大复合Mark 之一） | `stat`("ci"/"stderr"/"stdev"), `width` |
+| `mark_lollipop` | `mark_point()` + `mark_line(xend=x, yend=0)` | 无直接对标 | x, y |
+| `mark_dumbbell` | `mark_point(aes=x, y=y_start)` + `mark_point(aes=x, y=y_end)` + `mark_line(aes(x=x, xend=x, y=y_start, yend=y_end))` | G2 `mark.link` | `y_start`, `y_end` |
+
+**复合 Mark 实现原则**：
+1. 必须在文档中注明等价展开（"该函数等价于 `mark_rule + mark_text` 的组合"）
+2. `@export` 但标注为"语法糖"
+3. 不接受 `rasterize` 参数（内层 Mark 各自处理）
+4. 返回 `plotit` 对象，可继续链式调用其他函数
+
+**新增 Mark 判断流程**（更新）：
+
+```
+目标视觉效果
+├── 能用已有基础 Mark + project_* → 不新增，提供 combination recipe（§3.2b）
+├── 能用已有 Mark + scale_*/split_* → 不新增
+├── 底层 geom+stat 自带非平凡算法 → 新增「统计 Mark」
+├── 2+ 已有 Mark 固定组合，减少 3+ 层管道 → 新增「复合 Mark」（语法糖）
+└── 需要外部布局算法 / 非 ggplot2 渲染 → 新增「基础 Mark」（引入新 geom）
+```
 
 #### 3.3.4 `scale_*` — 比例尺
 
