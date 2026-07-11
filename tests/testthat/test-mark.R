@@ -182,3 +182,25 @@ test_that("[BDD] mark_density adds density layer", {
   expect_s3_class(p, "plotit::plotit")
   expect_length(.built(p)$data, 1)
 })
+
+# ---- mark_area ----
+test_that("[BDD] mark_area adds area layer", {
+  p <- plotit(ggplot2::economics, encode(x = date, y = unemploy)) |>
+    mark_area(alpha = 0.5)
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("[BDD] mark_area supports local mapping and data", {
+  p <- plotit(ggplot2::economics, encode(x = date, y = unemploy))
+  sub <- ggplot2::economics[1:100, ]
+  p <- mark_area(p, data = sub, mapping = encode(x = date, y = unemploy))
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("mark_area supports fill aesthetic", {
+  p <- plotit(ggplot2::economics, encode(x = date, y = unemploy, fill = "blue")) |>
+    mark_area()
+  expect_s3_class(p, "plotit::plotit")
+})

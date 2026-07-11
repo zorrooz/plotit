@@ -197,6 +197,34 @@ mark_density <- S7::new_generic(
 )
 ._register_mark_method(mark_density, ggplot2::geom_density)
 
+# ---- mark_area ----
+#' Area layer
+#'
+#' Adds a filled area layer. Use for stacked area charts, stream graphs,
+#' or error bands.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_area`
+#' @return Modified plotit object
+#' @examples
+#' plotit(ggplot2::economics, encode(x = date, y = unemploy)) |>
+#'   mark_area(alpha = 0.5)
+#' @export
+mark_area <- S7::new_generic(
+  "mark_area", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+._register_mark_method(mark_area, ggplot2::geom_area)
+
 # ---- mark_bar (hand-written: geom_col vs geom_bar dispatch) ----
 #' Bar layer
 #'
