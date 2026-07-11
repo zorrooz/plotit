@@ -225,3 +225,25 @@ test_that("mark_text passes extra params via dots", {
     mark_text(size = 3, check_overlap = TRUE, vjust = -1)
   expect_s3_class(p, "plotit::plotit")
 })
+
+# ---- mark_violin ----
+test_that("[BDD] mark_violin adds violin layer", {
+  p <- plotit(iris, encode(x = Species, y = Sepal.Length)) |>
+    mark_violin(draw_quantiles = 0.5)
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("[BDD] mark_violin supports local data", {
+  p <- plotit(iris, encode(x = Species, y = Sepal.Length)) |>
+    mark_violin(data = iris[iris$Species == "setosa", ])
+  expect_s3_class(p, "plotit::plotit")
+  expect_length(.built(p)$data, 1)
+})
+
+test_that("[BDD] mark_violin auto-dodges with fill", {
+  p <- plotit(iris, encode(x = Species, y = Sepal.Length, fill = Species)) |>
+    mark_violin()
+  built <- .built(p)
+  expect_length(built$data, 1)
+})

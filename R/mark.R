@@ -278,6 +278,34 @@ S7::method(mark_text, plotit_class) <- function(
   )
 }
 
+# ---- mark_violin ----
+#' Violin layer
+#'
+#' Adds a violin plot layer showing the kernel density estimate of the data
+#' at each position.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_violin`
+#' @return Modified plotit object
+#' @examples
+#' plotit(iris, encode(x = Species, y = Sepal.Length)) |>
+#'   mark_violin(draw_quantiles = 0.5)
+#' @export
+mark_violin <- S7::new_generic(
+  "mark_violin", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+._register_mark_method(mark_violin, ggplot2::geom_violin)
+
 # ---- mark_bar (hand-written: geom_col vs geom_bar dispatch) ----
 #' Bar layer
 #'
