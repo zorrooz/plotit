@@ -79,7 +79,7 @@ compose_grid(p1, p2, tag_levels = "A") |>
 Every plotit chart follows a consistent pipeline:
 
 ```
-data |> plotit(encode(...)) |> mark_*() |> scale_*() |> label_*() |> project_*() |> split_*() |> style() |> export()
+data |> plotit(encode(...)) |> mark_*() |> scale_*() |> split_*() |> project_*() |> label_*() |> style() |> export()
 ```
 
 | Step | Verb | Role |
@@ -87,9 +87,9 @@ data |> plotit(encode(...)) |> mark_*() |> scale_*() |> label_*() |> project_*()
 | 1. Initialise | `plotit()` + `encode()` | Bind data and aesthetic mappings |
 | 2. Layer | `mark_*()` | Add geometric layers (points, lines, bars, …) |
 | 3. Scale | `scale_*()` | Control how data maps to visual properties |
-| 4. Label | `label_*()` | Set titles, axis labels, legend titles |
+| 4. Facet | `split_*()` | Split into small multiples |
 | 5. Coordinate | `project_*()` | Choose coordinate system (cartesian, polar, map) |
-| 6. Facet | `split_*()` | Split into small multiples |
+| 6. Label | `label_*()` | Set titles, axis labels, legend titles |
 | 7. Theme | `style()` | Apply a complete theme |
 | 8. Export | `export()` | Render to file |
 
@@ -107,10 +107,14 @@ compose_*(p1, p2, ...) |> label_*() |> style() |> export()
 |:---|:---|:---|
 | `mark_point()` | `geom_point()` | Scatter plots |
 | `mark_line()` | `geom_line()` | Lines and trends |
+| `mark_area()` | `geom_area()` | Filled area / stream graph |
 | `mark_bar()` | `geom_bar()` / `geom_col()` | Bar charts |
+| `mark_text()` | `geom_text()` / `ggrepel` | Text labels and annotations |
 | `mark_boxplot()` | `geom_boxplot()` | Box-and-whisker plots |
 | `mark_histogram()` | `geom_histogram()` | Histograms |
-| `mark_density()` | `geom_density()` | Kernel density estimates |
+| `mark_density()` | `geom_density()` | 1D kernel density |
+| `mark_violin()` | `geom_violin()` | Violin plots |
+| `mark_map()` | `geom_sf()` | Geographic maps |
 
 ### `scale_*` — Data-to-visual mapping
 
@@ -166,6 +170,13 @@ compose_*(p1, p2, ...) |> label_*() |> style() |> export()
 | `style()` | Apply a ggplot2 theme |
 | `style_default()` | Restore plotit's built-in theme |
 | `export()` | Render to file (pdf, png, svg, …) |
+
+### Custom extensions
+
+| Function | Description |
+|:---|:---|
+| `make_mark()` | Register a custom mark from any ggplot2 geom |
+| `make_theme()` | Create a reusable theme preset function |
 
 ## Documentation
 

@@ -76,7 +76,7 @@ compose_grid(p1, p2, tag_levels = "A") |>
 每个 plotit 图表都遵循一致的管道：
 
 ```
-data |> plotit(encode(...)) |> mark_*() |> scale_*() |> label_*() |> project_*() |> split_*() |> style() |> export()
+data |> plotit(encode(...)) |> mark_*() |> scale_*() |> split_*() |> project_*() |> label_*() |> style() |> export()
 ```
 
 | 步骤 | 动词 | 职责 |
@@ -84,10 +84,10 @@ data |> plotit(encode(...)) |> mark_*() |> scale_*() |> label_*() |> project_*()
 | 1. 初始化 | `plotit()` + `encode()` | 绑定数据与美学映射 |
 | 2. 图层 | `mark_*()` | 添加几何图层（点、线、柱等） |
 | 3. 标度 | `scale_*()` | 控制数据到视觉属性的映射 |
-| 4. 标签 | `label_*()` | 设置标题、轴标签、图例标题 |
+| 4. 分面 | `split_*()` | 拆分为小倍数图 |
 | 5. 坐标 | `project_*()` | 选择坐标系（笛卡尔、极坐标、地图） |
-| 6. 分面 | `split_*()` | 拆分为小倍数图 |
-| 7. 主题 | `style()` | 应用完整主题 |
+| 6. 标签 | `label_*()` | 设置标题、轴标签、图例标题 |
+| 7. 主题 | `style()` | 应用主题样式 |
 | 8. 导出 | `export()` | 渲染为文件 |
 
 多图组合遵循最外层管道：
@@ -104,10 +104,14 @@ compose_*(p1, p2, ...) |> label_*() |> style() |> export()
 |:---|:---|:---|
 | `mark_point()` | `geom_point()` | 散点图 |
 | `mark_line()` | `geom_line()` | 折线与趋势线 |
+| `mark_area()` | `geom_area()` | 面积图/河流图 |
 | `mark_bar()` | `geom_bar()` / `geom_col()` | 柱状图 |
+| `mark_text()` | `geom_text()` / `ggrepel` | 文本标签与数据标注 |
 | `mark_boxplot()` | `geom_boxplot()` | 箱线图 |
 | `mark_histogram()` | `geom_histogram()` | 直方图 |
-| `mark_density()` | `geom_density()` | 核密度估计 |
+| `mark_density()` | `geom_density()` | 1D 核密度估计 |
+| `mark_violin()` | `geom_violin()` | 小提琴图 |
+| `mark_map()` | `geom_sf()` | 地图/地理空间 |
 
 ### `scale_*` — 数据到视觉的映射
 
@@ -163,6 +167,13 @@ compose_*(p1, p2, ...) |> label_*() |> style() |> export()
 | `style()` | 应用 ggplot2 主题 |
 | `style_default()` | 恢复 plotit 内置主题 |
 | `export()` | 渲染为文件（pdf、png、svg 等） |
+
+### 自定义扩展
+
+| 函数 | 说明 |
+|:---|:---|
+| `make_mark()` | 基于任意 ggplot2 geom 注册自定义 Mark |
+| `make_theme()` | 创建可复用的主题预设函数 |
 
 ## 文档
 
