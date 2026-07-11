@@ -71,6 +71,8 @@ for (.generic_name in c(
   "mark_violin", "mark_map", "mark_rect", "mark_rule",
   "mark_path", "mark_polygon", "mark_smooth", "mark_hex",
   "mark_density_2d", "mark_corr",
+  "mark_errorbar", "mark_significance",
+  "mark_lollipop", "mark_dumbbell",
   "scale_color", "scale_fill", "scale_size", "scale_alpha",
   "scale_shape", "scale_linetype", "scale_x", "scale_y",
   "project_cartesian", "project_polar", "project_parallel",

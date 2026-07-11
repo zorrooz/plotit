@@ -500,3 +500,118 @@ test_that("make_theme with custom base theme works", {
     mark_point() |> style_custom()
   expect_s3_class(p, "plotit::plotit")
 })
+
+# ---- mark_errorbar ----
+test_that("[BDD] mark_errorbar adds error bars", {
+  df <- data.frame(
+    x = c("A", "B"),
+    y = c(10, 20),
+    ymin = c(8, 18),
+    ymax = c(12, 22)
+  )
+  p <- plotit(df, encode(x = x, y = y, ymin = ymin, ymax = ymax)) |>
+    mark_point() |>
+    mark_errorbar(width = 0.3)
+  expect_s3_class(p, "plotit::plotit")
+  expect_true(length(.built(p)$data) >= 2)
+})
+
+test_that("mark_errorbar supports horizontal orientation", {
+  df <- data.frame(y = c("A", "B"), x = c(10, 20),
+                   xmin = c(8, 18), xmax = c(12, 22))
+  p <- plotit(df, encode(x = x, y = y, xmin = xmin, xmax = xmax)) |>
+    mark_point() |>
+    mark_errorbar(width = 0.3, orientation = "horizontal")
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_errorbar supports local data", {
+  df <- data.frame(x = c("A", "B"), y = c(10, 20))
+  err <- data.frame(x = c("A", "B"), ymin = c(8, 18), ymax = c(12, 22))
+  p <- plotit(df, encode(x = x, y = y)) |> mark_point() |>
+    mark_errorbar(data = err, mapping = encode(x = x, ymin = ymin, ymax = ymax))
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_significance ----
+test_that("[BDD] mark_significance adds significance brackets", {
+  df <- data.frame(group = c("A", "B", "C"), value = c(5, 8, 4))
+  comp <- data.frame(
+    group1 = c("A", "A"), group2 = c("B", "C"),
+    label = c("**", "ns"), stringsAsFactors = FALSE
+  )
+  p <- plotit(df, encode(x = group, y = value)) |>
+    mark_bar() |>
+    mark_significance(comp, y_position = c(9, 6))
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_significance errors on missing columns", {
+  df <- data.frame(group = c("A", "B"), value = c(5, 8))
+  bad_comp <- data.frame(x = 1:2)
+  p <- plotit(df, encode(x = group, y = value)) |> mark_bar()
+  expect_error(mark_significance(p, bad_comp), "group1")
+})
+
+test_that("mark_significance auto-computes y_position", {
+  df <- data.frame(group = c("A", "B", "C"), value = c(5, 8, 4))
+  comp <- data.frame(
+    group1 = c("A"), group2 = c("B"),
+    label = c("*"), stringsAsFactors = FALSE
+  )
+  p <- plotit(df, encode(x = group, y = value)) |>
+    mark_bar() |>
+    mark_significance(comp, y_offset = 0.5)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_lollipop ----
+test_that("[BDD] mark_lollipop creates lollipop chart", {
+  df <- data.frame(cat = LETTERS[1:5], val = c(3, 7, 2, 9, 5))
+  p <- plotit(df, encode(x = cat, y = val)) |> mark_lollipop()
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_lollipop supports custom stem colour", {
+  df <- data.frame(cat = LETTERS[1:5], val = c(3, 7, 2, 9, 5))
+  p <- plotit(df, encode(x = cat, y = val)) |>
+    mark_lollipop(stem_colour = "steelblue", point_size = 4)
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_lollipop works with local data", {
+  df <- data.frame(cat = LETTERS[1:3], val = c(4, 6, 2))
+  p <- plotit(df, encode(x = cat, y = val)) |>
+    mark_lollipop(data = df[1:2, ])
+  expect_s3_class(p, "plotit::plotit")
+})
+
+# ---- mark_dumbbell ----
+test_that("[BDD] mark_dumbbell creates dumbbell chart", {
+  df <- data.frame(
+    cat = LETTERS[1:4],
+    before = c(3, 5, 2, 8),
+    after = c(7, 6, 5, 10)
+  )
+  p <- plotit(df, encode(x = cat, y = before, yend = after)) |>
+    mark_dumbbell()
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_dumbbell supports custom colours", {
+  df <- data.frame(cat = LETTERS[1:3], before = c(3, 5, 2), after = c(7, 6, 5))
+  p <- plotit(df, encode(x = cat, y = before, yend = after)) |>
+    mark_dumbbell(colour_start = "orange", colour_end = "purple")
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_dumbbell works with local data", {
+  df <- data.frame(
+    cat = LETTERS[1:4],
+    before = c(3, 5, 2, 8),
+    after = c(7, 6, 5, 10)
+  )
+  p <- plotit(df, encode(x = cat, y = before, yend = after)) |>
+    mark_dumbbell(data = df[1:2, ])
+  expect_s3_class(p, "plotit::plotit")
+})
