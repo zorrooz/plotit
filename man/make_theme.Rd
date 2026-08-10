@@ -23,6 +23,13 @@ Builds a theme function from \code{ggplot2::theme()} elements and
 an optional base theme. The returned function applies the theme
 to a plotit object and can be used anywhere \code{style()} is used.
 }
+\details{
+The theme function is assigned to \code{name} in the calling environment
+(\code{parent.frame()}) and also returned invisibly.  When calling
+\code{make_theme()} inside another function, assign the return value
+explicitly -- the \code{parent.frame()} assignment is lost when that
+function returns.
+}
 \examples{
 style_dark <- make_theme("style_dark",
   plot.background = ggplot2::element_rect(fill = "#1a1a1a"),

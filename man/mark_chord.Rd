@@ -6,41 +6,68 @@
 \usage{
 mark_chord(
   plot,
+  mapping = NULL,
+  data = NULL,
   gap_width = 4,
-  grid_colour = "grey80",
-  link_colour = "grey30",
   link_alpha = 0.5,
+  rasterize = FALSE,
+  rasterize_dpi = 300,
+  rasterize_dev = "cairo",
   ...
 )
 }
 \arguments{
 \item{plot}{A plotit object}
 
+\item{mapping}{Aesthetics. Structural aesthetics:
+\code{source} (required), \code{target} (required), \code{value} (optional).
+Visual aesthetics: \code{fill} (sector colour, default maps to source
+identity, compatible with \code{scale_fill_*}).}
+
+\item{data}{Optional data for this layer}
+
 \item{gap_width}{Gap between sectors in degrees (default 4).}
 
-\item{grid_colour}{Colour for the outer grid (default \code{"grey80"}).}
-
-\item{link_colour}{Colour for the chord links (default \code{"grey30"}).}
-
 \item{link_alpha}{Alpha transparency for links (default 0.5).}
+
+\item{rasterize}{If \code{TRUE}, rasterize via \code{ggrastr::rasterise()}.}
+
+\item{rasterize_dpi}{DPI for rasterization (default 300).}
+
+\item{rasterize_dev}{Graphics device for rasterization (default \code{"cairo"}).}
 
 \item{...}{Other arguments passed to \code{circlize::chordDiagram}}
 }
 \value{
 Modified plotit object
+
+\strong{Renderer note}: \code{mark_chord} renders natively with \code{circlize} on the
+current graphics device (not through the ggplot2 build system) and
+replaces the plot's \code{gg} with an empty ggplot.  Layers added before or
+after it therefore do not share a coordinate system -- treat it as a
+standalone renderer.
 }
 \description{
 Creates a chord diagram showing pairwise relationships between groups.
-Requires the \pkg{circlize} package. Data should be an adjacency matrix
-or a data frame with \code{from}, \code{to}, and \code{value} columns.
+Requires the \pkg{circlize} package.
+}
+\details{
+Accepts an \strong{edges table} (data.frame) with \code{source}, \code{target},
+and optionally \code{value} columns. The mark internally builds the
+adjacency matrix.
 }
 \examples{
 \dontrun{
 if (requireNamespace("circlize", quietly = TRUE)) {
-  mat <- matrix(c(0, 5, 3, 2, 0, 4, 1, 3, 0), nrow = 3)
-  rownames(mat) <- colnames(mat) <- c("A", "B", "C")
-  plotit(as.data.frame(as.table(mat)), encode()) |>
-    mark_chord()
+  df <- data.frame(
+    source = c("A", "A", "B", "B", "C"),
+    target = c("B", "C", "C", "D", "D"),
+    value  = c(5, 3, 4, 2, 6)
+  )
+  df |> plotit(encode(source = source, target = target,
+                      value = value, fill = source)) |>
+    mark_chord() |>
+    scale_fill(range = "viridis")
 }
 }
 }

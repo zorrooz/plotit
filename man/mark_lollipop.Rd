@@ -11,6 +11,7 @@ mark_lollipop(
   stem_colour = "grey50",
   stem_width = 0.5,
   point_size = 3,
+  ref = 0,
   ...
 )
 }
@@ -26,6 +27,8 @@ mark_lollipop(
 \item{stem_width}{Line width for stems (default 0.5).}
 
 \item{point_size}{Point size for the lollipop head (default 3).}
+
+\item{ref}{Baseline value for the stems (default 0).}
 
 \item{...}{Other arguments passed to \code{mark_point()}}
 }
