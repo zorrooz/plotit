@@ -85,11 +85,16 @@ for (.generic_name in c(
   .generic <- get(.generic_name)
   local({
     .name <- .generic_name
-    S7::method(.generic, plotit_composite) <- function(plot, ...) {
+    # S7 requires method signatures to be compatible with the generic's;
+    # a bare (plot, ...) signature triggers one warning per missing
+    # argument at registration time.  Align the formals dynamically.
+    .fun <- function(plot, ...) {
       cli::cli_abort(c(
         "{.fn {.name}} is not supported for {.cls plotit_composite} objects.",
         "i" = "Apply it to individual sub-plots before composing."
       ))
     }
+    formals(.fun) <- formals(.generic)
+    S7::method(.generic, plotit_composite) <- .fun
   })
 }
