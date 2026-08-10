@@ -12,7 +12,6 @@ URL: https://github.com/zorrooz/plotit, https://zorrooz.github.io/plotit/
 BugReports: https://github.com/zorrooz/plotit/issues
 Suggests:
     ggbeeswarm,
-    # ggsankey HEAD breaks on ggplot2 >= 4.0 (see CODE_REVIEW.md A2)
     ggsankey (>= 0.0.4),
     hexbin,
     treemapify,
