@@ -44,6 +44,10 @@ mark_network(
 
   Default colour for edges (default `"grey70"`).
 
+- edge_width:
+
+  Default width for edges (default 0.5).
+
 - node_colour:
 
   Default fill colour for nodes (default `"#4E79A7"`).
