@@ -405,10 +405,13 @@ S7::method(project_parallel, plotit_class) <- function(
   id_col <- ".plotit_id"
   val_col <- ".plotit_val"
   var_col <- ".plotit_var"
-  if (any(c(id_col, val_col, var_col) %in% names(data))) {
+  reserved <- c(id_col, val_col, var_col)
+  conflict <- intersect(reserved, names(data))
+  if (length(conflict) > 0) {
     cli::cli_abort(c(
       "Data contains reserved column names.",
-      "i" = "Columns {.val {c(id_col, val_col, var_col)}} are used internally."
+      "x" = "Found: {.val {conflict}}.",
+      "i" = "These names are used internally by {.fn project_parallel}."
     ))
   }
   data[[id_col]] <- seq_len(nrow(data))

@@ -371,7 +371,7 @@ style_dark <- make_theme("style_dark",
 **复合 Mark 实现原则**：
 1. 必须在文档中注明等价展开（"该函数等价于 `mark_rule + mark_text` 的组合"）
 2. `@export` 但标注为"语法糖"
-3. 不接受 `rasterize` 参数（内层 Mark 各自处理）
+3. 不接受 `rasterize` 参数（内层 Mark 各自处理）。例外：`mark_errorbar` 直接包装 `geom_errorbar`/`geom_errorbarh`，保留 `rasterize` 支持
 4. 返回 `plotit` 对象，可继续链式调用其他函数
 
 **新增 Mark 判断流程**（更新）：

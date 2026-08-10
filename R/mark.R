@@ -479,11 +479,16 @@ S7::method(mark_rule, plotit_class) <- function(
     if (!is.null(intercept)) params$intercept <- intercept
     geom_call <- do.call(ggplot2::geom_abline, params)
   } else if (!is.null(x) && !is.null(xend) && !is.null(y) && !is.null(yend)) {
-    params$x    <- x
-    params$xend <- xend
-    params$y    <- y
-    params$yend <- yend
-    geom_call <- do.call(ggplot2::geom_segment, params)
+    # annotate() avoids the "All aesthetics have length 1" warning that
+    # constant aes() mappings trigger on multi-row data (R6).  NULL
+    # parameters are omitted -- annotate() requires equal-length params.
+    ann_args <- list(x = x, xend = xend, y = y, yend = yend)
+    if (!is.null(colour))    ann_args$colour <- colour
+    if (!is.null(linetype))  ann_args$linetype <- linetype
+    if (!is.null(linewidth)) ann_args$linewidth <- linewidth
+    geom_call <- do.call(
+      ggplot2::annotate, c(list("segment"), ann_args, rlang::list2(...))
+    )
   } else {
     cli::cli_abort(c(
       "{.fn mark_rule} requires one of:",
@@ -700,23 +705,10 @@ S7::method(mark_density_2d, plotit_class) <- function(
   geom_fun <- if (filled) ggplot2::geom_density_2d_filled else ggplot2::geom_density_2d
   dots <- rlang::list2(...)
   if (!is.null(bins)) dots$bins <- bins
-  # Only clear default_color when the layer provides colour/fill
-  if (!is.null(mapping) && (!is.null(mapping$colour) || !is.null(mapping$fill))) {
-    plot <- ._clear_default_color(plot, mapping)
-  }
-  pos <- position
-  if (is.null(pos) && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
-    pos <- ggplot2::position_dodge(plot@meta@dodge)
-  }
-  geom <- if (is.null(pos)) {
-    do.call(geom_fun, c(list(mapping = mapping, data = data), dots))
-  } else {
-    do.call(geom_fun, c(list(mapping = mapping, data = data, position = pos), dots))
-  }
-  .add_geom(plot, geom,
-    rasterize = rasterize, rasterize_dpi = rasterize_dpi,
-    rasterize_dev = rasterize_dev
-  )
+  do.call(function(...) {
+    ._mark_impl(plot, mapping, data, position, geom_fun,
+                rasterize, rasterize_dpi, rasterize_dev, ...)
+  }, dots)
 }
 
 # ---- mark_corr ----
@@ -944,36 +936,26 @@ S7::method(mark_significance, plotit_class) <- function(
     if (is.na(x1) || is.na(x2)) next
     y_pos <- if (i <= length(y_position)) y_position[i] else y_position[1] + (i - 1) * y_span * 0.08
     # Bracket line
-    geome <- ggplot2::geom_segment(
-      mapping = encode(x = x1, xend = x2, y = y_pos, yend = y_pos),
+    plot@gg <- plot@gg + ggplot2::annotate(
+      "segment", x = x1, xend = x2, y = y_pos, yend = y_pos,
       colour = line_colour, linewidth = line_width
     )
-    plot <- .add_geom(plot, geome)
     # Left tick
     tick_len <- if (is.factor(x_var)) tip_length * length(x_levels) else tip_length * diff(range(x_positions))
-    geome <- ggplot2::geom_segment(
-      mapping = encode(
-        x = x1, xend = x1, y = y_pos - tick_len, yend = y_pos
-      ),
+    plot@gg <- plot@gg + ggplot2::annotate(
+      "segment", x = x1, xend = x1, y = y_pos - tick_len, yend = y_pos,
       colour = line_colour, linewidth = line_width
     )
-    plot <- .add_geom(plot, geome)
     # Right tick
-    geome <- ggplot2::geom_segment(
-      mapping = encode(
-        x = x2, xend = x2, y = y_pos - tick_len, yend = y_pos
-      ),
+    plot@gg <- plot@gg + ggplot2::annotate(
+      "segment", x = x2, xend = x2, y = y_pos - tick_len, yend = y_pos,
       colour = line_colour, linewidth = line_width
     )
-    plot <- .add_geom(plot, geome)
     # Label
-    geome <- ggplot2::geom_text(
-      mapping = encode(
-        x = (x1 + x2) / 2, y = y_pos + y_offset, label = comparisons$label[i]
-      ),
-      size = text_size, ...
+    plot@gg <- plot@gg + ggplot2::annotate(
+      "text", x = (x1 + x2) / 2, y = y_pos + y_offset,
+      label = comparisons$label[i], size = text_size, ...
     )
-    plot <- .add_geom(plot, geome)
   }
   plot
 }
@@ -997,6 +979,7 @@ S7::method(mark_significance, plotit_class) <- function(
 #' @param stem_colour Colour for the stem lines (default `"grey50"`).
 #' @param stem_width Line width for stems (default 0.5).
 #' @param point_size Point size for the lollipop head (default 3).
+#' @param ref Baseline value for the stems (default 0).
 #' @param ... Other arguments passed to `mark_point()`
 #' @return Modified plotit object
 #' @examples
@@ -1008,7 +991,7 @@ mark_lollipop <- S7::new_generic(
   "mark_lollipop", "plot",
   function(plot, mapping = NULL, data = NULL,
            stem_colour = "grey50", stem_width = 0.5,
-           point_size = 3, ...) {
+           point_size = 3, ref = 0, ...) {
     S7::S7_dispatch()
   }
 )
@@ -1017,27 +1000,21 @@ mark_lollipop <- S7::new_generic(
 S7::method(mark_lollipop, plotit_class) <- function(
     plot, mapping = NULL, data = NULL,
     stem_colour = "grey50", stem_width = 0.5,
-    point_size = 3, ...) {
+    point_size = 3, ref = 0, ...) {
   d <- data %||% plot@gg$data
   m <- mapping %||% plot@gg$mapping
   # Extract x and y from mapping
   x_col <- rlang::eval_tidy(m$x, d)
   y_col <- rlang::eval_tidy(m$y, d)
-  # Stem: segment from 0 to y
-  stem_mapping <- encode(x = x_col, xend = x_col, y = 0, yend = y_col)
+  # Stem: segment from `ref` to y.  Values are injected with !! so the
+  # aes do not depend on data column names (D4).
+  stem_mapping <- encode(x = !!x_col, xend = !!x_col, y = !!ref, yend = !!y_col)
   geome <- ggplot2::geom_segment(
     mapping = stem_mapping,
     colour = stem_colour, linewidth = stem_width
   )
   plot <- .add_geom(plot, geome)
-  # Point at the top
-  point_mapping <- encode(x = x_col, y = y_col)
-  # Determine fill from mapping or default
-  fill_val <- if (!is.null(m$fill)) {
-    rlang::eval_tidy(m$fill, d)
-  } else {
-    NULL
-  }
+  # Point at the top (inherits the full mapping: x/y/colour/fill)
   plot <- plot |> mark_point(
     mapping = m, data = d, size = point_size, ...
   )
@@ -1101,10 +1078,11 @@ S7::method(mark_dumbbell, plotit_class) <- function(
     ))
   }
   yend_col <- rlang::eval_tidy(m$yend, d)
-  # Connecting line
+  # Connecting line (values injected with !! so the aes do not depend on
+  # data column names, D4)
   segment_mapping <- encode(
-    x = x_col, xend = x_col,
-    y = y_col, yend = yend_col
+    x = !!x_col, xend = !!x_col,
+    y = !!y_col, yend = !!yend_col
   )
   geome <- ggplot2::geom_segment(
     mapping = segment_mapping,
@@ -1112,12 +1090,12 @@ S7::method(mark_dumbbell, plotit_class) <- function(
   )
   plot <- .add_geom(plot, geome)
   # Start point
-  start_mapping <- encode(x = x_col, y = y_col)
+  start_mapping <- encode(x = !!x_col, y = !!y_col)
   plot <- plot |>
     mark_point(mapping = start_mapping, data = d,
                colour = colour_start, size = point_size, ...)
   # End point
-  end_mapping <- encode(x = x_col, y = yend_col)
+  end_mapping <- encode(x = !!x_col, y = !!yend_col)
   plot <- plot |>
     mark_point(mapping = end_mapping, data = d,
                colour = colour_end, size = point_size, ...)
@@ -1280,21 +1258,24 @@ S7::method(mark_sankey, plotit_class) <- function(
     sankey_data$fill_grp <- sankey_data$node
   }
 
-  # Build a fresh ggplot from sankey_data to avoid global data conflicts
-  gg <- ggplot2::ggplot(sankey_data)
+  # The flow fill mapping needs a legend; drop the default_color guides
+  # suppression injected by plotit().
+  plot <- ._clear_default_color(plot)
 
-  # Flow ribbons
+  # Add layers incrementally on top of the existing plot so the theme,
+  # scales and previously added layers are preserved (A4).
   flow_mapping <- ggplot2::aes(
     x = x, next_x = next_x, node = node, next_node = next_node,
     fill = fill_grp, value = value
   )
   if (!has_fill) {
-    gg <- gg + ggsankey::geom_sankey(
-      mapping = flow_mapping,
+    plot@gg <- plot@gg + ggsankey::geom_sankey(
+      data = sankey_data, mapping = flow_mapping, inherit.aes = FALSE,
       node.fill = node_colour, flow.alpha = flow_alpha, ...)
   } else {
-    gg <- gg + ggsankey::geom_sankey(
-      mapping = flow_mapping, flow.alpha = flow_alpha, ...)
+    plot@gg <- plot@gg + ggsankey::geom_sankey(
+      data = sankey_data, mapping = flow_mapping, inherit.aes = FALSE,
+      flow.alpha = flow_alpha, ...)
   }
 
   # Node labels
@@ -1302,10 +1283,9 @@ S7::method(mark_sankey, plotit_class) <- function(
     x = x, next_x = next_x, node = node, next_node = next_node,
     label = node
   )
-  gg <- gg + ggsankey::geom_sankey_text(
-    mapping = text_mapping, size = 3, check_overlap = FALSE)
-
-  plot@gg <- gg
+  plot@gg <- plot@gg + ggsankey::geom_sankey_text(
+    data = sankey_data, mapping = text_mapping, inherit.aes = FALSE,
+    size = 3, check_overlap = FALSE)
   plot
 }
 
@@ -1519,7 +1499,17 @@ S7::method(mark_network, plotit_class) <- function(
       repel = FALSE, size = 3)
   }
 
-  gg <- gg + ggplot2::theme_void()
+  # Inherit the plotit theme so the default look is preserved (A4).
+  # ggraph builds its own plot object, so previously added layers and
+  # scales cannot be carried over -- documented limitation of the
+  # network renderer.
+  gg <- gg + plot@gg$theme +
+    ggplot2::theme(
+      axis.line = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank(),
+      axis.text = ggplot2::element_blank(),
+      axis.title = ggplot2::element_blank()
+    )
   plot@gg <- gg
   plot
 }
@@ -1546,6 +1536,12 @@ S7::method(mark_network, plotit_class) <- function(
 #' @param rasterize_dev Graphics device for rasterization (default \code{"cairo"}).
 #' @param ... Other arguments passed to \code{circlize::chordDiagram}
 #' @return Modified plotit object
+#'
+#' **Renderer note**: `mark_chord` renders natively with `circlize` on the
+#' current graphics device (not through the ggplot2 build system) and
+#' replaces the plot's `gg` with an empty ggplot.  Layers added before or
+#' after it therefore do not share a coordinate system -- treat it as a
+#' standalone renderer.
 #' @references
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/chord}{Chord} (graphlib)
 #' @examples
