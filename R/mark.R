@@ -1367,6 +1367,7 @@ S7::method(mark_treemap, plotit_class) <- function(
 #' @param layout Layout algorithm: \code{"auto"}, \code{"circle"},
 #'   \code{"linear"}, \code{"bipartite"}, or \code{"manual"}.
 #' @param edge_colour Default colour for edges (default \code{"grey70"}).
+#' @param edge_width Default width for edges (default 0.5).
 #' @param node_colour Default fill colour for nodes (default \code{"#4E79A7"}).
 #' @param node_size Default size for nodes (default 5).
 #' @param ... Other arguments passed to \code{ggraph::geom_edge_link}

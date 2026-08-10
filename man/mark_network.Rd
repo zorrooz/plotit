@@ -29,6 +29,8 @@ mark_network(
 
 \item{edge_colour}{Default colour for edges (default \code{"grey70"}).}
 
+\item{edge_width}{Default width for edges (default 0.5).}
+
 \item{node_colour}{Default fill colour for nodes (default \code{"#4E79A7"}).}
 
 \item{node_size}{Default size for nodes (default 5).}
