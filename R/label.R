@@ -167,8 +167,10 @@ NULL
       } else if (is.null(val)) {
         plot@gg <- ._label_set_aes(plot@gg, a, NULL, hide = FALSE)
       } else {
-        # Direct sub-plot label setting for patchwork
-        if (inherits(plot@gg, "patchwork")) {
+        # Direct sub-plot label setting for patchwork (legacy layout
+        # object).  patchwork 4.x exposes no public $plots -- the
+        # composite-level labels set below still apply in that case.
+        if (inherits(plot@gg, "patchwork") && !is.null(plot@gg$plots)) {
           for (.i in seq_along(plot@gg$plots)) {
             if (isTRUE(val == FALSE) || is.null(val)) {
               plot@gg$plots[[.i]]$labels[[a]] <- NULL

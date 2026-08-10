@@ -6,6 +6,8 @@
 \usage{
 mark_network(
   plot,
+  edges = NULL,
+  encode_edges = NULL,
   layout = c("auto", "circle", "linear", "bipartite", "manual"),
   edge_colour = "grey70",
   edge_width = 0.5,
@@ -15,23 +17,23 @@ mark_network(
 )
 }
 \arguments{
-\item{plot}{A plotit object. The data should be an \code{igraph}
-object.}
+\item{plot}{A plotit object. The data should be a data.frame of \strong{nodes}.}
 
-\item{layout}{Layout algorithm: \code{"auto"} (default, uses
-\code{layout_with_fr}), \code{"circle"}, \code{"linear"}, \code{"bipartite"},
-or \code{"manual"}.}
+\item{edges}{A data.frame of \strong{edges}.}
 
-\item{edge_colour}{Colour for edges (default \code{"grey70"}).}
+\item{encode_edges}{An \code{encode()} object with \code{source} (required),
+\code{target} (required), \code{weight} (optional).}
 
-\item{edge_width}{Width for edges (default 0.5).}
+\item{layout}{Layout algorithm: \code{"auto"}, \code{"circle"},
+\code{"linear"}, \code{"bipartite"}, or \code{"manual"}.}
 
-\item{node_colour}{Fill colour for nodes (default \code{"#4E79A7"}).}
+\item{edge_colour}{Default colour for edges (default \code{"grey70"}).}
 
-\item{node_size}{Size for nodes (default 5).}
+\item{node_colour}{Default fill colour for nodes (default \code{"#4E79A7"}).}
 
-\item{...}{Other arguments passed to \code{ggraph::geom_edge_link}
-and \code{ggraph::geom_node_point}}
+\item{node_size}{Default size for nodes (default 5).}
+
+\item{...}{Other arguments passed to \code{ggraph::geom_edge_link}}
 }
 \value{
 Modified plotit object
@@ -40,15 +42,36 @@ Modified plotit object
 Creates a network visualization with nodes and edges.
 Requires the \pkg{ggraph} and \pkg{igraph} packages.
 }
+\details{
+\strong{Dual data source design}: The main data (passed to \code{plotit()}) is a
+\strong{nodes} data.frame.  Edges are passed via the \code{edges} parameter with
+their own \code{encode_edges}.  Node aesthetics (\code{color}, \code{size},
+\code{label}) work with standard \code{scale_*} functions.
+}
 \examples{
 \dontrun{
 if (requireNamespace("ggraph", quietly = TRUE) &&
     requireNamespace("igraph", quietly = TRUE)) {
-  gr <- igraph::sample_pa(30)
-  plotit(gr, encode()) |> mark_network()
+  nodes <- data.frame(
+    name  = c("A", "B", "C", "D"),
+    group = c("X", "Y", "X", "Y"),
+    value = c(10, 20, 15, 25)
+  )
+  edges <- data.frame(
+    from   = c("A", "A", "B", "C"),
+    to     = c("B", "C", "C", "D"),
+    weight = c(1, 2, 3, 4)
+  )
+  nodes |> plotit(encode(color = group, size = value, label = name)) |>
+    mark_network(
+      edges = edges,
+      encode_edges = encode(source = from, target = to, weight = weight)
+    ) |>
+    scale_color(range = "viridis") |>
+    scale_size(range = c(5, 20))
 }
 }
 }
 \references{
-AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/force-graph}{ForceGraph} (graphlib)
+AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/force-graph}{ForceGraph}
 }

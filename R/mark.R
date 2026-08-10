@@ -9,13 +9,14 @@ NULL
 #' @noRd
 #' @keywords internal
 ._mark_impl <- function(plot, mapping, data, position, geom_fun,
-                        rasterize, rasterize_dpi, rasterize_dev, ...) {
+                        rasterize, rasterize_dpi, rasterize_dev,
+                        auto_dodge = TRUE, ...) {
   # Only clear default_color when the layer actually provides colour/fill
   if (!is.null(mapping) && (!is.null(mapping$colour) || !is.null(mapping$fill))) {
     plot <- ._clear_default_color(plot, mapping)
   }
   pos <- position
-  if (is.null(pos) && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
+  if (is.null(pos) && auto_dodge && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
     pos <- ggplot2::position_dodge(plot@meta@dodge)
   }
   geom <- if (is.null(pos)) {
@@ -354,7 +355,7 @@ S7::method(mark_map, plotit_class) <- function(
     ))
   }
   # geom_sf does not support position adjustment; ignore dodge
-  if (!is.null(mapping) && !is.null(mapping$colour)) {
+  if (!is.null(mapping) && (!is.null(mapping$colour) || !is.null(mapping$fill))) {
     plot <- ._clear_default_color(plot, mapping)
   }
   geom <- ggplot2::geom_sf(mapping = mapping, data = data, ...)
@@ -478,11 +479,16 @@ S7::method(mark_rule, plotit_class) <- function(
     if (!is.null(intercept)) params$intercept <- intercept
     geom_call <- do.call(ggplot2::geom_abline, params)
   } else if (!is.null(x) && !is.null(xend) && !is.null(y) && !is.null(yend)) {
-    params$x    <- x
-    params$xend <- xend
-    params$y    <- y
-    params$yend <- yend
-    geom_call <- do.call(ggplot2::geom_segment, params)
+    # annotate() avoids the "All aesthetics have length 1" warning that
+    # constant aes() mappings trigger on multi-row data (R6).  NULL
+    # parameters are omitted -- annotate() requires equal-length params.
+    ann_args <- list(x = x, xend = xend, y = y, yend = yend)
+    if (!is.null(colour))    ann_args$colour <- colour
+    if (!is.null(linetype))  ann_args$linetype <- linetype
+    if (!is.null(linewidth)) ann_args$linewidth <- linewidth
+    geom_call <- do.call(
+      ggplot2::annotate, c(list("segment"), ann_args, rlang::list2(...))
+    )
   } else {
     cli::cli_abort(c(
       "{.fn mark_rule} requires one of:",
@@ -648,6 +654,9 @@ S7::method(mark_hex, plotit_class) <- function(
     plot, mapping = NULL, data = NULL, position = NULL, ...,
     bins = NULL,
     rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  if (!requireNamespace("hexbin", quietly = TRUE)) {
+    cli::cli_abort("{.fn mark_hex} requires the {.pkg hexbin} package.")
+  }
   params <- rlang::list2(...)
   params$bins <- bins
   do.call(function(...) {
@@ -696,23 +705,10 @@ S7::method(mark_density_2d, plotit_class) <- function(
   geom_fun <- if (filled) ggplot2::geom_density_2d_filled else ggplot2::geom_density_2d
   dots <- rlang::list2(...)
   if (!is.null(bins)) dots$bins <- bins
-  # Only clear default_color when the layer provides colour/fill
-  if (!is.null(mapping) && (!is.null(mapping$colour) || !is.null(mapping$fill))) {
-    plot <- ._clear_default_color(plot, mapping)
-  }
-  pos <- position
-  if (is.null(pos) && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
-    pos <- ggplot2::position_dodge(plot@meta@dodge)
-  }
-  geom <- if (is.null(pos)) {
-    do.call(geom_fun, c(list(mapping = mapping, data = data), dots))
-  } else {
-    do.call(geom_fun, c(list(mapping = mapping, data = data, position = pos), dots))
-  }
-  .add_geom(plot, geom,
-    rasterize = rasterize, rasterize_dpi = rasterize_dpi,
-    rasterize_dev = rasterize_dev
-  )
+  do.call(function(...) {
+    ._mark_impl(plot, mapping, data, position, geom_fun,
+                rasterize, rasterize_dpi, rasterize_dev, ...)
+  }, dots)
 }
 
 # ---- mark_corr ----
@@ -752,17 +748,30 @@ S7::method(mark_corr, plotit_class) <- function(
     reorder = TRUE, ...,
     rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
   method <- match.arg(method)
+  # Clear the default_color injected by plotit() so the fill legend appears
+  plot <- ._clear_default_color(plot)
   # Extract numeric columns from plot data
   raw_data <- plot@gg$data
   num_cols <- vapply(raw_data, is.numeric, logical(1))
   if (sum(num_cols) < 2) {
     cli::cli_abort("{.fn mark_corr} requires at least 2 numeric columns.")
   }
-  mat <- stats::cor(raw_data[, num_cols, drop = FALSE], method = method)
+  # Pairwise complete observations so a single NA column does not
+  # invalidate the whole correlation matrix.
+  mat <- stats::cor(raw_data[, num_cols, drop = FALSE], method = method,
+                    use = "pairwise.complete.obs")
   # Hierarchical clustering reorder
   if (reorder) {
-    ord <- stats::hclust(stats::as.dist(1 - abs(mat)))$order
-    mat <- mat[ord, ord]
+    if (anyNA(mat)) {
+      # e.g. a zero-variance column yields NA correlations; clustering
+      # would crash, so fall back to the original order with a warning.
+      cli::cli_warn(
+        "Correlation matrix contains NA (zero-variance column?); skipping reorder."
+      )
+    } else {
+      ord <- stats::hclust(stats::as.dist(1 - abs(mat)))$order
+      mat <- mat[ord, ord]
+    }
   }
   # Melt to long form
   df <- expand.grid(
@@ -897,14 +906,20 @@ S7::method(mark_significance, plotit_class) <- function(
       "{.arg comparisons} must have columns: {.val {required}}."
     )
   }
-  # Extract data range for auto y_position
+  # Extract data range only when needed for auto-computation (C3)
   d <- plot@gg$data
-  y_var <- rlang::eval_tidy(plot@gg$mapping$y, d)
-  y_range <- range(y_var, na.rm = TRUE)
+  y_var <- if (!is.null(plot@gg$mapping$y)) rlang::eval_tidy(plot@gg$mapping$y, d) else NULL
+  y_range <- if (!is.null(y_var)) range(y_var, na.rm = TRUE) else c(0, 1)
   y_span <- diff(y_range)
   if (is.null(y_offset)) y_offset <- y_span * 0.02
   # Auto-compute y_position if not provided
   if (is.null(y_position)) {
+    if (is.null(y_var)) {
+      cli::cli_abort(c(
+        "{.fn mark_significance} cannot auto-compute {.arg y_position} without a y mapping.",
+        "i" = "Provide {.arg y_position} explicitly."
+      ))
+    }
     y_position <- y_range[2] + y_span * 0.1 + seq_len(nrow(comparisons)) * y_span * 0.08
   }
   # Get x positions (handle factor/character group1/group2)
@@ -921,36 +936,26 @@ S7::method(mark_significance, plotit_class) <- function(
     if (is.na(x1) || is.na(x2)) next
     y_pos <- if (i <= length(y_position)) y_position[i] else y_position[1] + (i - 1) * y_span * 0.08
     # Bracket line
-    geome <- ggplot2::geom_segment(
-      mapping = encode(x = x1, xend = x2, y = y_pos, yend = y_pos),
+    plot@gg <- plot@gg + ggplot2::annotate(
+      "segment", x = x1, xend = x2, y = y_pos, yend = y_pos,
       colour = line_colour, linewidth = line_width
     )
-    plot <- .add_geom(plot, geome)
     # Left tick
     tick_len <- if (is.factor(x_var)) tip_length * length(x_levels) else tip_length * diff(range(x_positions))
-    geome <- ggplot2::geom_segment(
-      mapping = encode(
-        x = x1, xend = x1, y = y_pos - tick_len, yend = y_pos
-      ),
+    plot@gg <- plot@gg + ggplot2::annotate(
+      "segment", x = x1, xend = x1, y = y_pos - tick_len, yend = y_pos,
       colour = line_colour, linewidth = line_width
     )
-    plot <- .add_geom(plot, geome)
     # Right tick
-    geome <- ggplot2::geom_segment(
-      mapping = encode(
-        x = x2, xend = x2, y = y_pos - tick_len, yend = y_pos
-      ),
+    plot@gg <- plot@gg + ggplot2::annotate(
+      "segment", x = x2, xend = x2, y = y_pos - tick_len, yend = y_pos,
       colour = line_colour, linewidth = line_width
     )
-    plot <- .add_geom(plot, geome)
     # Label
-    geome <- ggplot2::geom_text(
-      mapping = encode(
-        x = (x1 + x2) / 2, y = y_pos + y_offset, label = comparisons$label[i]
-      ),
-      size = text_size, ...
+    plot@gg <- plot@gg + ggplot2::annotate(
+      "text", x = (x1 + x2) / 2, y = y_pos + y_offset,
+      label = comparisons$label[i], size = text_size, ...
     )
-    plot <- .add_geom(plot, geome)
   }
   plot
 }
@@ -974,6 +979,7 @@ S7::method(mark_significance, plotit_class) <- function(
 #' @param stem_colour Colour for the stem lines (default `"grey50"`).
 #' @param stem_width Line width for stems (default 0.5).
 #' @param point_size Point size for the lollipop head (default 3).
+#' @param ref Baseline value for the stems (default 0).
 #' @param ... Other arguments passed to `mark_point()`
 #' @return Modified plotit object
 #' @examples
@@ -985,7 +991,7 @@ mark_lollipop <- S7::new_generic(
   "mark_lollipop", "plot",
   function(plot, mapping = NULL, data = NULL,
            stem_colour = "grey50", stem_width = 0.5,
-           point_size = 3, ...) {
+           point_size = 3, ref = 0, ...) {
     S7::S7_dispatch()
   }
 )
@@ -994,27 +1000,21 @@ mark_lollipop <- S7::new_generic(
 S7::method(mark_lollipop, plotit_class) <- function(
     plot, mapping = NULL, data = NULL,
     stem_colour = "grey50", stem_width = 0.5,
-    point_size = 3, ...) {
+    point_size = 3, ref = 0, ...) {
   d <- data %||% plot@gg$data
   m <- mapping %||% plot@gg$mapping
   # Extract x and y from mapping
   x_col <- rlang::eval_tidy(m$x, d)
   y_col <- rlang::eval_tidy(m$y, d)
-  # Stem: segment from 0 to y
-  stem_mapping <- encode(x = x_col, xend = x_col, y = 0, yend = y_col)
+  # Stem: segment from `ref` to y.  Values are injected with !! so the
+  # aes do not depend on data column names (D4).
+  stem_mapping <- encode(x = !!x_col, xend = !!x_col, y = !!ref, yend = !!y_col)
   geome <- ggplot2::geom_segment(
     mapping = stem_mapping,
     colour = stem_colour, linewidth = stem_width
   )
   plot <- .add_geom(plot, geome)
-  # Point at the top
-  point_mapping <- encode(x = x_col, y = y_col)
-  # Determine fill from mapping or default
-  fill_val <- if (!is.null(m$fill)) {
-    rlang::eval_tidy(m$fill, d)
-  } else {
-    NULL
-  }
+  # Point at the top (inherits the full mapping: x/y/colour/fill)
   plot <- plot |> mark_point(
     mapping = m, data = d, size = point_size, ...
   )
@@ -1071,11 +1071,18 @@ S7::method(mark_dumbbell, plotit_class) <- function(
   m <- mapping %||% plot@gg$mapping
   x_col <- rlang::eval_tidy(m$x, d)
   y_col <- rlang::eval_tidy(m$y, d)
+  if (is.null(m$yend)) {
+    cli::cli_abort(c(
+      "{.fn mark_dumbbell} requires a {.arg yend} mapping for the second point.",
+      "i" = "Use {.code encode(x = ..., y = ..., yend = ...)}."
+    ))
+  }
   yend_col <- rlang::eval_tidy(m$yend, d)
-  # Connecting line
+  # Connecting line (values injected with !! so the aes do not depend on
+  # data column names, D4)
   segment_mapping <- encode(
-    x = x_col, xend = x_col,
-    y = y_col, yend = yend_col
+    x = !!x_col, xend = !!x_col,
+    y = !!y_col, yend = !!yend_col
   )
   geome <- ggplot2::geom_segment(
     mapping = segment_mapping,
@@ -1083,12 +1090,12 @@ S7::method(mark_dumbbell, plotit_class) <- function(
   )
   plot <- .add_geom(plot, geome)
   # Start point
-  start_mapping <- encode(x = x_col, y = y_col)
+  start_mapping <- encode(x = !!x_col, y = !!y_col)
   plot <- plot |>
     mark_point(mapping = start_mapping, data = d,
                colour = colour_start, size = point_size, ...)
   # End point
-  end_mapping <- encode(x = x_col, y = yend_col)
+  end_mapping <- encode(x = !!x_col, y = !!yend_col)
   plot <- plot |>
     mark_point(mapping = end_mapping, data = d,
                colour = colour_end, size = point_size, ...)
@@ -1144,9 +1151,12 @@ S7::method(mark_beeswarm, plotit_class) <- function(
   method <- match.arg(method)
   params <- rlang::list2(...)
   params$method <- method[1]
+  # geom_beeswarm implements its own collision placement; the global
+  # auto-dodge position is not supported (B3).
   do.call(function(...) {
     ._mark_impl(plot, mapping, data, position, ggbeeswarm::geom_beeswarm,
-                rasterize, rasterize_dpi, rasterize_dev, ...)
+                rasterize, rasterize_dpi, rasterize_dev,
+                auto_dodge = FALSE, ...)
   }, params)
 }
 
@@ -1154,31 +1164,41 @@ S7::method(mark_beeswarm, plotit_class) <- function(
 #' Sankey flow diagram layer
 #'
 #' Creates a Sankey diagram showing directed flows between nodes.
-#' Requires the \pkg{ggsankey} package. Data should contain
-#' `x`, `next_x`, `node`, and `next_node` columns as generated by
-#' \code{ggsankey::make_long}.
+#' Requires the \pkg{ggsankey} package.
+#'
+#' Accepts an **edges table** (data.frame) with `source`, `target`, and
+#' optionally `value` columns. The mark internally builds the node-link
+#' structure — no need for `ggsankey::make_long()` preprocessing.
 #'
 #' @param plot A plotit object
-#' @param mapping Optional new aesthetics. The default expects
-#'   `x`, `next_x`, `node`, `next_node`, and optionally `value`.
+#' @param mapping Aesthetics. Structural aesthetics:
+#'   \code{source} (required), \code{target} (required), \code{value} (optional).
+#'   Visual aesthetics: \code{fill} (node colour, default maps to node
+#'   identity, compatible with \code{scale_fill_*}).
 #' @param data Optional data for this layer
-#' @param position Position adjustment (rarely used for Sankey).
-#' @param node_colour Colour for node rectangles (default `"grey30"`).
+#' @param position Position adjustment.
+#' @param node_colour Default colour for node rectangles (used when no
+#'   \code{fill} mapping is present, default \code{"grey30"}).
 #' @param flow_alpha Alpha transparency for flow ribbons (default 0.5).
-#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize If \code{TRUE}, rasterize via \code{ggrastr::rasterise()}.
 #' @param rasterize_dpi DPI for rasterization (default 300).
-#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
-#' @param ... Other arguments passed to `geom_sankey`
+#' @param rasterize_dev Graphics device for rasterization (default \code{"cairo"}).
+#' @param ... Other arguments passed to \code{geom_sankey}
 #' @return Modified plotit object
 #' @references
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/sankey}{Sankey} (graphlib)
 #' @examples
 #' \dontrun{
 #' if (requireNamespace("ggsankey", quietly = TRUE)) {
-#'   df <- ggsankey::make_long(ggplot2::diamonds, cut, color)
-#'   plotit(df, encode(x = x, next_x = next_x, node = node,
-#'                     next_node = next_node, value = value)) |>
-#'     mark_sankey()
+#'   df <- data.frame(
+#'     source = c("A", "A", "B", "B", "C"),
+#'     target = c("B", "C", "C", "D", "D"),
+#'     value  = c(10, 5, 8, 3, 6)
+#'   )
+#'   df |> plotit(encode(source = source, target = target,
+#'                       value = value, fill = source)) |>
+#'     mark_sankey() |>
+#'     scale_fill(range = "viridis")
 #' }
 #' }
 #' @export
@@ -1199,30 +1219,73 @@ S7::method(mark_sankey, plotit_class) <- function(
   if (!requireNamespace("ggsankey", quietly = TRUE)) {
     cli::cli_abort("{.fn mark_sankey} requires the {.pkg ggsankey} package.")
   }
-  if (!is.null(mapping) && !is.null(mapping$colour)) {
-    plot <- ._clear_default_color(plot, mapping)
+
+  edges <- data %||% plot@gg$data
+  mapping <- mapping %||% plot@gg$mapping
+
+  # --- Extract structural aesthetics: source, target, value ---
+  if (is.null(mapping$source) || is.null(mapping$target)) {
+    cli::cli_abort(c(
+      "{.fn mark_sankey} requires {.arg source} and {.arg target} aesthetics.",
+      "i" = "Map them in {.fn plotit}: {.code encode(source = ..., target = ..., value = ...)}.",
+      "i" = "Or pass {.arg mapping} to {.fn mark_sankey} directly."
+    ))
   }
-  pos <- position
-  if (is.null(pos) && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
-    pos <- ggplot2::position_dodge(plot@meta@dodge)
-  }
-  # Sankey requires both a geom_sankey flow + a geom_sankey_text layer
-  # Add flow ribbon
-  geom_flow <- if (is.null(pos)) {
-    ggsankey::geom_sankey(mapping = mapping, data = data,
-                          node.fill = node_colour, alpha = flow_alpha, ...)
-  } else {
-    ggsankey::geom_sankey(mapping = mapping, data = data, position = pos,
-                          node.fill = node_colour, alpha = flow_alpha, ...)
-  }
-  plot <- .add_geom(plot, geom_flow,
-    rasterize = rasterize, rasterize_dpi = rasterize_dpi,
-    rasterize_dev = rasterize_dev
+  src <- as.character(rlang::eval_tidy(mapping$source, edges))
+  tgt <- as.character(rlang::eval_tidy(mapping$target, edges))
+  val <- rlang::eval_tidy(mapping$value, edges)
+  if (is.null(val)) val <- rep(1, length(src))
+
+  # --- Convert edges table to ggsankey long format ---
+  n <- length(src)
+  sankey_data <- data.frame(
+    x         = rep("source", 2 * n),
+    node      = c(src, tgt),
+    next_x    = c(rep("target", n), rep(NA, n)),
+    next_node = c(tgt, rep(NA, n)),
+    value     = c(val, rep(NA, n)),
+    stringsAsFactors = FALSE
   )
-  # Add node labels
-  plot <- plot |>
-    mark_text(mapping = mapping, data = data, repel = FALSE,
-              check_overlap = FALSE, size = 3)
+
+  # --- Build fill aesthetic ---
+  # plotit() injects fill = I(default_color) as a constant; it is not a
+  # real data mapping and must not drive the node palette.
+  has_fill <- !is.null(mapping$fill) && !inherits(mapping$fill, "AsIs")
+  if (has_fill) {
+    fill_vals <- as.character(rlang::eval_tidy(mapping$fill, edges))
+    sankey_data$fill_grp <- c(fill_vals, fill_vals)
+  } else {
+    sankey_data$fill_grp <- sankey_data$node
+  }
+
+  # The flow fill mapping needs a legend; drop the default_color guides
+  # suppression injected by plotit().
+  plot <- ._clear_default_color(plot)
+
+  # Add layers incrementally on top of the existing plot so the theme,
+  # scales and previously added layers are preserved (A4).
+  flow_mapping <- ggplot2::aes(
+    x = x, next_x = next_x, node = node, next_node = next_node,
+    fill = fill_grp, value = value
+  )
+  if (!has_fill) {
+    plot@gg <- plot@gg + ggsankey::geom_sankey(
+      data = sankey_data, mapping = flow_mapping, inherit.aes = FALSE,
+      node.fill = node_colour, flow.alpha = flow_alpha, ...)
+  } else {
+    plot@gg <- plot@gg + ggsankey::geom_sankey(
+      data = sankey_data, mapping = flow_mapping, inherit.aes = FALSE,
+      flow.alpha = flow_alpha, ...)
+  }
+
+  # Node labels
+  text_mapping <- ggplot2::aes(
+    x = x, next_x = next_x, node = node, next_node = next_node,
+    label = node
+  )
+  plot@gg <- plot@gg + ggsankey::geom_sankey_text(
+    data = sankey_data, mapping = text_mapping, inherit.aes = FALSE,
+    size = 3, check_overlap = FALSE)
   plot
 }
 
@@ -1276,15 +1339,9 @@ S7::method(mark_treemap, plotit_class) <- function(
   if (!is.null(mapping) && !is.null(mapping$fill)) {
     plot <- ._clear_default_color(plot, mapping)
   }
-  pos <- position
-  if (is.null(pos) && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
-    pos <- ggplot2::position_dodge(plot@meta@dodge)
-  }
-  geom <- if (is.null(pos)) {
-    treemapify::geom_treemap(mapping = mapping, data = data, ...)
-  } else {
-    treemapify::geom_treemap(mapping = mapping, data = data, position = pos, ...)
-  }
+  # geom_treemap lays out rectangles itself; the global auto-dodge
+  # position is ignored by treemapify (D6).
+  geom <- treemapify::geom_treemap(mapping = mapping, data = data, ...)
   plot <- .add_geom(plot, geom,
     rasterize = rasterize, rasterize_dpi = rasterize_dpi,
     rasterize_dev = rasterize_dev
@@ -1298,32 +1355,53 @@ S7::method(mark_treemap, plotit_class) <- function(
 #' Creates a network visualization with nodes and edges.
 #' Requires the \pkg{ggraph} and \pkg{igraph} packages.
 #'
-#' @param plot A plotit object. The data should be an `igraph`
-#'   object.
-#' @param layout Layout algorithm: `"auto"` (default, uses
-#'   `layout_with_fr`), `"circle"`, `"linear"`, `"bipartite"`,
-#'   or `"manual"`.
-#' @param edge_colour Colour for edges (default `"grey70"`).
-#' @param edge_width Width for edges (default 0.5).
-#' @param node_colour Fill colour for nodes (default `"#4E79A7"`).
-#' @param node_size Size for nodes (default 5).
-#' @param ... Other arguments passed to `ggraph::geom_edge_link`
-#'   and `ggraph::geom_node_point`
+#' **Dual data source design**: The main data (passed to \code{plotit()}) is a
+#' **nodes** data.frame.  Edges are passed via the \code{edges} parameter with
+#' their own \code{encode_edges}.  Node aesthetics (\code{color}, \code{size},
+#' \code{label}) work with standard \code{scale_*} functions.
+#'
+#' @param plot A plotit object. The data should be a data.frame of **nodes**.
+#' @param edges A data.frame of **edges**.
+#' @param encode_edges An \code{encode()} object with \code{source} (required),
+#'   \code{target} (required), \code{weight} (optional).
+#' @param layout Layout algorithm: \code{"auto"}, \code{"circle"},
+#'   \code{"linear"}, \code{"bipartite"}, or \code{"manual"}.
+#' @param edge_colour Default colour for edges (default \code{"grey70"}).
+#' @param node_colour Default fill colour for nodes (default \code{"#4E79A7"}).
+#' @param node_size Default size for nodes (default 5).
+#' @param ... Other arguments passed to \code{ggraph::geom_edge_link}
 #' @return Modified plotit object
 #' @references
-#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/force-graph}{ForceGraph} (graphlib)
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/force-graph}{ForceGraph}
 #' @examples
 #' \dontrun{
 #' if (requireNamespace("ggraph", quietly = TRUE) &&
 #'     requireNamespace("igraph", quietly = TRUE)) {
-#'   gr <- igraph::sample_pa(30)
-#'   plotit(gr, encode()) |> mark_network()
+#'   nodes <- data.frame(
+#'     name  = c("A", "B", "C", "D"),
+#'     group = c("X", "Y", "X", "Y"),
+#'     value = c(10, 20, 15, 25)
+#'   )
+#'   edges <- data.frame(
+#'     from   = c("A", "A", "B", "C"),
+#'     to     = c("B", "C", "C", "D"),
+#'     weight = c(1, 2, 3, 4)
+#'   )
+#'   nodes |> plotit(encode(color = group, size = value, label = name)) |>
+#'     mark_network(
+#'       edges = edges,
+#'       encode_edges = encode(source = from, target = to, weight = weight)
+#'     ) |>
+#'     scale_color(range = "viridis") |>
+#'     scale_size(range = c(5, 20))
 #' }
 #' }
 #' @export
 mark_network <- S7::new_generic(
   "mark_network", "plot",
   function(plot,
+           edges = NULL,
+           encode_edges = NULL,
            layout = c("auto", "circle", "linear", "bipartite", "manual"),
            edge_colour = "grey70", edge_width = 0.5,
            node_colour = "#4E79A7", node_size = 5, ...) {
@@ -1334,6 +1412,8 @@ mark_network <- S7::new_generic(
 #' @export
 S7::method(mark_network, plotit_class) <- function(
     plot,
+    edges = NULL,
+    encode_edges = NULL,
     layout = c("auto", "circle", "linear", "bipartite", "manual"),
     edge_colour = "grey70", edge_width = 0.5,
     node_colour = "#4E79A7", node_size = 5, ...) {
@@ -1344,100 +1424,228 @@ S7::method(mark_network, plotit_class) <- function(
     cli::cli_abort("{.fn mark_network} requires the {.pkg igraph} package.")
   }
   layout <- match.arg(layout)
-  graph_data <- plot@gg$data
-  if (!inherits(graph_data, "igraph")) {
+
+  nodes <- plot@gg$data
+  if (is.null(nodes) || !is.data.frame(nodes)) {
     cli::cli_abort(
-      "{.fn mark_network} requires an {.cls igraph} object as plot data."
+      "{.fn mark_network} expects a data.frame of nodes as plot data."
     )
   }
-  layout_fun <- switch(layout,
-    auto = igraph::layout_with_fr,
-    circle = igraph::layout_in_circle,
-    linear = igraph::layout_on_line,
-    bipartite = igraph::layout_as_bipartite,
-    manual = igraph::layout_nicely
+
+  node_id_col <- names(nodes)[1]
+  node_ids <- as.character(nodes[[node_id_col]])
+  bad_ids <- duplicated(node_ids) | is.na(node_ids) | !nzchar(node_ids)
+  if (any(bad_ids)) {
+    cli::cli_abort(c(
+      "{.fn mark_network} requires a unique, non-NA node id.",
+      "x" = "The first column {.val {node_id_col}} contains {sum(bad_ids)} duplicate/empty/NA value(s).",
+      "i" = "Ensure the first column of the nodes data frame is a unique id (e.g. name)."
+    ))
+  }
+
+  if (!is.null(edges) && !is.null(encode_edges)) {
+    edge_src <- as.character(rlang::eval_tidy(encode_edges$source, edges))
+    edge_tgt <- as.character(rlang::eval_tidy(encode_edges$target, edges))
+    edge_wt  <- rlang::eval_tidy(encode_edges$weight, edges)
+    edges_df <- data.frame(from = edge_src, to = edge_tgt,
+                           weight = edge_wt %||% rep(1, length(edge_src)),
+                           stringsAsFactors = FALSE)
+  } else {
+    edges_df <- data.frame(from = character(0), to = character(0))
+  }
+
+  graph_obj <- tryCatch(
+    igraph::graph_from_data_frame(
+      d = edges_df,
+      vertices = nodes,
+      directed = FALSE
+    ),
+    error = function(e) cli::cli_abort(c(
+      "Failed to build the network graph from nodes and edges.",
+      "x" = conditionMessage(e),
+      "i" = "Ensure {.arg edges} reference node ids from the first column of the nodes data."
+    ))
   )
-  gg <- ggraph::ggraph(graph_data, layout = layout_fun) +
-    ggplot2::theme_void() +
+
+  layout_name <- switch(layout,
+    auto="fr", circle="circle",
+    linear="linear", bipartite="bipartite",
+    manual="nicely")
+
+  gg <- ggraph::ggraph(graph_obj, layout = layout_name) +
     ggraph::geom_edge_link(edge_colour = edge_colour,
-                            edge_width = edge_width, ...) +
-    ggraph::geom_node_point(fill = node_colour, size = node_size)
+                           edge_width = edge_width, ...)
+
+  node_aes <- plot@gg$mapping
+  node_mapping <- ggplot2::aes()
+  if (!is.null(node_aes)) {
+    # Skip I() constants injected by plotit() (D5): copying them into the
+    # layer would make later scale_color()/scale_fill() calls ineffective.
+    if (!is.null(node_aes$colour) && !inherits(node_aes$colour, "AsIs")) {
+      node_mapping$colour <- node_aes$colour
+    }
+    if (!is.null(node_aes$fill) && !inherits(node_aes$fill, "AsIs")) {
+      node_mapping$fill   <- node_aes$fill
+    }
+    if (!is.null(node_aes$size)) node_mapping$size <- node_aes$size
+  }
+
+  gg <- gg + ggraph::geom_node_point(
+    mapping = node_mapping, fill = node_colour, size = node_size)
+
+  if (!is.null(node_aes$label)) {
+    gg <- gg + ggraph::geom_node_text(
+      mapping = ggplot2::aes(label = !!node_aes$label),
+      repel = FALSE, size = 3)
+  }
+
+  # Inherit the plotit theme so the default look is preserved (A4).
+  # ggraph builds its own plot object, so previously added layers and
+  # scales cannot be carried over -- documented limitation of the
+  # network renderer.
+  gg <- gg + plot@gg$theme +
+    ggplot2::theme(
+      axis.line = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank(),
+      axis.text = ggplot2::element_blank(),
+      axis.title = ggplot2::element_blank()
+    )
   plot@gg <- gg
   plot
 }
-
 # ---- mark_chord ----
 #' Chord diagram layer
 #'
 #' Creates a chord diagram showing pairwise relationships between groups.
-#' Requires the \pkg{circlize} package. Data should be an adjacency matrix
-#' or a data frame with `from`, `to`, and `value` columns.
+#' Requires the \pkg{circlize} package.
+#'
+#' Accepts an **edges table** (data.frame) with \code{source}, \code{target},
+#' and optionally \code{value} columns. The mark internally builds the
+#' adjacency matrix.
 #'
 #' @param plot A plotit object
+#' @param mapping Aesthetics. Structural aesthetics:
+#'   \code{source} (required), \code{target} (required), \code{value} (optional).
+#'   Visual aesthetics: \code{fill} (sector colour, default maps to source
+#'   identity, compatible with \code{scale_fill_*}).
+#' @param data Optional data for this layer
 #' @param gap_width Gap between sectors in degrees (default 4).
-#' @param grid_colour Colour for the outer grid (default `"grey80"`).
-#' @param link_colour Colour for the chord links (default `"grey30"`).
 #' @param link_alpha Alpha transparency for links (default 0.5).
-#' @param ... Other arguments passed to `circlize::chordDiagram`
+#' @param rasterize If \code{TRUE}, rasterize via \code{ggrastr::rasterise()}.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default \code{"cairo"}).
+#' @param ... Other arguments passed to \code{circlize::chordDiagram}
 #' @return Modified plotit object
+#'
+#' **Renderer note**: `mark_chord` renders natively with `circlize` on the
+#' current graphics device (not through the ggplot2 build system) and
+#' replaces the plot's `gg` with an empty ggplot.  Layers added before or
+#' after it therefore do not share a coordinate system -- treat it as a
+#' standalone renderer.
 #' @references
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/chord}{Chord} (graphlib)
 #' @examples
 #' \dontrun{
 #' if (requireNamespace("circlize", quietly = TRUE)) {
-#'   mat <- matrix(c(0, 5, 3, 2, 0, 4, 1, 3, 0), nrow = 3)
-#'   rownames(mat) <- colnames(mat) <- c("A", "B", "C")
-#'   plotit(as.data.frame(as.table(mat)), encode()) |>
-#'     mark_chord()
+#'   df <- data.frame(
+#'     source = c("A", "A", "B", "B", "C"),
+#'     target = c("B", "C", "C", "D", "D"),
+#'     value  = c(5, 3, 4, 2, 6)
+#'   )
+#'   df |> plotit(encode(source = source, target = target,
+#'                       value = value, fill = source)) |>
+#'     mark_chord() |>
+#'     scale_fill(range = "viridis")
 #' }
 #' }
 #' @export
 mark_chord <- S7::new_generic(
   "mark_chord", "plot",
-  function(plot, gap_width = 4, grid_colour = "grey80",
-           link_colour = "grey30", link_alpha = 0.5, ...) {
+  function(plot, mapping = NULL, data = NULL,
+           gap_width = 4, link_alpha = 0.5,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo",
+           ...) {
     S7::S7_dispatch()
   }
 )
 
 #' @export
 S7::method(mark_chord, plotit_class) <- function(
-    plot, gap_width = 4, grid_colour = "grey80",
-    link_colour = "grey30", link_alpha = 0.5, ...) {
+    plot, mapping = NULL, data = NULL,
+    gap_width = 4, link_alpha = 0.5,
+    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo",
+    ...) {
   if (!requireNamespace("circlize", quietly = TRUE)) {
     cli::cli_abort("{.fn mark_chord} requires the {.pkg circlize} package.")
   }
-  d <- plot@gg$data
-  # Expect adjacency matrix or from-to-value data frame
-  if (is.data.frame(d)) {
-    if (all(c("Var1", "Var2", "Freq") %in% names(d))) {
-      # Convert table-as-dataframe to matrix
-      mat <- xtabs(Freq ~ Var1 + Var2, data = d)
-    } else if (all(c("from", "to", "value") %in% names(d))) {
-      mat <- xtabs(value ~ from + to, data = d)
+
+  edges <- data %||% plot@gg$data
+  mapping <- mapping %||% plot@gg$mapping
+
+  # Auto-detect data format:
+  #   If mapping has source/target -> new API (edges table)
+  #   Otherwise -> fallback (from/to legacy, Var1/Var2/Freq, or matrix)
+  if (!is.null(mapping$source) && !is.null(mapping$target)) {
+    src <- as.character(rlang::eval_tidy(mapping$source, edges))
+    tgt <- as.character(rlang::eval_tidy(mapping$target, edges))
+    val <- rlang::eval_tidy(mapping$value, edges) %||% rep(1, length(src))
+  } else if (is.data.frame(edges)) {
+    if (all(c("from", "to") %in% names(edges))) {
+      # Legacy API compatibility: from/to/value columns map to source/target/value
+      src <- as.character(edges[["from"]])
+      tgt <- as.character(edges[["to"]])
+      val <- edges[["value"]] %||% rep(1, length(src))
+    } else if (all(c("Var1", "Var2", "Freq") %in% names(edges))) {
+      mat <- xtabs(Freq ~ Var1 + Var2, data = edges)
+      circlize::chordDiagram(mat, transparency = 1 - link_alpha,
+        annotationTrack = "grid", preAllocateTracks = list(track.height = 0.1), ...)
+      gg <- ggplot2::ggplot() + ggplot2::theme_void()
+      plot@gg <- gg
+      return(plot)
     } else {
-      cli::cli_abort(
-        "{.fn mark_chord} expects data with columns Var1/Var2/Freq or from/to/value."
-      )
+      cli::cli_abort(c(
+        "{.fn mark_chord} needs {.code encode(source =, target =, value =)}.",
+        "i" = "Or provide {.val from}/{.val to} (legacy) or {.val Var1}/{.val Var2}/{.val Freq} columns."
+      ))
     }
-  } else if (is.matrix(d)) {
-    mat <- d
   } else {
-    cli::cli_abort(
-      "{.fn mark_chord} expects a matrix or data frame as plot data."
-    )
+    mat <- as.matrix(edges)
+    circlize::chordDiagram(mat, transparency = 1 - link_alpha,
+      annotationTrack = "grid", preAllocateTracks = list(track.height = 0.1), ...)
+    gg <- ggplot2::ggplot() + ggplot2::theme_void()
+    plot@gg <- gg
+    return(plot)
   }
-  # Build a new ggplot with a custom drawing layer
-  chord_grob <- function(...) {
-    circlize::chordDiagram(mat, ...)
+
+  # --- Build adjacency matrix ---
+  all_nodes <- unique(c(src, tgt))
+  mat <- matrix(0, nrow = length(all_nodes), ncol = length(all_nodes),
+                dimnames = list(all_nodes, all_nodes))
+  for (i in seq_along(src)) {
+    mat[src[i], tgt[i]] <- mat[src[i], tgt[i]] + val[i]
   }
-  # Use annotation layer since circlize draws directly
+
+  # --- Build sector colours from fill mapping ---
+  # plotit() injects fill = I(default_color) as a constant; it is not a
+  # real data mapping and must not drive the sector palette.
+  has_fill <- !is.null(mapping$fill) && !inherits(mapping$fill, "AsIs")
+  if (has_fill) {
+    fill_vals <- as.character(rlang::eval_tidy(mapping$fill, edges))
+    node_fill <- stats::setNames(rep("grey60", length(all_nodes)), all_nodes)
+    for (i in seq_along(src)) {
+      node_fill[src[i]] <- fill_vals[i]
+    }
+    grid_col <- node_fill[all_nodes]
+  } else {
+    grid_col <- "grey80"
+  }
+
   gg <- ggplot2::ggplot() + ggplot2::theme_void()
   plot@gg <- gg
-  # Draw chord via a custom annotation
+
   circlize::chordDiagram(mat,
     transparency = 1 - link_alpha,
-    grid.col = grid_colour,
+    grid.col = grid_col,
     annotationTrack = "grid",
     preAllocateTracks = list(track.height = 0.1),
     ...

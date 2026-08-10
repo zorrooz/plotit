@@ -39,11 +39,26 @@ NULL
   gg + patchwork::plot_layout(widths = NULL, heights = NULL)
 }
 
+# Sync lazy labels on a sub-plot before extraction so label_* settings
+# survive composition (AGENTS.md §1.2).  Composites are skipped: their
+# labels live in annotations, not meta@labels.
+#' Sync lazy labels on a sub-plot before composition.
+#' @noRd
+#' @keywords internal
+._sync_subplot <- function(p) {
+  if (S7::S7_inherits(p, plotit_class) && !S7::S7_inherits(p, plotit_composite)) {
+    ._sync_labels(p)
+  } else {
+    p
+  }
+}
+
 # Assemble a list of plots into a patchwork via wrap_plots()
 #' Assemble a list of plots into a patchwork via wrap_plots().
 #' @noRd
 #' @keywords internal
 ._assemble_plots <- function(plots, layout) {
+  plots <- lapply(plots, ._sync_subplot)
   ggs <- lapply(plots, ._extract_gg)
   ggs <- lapply(ggs, ._reset_sizing)
 
@@ -208,8 +223,8 @@ compose_inset <- function(
     cli::cli_abort("{.arg base} must be a {.cls plotit} object.")
   }
 
-  base_gg <- ._reset_sizing(._extract_gg(base))
-  inset_gg <- ._reset_sizing(._extract_gg(inset))
+  base_gg <- ._reset_sizing(._extract_gg(._sync_subplot(base)))
+  inset_gg <- ._reset_sizing(._extract_gg(._sync_subplot(inset)))
   gg <- base_gg + patchwork::inset_element(
     inset_gg,
     left     = left,
@@ -288,9 +303,9 @@ compose_marginal <- function(
     cli::cli_abort("{.arg main} must be a {.cls plotit} object.")
   }
 
-  main_gg <- ._reset_sizing(._extract_gg(main))
-  top_gg <- ._reset_sizing(._extract_gg(top))
-  right_gg <- ._reset_sizing(._extract_gg(right))
+  main_gg <- ._reset_sizing(._extract_gg(._sync_subplot(main)))
+  top_gg <- ._reset_sizing(._extract_gg(._sync_subplot(top)))
+  right_gg <- ._reset_sizing(._extract_gg(._sync_subplot(right)))
 
   # Shared axes: hide redundant labels / ticks on marginal panels
   # BEFORE assembly (robust -- no patchwork-internals dependency)

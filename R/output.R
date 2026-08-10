@@ -59,7 +59,10 @@ pkgdown_print.plotit_composite <- function(x, visible = TRUE) {
 #' @return The plotit object (invisibly)
 #' @noRd
 S7::method(print, plotit_class) <- function(x, ...) {
-  if (is.null(attr(x@meta, "plotit_theme_managed", exact = TRUE))) {
+  # Fall back to the default theme when the plot was built without one
+  # (e.g. mark_chord replaces gg with an empty ggplot).
+  if (is.null(attr(x@meta, "plotit_theme_managed", exact = TRUE)) ||
+      length(x@gg$theme) == 0) {
     x@gg <- x@gg + .theme_default()
     attr(x@meta, "plotit_theme_managed") <- TRUE
   }
@@ -94,7 +97,8 @@ S7::method(print, plotit_class) <- function(x, ...) {
 # S3 print method — reaches knitr/vignette contexts where S7 dispatch doesn't fire
 #' @export
 print.plotit <- function(x, ...) {
-  if (is.null(attr(x@meta, "plotit_theme_managed", exact = TRUE))) {
+  if (is.null(attr(x@meta, "plotit_theme_managed", exact = TRUE)) ||
+      length(x@gg$theme) == 0) {
     x@gg <- x@gg + .theme_default()
     attr(x@meta, "plotit_theme_managed") <- TRUE
   }

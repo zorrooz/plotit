@@ -415,6 +415,7 @@ test_that("mark_smooth supports colour aesthetic", {
 
 # ---- mark_hex ----
 test_that("[BDD] mark_hex adds hex bin layer", {
+  skip_if_not_installed("hexbin")
   p <- plotit(ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 1000), ],
               encode(x = carat, y = price)) |> mark_hex(bins = 15)
   expect_s3_class(p, "plotit::plotit")
@@ -422,12 +423,14 @@ test_that("[BDD] mark_hex adds hex bin layer", {
 })
 
 test_that("mark_hex supports bins parameter", {
+  skip_if_not_installed("hexbin")
   p <- plotit(ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 500), ],
               encode(x = carat, y = price)) |> mark_hex(bins = 10)
   expect_s3_class(p, "plotit::plotit")
 })
 
 test_that("mark_hex supports local data", {
+  skip_if_not_installed("hexbin")
   sub <- ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 300), ]
   p <- plotit(sub, encode(x = carat, y = price)) |> mark_hex(data = sub)
   expect_s3_class(p, "plotit::plotit")
@@ -639,13 +642,31 @@ test_that("mark_beeswarm supports local data", {
 })
 
 # ---- mark_sankey ----
-test_that("[BDD] mark_sankey builds sankey", {
+# ggsankey HEAD 的旧式 aesthetics 声明在 ggplot2 >= 4.0 下失效（A2），
+# 渲染 0 行且伴随 "Ignoring unknown aesthetics" 警告。返回 FALSE 表示
+# 环境不兼容，测试 skip 而非失败。
+.sankey_renders <- function(p) {
+  built <- suppressWarnings(
+    tryCatch(ggplot2::ggplot_build(p@gg), error = function(e) e)
+  )
+  if (inherits(built, "error")) return(FALSE)
+  nrow(built$data[[1]]) > 0
+}
+
+test_that("[BDD] mark_sankey builds sankey (edges-table API)", {
   skip_if_not_installed("ggsankey")
-  df <- ggsankey::make_long(ggplot2::diamonds[1:200, ], cut, color)
-  p <- plotit(df, encode(x = x, next_x = next_x, node = node,
-                          next_node = next_node, value = value)) |>
-    mark_sankey()
+  df <- data.frame(
+    source = c("A", "A", "B", "B", "C"),
+    target = c("B", "C", "C", "D", "D"),
+    value  = c(10, 5, 8, 3, 6)
+  )
+  p <- df |> plotit(encode(source = source, target = target,
+                           value = value, fill = source)) |> mark_sankey()
   expect_s3_class(p, "plotit::plotit")
+  if (!.sankey_renders(p)) {
+    skip("ggsankey × ggplot2 4.0 渲染 0 行（已知不兼容 A2）")
+  }
+  expect_gt(nrow(ggplot2::ggplot_build(p@gg)$data[[1]]), 0)
 })
 
 test_that("mark_sankey errors without ggsankey", {
@@ -656,13 +677,26 @@ test_that("mark_sankey errors without ggsankey", {
   }
 })
 
+test_that("mark_sankey errors without source/target mapping", {
+  skip_if_not_installed("ggsankey")
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
+  expect_error(mark_sankey(p), "source")
+})
+
 test_that("mark_sankey supports flow_alpha", {
   skip_if_not_installed("ggsankey")
-  df <- ggsankey::make_long(ggplot2::diamonds[1:200, ], cut, color)
-  p <- plotit(df, encode(x = x, next_x = next_x, node = node,
-                          next_node = next_node, value = value)) |>
+  df <- data.frame(
+    source = c("A", "A", "B"),
+    target = c("B", "C", "C"),
+    value  = c(10, 5, 8)
+  )
+  p <- df |> plotit(encode(source = source, target = target, value = value)) |>
     mark_sankey(flow_alpha = 0.8)
   expect_s3_class(p, "plotit::plotit")
+  # flow.alpha 只作用于 flow 层（GeomPolygon），node 层（GeomRect）不透明
+  alphas <- vapply(p@gg$layers, function(l) l$aes_params$alpha %||% NA_real_, numeric(1))
+  expect_true(any(alphas == 0.8, na.rm = TRUE))
+  expect_true(anyNA(alphas))
 })
 
 # ---- mark_treemap ----
@@ -700,41 +734,59 @@ test_that("mark_treemap supports rasterize", {
 })
 
 # ---- mark_network ----
-test_that("[BDD] mark_network builds network", {
-  skip("igraph data not accepted by plotit() on CI ggplot2")
+test_that("[BDD] mark_network builds network (nodes + edges API)", {
   skip_if_not_installed("ggraph")
   skip_if_not_installed("igraph")
-  gr <- igraph::sample_pa(20, directed = FALSE)
-  p <- plotit(gr, encode()) |> mark_network()
+  nodes <- data.frame(
+    name  = c("A", "B", "C", "D"),
+    group = c("X", "Y", "X", "Y"),
+    value = c(10, 20, 15, 25)
+  )
+  edges <- data.frame(
+    from   = c("A", "A", "B", "C"),
+    to     = c("B", "C", "C", "D"),
+    weight = c(1, 2, 3, 4)
+  )
+  p <- nodes |> plotit(encode(color = group, size = value, label = name)) |>
+    mark_network(edges = edges,
+                 encode_edges = encode(source = from, target = to, weight = weight))
   expect_s3_class(p, "plotit::plotit")
+  expect_length(ggplot2::ggplot_build(p@gg)$data, 3)
 })
 
-test_that("mark_network errors on non-igraph data", {
+test_that("mark_network errors on non-node data", {
   skip_if_not_installed("ggraph")
   skip_if_not_installed("igraph")
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
-  expect_error(mark_network(p), "igraph")
+  expect_error(mark_network(p), "node id")
 })
 
 test_that("mark_network supports circle layout", {
-  skip("igraph data not accepted by plotit() on CI ggplot2")
   skip_if_not_installed("ggraph")
   skip_if_not_installed("igraph")
-  gr <- igraph::sample_pa(10, directed = FALSE)
-  p <- plotit(gr, encode()) |> mark_network(layout = "circle")
+  nodes <- data.frame(name = c("A", "B", "C", "D"), group = c("X", "Y", "X", "Y"))
+  edges <- data.frame(from = c("A", "A", "B", "C"), to = c("B", "C", "C", "D"))
+  p <- nodes |> plotit(encode(color = group)) |>
+    mark_network(edges = edges,
+                 encode_edges = encode(source = from, target = to),
+                 layout = "circle")
   expect_s3_class(p, "plotit::plotit")
+  expect_length(ggplot2::ggplot_build(p@gg)$data, 2)
 })
 
 # ---- mark_chord ----
-test_that("[BDD] mark_chord builds chord diagram", {
+test_that("[BDD] mark_chord builds chord diagram (legacy from/to API)", {
   skip_if_not_installed("circlize")
   mat <- matrix(c(0, 5, 3, 2, 0, 4, 1, 3, 0), nrow = 3)
   rownames(mat) <- colnames(mat) <- c("A", "B", "C")
   # Convert to long form data frame
   df <- as.data.frame(as.table(mat))
   names(df) <- c("from", "to", "value")
+  pdf(NULL)
+  on.exit(dev.off(), add = TRUE)
   p <- plotit(df, encode()) |> mark_chord()
   expect_s3_class(p, "plotit::plotit")
+  expect_s3_class(p@gg, "ggplot")
 })
 
 test_that("mark_chord errors without circlize", {
@@ -751,6 +803,22 @@ test_that("mark_chord accepts matrix data", {
   rownames(mat) <- colnames(mat) <- c("A", "B", "C")
   df <- as.data.frame(as.table(mat))
   names(df) <- c("from", "to", "value")
+  pdf(NULL)
+  on.exit(dev.off(), add = TRUE)
   p <- plotit(df, encode()) |> mark_chord()
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_chord supports edges-table API", {
+  skip_if_not_installed("circlize")
+  df <- data.frame(
+    source = c("A", "A", "B", "B"),
+    target = c("B", "C", "C", "D"),
+    value  = c(5, 3, 4, 2)
+  )
+  pdf(NULL)
+  on.exit(dev.off(), add = TRUE)
+  p <- df |> plotit(encode(source = source, target = target, value = value)) |>
+    mark_chord()
   expect_s3_class(p, "plotit::plotit")
 })

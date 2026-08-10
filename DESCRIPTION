@@ -13,6 +13,7 @@ BugReports: https://github.com/zorrooz/plotit/issues
 Suggests:
     ggbeeswarm,
     ggsankey (>= 0.0.4),
+    hexbin,
     treemapify,
     ggraph,
     igraph,

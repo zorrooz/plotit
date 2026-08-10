@@ -55,6 +55,12 @@ make_mark <- function(name, geom_fun) {
 #' @param base_theme A base ggplot2 theme function
 #'   (default: [ggplot2::theme_minimal]).
 #' @return Invisibly returns the created function.
+#' @details
+#' The theme function is assigned to `name` in the calling environment
+#' (`parent.frame()`) and also returned invisibly.  When calling
+#' `make_theme()` inside another function, assign the return value
+#' explicitly -- the `parent.frame()` assignment is lost when that
+#' function returns.
 #' @examples
 #' style_dark <- make_theme("style_dark",
 #'   plot.background = ggplot2::element_rect(fill = "#1a1a1a"),
