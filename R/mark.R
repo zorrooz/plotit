@@ -9,13 +9,14 @@ NULL
 #' @noRd
 #' @keywords internal
 ._mark_impl <- function(plot, mapping, data, position, geom_fun,
-                        rasterize, rasterize_dpi, rasterize_dev, ...) {
+                        rasterize, rasterize_dpi, rasterize_dev,
+                        auto_dodge = TRUE, ...) {
   # Only clear default_color when the layer actually provides colour/fill
   if (!is.null(mapping) && (!is.null(mapping$colour) || !is.null(mapping$fill))) {
     plot <- ._clear_default_color(plot, mapping)
   }
   pos <- position
-  if (is.null(pos) && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
+  if (is.null(pos) && auto_dodge && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
     pos <- ggplot2::position_dodge(plot@meta@dodge)
   }
   geom <- if (is.null(pos)) {
@@ -354,7 +355,7 @@ S7::method(mark_map, plotit_class) <- function(
     ))
   }
   # geom_sf does not support position adjustment; ignore dodge
-  if (!is.null(mapping) && !is.null(mapping$colour)) {
+  if (!is.null(mapping) && (!is.null(mapping$colour) || !is.null(mapping$fill))) {
     plot <- ._clear_default_color(plot, mapping)
   }
   geom <- ggplot2::geom_sf(mapping = mapping, data = data, ...)
@@ -648,6 +649,9 @@ S7::method(mark_hex, plotit_class) <- function(
     plot, mapping = NULL, data = NULL, position = NULL, ...,
     bins = NULL,
     rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  if (!requireNamespace("hexbin", quietly = TRUE)) {
+    cli::cli_abort("{.fn mark_hex} requires the {.pkg hexbin} package.")
+  }
   params <- rlang::list2(...)
   params$bins <- bins
   do.call(function(...) {
@@ -752,17 +756,30 @@ S7::method(mark_corr, plotit_class) <- function(
     reorder = TRUE, ...,
     rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
   method <- match.arg(method)
+  # Clear the default_color injected by plotit() so the fill legend appears
+  plot <- ._clear_default_color(plot)
   # Extract numeric columns from plot data
   raw_data <- plot@gg$data
   num_cols <- vapply(raw_data, is.numeric, logical(1))
   if (sum(num_cols) < 2) {
     cli::cli_abort("{.fn mark_corr} requires at least 2 numeric columns.")
   }
-  mat <- stats::cor(raw_data[, num_cols, drop = FALSE], method = method)
+  # Pairwise complete observations so a single NA column does not
+  # invalidate the whole correlation matrix.
+  mat <- stats::cor(raw_data[, num_cols, drop = FALSE], method = method,
+                    use = "pairwise.complete.obs")
   # Hierarchical clustering reorder
   if (reorder) {
-    ord <- stats::hclust(stats::as.dist(1 - abs(mat)))$order
-    mat <- mat[ord, ord]
+    if (anyNA(mat)) {
+      # e.g. a zero-variance column yields NA correlations; clustering
+      # would crash, so fall back to the original order with a warning.
+      cli::cli_warn(
+        "Correlation matrix contains NA (zero-variance column?); skipping reorder."
+      )
+    } else {
+      ord <- stats::hclust(stats::as.dist(1 - abs(mat)))$order
+      mat <- mat[ord, ord]
+    }
   }
   # Melt to long form
   df <- expand.grid(
@@ -897,14 +914,20 @@ S7::method(mark_significance, plotit_class) <- function(
       "{.arg comparisons} must have columns: {.val {required}}."
     )
   }
-  # Extract data range for auto y_position
+  # Extract data range only when needed for auto-computation (C3)
   d <- plot@gg$data
-  y_var <- rlang::eval_tidy(plot@gg$mapping$y, d)
-  y_range <- range(y_var, na.rm = TRUE)
+  y_var <- if (!is.null(plot@gg$mapping$y)) rlang::eval_tidy(plot@gg$mapping$y, d) else NULL
+  y_range <- if (!is.null(y_var)) range(y_var, na.rm = TRUE) else c(0, 1)
   y_span <- diff(y_range)
   if (is.null(y_offset)) y_offset <- y_span * 0.02
   # Auto-compute y_position if not provided
   if (is.null(y_position)) {
+    if (is.null(y_var)) {
+      cli::cli_abort(c(
+        "{.fn mark_significance} cannot auto-compute {.arg y_position} without a y mapping.",
+        "i" = "Provide {.arg y_position} explicitly."
+      ))
+    }
     y_position <- y_range[2] + y_span * 0.1 + seq_len(nrow(comparisons)) * y_span * 0.08
   }
   # Get x positions (handle factor/character group1/group2)
@@ -1071,6 +1094,12 @@ S7::method(mark_dumbbell, plotit_class) <- function(
   m <- mapping %||% plot@gg$mapping
   x_col <- rlang::eval_tidy(m$x, d)
   y_col <- rlang::eval_tidy(m$y, d)
+  if (is.null(m$yend)) {
+    cli::cli_abort(c(
+      "{.fn mark_dumbbell} requires a {.arg yend} mapping for the second point.",
+      "i" = "Use {.code encode(x = ..., y = ..., yend = ...)}."
+    ))
+  }
   yend_col <- rlang::eval_tidy(m$yend, d)
   # Connecting line
   segment_mapping <- encode(
@@ -1144,9 +1173,12 @@ S7::method(mark_beeswarm, plotit_class) <- function(
   method <- match.arg(method)
   params <- rlang::list2(...)
   params$method <- method[1]
+  # geom_beeswarm implements its own collision placement; the global
+  # auto-dodge position is not supported (B3).
   do.call(function(...) {
     ._mark_impl(plot, mapping, data, position, ggbeeswarm::geom_beeswarm,
-                rasterize, rasterize_dpi, rasterize_dev, ...)
+                rasterize, rasterize_dpi, rasterize_dev,
+                auto_dodge = FALSE, ...)
   }, params)
 }
 
@@ -1188,7 +1220,7 @@ S7::method(mark_beeswarm, plotit_class) <- function(
 #'   df |> plotit(encode(source = source, target = target,
 #'                       value = value, fill = source)) |>
 #'     mark_sankey() |>
-#'     scale_fill(range = "tableau")
+#'     scale_fill(range = "viridis")
 #' }
 #' }
 #' @export
@@ -1327,15 +1359,9 @@ S7::method(mark_treemap, plotit_class) <- function(
   if (!is.null(mapping) && !is.null(mapping$fill)) {
     plot <- ._clear_default_color(plot, mapping)
   }
-  pos <- position
-  if (is.null(pos) && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
-    pos <- ggplot2::position_dodge(plot@meta@dodge)
-  }
-  geom <- if (is.null(pos)) {
-    treemapify::geom_treemap(mapping = mapping, data = data, ...)
-  } else {
-    treemapify::geom_treemap(mapping = mapping, data = data, position = pos, ...)
-  }
+  # geom_treemap lays out rectangles itself; the global auto-dodge
+  # position is ignored by treemapify (D6).
+  geom <- treemapify::geom_treemap(mapping = mapping, data = data, ...)
   plot <- .add_geom(plot, geom,
     rasterize = rasterize, rasterize_dpi = rasterize_dpi,
     rasterize_dev = rasterize_dev
@@ -1386,7 +1412,7 @@ S7::method(mark_treemap, plotit_class) <- function(
 #'       edges = edges,
 #'       encode_edges = encode(source = from, target = to, weight = weight)
 #'     ) |>
-#'     scale_color(range = "category10") |>
+#'     scale_color(range = "viridis") |>
 #'     scale_size(range = c(5, 20))
 #' }
 #' }
@@ -1473,9 +1499,15 @@ S7::method(mark_network, plotit_class) <- function(
   node_aes <- plot@gg$mapping
   node_mapping <- ggplot2::aes()
   if (!is.null(node_aes)) {
-    if (!is.null(node_aes$colour)) node_mapping$colour <- node_aes$colour
-    if (!is.null(node_aes$fill))   node_mapping$fill   <- node_aes$fill
-    if (!is.null(node_aes$size))   node_mapping$size   <- node_aes$size
+    # Skip I() constants injected by plotit() (D5): copying them into the
+    # layer would make later scale_color()/scale_fill() calls ineffective.
+    if (!is.null(node_aes$colour) && !inherits(node_aes$colour, "AsIs")) {
+      node_mapping$colour <- node_aes$colour
+    }
+    if (!is.null(node_aes$fill) && !inherits(node_aes$fill, "AsIs")) {
+      node_mapping$fill   <- node_aes$fill
+    }
+    if (!is.null(node_aes$size)) node_mapping$size <- node_aes$size
   }
 
   gg <- gg + ggraph::geom_node_point(

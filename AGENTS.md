@@ -109,7 +109,7 @@
 对标 Vega-Lite / AntV-G2 的视觉通道丰富度，不限于 ggplot2 原生几何。
 新 mark 按需引入，遵循统一 S7 泛型+方法模式（`mark_<type>` + `geom_<底层>`），支持 `rasterize`。
 
-**已实现**（18）：
+**已实现**（27）：
 
 | 函数 | 对应 | 用途 |
 |---|---|---|
@@ -131,6 +131,15 @@
 | `mark_hex` | `geom_hex` | 2D 六边形热力图 ✅ |
 | `mark_density_2d` | `geom_density_2d`/`geom_density_2d_filled` | 2D 密度等高线 ✅ |
 | `mark_corr` | `geom_tile` + corr 预处理 | 相关性矩阵热力图 ✅ |
+| `mark_errorbar` | `geom_errorbar`/`geom_errorbarh` | 误差棒 ✅ |
+| `mark_significance` | `mark_rule` + `mark_text` 语法糖 | 显著性标记 ✅ |
+| `mark_lollipop` | `mark_point` + 线段语法糖 | 棒棒糖图 ✅ |
+| `mark_dumbbell` | `mark_point`×2 + 线段语法糖 | 哑铃对比图 ✅ |
+| `mark_beeswarm` | `ggbeeswarm::geom_beeswarm` | 蜂群散点 ✅ |
+| `mark_sankey` | `ggsankey`（edges-table API） | 桑基流向图 ✅ |
+| `mark_treemap` | `treemapify` | 矩形树图 ✅ |
+| `mark_network` | `ggraph`/`igraph`（nodes+edges 双数据源） | 力导向网络图 ✅ |
+| `mark_chord` | `circlize`（edges-table API） | 弦图 ✅ |
 
 #### Vega-Lite vs AntV G2 复合 Mark 全量对比
 
@@ -156,32 +165,32 @@ G2 的每个复合 Mark 内部展开为 2-5 个基础 Mark 的组合，这与 pl
 | 2 | 基础 | `mark_line` | 几何 | `geom_line` | VL `line`/G2 `line` | 折线/趋势 ✅ |
 | 3 | 基础 | `mark_area` | 几何 | `geom_area`/`geom_ribbon` | VL `area`/G2 `area` | 面积图/堆叠面积 ✅ |
 | 4 | 基础 | `mark_bar` | 几何 | `geom_bar`/`geom_col` | VL `bar`/G2 `interval` | 柱状/条形图 ✅ |
-| 5 | 基础 | `mark_rect` | 几何 | `geom_tile`/`geom_rect` | VL `rect`/G2 `cell` `rect` | 矩形/热力图单元格 |
-| 6 | 基础 | `mark_polygon` | 几何 | `geom_polygon` | G2 `polygon` | 多边形/自定义形状 |
+| 5 | 基础 | `mark_rect` | 几何 | `geom_tile`/`geom_rect` | VL `rect`/G2 `cell` `rect` | 矩形/热力图单元格 ✅ |
+| 6 | 基础 | `mark_polygon` | 几何 | `geom_polygon` | G2 `polygon` | 多边形/自定义形状 ✅ |
 | 7 | 基础 | `mark_text` | 几何 | `geom_text`/`ggrepel` | VL `text`/G2 `text` | 文本标签/数据标注 ✅ |
-| 8 | 基础 | `mark_rule` | 几何 | `geom_hline`/`geom_vline`/`geom_abline`/`geom_segment` | VL `rule`/G2 `lineX` `lineY` `rangeX` `rangeY` | 参考线/参考区域/误差线 |
-| 9 | 基础 | `mark_path` | 几何 | `geom_path` | G2 `path` | 路径/轨迹 |
+| 8 | 基础 | `mark_rule` | 几何 | `geom_hline`/`geom_vline`/`geom_abline`/`geom_segment` | VL `rule`/G2 `lineX` `lineY` `rangeX` `rangeY` | 参考线/参考区域/误差线 ✅ |
+| 9 | 基础 | `mark_path` | 几何 | `geom_path` | G2 `path` | 路径/轨迹 ✅ |
 | 10 | 基础 | `mark_histogram` | 分布 | `geom_histogram` | VL `bar`(binned) | 直方图 ✅ |
 | 11 | 基础 | `mark_density` | 分布 | `geom_density` | G2 `density` | 1D 核密度曲线 ✅ |
 | 12 | 基础 | `mark_boxplot` | 分布 | `geom_boxplot` | VL `boxplot`/G2 `boxplot` | 箱线图 ✅ |
 | 13 | 基础 | `mark_violin` | 分布 | `geom_violin` | G2 `density`(violin) | 小提琴图 ✅ |
 | 14 | 基础 | `mark_map` | 地理 | `sf`+`geom_sf` | VL `geoshape`/G2 `geoPath` | 地图/地理空间 ✅ |
 | | **第二层：统计 Mark** | | | | | |
-| 15 | 统计 | `mark_smooth` | 统计 | `geom_smooth` | VL: layer组合/G2: transform | 回归平滑+置信带 |
-| 16 | 统计 | `mark_hex` | 统计 | `geom_hex` | G2 `heatmap`(corelib) | 2D 六边形分箱热力图 |
-| 17 | 统计 | `mark_density_2d` | 统计 | `geom_density_2d`/`geom_density_2d_filled` | G2 `density`(contour) | 2D 密度等高线 |
-| 18 | 统计 | `mark_corr` | 统计 | `geom_tile` + corr预处理 | G2 `cell`(相关性矩阵) | 相关性矩阵热力图 |
+| 15 | 统计 | `mark_smooth` | 统计 | `geom_smooth` | VL: layer组合/G2: transform | 回归平滑+置信带 ✅ |
+| 16 | 统计 | `mark_hex` | 统计 | `geom_hex` | G2 `heatmap`(corelib) | 2D 六边形分箱热力图 ✅ |
+| 17 | 统计 | `mark_density_2d` | 统计 | `geom_density_2d`/`geom_density_2d_filled` | G2 `density`(contour) | 2D 密度等高线 ✅ |
+| 18 | 统计 | `mark_corr` | 统计 | `geom_tile` + corr预处理 | G2 `cell`(相关性矩阵) | 相关性矩阵热力图 ✅ |
 | | **第三层：复合 Mark** | | | | | |
-| 19 | 复合 | `mark_significance` | 标注 | `mark_rule` + `mark_text` 语法糖 | VL: layer组合 | 显著性标记（括号+星号） |
-| 20 | 复合 | `mark_errorbar` | 标注 | `mark_rule` + `mark_line` 语法糖 | VL `errorbar`(复合Mark) | 误差棒 |
-| 21 | 复合 | `mark_lollipop` | 图表 | `mark_point` + `mark_line` 语法糖 | — | 棒棒糖图 |
-| 22 | 复合 | `mark_dumbbell` | 图表 | `mark_point`×2 + `mark_line` 语法糖 | G2 `link`(corelib) | 哑铃对比图 |
+| 19 | 复合 | `mark_significance` | 标注 | `mark_rule` + `mark_text` 语法糖 | VL: layer组合 | 显著性标记（括号+星号） ✅ |
+| 20 | 复合 | `mark_errorbar` | 标注 | `geom_errorbar`/`geom_errorbarh` 包装 | VL `errorbar`(复合Mark) | 误差棒 ✅ |
+| 21 | 复合 | `mark_lollipop` | 图表 | `mark_point` + `mark_line` 语法糖 | — | 棒棒糖图 ✅ |
+| 22 | 复合 | `mark_dumbbell` | 图表 | `mark_point`×2 + `mark_line` 语法糖 | G2 `link`(corelib) | 哑铃对比图 ✅ |
 | | **第三层（关系）** | | | | | |
-| 23 | 复合 | `mark_beeswarm` | 分布 | `ggbeeswarm::geom_beeswarm` | G2 `beeswarm`(corelib) | 蜂群散点（碰撞检测） |
-| 24 | 复合 | `mark_sankey` | 关系 | `ggsankey` | G2 `sankey`(graphlib) | 桑基流向图 |
-| 25 | 复合 | `mark_treemap` | 关系 | `treemapify` | G2 `treemap`(graphlib) | 矩形树图 |
-| 26 | 复合 | `mark_network` | 关系 | `ggraph`/`igraph` | G2 `forceGraph`(graphlib) | 力导向网络图 |
-| 27 | 复合 | `mark_chord` | 关系 | `circlize` | G2 `chord`(graphlib) | 弦图 |
+| 23 | 复合 | `mark_beeswarm` | 分布 | `ggbeeswarm::geom_beeswarm` | G2 `beeswarm`(corelib) | 蜂群散点（碰撞检测） ✅ |
+| 24 | 复合 | `mark_sankey` | 关系 | `ggsankey`（edges-table API） | G2 `sankey`(graphlib) | 桑基流向图 ✅ |
+| 25 | 复合 | `mark_treemap` | 关系 | `treemapify` | G2 `treemap`(graphlib) | 矩形树图 ✅ |
+| 26 | 复合 | `mark_network` | 关系 | `ggraph`/`igraph`（nodes+edges 双数据源） | G2 `forceGraph`(graphlib) | 力导向网络图 ✅ |
+| 27 | 复合 | `mark_chord` | 关系 | `circlize`（edges-table API） | G2 `chord`(graphlib) | 弦图 ✅ |
 
 **三层判断规则**：
 
@@ -355,7 +364,7 @@ style_dark <- make_theme("style_dark",
 | 复合 Mark | 展开等价管道 | 对标来源 | 典型参数 |
 |---|---|---|---|
 | `mark_significance` | `mark_rule(x=x, xend=x2, y=y, yend=y)` + `mark_text(x=mid(x,x2), y=y+offset, label=sig)` | Vega-Lite: layer(bar+rule+text) 社区惯用模式 | `comparisons`(data.frame), `y_positions`, `labels` |
-| `mark_errorbar` | `mark_rule(x=x, ymin=.., ymax=..)` + 可选 tick 端点 | Vega-Lite `errorbar`（3大复合Mark 之一） | `stat`("ci"/"stderr"/"stdev"), `width` |
+| `mark_errorbar` | `geom_errorbar`/`geom_errorbarh` 包装 | Vega-Lite `errorbar`（3大复合Mark 之一） | `width`, `orientation` |
 | `mark_lollipop` | `mark_point()` + `mark_line(xend=x, yend=0)` | 无直接对标 | x, y |
 | `mark_dumbbell` | `mark_point(aes=x, y=y_start)` + `mark_point(aes=x, y=y_end)` + `mark_line(aes(x=x, xend=x, y=y_start, yend=y_end))` | G2 `mark.link` | `y_start`, `y_end` |
 
@@ -451,7 +460,7 @@ x/y 的 `range` 表示数据在面板上的视觉占比，通过 `limits` + `exp
 |---|---|---|---|
 | `"std"` | 每列 min-max→[0,1] | 共享 `scale_y_continuous()` | 无 |
 | `"global"` | 全局 min-max→[0,1] | 共享 `scale_y_continuous()` | 无 |
-| `"none"` | 无 | 抑制原生 y 轴 | 每列手动渲染（`geom_vline`+`geom_segment`+`geom_text`） |
+| `"none"` | 无 | 抑制原生 y 轴 | 每列手动渲染（`geom_segment`+`geom_text`） |
 
 `"none"` 模式已知局限：非原生 guide，轴线颜色/线宽/字体从 `._parallel_theme_props()` 提取当前主题 `axis.*` 元素，不保证 100% 像素一致。推荐优先使用 `"std"` 或 `"global"`。
 
@@ -662,7 +671,7 @@ export(p, "output.pdf", dpi = 300)
 | 阶段 | 名称 | 范围 | 状态 |
 |---|---|---|---|
 | 0 | 固本 | 架构清债 + 代码质量 | 🔄 进行中（单图侧 patchwork 剥离已完成；剩余：组合图、sync_labels、工厂函数、@examples） |
-| 1-4 | mark 扩展 | 13 种新 mark（20 种规划 − 6 已实现 − 1 已移除组合） | ⬜ 未开始 |
+| 1-4 | mark 扩展 | 13 种新 mark（20 种规划 − 6 已实现 − 1 已移除组合） | ✅ 已完成（实际 27 种，见 §3.2） |
 | 5 | 收尾 | 文档补齐、全量验证、发布准备 | ⬜ 未开始 |
 
 ---
@@ -815,10 +824,10 @@ export(p, "output.pdf", dpi = 300)
 | 层级 | 函数族 | 1.0 目标 | 已实现 | 完成度 |
 |------|--------|----------|--------|--------|
 | 内层 | plotit + encode | 2 | 2 | 100% |
-| 内层 | mark_* | 20（目标 ≥15） | 6 | 30% |
+| 内层 | mark_* | 20（目标 ≥15） | 27 | 135%（超目标） |
 | 内层 | scale_* + project_* + split_* + label_* + style+export | 22 | 22 | 100% |
 | 最外层 | compose_* | 3 | 3 | 100% |
-| **总计** | | **~49** | **33** | **67%** |
+| **总计** | | **~49** | **54** | **110%** |
 
 ### 9.5 1.0 检查清单
 

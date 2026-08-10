@@ -415,6 +415,7 @@ test_that("mark_smooth supports colour aesthetic", {
 
 # ---- mark_hex ----
 test_that("[BDD] mark_hex adds hex bin layer", {
+  skip_if_not_installed("hexbin")
   p <- plotit(ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 1000), ],
               encode(x = carat, y = price)) |> mark_hex(bins = 15)
   expect_s3_class(p, "plotit::plotit")
@@ -422,12 +423,14 @@ test_that("[BDD] mark_hex adds hex bin layer", {
 })
 
 test_that("mark_hex supports bins parameter", {
+  skip_if_not_installed("hexbin")
   p <- plotit(ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 500), ],
               encode(x = carat, y = price)) |> mark_hex(bins = 10)
   expect_s3_class(p, "plotit::plotit")
 })
 
 test_that("mark_hex supports local data", {
+  skip_if_not_installed("hexbin")
   sub <- ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 300), ]
   p <- plotit(sub, encode(x = carat, y = price)) |> mark_hex(data = sub)
   expect_s3_class(p, "plotit::plotit")
