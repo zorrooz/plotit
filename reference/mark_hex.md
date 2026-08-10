@@ -75,7 +75,4 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
   plotit(ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 1000), ],
          encode(x = carat, y = price)) |> mark_hex(bins = 20)
 }
-#> Warning: Computation failed in `stat_binhex()`.
-#> Caused by error in `compute_group()`:
-#> ! The package "hexbin" is required for `stat_bin_hex()`.
 ```

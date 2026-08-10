@@ -14,6 +14,7 @@ mark_lollipop(
   stem_colour = "grey50",
   stem_width = 0.5,
   point_size = 3,
+  ref = 0,
   ...
 )
 ```
@@ -43,6 +44,10 @@ mark_lollipop(
 - point_size:
 
   Point size for the lollipop head (default 3).
+
+- ref:
+
+  Baseline value for the stems (default 0).
 
 - ...:
 

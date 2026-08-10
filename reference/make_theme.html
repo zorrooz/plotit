@@ -78,6 +78,14 @@ to a plotit object and can be used anywhere <code><a href="style.html">style()</
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>Invisibly returns the created function.</p>
     </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>The theme function is assigned to <code>name</code> in the calling environment
+(<code><a href="https://rdrr.io/r/base/sys.parent.html" class="external-link">parent.frame()</a></code>) and also returned invisibly.  When calling
+<code>make_theme()</code> inside another function, assign the return value
+explicitly – the <code><a href="https://rdrr.io/r/base/sys.parent.html" class="external-link">parent.frame()</a></code> assignment is lost when that
+function returns.</p>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>

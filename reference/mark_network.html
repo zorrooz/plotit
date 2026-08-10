@@ -52,6 +52,8 @@ Requires the <span class="pkg">ggraph</span> and <span class="pkg">igraph</span>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mark_network</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
+<span>  edges <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  encode_edges <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  layout <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"circle"</span>, <span class="st">"linear"</span>, <span class="st">"bipartite"</span>, <span class="st">"manual"</span><span class="op">)</span>,</span>
 <span>  edge_colour <span class="op">=</span> <span class="st">"grey70"</span>,</span>
 <span>  edge_width <span class="op">=</span> <span class="fl">0.5</span>,</span>
@@ -66,35 +68,37 @@ Requires the <span class="pkg">ggraph</span> and <span class="pkg">igraph</span>
 
 
 <dl><dt id="arg-plot">plot<a class="anchor" aria-label="anchor" href="#arg-plot"></a></dt>
-<dd><p>A plotit object. The data should be an <code>igraph</code>
-object.</p></dd>
+<dd><p>A plotit object. The data should be a data.frame of <strong>nodes</strong>.</p></dd>
+
+
+<dt id="arg-edges">edges<a class="anchor" aria-label="anchor" href="#arg-edges"></a></dt>
+<dd><p>A data.frame of <strong>edges</strong>.</p></dd>
+
+
+<dt id="arg-encode-edges">encode_edges<a class="anchor" aria-label="anchor" href="#arg-encode-edges"></a></dt>
+<dd><p>An <code><a href="encode.html">encode()</a></code> object with <code>source</code> (required),
+<code>target</code> (required), <code>weight</code> (optional).</p></dd>
 
 
 <dt id="arg-layout">layout<a class="anchor" aria-label="anchor" href="#arg-layout"></a></dt>
-<dd><p>Layout algorithm: <code>"auto"</code> (default, uses
-<code>layout_with_fr</code>), <code>"circle"</code>, <code>"linear"</code>, <code>"bipartite"</code>,
-or <code>"manual"</code>.</p></dd>
+<dd><p>Layout algorithm: <code>"auto"</code>, <code>"circle"</code>,
+<code>"linear"</code>, <code>"bipartite"</code>, or <code>"manual"</code>.</p></dd>
 
 
 <dt id="arg-edge-colour">edge_colour<a class="anchor" aria-label="anchor" href="#arg-edge-colour"></a></dt>
-<dd><p>Colour for edges (default <code>"grey70"</code>).</p></dd>
-
-
-<dt id="arg-edge-width">edge_width<a class="anchor" aria-label="anchor" href="#arg-edge-width"></a></dt>
-<dd><p>Width for edges (default 0.5).</p></dd>
+<dd><p>Default colour for edges (default <code>"grey70"</code>).</p></dd>
 
 
 <dt id="arg-node-colour">node_colour<a class="anchor" aria-label="anchor" href="#arg-node-colour"></a></dt>
-<dd><p>Fill colour for nodes (default <code>"#4E79A7"</code>).</p></dd>
+<dd><p>Default fill colour for nodes (default <code>"#4E79A7"</code>).</p></dd>
 
 
 <dt id="arg-node-size">node_size<a class="anchor" aria-label="anchor" href="#arg-node-size"></a></dt>
-<dd><p>Size for nodes (default 5).</p></dd>
+<dd><p>Default size for nodes (default 5).</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Other arguments passed to <code><a href="https://ggraph.data-imaginist.com/reference/geom_edge_link.html" class="external-link">ggraph::geom_edge_link</a></code>
-and <code><a href="https://ggraph.data-imaginist.com/reference/geom_node_point.html" class="external-link">ggraph::geom_node_point</a></code></p></dd>
+<dd><p>Other arguments passed to <code><a href="https://ggraph.data-imaginist.com/reference/geom_edge_link.html" class="external-link">ggraph::geom_edge_link</a></code></p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -102,8 +106,15 @@ and <code><a href="https://ggraph.data-imaginist.com/reference/geom_node_point.h
     <p>Modified plotit object</p>
     </div>
     <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p><strong>Dual data source design</strong>: The main data (passed to <code><a href="plotit.html">plotit()</a></code>) is a
+<strong>nodes</strong> data.frame.  Edges are passed via the <code>edges</code> parameter with
+their own <code>encode_edges</code>.  Node aesthetics (<code>color</code>, <code>size</code>,
+<code>label</code>) work with standard <code>scale_*</code> functions.</p>
+    </div>
+    <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>AntV G2: <a href="https://g2.antv.antgroup.com/en/api/mark/force-graph" class="external-link">ForceGraph</a> (graphlib)</p>
+    <p>AntV G2: <a href="https://g2.antv.antgroup.com/en/api/mark/force-graph" class="external-link">ForceGraph</a></p>
     </div>
 
     <div class="section level2">
@@ -111,8 +122,23 @@ and <code><a href="https://ggraph.data-imaginist.com/reference/geom_node_point.h
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggraph"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">&amp;&amp;</span></span></span>
 <span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"igraph"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span>  <span class="va">gr</span> <span class="op">&lt;-</span> <span class="fu">igraph</span><span class="fu">::</span><span class="fu"><a href="https://r.igraph.org/reference/sample_pa.html" class="external-link">sample_pa</a></span><span class="op">(</span><span class="fl">30</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="plotit.html">plotit</a></span><span class="op">(</span><span class="va">gr</span>, <span class="fu"><a href="encode.html">encode</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">mark_network</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">nodes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    name  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span>, <span class="st">"C"</span>, <span class="st">"D"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X"</span>, <span class="st">"Y"</span>, <span class="st">"X"</span>, <span class="st">"Y"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    value <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">20</span>, <span class="fl">15</span>, <span class="fl">25</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">edges</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    from   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"A"</span>, <span class="st">"B"</span>, <span class="st">"C"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    to     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"B"</span>, <span class="st">"C"</span>, <span class="st">"C"</span>, <span class="st">"D"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    weight <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">nodes</span> <span class="op">|&gt;</span> <span class="fu"><a href="plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="encode.html">encode</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">group</span>, size <span class="op">=</span> <span class="va">value</span>, label <span class="op">=</span> <span class="va">name</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu">mark_network</span><span class="op">(</span></span></span>
+<span class="r-in"><span>      edges <span class="op">=</span> <span class="va">edges</span>,</span></span>
+<span class="r-in"><span>      encode_edges <span class="op">=</span> <span class="fu"><a href="encode.html">encode</a></span><span class="op">(</span>source <span class="op">=</span> <span class="va">from</span>, target <span class="op">=</span> <span class="va">to</span>, weight <span class="op">=</span> <span class="va">weight</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="scale_color.html">scale_color</a></span><span class="op">(</span>range <span class="op">=</span> <span class="st">"viridis"</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="scale_size.html">scale_size</a></span><span class="op">(</span>range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">20</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>

@@ -87,28 +87,4 @@ comp <- data.frame(
 plotit(df, encode(x = group, y = value)) |>
   mark_bar() |>
   mark_significance(comp, y_position = c(9, 6))
-#> Warning: All aesthetics have length 1, but the data has 3 rows.
-#> ℹ Please consider using `annotate()` or provide this layer with data containing
-#>   a single row.
-#> Warning: All aesthetics have length 1, but the data has 3 rows.
-#> ℹ Please consider using `annotate()` or provide this layer with data containing
-#>   a single row.
-#> Warning: All aesthetics have length 1, but the data has 3 rows.
-#> ℹ Please consider using `annotate()` or provide this layer with data containing
-#>   a single row.
-#> Warning: All aesthetics have length 1, but the data has 3 rows.
-#> ℹ Please consider using `annotate()` or provide this layer with data containing
-#>   a single row.
-#> Warning: All aesthetics have length 1, but the data has 3 rows.
-#> ℹ Please consider using `annotate()` or provide this layer with data containing
-#>   a single row.
-#> Warning: All aesthetics have length 1, but the data has 3 rows.
-#> ℹ Please consider using `annotate()` or provide this layer with data containing
-#>   a single row.
-#> Warning: All aesthetics have length 1, but the data has 3 rows.
-#> ℹ Please consider using `annotate()` or provide this layer with data containing
-#>   a single row.
-#> Warning: All aesthetics have length 1, but the data has 3 rows.
-#> ℹ Please consider using `annotate()` or provide this layer with data containing
-#>   a single row.
 ```

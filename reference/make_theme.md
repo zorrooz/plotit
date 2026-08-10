@@ -32,6 +32,15 @@ make_theme(name, ..., base_theme = ggplot2::theme_minimal)
 
 Invisibly returns the created function.
 
+## Details
+
+The theme function is assigned to `name` in the calling environment
+([`parent.frame()`](https://rdrr.io/r/base/sys.parent.html)) and also
+returned invisibly. When calling `make_theme()` inside another function,
+assign the return value explicitly – the
+[`parent.frame()`](https://rdrr.io/r/base/sys.parent.html) assignment is
+lost when that function returns.
+
 ## Examples
 
 ``` r
