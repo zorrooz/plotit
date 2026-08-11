@@ -46,12 +46,10 @@ for one-dimensional distributions. Requires the
 \pkg{ggbeeswarm} package.
 }
 \examples{
-\dontrun{
-if (requireNamespace("ggbeeswarm", quietly = TRUE)) {
-  plotit(iris, encode(x = Species, y = Sepal.Length)) |>
-    mark_beeswarm()
-}
-}
+\dontshow{if ((requireNamespace("ggbeeswarm", quietly = TRUE))) withAutoprint(\{ # examplesIf}
+plotit(iris, encode(x = Species, y = Sepal.Length)) |>
+  mark_beeswarm()
+\dontshow{\}) # examplesIf}
 }
 \references{
 AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/beeswarm}{Beeswarm} (corelib)

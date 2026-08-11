@@ -41,6 +41,12 @@ S7::method(format, plotit_composite) <- function(x, ...) ""
 #' @exportS3Method pkgdown::pkgdown_print
 pkgdown_print.plotit <- function(x, visible = TRUE) {
   if (!visible) return(invisible())
+  # Native renderers (e.g. mark_chord via circlize) draw directly on the
+  # device; the underlying gg is an empty ggplot that would overwrite the
+  # plot, so keep it and let evaluate record the device output.
+  if (isTRUE(attr(x@meta, "plotit_native_render", exact = TRUE))) {
+    return(invisible())
+  }
   ._print_render(x)
 }
 
@@ -142,10 +148,8 @@ knit_print.plotit_composite <- function(x, ...) {
 #' @param ... Additional arguments passed to `ggplot2::ggsave()`.
 #' @return Invisibly, the original `plotit` object.
 #' @examples
-#'   \dontrun{
-#'   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
-#'   export(p, tempfile(fileext = ".png"), dpi = 72)
-#'   }
+#' p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
+#' export(p, tempfile(fileext = ".png"), dpi = 72)
 #' @export
 export <- S7::new_generic(
   "export",

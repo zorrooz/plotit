@@ -34,8 +34,6 @@ function returns.
 style_dark <- make_theme("style_dark",
   plot.background = ggplot2::element_rect(fill = "#1a1a1a"),
   text = ggplot2::element_text(colour = "white"))
-\dontrun{
 plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
   mark_point() |> style_dark()
-}
 }
