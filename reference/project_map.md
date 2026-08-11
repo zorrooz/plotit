@@ -49,9 +49,7 @@ Modified plotit object.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
 # requires the sf package
 nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
 plotit(nc, encode()) |> project_map()
-} # }
 ```

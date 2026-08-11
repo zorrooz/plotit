@@ -66,15 +66,11 @@ AntV G2: [Treemap](https://g2.antv.antgroup.com/en/api/mark/treemap)
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
-if (requireNamespace("treemapify", quietly = TRUE)) {
-  df <- data.frame(
-    group = c("A", "B", "C"),
-    subgroup = c("a1", "a2", "b1"),
-    size = c(30, 20, 50))
-  plotit(df, encode(area = size, fill = group,
-                    subgroup = subgroup)) |>
-    mark_treemap()
-}
-} # }
+df <- data.frame(
+  group = c("A", "B", "C"),
+  subgroup = c("a1", "a2", "b1"),
+  size = c(30, 20, 50))
+plotit(df, encode(area = size, fill = group,
+                  subgroup = subgroup)) |>
+  mark_treemap()
 ```

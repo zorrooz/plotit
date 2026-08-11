@@ -31,8 +31,12 @@ Invisibly returns the registered S7 generic.
 
 ``` r
 make_mark("mark_spoke", ggplot2::geom_spoke)
-# Now usable in pipeline:
-if (FALSE) { # \dontrun{
-df |> plotit(encode(x = x, y = y, radius = r, angle = a)) |> mark_spoke()
-} # }
+df <- data.frame(
+  x = 1:5, y = 1:5,
+  angle = seq(0, 2 * pi, length.out = 5),
+  radius = rep(0.3, 5)
+)
+# Now usable in the pipeline:
+df |> plotit(encode(x = x, y = y, angle = angle, radius = radius)) |>
+  mark_spoke()
 ```

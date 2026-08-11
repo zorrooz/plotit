@@ -67,8 +67,6 @@ AntV G2: [GeoPath](https://g2.antv.antgroup.com/en/api/mark/geo-path)
 ## Examples
 
 ``` r
-if (requireNamespace("sf", quietly = TRUE)) {
-  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
-  plotit(nc, encode(geometry = geometry)) |> mark_map()
-}
+nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+plotit(nc, encode(geometry = geometry)) |> mark_map()
 ```

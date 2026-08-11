@@ -54,8 +54,6 @@ Invisibly, the original `plotit` object.
 ## Examples
 
 ``` r
-  if (FALSE) { # \dontrun{
-  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
-  export(p, tempfile(fileext = ".png"), dpi = 72)
-  } # }
+p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
+export(p, tempfile(fileext = ".png"), dpi = 72)
 ```

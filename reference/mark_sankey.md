@@ -87,17 +87,31 @@ AntV G2: [Sankey](https://g2.antv.antgroup.com/en/api/mark/sankey)
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
-if (requireNamespace("ggsankey", quietly = TRUE)) {
-  df <- data.frame(
-    source = c("A", "A", "B", "B", "C"),
-    target = c("B", "C", "C", "D", "D"),
-    value  = c(10, 5, 8, 3, 6)
-  )
-  df |> plotit(encode(source = source, target = target,
-                      value = value, fill = source)) |>
-    mark_sankey() |>
-    scale_fill(range = "viridis")
-}
-} # }
+df <- data.frame(
+  source = c("A", "A", "B", "B", "C"),
+  target = c("B", "C", "C", "D", "D"),
+  value  = c(10, 5, 8, 3, 6)
+)
+df |> plotit(encode(source = source, target = target,
+                    value = value, fill = source)) |>
+  mark_sankey() |>
+  scale_fill(range = "viridis")
+#> Warning: Ignoring unknown aesthetics: next_x, node, next_node, and value
+#> Warning: Ignoring unknown aesthetics: next_x, node, next_node, and value
+#> Warning: Ignoring unknown aesthetics: next_x, node, and next_node
+#> Warning: There was 1 warning in `dplyr::mutate()`.
+#> ℹ In argument: `dplyr::across(c(x, next_x), ~as.numeric(.), .names =
+#>   ("n_{.col}"))`.
+#> Caused by warning:
+#> ! NAs introduced by coercion
+#> Warning: There was 1 warning in `dplyr::mutate()`.
+#> ℹ In argument: `dplyr::across(c(x, next_x), ~as.numeric(.), .names =
+#>   ("n_{.col}"))`.
+#> Caused by warning:
+#> ! NAs introduced by coercion
+#> Warning: There was 1 warning in `dplyr::mutate()`.
+#> ℹ In argument: `dplyr::across(c(x, next_x), ~as.numeric(.), .names =
+#>   ("n_{.col}"))`.
+#> Caused by warning:
+#> ! NAs introduced by coercion
 ```

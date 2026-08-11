@@ -86,17 +86,12 @@ AntV G2: [Chord](https://g2.antv.antgroup.com/en/api/mark/chord)
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
-if (requireNamespace("circlize", quietly = TRUE)) {
-  df <- data.frame(
-    source = c("A", "A", "B", "B", "C"),
-    target = c("B", "C", "C", "D", "D"),
-    value  = c(5, 3, 4, 2, 6)
-  )
-  df |> plotit(encode(source = source, target = target,
-                      value = value, fill = source)) |>
-    mark_chord() |>
-    scale_fill(range = "viridis")
-}
-} # }
+df <- data.frame(
+  source = c("A", "A", "B", "B", "C"),
+  target = c("B", "C", "C", "D", "D"),
+  value  = c(5, 3, 4, 2, 6)
+)
+df |> plotit(encode(source = source, target = target,
+                    value = value)) |>
+  mark_chord()
 ```

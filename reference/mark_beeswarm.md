@@ -71,10 +71,6 @@ AntV G2: [Beeswarm](https://g2.antv.antgroup.com/en/api/mark/beeswarm)
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
-if (requireNamespace("ggbeeswarm", quietly = TRUE)) {
-  plotit(iris, encode(x = Species, y = Sepal.Length)) |>
-    mark_beeswarm()
-}
-} # }
+plotit(iris, encode(x = Species, y = Sepal.Length)) |>
+  mark_beeswarm()
 ```
