@@ -26,10 +26,10 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
+          # Default dependencies is R expr '"all"' (all deps incl. Suggests),
+          # and the action installs system requirements automatically.
           extra-packages: any::pkgdown, local::.
           needs: website
-          dependencies: "all"
-          install-system-dependencies: true
 
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE)
