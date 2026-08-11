@@ -55,19 +55,17 @@ optionally \code{value} columns. The mark internally builds the node-link
 structure — no need for \code{ggsankey::make_long()} preprocessing.
 }
 \examples{
-\dontrun{
-if (requireNamespace("ggsankey", quietly = TRUE)) {
-  df <- data.frame(
-    source = c("A", "A", "B", "B", "C"),
-    target = c("B", "C", "C", "D", "D"),
-    value  = c(10, 5, 8, 3, 6)
-  )
-  df |> plotit(encode(source = source, target = target,
-                      value = value, fill = source)) |>
-    mark_sankey() |>
-    scale_fill(range = "viridis")
-}
-}
+\dontshow{if ((requireNamespace("ggsankey", quietly = TRUE))) withAutoprint(\{ # examplesIf}
+df <- data.frame(
+  source = c("A", "A", "B", "B", "C"),
+  target = c("B", "C", "C", "D", "D"),
+  value  = c(10, 5, 8, 3, 6)
+)
+df |> plotit(encode(source = source, target = target,
+                    value = value, fill = source)) |>
+  mark_sankey() |>
+  scale_fill(range = "viridis")
+\dontshow{\}) # examplesIf}
 }
 \references{
 AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/sankey}{Sankey} (graphlib)

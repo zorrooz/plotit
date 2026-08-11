@@ -40,10 +40,10 @@ Adds a geographic map layer for \pkg{sf} spatial data frames.
 Requires the \pkg{sf} package.
 }
 \examples{
-if (requireNamespace("sf", quietly = TRUE)) {
-  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
-  plotit(nc, encode(geometry = geometry)) |> mark_map()
-}
+\dontshow{if ((requireNamespace("sf", quietly = TRUE))) withAutoprint(\{ # examplesIf}
+nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+plotit(nc, encode(geometry = geometry)) |> mark_map()
+\dontshow{\}) # examplesIf}
 }
 \references{
 Vega-Lite: \href{https://vega.github.io/vega-lite/docs/geoshape.html}{Geoshape}

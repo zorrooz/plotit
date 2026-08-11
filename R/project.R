@@ -557,12 +557,10 @@ S7::method(project_parallel, plotit_class) <- function(
 #' @param clip Should drawing be clipped? `"on"` or `"off"`.
 #' @param ... Passed to `coord_sf()` or `coord_map()`.
 #' @return Modified plotit object.
-#' @examples
-#' \dontrun{
+#' @examplesIf(requireNamespace("sf", quietly = TRUE))
 #' # requires the sf package
 #' nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
 #' plotit(nc, encode()) |> project_map()
-#' }
 #' @export
 project_map <- S7::new_generic(
   "project_map",

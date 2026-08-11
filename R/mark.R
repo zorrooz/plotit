@@ -326,11 +326,9 @@ mark_violin <- S7::new_generic(
 #' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/geoshape.html}{Geoshape}
 #'
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/geo-path}{GeoPath}
-#' @examples
-#' if (requireNamespace("sf", quietly = TRUE)) {
-#'   nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
-#'   plotit(nc, encode(geometry = geometry)) |> mark_map()
-#' }
+#' @examplesIf(requireNamespace("sf", quietly = TRUE))
+#' nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+#' plotit(nc, encode(geometry = geometry)) |> mark_map()
 #' @export
 mark_map <- S7::new_generic(
   "mark_map", "plot",
@@ -635,10 +633,8 @@ S7::method(mark_smooth, plotit_class) <- function(
 #' @references
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/heatmap}{Heatmap} (corelib)
 #' @examples
-#' if (requireNamespace("ggplot2", quietly = TRUE)) {
-#'   plotit(ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 1000), ],
-#'          encode(x = carat, y = price)) |> mark_hex(bins = 20)
-#' }
+#' plotit(ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 1000), ],
+#'        encode(x = carat, y = price)) |> mark_hex(bins = 20)
 #' @export
 mark_hex <- S7::new_generic(
   "mark_hex", "plot",
@@ -1123,13 +1119,9 @@ S7::method(mark_dumbbell, plotit_class) <- function(
 #' @return Modified plotit object
 #' @references
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/beeswarm}{Beeswarm} (corelib)
-#' @examples
-#' \dontrun{
-#' if (requireNamespace("ggbeeswarm", quietly = TRUE)) {
-#'   plotit(iris, encode(x = Species, y = Sepal.Length)) |>
-#'     mark_beeswarm()
-#' }
-#' }
+#' @examplesIf(requireNamespace("ggbeeswarm", quietly = TRUE))
+#' plotit(iris, encode(x = Species, y = Sepal.Length)) |>
+#'   mark_beeswarm()
 #' @export
 mark_beeswarm <- S7::new_generic(
   "mark_beeswarm", "plot",
@@ -1187,20 +1179,16 @@ S7::method(mark_beeswarm, plotit_class) <- function(
 #' @return Modified plotit object
 #' @references
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/sankey}{Sankey} (graphlib)
-#' @examples
-#' \dontrun{
-#' if (requireNamespace("ggsankey", quietly = TRUE)) {
-#'   df <- data.frame(
-#'     source = c("A", "A", "B", "B", "C"),
-#'     target = c("B", "C", "C", "D", "D"),
-#'     value  = c(10, 5, 8, 3, 6)
-#'   )
-#'   df |> plotit(encode(source = source, target = target,
-#'                       value = value, fill = source)) |>
-#'     mark_sankey() |>
-#'     scale_fill(range = "viridis")
-#' }
-#' }
+#' @examplesIf(requireNamespace("ggsankey", quietly = TRUE))
+#' df <- data.frame(
+#'   source = c("A", "A", "B", "B", "C"),
+#'   target = c("B", "C", "C", "D", "D"),
+#'   value  = c(10, 5, 8, 3, 6)
+#' )
+#' df |> plotit(encode(source = source, target = target,
+#'                     value = value, fill = source)) |>
+#'   mark_sankey() |>
+#'   scale_fill(range = "viridis")
 #' @export
 mark_sankey <- S7::new_generic(
   "mark_sankey", "plot",
@@ -1308,18 +1296,14 @@ S7::method(mark_sankey, plotit_class) <- function(
 #' @return Modified plotit object
 #' @references
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/treemap}{Treemap} (graphlib)
-#' @examples
-#' \dontrun{
-#' if (requireNamespace("treemapify", quietly = TRUE)) {
-#'   df <- data.frame(
-#'     group = c("A", "B", "C"),
-#'     subgroup = c("a1", "a2", "b1"),
-#'     size = c(30, 20, 50))
-#'   plotit(df, encode(area = size, fill = group,
-#'                     subgroup = subgroup)) |>
-#'     mark_treemap()
-#' }
-#' }
+#' @examplesIf(requireNamespace("treemapify", quietly = TRUE))
+#' df <- data.frame(
+#'   group = c("A", "B", "C"),
+#'   subgroup = c("a1", "a2", "b1"),
+#'   size = c(30, 20, 50))
+#' plotit(df, encode(area = size, fill = group,
+#'                   subgroup = subgroup)) |>
+#'   mark_treemap()
 #' @export
 mark_treemap <- S7::new_generic(
   "mark_treemap", "plot",
@@ -1374,29 +1358,24 @@ S7::method(mark_treemap, plotit_class) <- function(
 #' @return Modified plotit object
 #' @references
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/force-graph}{ForceGraph}
-#' @examples
-#' \dontrun{
-#' if (requireNamespace("ggraph", quietly = TRUE) &&
-#'     requireNamespace("igraph", quietly = TRUE)) {
-#'   nodes <- data.frame(
-#'     name  = c("A", "B", "C", "D"),
-#'     group = c("X", "Y", "X", "Y"),
-#'     value = c(10, 20, 15, 25)
-#'   )
-#'   edges <- data.frame(
-#'     from   = c("A", "A", "B", "C"),
-#'     to     = c("B", "C", "C", "D"),
-#'     weight = c(1, 2, 3, 4)
-#'   )
-#'   nodes |> plotit(encode(color = group, size = value, label = name)) |>
-#'     mark_network(
-#'       edges = edges,
-#'       encode_edges = encode(source = from, target = to, weight = weight)
-#'     ) |>
-#'     scale_color(range = "viridis") |>
-#'     scale_size(range = c(5, 20))
-#' }
-#' }
+#' @examplesIf(requireNamespace("ggraph", quietly = TRUE) && requireNamespace("igraph", quietly = TRUE))
+#' nodes <- data.frame(
+#'   name  = c("A", "B", "C", "D"),
+#'   group = c("X", "Y", "X", "Y"),
+#'   value = c(10, 20, 15, 25)
+#' )
+#' edges <- data.frame(
+#'   from   = c("A", "A", "B", "C"),
+#'   to     = c("B", "C", "C", "D"),
+#'   weight = c(1, 2, 3, 4)
+#' )
+#' nodes |> plotit(encode(color = group, size = value, label = name)) |>
+#'   mark_network(
+#'     edges = edges,
+#'     encode_edges = encode(source = from, target = to, weight = weight)
+#'   ) |>
+#'   scale_color(range = "viridis") |>
+#'   scale_size(range = c(5, 20))
 #' @export
 mark_network <- S7::new_generic(
   "mark_network", "plot",
@@ -1545,20 +1524,15 @@ S7::method(mark_network, plotit_class) <- function(
 #' standalone renderer.
 #' @references
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/chord}{Chord} (graphlib)
-#' @examples
-#' \dontrun{
-#' if (requireNamespace("circlize", quietly = TRUE)) {
-#'   df <- data.frame(
-#'     source = c("A", "A", "B", "B", "C"),
-#'     target = c("B", "C", "C", "D", "D"),
-#'     value  = c(5, 3, 4, 2, 6)
-#'   )
-#'   df |> plotit(encode(source = source, target = target,
-#'                       value = value, fill = source)) |>
-#'     mark_chord() |>
-#'     scale_fill(range = "viridis")
-#' }
-#' }
+#' @examplesIf(requireNamespace("circlize", quietly = TRUE))
+#' df <- data.frame(
+#'   source = c("A", "A", "B", "B", "C"),
+#'   target = c("B", "C", "C", "D", "D"),
+#'   value  = c(5, 3, 4, 2, 6)
+#' )
+#' df |> plotit(encode(source = source, target = target,
+#'                     value = value)) |>
+#'   mark_chord()
 #' @export
 mark_chord <- S7::new_generic(
   "mark_chord", "plot",
@@ -1602,6 +1576,9 @@ S7::method(mark_chord, plotit_class) <- function(
         annotationTrack = "grid", preAllocateTracks = list(track.height = 0.1), ...)
       gg <- ggplot2::ggplot() + ggplot2::theme_void()
       plot@gg <- gg
+      # Native render: circlize draws directly on the device; mark the plot
+      # so print/pkgdown_print do not overwrite it with the empty ggplot.
+      attr(plot@meta, "plotit_native_render") <- TRUE
       return(plot)
     } else {
       cli::cli_abort(c(
@@ -1615,6 +1592,9 @@ S7::method(mark_chord, plotit_class) <- function(
       annotationTrack = "grid", preAllocateTracks = list(track.height = 0.1), ...)
     gg <- ggplot2::ggplot() + ggplot2::theme_void()
     plot@gg <- gg
+    # Native render: circlize draws directly on the device; mark the plot
+    # so print/pkgdown_print do not overwrite it with the empty ggplot.
+    attr(plot@meta, "plotit_native_render") <- TRUE
     return(plot)
   }
 
@@ -1643,6 +1623,9 @@ S7::method(mark_chord, plotit_class) <- function(
 
   gg <- ggplot2::ggplot() + ggplot2::theme_void()
   plot@gg <- gg
+  # Native render: circlize draws directly on the device; mark the plot
+  # so print/pkgdown_print do not overwrite it with the empty ggplot.
+  attr(plot@meta, "plotit_native_render") <- TRUE
 
   circlize::chordDiagram(mat,
     transparency = 1 - link_alpha,

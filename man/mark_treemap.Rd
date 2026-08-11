@@ -42,17 +42,15 @@ Requires the \pkg{treemapify} package. Data should contain
 \code{area}, \code{subgroup}, and optionally \code{subgroup2} columns.
 }
 \examples{
-\dontrun{
-if (requireNamespace("treemapify", quietly = TRUE)) {
-  df <- data.frame(
-    group = c("A", "B", "C"),
-    subgroup = c("a1", "a2", "b1"),
-    size = c(30, 20, 50))
-  plotit(df, encode(area = size, fill = group,
-                    subgroup = subgroup)) |>
-    mark_treemap()
-}
-}
+\dontshow{if ((requireNamespace("treemapify", quietly = TRUE))) withAutoprint(\{ # examplesIf}
+df <- data.frame(
+  group = c("A", "B", "C"),
+  subgroup = c("a1", "a2", "b1"),
+  size = c(30, 20, 50))
+plotit(df, encode(area = size, fill = group,
+                  subgroup = subgroup)) |>
+  mark_treemap()
+\dontshow{\}) # examplesIf}
 }
 \references{
 AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/treemap}{Treemap} (graphlib)

@@ -16,10 +16,14 @@ NULL
 #' @return Invisibly returns the registered S7 generic.
 #' @examples
 #' make_mark("mark_spoke", ggplot2::geom_spoke)
-#' # Now usable in pipeline:
-#' \dontrun{
-#' df |> plotit(encode(x = x, y = y, radius = r, angle = a)) |> mark_spoke()
-#' }
+#' df <- data.frame(
+#'   x = 1:5, y = 1:5,
+#'   angle = seq(0, 2 * pi, length.out = 5),
+#'   radius = rep(0.3, 5)
+#' )
+#' # Now usable in the pipeline:
+#' df |> plotit(encode(x = x, y = y, angle = angle, radius = radius)) |>
+#'   mark_spoke()
 #' @export
 make_mark <- function(name, geom_fun) {
   if (!is.character(name) || length(name) != 1) {
@@ -39,6 +43,9 @@ make_mark <- function(name, geom_fun) {
     }
   )
   ._register_mark_method(generic, geom_fun)
+  # Make the new mark callable from the calling environment (same pattern
+  # as make_theme), so it works inside pipelines right away.
+  assign(name, generic, envir = parent.frame())
   invisible(generic)
 }
 
@@ -65,10 +72,8 @@ make_mark <- function(name, geom_fun) {
 #' style_dark <- make_theme("style_dark",
 #'   plot.background = ggplot2::element_rect(fill = "#1a1a1a"),
 #'   text = ggplot2::element_text(colour = "white"))
-#' \dontrun{
 #' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
 #'   mark_point() |> style_dark()
-#' }
 #' @export
 make_theme <- function(name, ..., base_theme = ggplot2::theme_minimal) {
   force(name)

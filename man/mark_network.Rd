@@ -51,28 +51,25 @@ their own \code{encode_edges}.  Node aesthetics (\code{color}, \code{size},
 \code{label}) work with standard \code{scale_*} functions.
 }
 \examples{
-\dontrun{
-if (requireNamespace("ggraph", quietly = TRUE) &&
-    requireNamespace("igraph", quietly = TRUE)) {
-  nodes <- data.frame(
-    name  = c("A", "B", "C", "D"),
-    group = c("X", "Y", "X", "Y"),
-    value = c(10, 20, 15, 25)
-  )
-  edges <- data.frame(
-    from   = c("A", "A", "B", "C"),
-    to     = c("B", "C", "C", "D"),
-    weight = c(1, 2, 3, 4)
-  )
-  nodes |> plotit(encode(color = group, size = value, label = name)) |>
-    mark_network(
-      edges = edges,
-      encode_edges = encode(source = from, target = to, weight = weight)
-    ) |>
-    scale_color(range = "viridis") |>
-    scale_size(range = c(5, 20))
-}
-}
+\dontshow{if ((requireNamespace("ggraph", quietly = TRUE) && requireNamespace("igraph", quietly = TRUE))) withAutoprint(\{ # examplesIf}
+nodes <- data.frame(
+  name  = c("A", "B", "C", "D"),
+  group = c("X", "Y", "X", "Y"),
+  value = c(10, 20, 15, 25)
+)
+edges <- data.frame(
+  from   = c("A", "A", "B", "C"),
+  to     = c("B", "C", "C", "D"),
+  weight = c(1, 2, 3, 4)
+)
+nodes |> plotit(encode(color = group, size = value, label = name)) |>
+  mark_network(
+    edges = edges,
+    encode_edges = encode(source = from, target = to, weight = weight)
+  ) |>
+  scale_color(range = "viridis") |>
+  scale_size(range = c(5, 20))
+\dontshow{\}) # examplesIf}
 }
 \references{
 AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/force-graph}{ForceGraph}
