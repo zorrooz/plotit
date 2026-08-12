@@ -6,7 +6,7 @@ linters: linters_with_defaults(
     cyclocomp_linter = NULL,
     indentation_linter = indentation_linter(indent = 2L)
   )
-encoding: "UTF-8"
+encoding: UTF-8
 exclusions: list(
     "playground.R",
     "R/zzz.R",

@@ -505,3 +505,78 @@ C 组（第三轮新增）：
 | 3.12 | 杂项 | 清理垃圾文件 `Rplots.pdf`（根目录 + `tests/testthat/`），检查 `.Rbuildignore`（已于 2026-08-10 完成） | 仓库 | 无残留 |
 
 **执行顺序与回归方式**：阶段 1 完成后立即跑完整 testthat（目标：0 失败、无 sankey/beeswarm 警告）；阶段 2 逐项验证后回归；阶段 3 为低风险收尾，可与文档同步并行。每阶段结束执行 `roxygen2::roxygenize()` 并核对 NAMESPACE/man 变更（§1.5）。临时核验脚本已于审查结束后按约定（AGENTS.md §1.7）清理；修复时按本报告各表"验证"列执行，并以完整 testthat 套件（目标 0 失败、0 警告噪声）为准。
+
+---
+
+## 2026-08-12 修复核验（第四轮）
+
+> 工作树：stage1-3 修复已提交（4ff7657/7b7df94/acf337a，2026-08-10）+ 本轮遗留修复。
+> 方法：源码全读 + 行为实测 + 完整 testthat 套件（0 失败、加载 0 警告）。
+
+### 已修复核验（stage1-3，实测确认）
+
+前两轮 15 项 + A/B/C/D/F 组共 26 项问题，除下列遗留项外全部修复：F1（50 个 S7 警告 → 0）、A1/A3（mapping 回落）、A4-sankey（增量构建保留主题/层）、C2（flow_alpha 只进 flow 层）、C3/C4（significance/dumbbell 定向校验）、B1（compose 子图标签同步）、B2/C1/D5（default_color 清除）、B3/D6（dodge 跳过）、D1（hexbin 检查）、D2（示例 scheme 修正）、D3/D4（annotate + `!!` 注入）、#3/#4/#6/#7/#8/#13/#14/#15、R5 文档同步（AGENTS.md §3.2/§3.3b/§9）。
+
+### 本轮遗留修复（stage 4-6）
+
+| # | 问题 | 修复 | 实测证据 |
+|---|------|------|----------|
+| A2 | sankey flow 层 0 行（x 非 factor → `as.numeric` 得 NA；ggplot2 4.0 aesthetics 校验丢弃 `next_x` 等）| 双重修复：x/next_x 转 factor；绕过 `geom_sankey()` 直接 `layer()` 构造（`check.aes` 条件传参 + `prepare_params` 拆分 flow./node. 前缀参数）| flow 5400 行 / node 8 行 / text 6 行，零警告 |
+| #5 | sankey 数值 fill 被 `as.character` 强制 | 数值列保持 numeric，仅类别值转字符 | `fill_grp` 类型实测 double，连续色阶可用 |
+| #10 | significance 整数位 x 定位，`scale_x(limits=)` 收缩错位 | 离散轴改为水平标签直接映射（scale 自动定位），收缩/重排/任意调用顺序均正确；越界水平跳过 | 收缩场景 B→C bracket 消失；重排 `limits=c("C","A","B")` 后 bracket 跟随新位置 |
+| #11 | chord 重复源/目标 fill last-write-wins | 改为 first-write-wins，与求和矩阵一致 | 源码 + 构建实测 |
+| 新发现 | chord `print()` 画空 ggplot 覆盖 circlize 输出；`export()` 导出空白文件（3737 bytes）| 提取 `._chord_draw` 可重放渲染器并缓存闭包；print（S7+S3）检测 `plotit_native_render` 跳过占位图；export 重放到目标设备（pdf/png，`units="in"`/`res` 适配）| print 后 grid grob 数 0；export PDF 17.8KB 非空 |
+| 新发现 | chord `gap_width` 参数未生效（参数传入不生效，§8 原则 0）| 映射到 `chordDiagram(small.gap = gap_width)` | 参数链路实测 |
+| A4 | network 替换先前层仅文档化 | 替换前 `cli_warn` 提示（用户可感知）| 加层后 mark_network 触发定向警告 |
+
+### 测试与卫生
+
+- sankey 测试从 guard-skip 转为真实渲染断言（0 skip 0 失败），并新增数值 fill 与无警告断言
+- mark_rect 空数据 "Cannot determine variable type" 警告修复
+- `Rplots.pdf` 垃圾文件（根目录 + tests/testthat/）清理
+- AGENTS.md §4.6：`gg$labels` 标注由"只读"改为"可写"并注明理由（§1.2 惰性标签设计）
+- 完整 testthat：0 失败；`load_all()` 0 警告；roxygenize 后仅 `mark_chord.Rd` 变更（无 NAMESPACE 变动）
+
+---
+
+## 2026-08-12 约定一致性检查与全面同步（第五轮）
+
+> 方法：AGENTS.md 全文与 R/ + tests/ 实现逐节对照（§1-§12）。
+> 原则（§1.6）：实现改进则修约定，实现退化则修实现。
+
+### A 类：实现违反约定（修实现，5 项）
+
+| # | 问题 | 违反条款 | 修复 |
+|---|------|---------|------|
+| A1 | `mark_sankey` 签名含 `rasterize` 参数但实现不生效（§8 原则 0） | §3.3b 原则 3（复合 Mark 不接受 rasterize） | 删除参数 + roxygen 同步 |
+| A2 | `mark_chord` 同上 | 同上 | 同上 |
+| A3 | `test-mark.R` 8 处中文注释/skip 消息 | §4.3 代码文本一律英文 | 全部改英文 |
+| A4 | `.lintr` 的 `encoding: "UTF-8"` 带引号 | §11.7 DCF 编码值不加引号 | 改为 `encoding: UTF-8` |
+| A5 | `mark_text` 冗余清除只查 `colour` 不查 `fill`（不对称，与 `._mark_impl` 重复） | §8 原则 3 对称抽象 | 删除手动清除，统一走 `._mark_impl` |
+
+### B 类：约定文档过时（修约定，10 项）
+
+| # | 位置 | 过时内容 | 已更新为 |
+|---|------|---------|----------|
+| B1 | §3.3.1 / §3.3.4 / §8 原则 7 | "三处共用" | 9 处调用点清单 |
+| B2 | §3.3.4 | "17 处引用" | 13 处 |
+| B3 | §3.3.3 | 无签名特例说明 | 补复合/关系/统计/网络 mark 签名特例 |
+| B4 | §9.1 任务 0.3 / §10 AD-5 | `._make_mark()` 函数名、"5 个标准 mark" | `._register_mark_method()`、10 个标准 mark |
+| B5 | §9.2 阶段 2/3/4 | 标题缺 ✅ | 补 ✅ |
+| B6 | §1.1 / §3.2 | "规划 20 种"、"10 已实现"、"28 种"、"移除 2 个" | 27 种已实现、14 基础+4 统计+9 复合、移除 3 个 |
+| B7 | §2 技术选型 | 核心依赖缺 rlang；"未来扩展"已全部落地 | 补 rlang；改为可选依赖（Suggests）清单 |
+| B8 | §1.1a / §3.2b | "§3.2c" 引用错误、`prepara_data` 拼写 | 修正为 §3.2b、`prepared_data` |
+| B9 | §6 调色板 | "有映射默认 viridis" 与 §3.3.4 矛盾 | 连续 viridis / 离散 hue |
+| B10 | §9.0/§9.1/§9.3/§9.5/§10 DI-1 / §4.1 | 阶段 0 状态、任务 0.2-0.4、验收标准、@examples 状态、文件列表 | 勾选已完成项；补 factory.R/zzz.R |
+
+### C 类：新增约定（新实现的行为固化）
+
+- **§3.3b 新增"第三层（关系类）渲染定位"表**：`mark_sankey`（layer 直构 + `check.aes` 兼容 ggplot2 ≥ 4.0）、`mark_network`（替换前警告、仅继承主题）、`mark_chord`（circlize 原生渲染器：`plotit_native_render` 标记、print 跳过、export 重放、`gap_width`→`small.gap`）、`mark_beeswarm`/`mark_treemap`（跳过 dodge）
+- §3.3b 复合 Mark 表格参数修正：`mark_significance`（`y_position`/`y_offset`，无 `labels` 参数）、`mark_lollipop`（`ref` 参数，展开对齐 roxygen）
+- §3.2 表注：标准/统计 mark 支持 `rasterize`；复合与关系类不接受
+
+### 验证
+
+- 完整 testthat：0 失败；`load_all()` 0 警告（删除 rasterize 参数后无回归）
+- `roxygen2::roxygenize()` 更新 `mark_sankey.Rd`/`mark_chord.Rd`
+- 工作树：AGENTS.md/CODE_REVIEW.md/.lintr/R/mark.R/R/utils.R/R/output.R/tests/testthat/test-mark.R + 2 Rd
