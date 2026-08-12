@@ -281,7 +281,9 @@ test_that("[BDD] mark_rect adds tile layer", {
 test_that("mark_rect supports local data", {
   df <- expand.grid(x = 1:3, y = 1:3)
   df$z <- runif(9)
-  p <- plotit(data.frame(), encode(x = x, y = y)) |>
+  # Empty data with column structure retained, avoids the
+  # "Cannot determine variable type" warning
+  p <- plotit(df[0, ], encode(x = x, y = y)) |>
     mark_rect(data = df, mapping = encode(x = x, y = y, fill = z))
   expect_s3_class(p, "plotit::plotit")
 })
@@ -642,9 +644,10 @@ test_that("mark_beeswarm supports local data", {
 })
 
 # ---- mark_sankey ----
-# ggsankey HEAD 的旧式 aesthetics 声明在 ggplot2 >= 4.0 下失效（A2），
-# 渲染 0 行且伴随 "Ignoring unknown aesthetics" 警告。返回 FALSE 表示
-# 环境不兼容，测试 skip 而非失败。
+# ggsankey's stats declare an empty aesthetics set under ggplot2 >= 4.0,
+# so a legacy geom_sankey() call renders the flow layer with 0 rows (A2).
+# plotit now builds the layers directly (check.aes = FALSE + factor stage
+# columns); the guard only defends against future ggsankey changes.
 .sankey_renders <- function(p) {
   built <- suppressWarnings(
     tryCatch(ggplot2::ggplot_build(p@gg), error = function(e) e)
@@ -664,9 +667,12 @@ test_that("[BDD] mark_sankey builds sankey (edges-table API)", {
                            value = value, fill = source)) |> mark_sankey()
   expect_s3_class(p, "plotit::plotit")
   if (!.sankey_renders(p)) {
-    skip("ggsankey × ggplot2 4.0 渲染 0 行（已知不兼容 A2）")
+    skip("ggsankey x ggplot2 renders 0 rows (environment incompatible, A2)")
   }
   expect_gt(nrow(ggplot2::ggplot_build(p@gg)$data[[1]]), 0)
+  # A2: the flow layer is no longer emptied by the aesthetics check;
+  # no "Ignoring unknown aesthetics" warnings
+  expect_no_warning(ggplot2::ggplot_build(p@gg))
 })
 
 test_that("mark_sankey errors without ggsankey", {
@@ -693,10 +699,27 @@ test_that("mark_sankey supports flow_alpha", {
   p <- df |> plotit(encode(source = source, target = target, value = value)) |>
     mark_sankey(flow_alpha = 0.8)
   expect_s3_class(p, "plotit::plotit")
-  # flow.alpha 只作用于 flow 层（GeomPolygon），node 层（GeomRect）不透明
+  # flow.alpha applies to the flow layer (GeomPolygon) only; the node
+  # layer (GeomRect) stays opaque
   alphas <- vapply(p@gg$layers, function(l) l$aes_params$alpha %||% NA_real_, numeric(1))
   expect_true(any(alphas == 0.8, na.rm = TRUE))
   expect_true(anyNA(alphas))
+})
+
+test_that("mark_sankey keeps numeric fill values numeric (#5)", {
+  skip_if_not_installed("ggsankey")
+  df <- data.frame(
+    source = c("A", "A", "B"),
+    target = c("B", "C", "C"),
+    value  = c(10, 5, 8),
+    weight = c(1.5, 2.5, 3.5)
+  )
+  p <- df |> plotit(encode(source = source, target = target,
+                           value = value, fill = weight)) |> mark_sankey()
+  # Numeric fill columns stay numeric so continuous scales keep their
+  # semantics
+  expect_type(p@gg$layers[[1]]$data$fill_grp, "double")
+  expect_no_warning(ggplot2::ggplot_build(p@gg))
 })
 
 # ---- mark_treemap ----

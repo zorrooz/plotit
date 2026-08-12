@@ -44,7 +44,7 @@ pkgdown_print.plotit <- function(x, visible = TRUE) {
   # Native renderers (e.g. mark_chord via circlize) draw directly on the
   # device; the underlying gg is an empty ggplot that would overwrite the
   # plot, so keep it and let evaluate record the device output.
-  if (isTRUE(attr(x@meta, "plotit_native_render", exact = TRUE))) {
+  if (!is.null(attr(x@meta, "plotit_native_render", exact = TRUE))) {
     return(invisible())
   }
   ._print_render(x)
@@ -65,6 +65,11 @@ pkgdown_print.plotit_composite <- function(x, visible = TRUE) {
 #' @return The plotit object (invisibly)
 #' @noRd
 S7::method(print, plotit_class) <- function(x, ...) {
+  # Native renderers (mark_chord) draw on the device at call time; the
+  # placeholder gg must not overwrite that output.
+  if (!is.null(attr(x@meta, "plotit_native_render", exact = TRUE))) {
+    return(invisible(x))
+  }
   # Fall back to the default theme when the plot was built without one
   # (e.g. mark_chord replaces gg with an empty ggplot).
   if (is.null(attr(x@meta, "plotit_theme_managed", exact = TRUE)) ||
@@ -103,6 +108,9 @@ S7::method(print, plotit_class) <- function(x, ...) {
 # S3 print method — reaches knitr/vignette contexts where S7 dispatch doesn't fire
 #' @export
 print.plotit <- function(x, ...) {
+  if (!is.null(attr(x@meta, "plotit_native_render", exact = TRUE))) {
+    return(invisible(x))
+  }
   if (is.null(attr(x@meta, "plotit_theme_managed", exact = TRUE)) ||
       length(x@gg$theme) == 0) {
     x@gg <- x@gg + .theme_default()
@@ -179,6 +187,53 @@ S7::method(export, plotit_class) <- function(
 ) {
   if (is.null(filename) || identical(filename, "")) {
     cli::cli_abort("{.arg filename} must be a non-empty file path.")
+  }
+
+  # Native renderers (mark_chord) draw with circlize, not through ggsave;
+  # replay the captured draw on the target device.
+  native <- attr(plot@meta, "plotit_native_render", exact = TRUE)
+  if (!is.null(native)) {
+    meta_unit <- plot@meta@unit %||% getOption("plotit.default_unit", "in")
+    dev_fun <- device
+    if (is.character(dev_fun)) {
+      dev_fun <- switch(dev_fun,
+        pdf = grDevices::pdf, png = grDevices::png,
+        jpeg = grDevices::jpeg, jpg = grDevices::jpeg,
+        bmp = grDevices::bmp, tiff = grDevices::tiff,
+        cli::cli_abort("Unknown device {.val {device}}.")
+      )
+    }
+    if (is.null(dev_fun)) {
+      ext <- tolower(tools::file_ext(filename))
+      dev_fun <- switch(ext,
+        pdf = grDevices::pdf, png = grDevices::png,
+        jpg = grDevices::jpeg, jpeg = grDevices::jpeg,
+        bmp = grDevices::bmp, tiff = grDevices::tiff,
+        grDevices::pdf
+      )
+    }
+    w <- if (is.null(width)) {
+      plot@meta@width %||% getOption("plotit.default_width", 7)
+    } else {
+      .unit_to_inches(width, meta_unit)
+    }
+    h <- if (is.null(height)) {
+      plot@meta@height %||% getOption("plotit.default_height", 5)
+    } else {
+      .unit_to_inches(height, meta_unit)
+    }
+    # pdf() names its first argument `file`, raster devices `filename`;
+    # pass the path positionally.  Raster devices measure in pixels by
+    # default, so declare inches and set the resolution via `res`.
+    dev_args <- list(filename, width = w, height = h)
+    if (!identical(dev_fun, grDevices::pdf)) {
+      dev_args$units <- "in"
+      dev_args$res <- dpi
+    }
+    do.call(dev_fun, dev_args)
+    on.exit(grDevices::dev.off(), add = TRUE)
+    native$draw()
+    return(invisible(plot))
   }
 
   meta_unit <- plot@meta@unit %||% getOption("plotit.default_unit", "in")

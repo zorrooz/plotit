@@ -270,9 +270,6 @@ S7::method(mark_text, plotit_class) <- function(
   } else {
     geom_fun <- ggplot2::geom_text
   }
-  if (!is.null(mapping) && !is.null(mapping$colour)) {
-    plot <- ._clear_default_color(plot, mapping)
-  }
   ._mark_impl(
     plot, mapping, data, position, geom_fun,
     rasterize, rasterize_dpi, rasterize_dev, ...
@@ -918,18 +915,30 @@ S7::method(mark_significance, plotit_class) <- function(
     }
     y_position <- y_range[2] + y_span * 0.1 + seq_len(nrow(comparisons)) * y_span * 0.08
   }
-  # Get x positions (handle factor/character group1/group2)
+  # Determine whether the x axis is discrete.  Brackets are then placed
+  # by level label and the scale maps them to positions, which stays
+  # correct even when scale limits reorder or drop levels -- regardless
+  # of whether scale_x() runs before or after this mark (#10).
   x_var <- rlang::eval_tidy(plot@gg$mapping$x, d)
+  x_scale <- plot@gg$scales$get_scales("x")
+  is_discrete_x <- inherits(x_scale, "ScaleDiscretePosition") ||
+    (is.null(x_scale) && (is.factor(x_var) || is.character(x_var)))
   x_levels <- if (is.factor(x_var)) levels(x_var) else sort(unique(as.character(x_var)))
-  x_positions <- seq_along(x_levels)
-  names(x_positions) <- x_levels
+  if (is.character(x_scale$limits)) x_levels <- as.character(x_scale$limits)
   # Draw brackets
   for (i in seq_len(nrow(comparisons))) {
     g1 <- as.character(comparisons$group1[i])
     g2 <- as.character(comparisons$group2[i])
-    x1 <- if (g1 %in% names(x_positions)) x_positions[[g1]] else as.numeric(g1)
-    x2 <- if (g2 %in% names(x_positions)) x_positions[[g2]] else as.numeric(g2)
-    if (is.na(x1) || is.na(x2)) next
+    if (is_discrete_x) {
+      # Skip comparisons involving levels outside the visible axis
+      if (!(g1 %in% x_levels) || !(g2 %in% x_levels)) next
+      x1 <- g1
+      x2 <- g2
+    } else {
+      x1 <- as.numeric(g1)
+      x2 <- as.numeric(g2)
+      if (is.na(x1) || is.na(x2)) next
+    }
     y_pos <- if (i <= length(y_position)) y_position[i] else y_position[1] + (i - 1) * y_span * 0.08
     # Bracket line
     plot@gg <- plot@gg + ggplot2::annotate(
@@ -937,7 +946,7 @@ S7::method(mark_significance, plotit_class) <- function(
       colour = line_colour, linewidth = line_width
     )
     # Left tick
-    tick_len <- if (is.factor(x_var)) tip_length * length(x_levels) else tip_length * diff(range(x_positions))
+    tick_len <- if (is_discrete_x) tip_length * length(x_levels) else tip_length * diff(range(c(x1, x2)))
     plot@gg <- plot@gg + ggplot2::annotate(
       "segment", x = x1, xend = x1, y = y_pos - tick_len, yend = y_pos,
       colour = line_colour, linewidth = line_width
@@ -947,9 +956,14 @@ S7::method(mark_significance, plotit_class) <- function(
       "segment", x = x2, xend = x2, y = y_pos - tick_len, yend = y_pos,
       colour = line_colour, linewidth = line_width
     )
-    # Label
+    # Label (midpoint in numeric position space for discrete axes)
+    mid_x <- if (is_discrete_x) {
+      (match(g1, x_levels) + match(g2, x_levels)) / 2
+    } else {
+      (x1 + x2) / 2
+    }
     plot@gg <- plot@gg + ggplot2::annotate(
-      "text", x = (x1 + x2) / 2, y = y_pos + y_offset,
+      "text", x = mid_x, y = y_pos + y_offset,
       label = comparisons$label[i], size = text_size, ...
     )
   }
@@ -1172,10 +1186,8 @@ S7::method(mark_beeswarm, plotit_class) <- function(
 #' @param node_colour Default colour for node rectangles (used when no
 #'   \code{fill} mapping is present, default \code{"grey30"}).
 #' @param flow_alpha Alpha transparency for flow ribbons (default 0.5).
-#' @param rasterize If \code{TRUE}, rasterize via \code{ggrastr::rasterise()}.
-#' @param rasterize_dpi DPI for rasterization (default 300).
-#' @param rasterize_dev Graphics device for rasterization (default \code{"cairo"}).
-#' @param ... Other arguments passed to \code{geom_sankey}
+#' @param ... Other arguments passed to the underlying sankey layers
+#'   (\code{width}, \code{smooth}, \code{type}, \code{flow.*}, \code{node.*})
 #' @return Modified plotit object
 #' @references
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/sankey}{Sankey} (graphlib)
@@ -1193,8 +1205,7 @@ S7::method(mark_beeswarm, plotit_class) <- function(
 mark_sankey <- S7::new_generic(
   "mark_sankey", "plot",
   function(plot, mapping = NULL, data = NULL, position = NULL, ...,
-           node_colour = "grey30", flow_alpha = 0.5,
-           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+           node_colour = "grey30", flow_alpha = 0.5) {
     S7::S7_dispatch()
   }
 )
@@ -1202,8 +1213,7 @@ mark_sankey <- S7::new_generic(
 #' @export
 S7::method(mark_sankey, plotit_class) <- function(
     plot, mapping = NULL, data = NULL, position = NULL, ...,
-    node_colour = "grey30", flow_alpha = 0.5,
-    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    node_colour = "grey30", flow_alpha = 0.5) {
   if (!requireNamespace("ggsankey", quietly = TRUE)) {
     cli::cli_abort("{.fn mark_sankey} requires the {.pkg ggsankey} package.")
   }
@@ -1225,11 +1235,15 @@ S7::method(mark_sankey, plotit_class) <- function(
   if (is.null(val)) val <- rep(1, length(src))
 
   # --- Convert edges table to ggsankey long format ---
+  # x/next_x must be factors: ggsankey's stats call as.numeric() on them
+  # in setup_data, and character vectors coerce to NA (A2, empty flow
+  # layer).  factor() matches ggsankey::make_long() output.
   n <- length(src)
+  stage_levels <- c("source", "target")
   sankey_data <- data.frame(
-    x         = rep("source", 2 * n),
+    x         = factor(c(rep("source", n), rep("target", n)), levels = stage_levels),
     node      = c(src, tgt),
-    next_x    = c(rep("target", n), rep(NA, n)),
+    next_x    = factor(c(rep("target", n), rep(NA, n)), levels = stage_levels),
     next_node = c(tgt, rep(NA, n)),
     value     = c(val, rep(NA, n)),
     stringsAsFactors = FALSE
@@ -1240,7 +1254,10 @@ S7::method(mark_sankey, plotit_class) <- function(
   # real data mapping and must not drive the node palette.
   has_fill <- !is.null(mapping$fill) && !inherits(mapping$fill, "AsIs")
   if (has_fill) {
-    fill_vals <- as.character(rlang::eval_tidy(mapping$fill, edges))
+    fill_vals <- rlang::eval_tidy(mapping$fill, edges)
+    # Keep numeric fill values numeric so continuous scales keep their
+    # semantics; only coerce categorical values (A2-related, #5).
+    if (!is.numeric(fill_vals)) fill_vals <- as.character(fill_vals)
     sankey_data$fill_grp <- c(fill_vals, fill_vals)
   } else {
     sankey_data$fill_grp <- sankey_data$node
@@ -1250,30 +1267,65 @@ S7::method(mark_sankey, plotit_class) <- function(
   # suppression injected by plotit().
   plot <- ._clear_default_color(plot)
 
-  # Add layers incrementally on top of the existing plot so the theme,
-  # scales and previously added layers are preserved (A4).
+  # --- Layer construction ---
+  # ggplot2 >= 4.0 validates layer aesthetics against the stat/geom and
+  # silently drops unmapped ones; ggsankey's stats declare none of their
+  # custom aesthetics, so next_x/node/next_node/value would be removed
+  # and the flow layer renders 0 rows (A2).  Build the layers directly
+  # with check.aes = FALSE (parameter exists since ggplot2 3.4).
+  dots <- rlang::list2(...)
+  params_split <- do.call(getFromNamespace("prepare_params", "ggsankey"), dots)
+
+  base_params <- list(na.rm = FALSE, width = 0.1, space = NULL,
+                      smooth = 8, type = "sankey")
+  # flow.alpha/flow.* -> flow layer params (prefix stripped upstream);
+  # node.fill/node.* -> node layer params.  User-supplied values in `...`
+  # override the base defaults (duplicated names collapse to the last).
+  merge_params <- function(base, extra) {
+    out <- c(base, extra)
+    out[!duplicated(names(out), fromLast = TRUE)]
+  }
+  flow_params <- merge_params(base_params, params_split[[1]])
+  flow_params$alpha <- flow_alpha
+  node_params <- merge_params(base_params, params_split[[2]])
+  if (!has_fill) node_params$fill <- node_colour
+
+  layer_args <- list(data = sankey_data, position = "identity",
+                     inherit.aes = FALSE)
+  if ("check.aes" %in% names(formals(ggplot2::layer))) {
+    layer_args$check.aes <- FALSE
+  }
+
   flow_mapping <- ggplot2::aes(
     x = x, next_x = next_x, node = node, next_node = next_node,
     fill = fill_grp, value = value
   )
-  if (!has_fill) {
-    plot@gg <- plot@gg + ggsankey::geom_sankey(
-      data = sankey_data, mapping = flow_mapping, inherit.aes = FALSE,
-      node.fill = node_colour, flow.alpha = flow_alpha, ...)
-  } else {
-    plot@gg <- plot@gg + ggsankey::geom_sankey(
-      data = sankey_data, mapping = flow_mapping, inherit.aes = FALSE,
-      flow.alpha = flow_alpha, ...)
-  }
+  # Add layers incrementally on top of the existing plot so the theme,
+  # scales and previously added layers are preserved (A4).
+  plot@gg <- plot@gg + do.call(ggplot2::layer, c(
+    list(stat = getFromNamespace("StatSankeyFlow", "ggsankey"),
+         geom = "polygon", mapping = flow_mapping, params = flow_params),
+    layer_args
+  ))
+  plot@gg <- plot@gg + do.call(ggplot2::layer, c(
+    list(stat = getFromNamespace("StatSankeyNode", "ggsankey"),
+         geom = ggplot2::GeomRect, mapping = flow_mapping,
+         params = node_params),
+    layer_args
+  ))
 
-  # Node labels
+  # Node labels (StatSankeyText has no smooth parameter)
   text_mapping <- ggplot2::aes(
     x = x, next_x = next_x, node = node, next_node = next_node,
     label = node
   )
-  plot@gg <- plot@gg + ggsankey::geom_sankey_text(
-    data = sankey_data, mapping = text_mapping, inherit.aes = FALSE,
-    size = 3, check_overlap = FALSE)
+  text_params <- list(na.rm = FALSE, width = 0.1, space = NULL,
+                      type = "sankey", size = 3, check_overlap = FALSE)
+  plot@gg <- plot@gg + do.call(ggplot2::layer, c(
+    list(stat = getFromNamespace("StatSankeyText", "ggsankey"),
+         geom = "text", mapping = text_mapping, params = text_params),
+    layer_args
+  ))
   plot
 }
 
@@ -1482,7 +1534,13 @@ S7::method(mark_network, plotit_class) <- function(
   # Inherit the plotit theme so the default look is preserved (A4).
   # ggraph builds its own plot object, so previously added layers and
   # scales cannot be carried over -- documented limitation of the
-  # network renderer.
+  # network renderer.  Warn so the silent replacement is visible.
+  if (length(plot@gg$layers) > 0) {
+    cli::cli_warn(c(
+      "{.fn mark_network} replaces the plot object; previously added layers are dropped.",
+      "i" = "Add layers after {.fn mark_network} instead."
+    ))
+  }
   gg <- gg + plot@gg$theme +
     ggplot2::theme(
       axis.line = ggplot2::element_blank(),
@@ -1511,9 +1569,6 @@ S7::method(mark_network, plotit_class) <- function(
 #' @param data Optional data for this layer
 #' @param gap_width Gap between sectors in degrees (default 4).
 #' @param link_alpha Alpha transparency for links (default 0.5).
-#' @param rasterize If \code{TRUE}, rasterize via \code{ggrastr::rasterise()}.
-#' @param rasterize_dpi DPI for rasterization (default 300).
-#' @param rasterize_dev Graphics device for rasterization (default \code{"cairo"}).
 #' @param ... Other arguments passed to \code{circlize::chordDiagram}
 #' @return Modified plotit object
 #'
@@ -1521,7 +1576,8 @@ S7::method(mark_network, plotit_class) <- function(
 #' current graphics device (not through the ggplot2 build system) and
 #' replaces the plot's `gg` with an empty ggplot.  Layers added before or
 #' after it therefore do not share a coordinate system -- treat it as a
-#' standalone renderer.
+#' standalone renderer.  `print()` skips the placeholder and `export()`
+#' replays the render on the target device.
 #' @references
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/chord}{Chord} (graphlib)
 #' @examplesIf(requireNamespace("circlize", quietly = TRUE))
@@ -1537,22 +1593,51 @@ S7::method(mark_network, plotit_class) <- function(
 mark_chord <- S7::new_generic(
   "mark_chord", "plot",
   function(plot, mapping = NULL, data = NULL,
-           gap_width = 4, link_alpha = 0.5,
-           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo",
-           ...) {
+           gap_width = 4, link_alpha = 0.5, ...) {
     S7::S7_dispatch()
   }
 )
 
+# ---- Internal chord helpers ----
+# mark_chord renders natively with circlize (not through the ggplot2 build
+# system).  The draw closure is captured on meta so print()/export() can
+# replay the render on the target device instead of drawing the empty
+# placeholder ggplot.
+#' Replayable circlize chord renderer.
+#' @noRd
+._chord_draw <- function(mat, grid_col, gap_width, link_alpha, dots) {
+  args <- list(
+    x = mat,
+    transparency = 1 - link_alpha,
+    grid.col = grid_col,
+    annotationTrack = "grid",
+    preAllocateTracks = list(track.height = 0.1),
+    small.gap = gap_width
+  )
+  do.call(circlize::chordDiagram, c(args, dots))
+  invisible(NULL)
+}
+
+# Finish a chord plot: swap in the empty placeholder gg, draw immediately
+# (pkgdown records the device output), and store the replay closure.
+#' Complete a chord render: placeholder gg + immediate draw + replay capture.
+#' @noRd
+._finish_chord <- function(plot, mat, grid_col, gap_width, link_alpha, dots) {
+  plot@gg <- ggplot2::ggplot() + ggplot2::theme_void()
+  draw <- function() ._chord_draw(mat, grid_col, gap_width, link_alpha, dots)
+  attr(plot@meta, "plotit_native_render") <- list(draw = draw)
+  draw()
+  plot
+}
+
 #' @export
 S7::method(mark_chord, plotit_class) <- function(
     plot, mapping = NULL, data = NULL,
-    gap_width = 4, link_alpha = 0.5,
-    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo",
-    ...) {
+    gap_width = 4, link_alpha = 0.5, ...) {
   if (!requireNamespace("circlize", quietly = TRUE)) {
     cli::cli_abort("{.fn mark_chord} requires the {.pkg circlize} package.")
   }
+  dots <- rlang::list2(...)
 
   edges <- data %||% plot@gg$data
   mapping <- mapping %||% plot@gg$mapping
@@ -1572,14 +1657,7 @@ S7::method(mark_chord, plotit_class) <- function(
       val <- edges[["value"]] %||% rep(1, length(src))
     } else if (all(c("Var1", "Var2", "Freq") %in% names(edges))) {
       mat <- xtabs(Freq ~ Var1 + Var2, data = edges)
-      circlize::chordDiagram(mat, transparency = 1 - link_alpha,
-        annotationTrack = "grid", preAllocateTracks = list(track.height = 0.1), ...)
-      gg <- ggplot2::ggplot() + ggplot2::theme_void()
-      plot@gg <- gg
-      # Native render: circlize draws directly on the device; mark the plot
-      # so print/pkgdown_print do not overwrite it with the empty ggplot.
-      attr(plot@meta, "plotit_native_render") <- TRUE
-      return(plot)
+      return(._finish_chord(plot, mat, "grey80", gap_width, link_alpha, dots))
     } else {
       cli::cli_abort(c(
         "{.fn mark_chord} needs {.code encode(source =, target =, value =)}.",
@@ -1588,14 +1666,7 @@ S7::method(mark_chord, plotit_class) <- function(
     }
   } else {
     mat <- as.matrix(edges)
-    circlize::chordDiagram(mat, transparency = 1 - link_alpha,
-      annotationTrack = "grid", preAllocateTracks = list(track.height = 0.1), ...)
-    gg <- ggplot2::ggplot() + ggplot2::theme_void()
-    plot@gg <- gg
-    # Native render: circlize draws directly on the device; mark the plot
-    # so print/pkgdown_print do not overwrite it with the empty ggplot.
-    attr(plot@meta, "plotit_native_render") <- TRUE
-    return(plot)
+    return(._finish_chord(plot, mat, "grey80", gap_width, link_alpha, dots))
   }
 
   # --- Build adjacency matrix ---
@@ -1609,32 +1680,25 @@ S7::method(mark_chord, plotit_class) <- function(
   # --- Build sector colours from fill mapping ---
   # plotit() injects fill = I(default_color) as a constant; it is not a
   # real data mapping and must not drive the sector palette.
+  # Duplicate (src, tgt) pairs sum in the matrix; their sector colour uses
+  # the first occurrence so aggregation stays consistent (#11).
   has_fill <- !is.null(mapping$fill) && !inherits(mapping$fill, "AsIs")
   if (has_fill) {
     fill_vals <- as.character(rlang::eval_tidy(mapping$fill, edges))
     node_fill <- stats::setNames(rep("grey60", length(all_nodes)), all_nodes)
+    seen <- character()
     for (i in seq_along(src)) {
-      node_fill[src[i]] <- fill_vals[i]
+      if (!(src[i] %in% seen)) {
+        node_fill[src[i]] <- fill_vals[i]
+        seen <- c(seen, src[i])
+      }
     }
     grid_col <- node_fill[all_nodes]
   } else {
     grid_col <- "grey80"
   }
 
-  gg <- ggplot2::ggplot() + ggplot2::theme_void()
-  plot@gg <- gg
-  # Native render: circlize draws directly on the device; mark the plot
-  # so print/pkgdown_print do not overwrite it with the empty ggplot.
-  attr(plot@meta, "plotit_native_render") <- TRUE
-
-  circlize::chordDiagram(mat,
-    transparency = 1 - link_alpha,
-    grid.col = grid_col,
-    annotationTrack = "grid",
-    preAllocateTracks = list(track.height = 0.1),
-    ...
-  )
-  plot
+  ._finish_chord(plot, mat, grid_col, gap_width, link_alpha, dots)
 }
 
 # ---- mark_bar (hand-written: geom_col vs geom_bar dispatch) ----
