@@ -2,7 +2,7 @@
 % Please edit documentation in R/mark.R
 \name{mark_corr}
 \alias{mark_corr}
-\title{Correlation matrix heatmap}
+\title{Correlation matrix heatmap (sugar)}
 \usage{
 mark_corr(
   plot,
@@ -38,6 +38,7 @@ Modified plotit object
 \description{
 Computes a correlation matrix from numeric data columns, optionally
 reorders by hierarchical clustering, and renders it as a tile heatmap.
+Sugar over \code{\link[=transform_corr]{transform_corr()}} plus a tile layer.
 }
 \examples{
 plotit(mtcars, encode()) |> mark_corr()

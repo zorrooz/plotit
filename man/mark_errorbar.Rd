@@ -49,7 +49,8 @@ or other variability measures. Data should include columns for
 }
 \examples{
 df <- data.frame(
-  x = c("A", "B"), y = c(10, 20), ymin = c(8, 18), ymax = c(12, 22))
+  x = c("A", "B"), y = c(10, 20), ymin = c(8, 18), ymax = c(12, 22)
+)
 plotit(df, encode(x = x, y = y, ymin = ymin, ymax = ymax)) |>
   mark_errorbar(width = 0.3)
 }

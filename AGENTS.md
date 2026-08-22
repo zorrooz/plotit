@@ -45,7 +45,7 @@
 | 层级 | 稳定性 | 内容 |
 |------|--------|------|
 | 核心契约 | 1.0 后主版本稳定 | 函数名（`plotit`、`encode`、`mark_*`、`scale_*`、`label_*`、`compose_*`、`style`、`export`）、返回类型 `plotit` 支持管道、`plotit()` 的 `data` 和 `mapping` 参数；mark 的 `data` 参数接受 data.frame / `~table` 公式（兼容扩展） |
-| 扩展契约 | 2.0 可调整 | `scale_*` 的 `trans` 合法值集合（可增加不删除）、`label_*` 参数协议（`text`/`hide`/`reset`）、`project_*`/`split_*` 参数签名、关系数据体系（`as_graph()`、`layout_*`、`plotit_graph`、`@graph` 槽） |
+| 扩展契约 | 2.0 可调整 | `scale_*` 的 `trans` 合法值集合（可增加不删除）、`label_*` 参数协议（`text`/`hide`/`reset`）、`project_*`/`split_*` 参数签名、关系数据体系（`as_graph()`、`layout_*`、`transform_corr()`、`plotit_graph`、`@graph` 槽） |
 | 可迭代 | 不破坏上述两层 | 默认主题参数、启发式算法、默认调色板、内部工具函数实现 |
 
 例外：1.x 期间发现扩展契约中的设计缺陷允许经弃用→警告→移除周期（跨至少一个次版本）修正，不视为破坏性变更。
@@ -74,7 +74,7 @@
 
 - **OOP**：**S7**。核心类：`plotit_labels`（文本字段）、`plotit_metadata`（配置项）、`plotit`（持有 `gg` + `meta`）。若 S7 发生不兼容变更，锁定版本或评估迁移至 S3/R6。
 - **核心依赖**：ggplot2、S7、cli、rlang、patchwork。`ggrastr` 为可选增强（图层栅格化）。
-- **可选依赖**（Suggests，按 mark 按需加载）：ggrepel、ggbeeswarm、ggsankey、treemapify、ggraph、igraph、circlize、hexbin、sf、mapproj、ggrastr、knitr、rmarkdown。
+- **可选依赖**（Suggests，按 mark 按需加载）：ggrepel、ggbeeswarm、treemapify、igraph、hexbin、sf、mapproj、ggrastr、knitr、rmarkdown。（ggsankey/ggraph/circlize 已于关系数据体系改造中退役：sankey/network/chord 均改为 `layout_*` + 原语图层语法糖。）
 
 ---
 
@@ -131,16 +131,16 @@
 | `mark_smooth` | `geom_smooth` | 回归平滑+置信带 ✅ |
 | `mark_hex` | `geom_hex` | 2D 六边形热力图 ✅ |
 | `mark_density_2d` | `geom_density_2d`/`geom_density_2d_filled` | 2D 密度等高线 ✅ |
-| `mark_corr` | `geom_tile` + corr 预处理 | 相关性矩阵热力图 ✅ |
+| `mark_corr` | `transform_corr()` + `geom_tile` 语法糖 | 相关性矩阵热力图 ✅ |
 | `mark_errorbar` | `geom_errorbar`/`geom_errorbarh` | 误差棒 ✅ |
 | `mark_significance` | `mark_rule` + `mark_text` 语法糖 | 显著性标记 ✅ |
 | `mark_lollipop` | `mark_point` + 线段语法糖 | 棒棒糖图 ✅ |
 | `mark_dumbbell` | `mark_point`×2 + 线段语法糖 | 哑铃对比图 ✅ |
 | `mark_beeswarm` | `ggbeeswarm::geom_beeswarm` | 蜂群散点 ✅ |
-| `mark_sankey` | `ggsankey`（edges-table API） | 桑基流向图 ✅ |
+| `mark_sankey` | `layout_sankey()` + polygon/rect 语法糖（edges-table API） | 桑基流向图 ✅ |
 | `mark_treemap` | `treemapify` | 矩形树图 ✅ |
-| `mark_network` | `ggraph`/`igraph`（nodes+edges 双数据源） | 力导向网络图 ✅ |
-| `mark_chord` | `circlize`（edges-table API） | 弦图 ✅ |
+| `mark_network` | `layout_force/circle()` + point/rule 语法糖（nodes+edges 双数据源） | 力导向网络图 ✅ |
+| `mark_chord` | `layout_chord()` + polygon 语法糖（edges-table API） | 弦图 ✅ |
 
 #### Vega-Lite vs AntV G2 复合 Mark 全量对比
 
@@ -190,8 +190,8 @@ G2 的每个复合 Mark 内部展开为 2-5 个基础 Mark 的组合，这与 pl
 | 23 | 复合 | `mark_beeswarm` | 分布 | `ggbeeswarm::geom_beeswarm` | G2 `beeswarm`(corelib) | 蜂群散点（碰撞检测） ✅ |
 | 24 | 复合 | `mark_sankey` | 关系 | `ggsankey`（edges-table API） | G2 `sankey`(graphlib) | 桑基流向图 ✅ |
 | 25 | 复合 | `mark_treemap` | 关系 | `treemapify` | G2 `treemap`(graphlib) | 矩形树图 ✅ |
-| 26 | 复合 | `mark_network` | 关系 | `ggraph`/`igraph`（nodes+edges 双数据源） | G2 `forceGraph`(graphlib) | 力导向网络图 ✅ |
-| 27 | 复合 | `mark_chord` | 关系 | `circlize`（edges-table API） | G2 `chord`(graphlib) | 弦图 ✅ |
+| 26 | 复合 | `mark_network` | 关系 | `layout_force/circle()` + point/rule 语法糖（nodes+edges 双数据源） | G2 `forceGraph`(graphlib) | 力导向网络图 ✅ |
+| 27 | 复合 | `mark_chord` | 关系 | `layout_chord()` + polygon 语法糖（edges-table API） | G2 `chord`(graphlib) | 弦图 ✅ |
 
 **三层判断规则**：
 
@@ -383,10 +383,10 @@ style_dark <- make_theme("style_dark",
 | mark | 渲染方式 | 定位说明 |
 |---|---|---|
 | `mark_beeswarm` | `ggbeeswarm` geom | 标准 ggplot2 层；跳过全局自动 dodge（碰撞检测自排布） |
-| `mark_sankey` | `ggsankey` stat（`StatSankeyFlow`/`StatSankeyNode`/`StatSankeyText`） | 直接构造 layer（`check.aes = FALSE` 条件传参 + factor 阶段列），兼容 ggplot2 ≥ 4.0 aesthetics 校验（A2）；增量构建保留主题/层/scale |
-| `mark_treemap` | `treemapify` geom | 标准 ggplot2 层；忽略 dodge |
-| `mark_network` | `ggraph` 独立 plot 对象 | 替换 `plot@gg` 前若已有图层触发 `cli_warn`；仅继承主题，先前层/scale 不保留（已文档化局限） |
-| `mark_chord` | `circlize` 原生渲染器 | 直绘当前设备，`gg` 替换为空占位图；`plotit_native_render` 标记在 meta 上，`print()` 跳过占位图、`export()` 重放渲染到目标设备（pdf/png 等）；`gap_width` 映射 `chordDiagram(small.gap=)`；与 ggplot2 层不共享坐标系 |
+| `mark_sankey` | `layout_sankey()` + `mark_polygon(~ribbons)`/`mark_rect(~nodes)` 语法糖 | 纯 ggplot2 层增量构建；`@graph` 存 nodes/edges/ribbons 三表；确定性分层布局（无外部依赖）；节点填充取首次出现身份，数值 fill 保持 double（#5） |
+| `mark_treemap` | `treemapify` geom | 标准 ggplot2 层；忽略 dodge；另见 `layout_treemap()` 原生路径（§3.3.4a） |
+| `mark_network` | `layout_force/circle()` + point/rule/text 语法糖 | 普通 ggplot2 层**加法式**组合（先前层/scale 全保留）；`@graph` 可供后续 `~nodes/~edges` 引用；直边渲染为已知局限；`linear/bipartite` 弃用回退 force；`weight=` 弃用改 `value=`；`manual` 需节点表自带数值 x/y（此模式免 igraph） |
+| `mark_chord` | `layout_chord()` + `mark_polygon(~ribbons)`/`mark_polygon(~arcs)` 语法糖 | 纯 ggplot2 层增量构建；`@graph` 存 nodes/edges/arcs/ribbons 四表；确定性环形布局（无外部依赖）；重复 (source,target) 对聚合为单带；自环占两个子弧段；`gap_width`(度) 映射布局角距 |
 
 **新增 Mark 判断流程**（更新）：
 
@@ -475,19 +475,23 @@ data |> as_graph(source, target, value) |> plotit() |>
 | `layout_force` | `igraph::layout_with_fr` | `iterations`, `seed`(强制), `...` |
 | `layout_circle` | 三角函数 | `order_by`（`"id"`/`"degree"`） |
 | `layout_tree` | `igraph::layout_as_tree` | `direction`（`down/up/right/left`） |
+| `layout_dendrogram` | hclust 高度递归展开（`.side` 保序，免 igraph） | `direction`（`down/up/right/left`） |
+| `layout_chord` | 扇区角度分配 + 贝塞尔带（纯 R，确定性）；输出第三/四表 `arcs`+`ribbons` | `inner_radius`, `pad_angle`(rad), `curvature`, `order_by`（`"total"`/`"appearance"`） |
+| `layout_sankey` | 最长路径分层 + 重心扫描 + 贝塞尔带（纯 R，确定性免 seed） | `node_width`, `padding`, `curvature`, `n_points`, `max_sweeps`；输出第三表 `ribbons` |
+| `layout_treemap` | Bruls squarify 递归（纯 R）；层次表经 `as_graph(id/parent/value)` 收编 | 输出 `xmin…ymax` + `leaf` 标记 + 派生表 `leaves` |
 
 **核心约定**：
 
 - **双轨制**：复合关系 mark（`mark_network` 等）保留为语法糖，内部必须调用与公开 `layout_*` 相同的引擎函数（`._layout_engine_*`），禁止重复实现。
-- **公式引用**：mark 的 `data = ~table` 从 `plot@graph` 急切解析子表；`plotit_graph` 可含任意命名表（如未来 sankey 的 `ribbons`）。图数据上省略 `data` 报错。
-- **几何自动绑定**：经 `~table` 解析的图层自动绑定表中存在的几何列（`.GRAPH_GEOM_AES` 白名单：x/y/xend/yend/xmin…ymax）；显式映射优先。此类图层强制 `inherit.aes = FALSE`。
+- **公式引用**：mark 的 `data = ~table` 从 `plot@graph` 急切解析子表；`plotit_graph` 可含任意命名表（如 sankey 的 `ribbons`、treemap 的 `leaves`）。图数据上省略 `data` 报错。
+- **几何自动绑定**：经 `~table` 解析的图层自动绑定表中存在的几何列（白名单：x/y/xend/yend/xmin…ymax），并按 mark 家族收窄作用域（`._MARK_BIND_AES`：text/point 等仅 x,y；rect 含角点）；显式映射优先。此类图层强制 `inherit.aes = FALSE`。
 - **不可变槽**：`plotit@graph` 为可空属性（copy-on-write），禁止环境类共享状态；`layout_*` 返回新对象。
-- **幂等重算**：引擎只读拓扑列（source/target/value、id），执行前剥离残留几何列——链式换布局 last-wins。
-- **确定性**：随机布局强制 `seed` 参数（出版复现）。
-- **收编格式**：边表（canonical）、matrix/xtabs（M[row,col] → source=row）、hclust/dendrogram（节点携带 height）、tbl_graph。键统一转 character；`nodes` 缺省时按首次出现序隐式生成。
+- **幂等重算**：引擎只读拓扑列（source/target/value、id、height/parent），执行前剥离残留几何列——链式换布局 last-wins。
+- **确定性**：随机布局强制 `seed` 参数（出版复现）；sankey/treemap/dendrogram/chord 为纯确定性算法，无需 seed。
+- **收编格式**：边表（canonical）、matrix/xtabs（M[row,col] → source=row）、hclust/dendrogram（节点携带 height）、层次表（`id`+`parent` 列，value 存于节点）、tbl_graph。键统一转 character；`nodes` 缺省时按首次出现序隐式生成。
 - **已知局限**：图数据 + `split_*` 的边过滤语义未定义，v1 不支持。
 
-规划中（阶段 B/C）：`layout_treemap`/`layout_pack`/`layout_dendrogram`/`layout_sankey`/`layout_chord`；`transform_corr` 同模式抽出。
+规划中（延期评估）：`layout_pack`（packcircles 未入依赖）。关系类渲染器已 100% 收敛至 ggplot2 原语（circlize/ggsankey/ggraph 全部退役）。
 
 #### 3.3.5 `project_*` — 坐标系
 

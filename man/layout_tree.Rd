@@ -24,7 +24,8 @@ point from parent to child; multiple roots (forests) are supported.
 \examples{
 \dontshow{if (requireNamespace("igraph", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 hc <- hclust(dist(USArrests[, 1:3]))
-as_graph(hc) |> plotit() |>
+as_graph(hc) |>
+  plotit() |>
   layout_tree(direction = "down") |>
   mark_rule(data = ~edges) |>
   mark_point(data = ~nodes)

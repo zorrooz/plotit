@@ -658,93 +658,75 @@ test_that("mark_beeswarm supports local data", {
 })
 
 # ---- mark_sankey ----
-# ggsankey's stats declare an empty aesthetics set under ggplot2 >= 4.0,
-# so a legacy geom_sankey() call renders the flow layer with 0 rows (A2).
-# plotit now builds the layers directly (check.aes = FALSE + factor stage
-# columns); the guard only defends against future ggsankey changes.
-.sankey_renders <- function(p) {
-  built <- suppressWarnings(
-    tryCatch(ggplot2::ggplot_build(p@gg), error = function(e) e)
+.sankey_df <- function() {
+  data.frame(
+    source = c("A", "A", "B", "B", "C"),
+    target = c("B", "C", "C", "D", "D"),
+    value = c(10, 5, 8, 3, 6)
   )
-  if (inherits(built, "error")) {
-    return(FALSE)
-  }
-  nrow(built$data[[1]]) > 0
 }
 
 test_that("[BDD] mark_sankey builds sankey (edges-table API)", {
-  skip_if_not_installed("ggsankey")
-  df <- data.frame(
-    source = c("A", "A", "B", "B", "C"),
-    target = c("B", "C", "C", "D", "D"),
-    value  = c(10, 5, 8, 3, 6)
-  )
-  p <- df |>
+  s1 <- .sankey_df() |>
     plotit(encode(
       source = source, target = target,
       value = value, fill = source
     )) |>
     mark_sankey()
-  expect_s3_class(p, "plotit::plotit")
-  if (!.sankey_renders(p)) {
-    skip("ggsankey x ggplot2 renders 0 rows (environment incompatible, A2)")
-  }
-  expect_gt(nrow(ggplot2::ggplot_build(p@gg)$data[[1]]), 0)
-  # A2: the flow layer is no longer emptied by the aesthetics check;
-  # no "Ignoring unknown aesthetics" warnings
-  expect_no_warning(ggplot2::ggplot_build(p@gg))
-})
-
-test_that("mark_sankey errors without ggsankey", {
-  p <- plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_point()
-  # ggsankey not installed → error
-  if (!requireNamespace("ggsankey", quietly = TRUE)) {
-    expect_error(mark_sankey(p), "ggsankey")
-  }
+  expect_s3_class(s1, "plotit::plotit")
+  # laid-out tables stored for further ~table references
+  expect_setequal(names(s1@graph), c("nodes", "edges", "ribbons"))
+  built <- suppressWarnings(ggplot2::ggplot_build(s1@gg))
+  expect_length(built$plot$layers, 3) # polygon + rect + text
+  # one ribbon polygon: 5 edges x (50 top + 50 bottom) rows
+  expect_equal(nrow(built$data[[1]]), 5 * 100)
+  expect_gt(nrow(built$data[[2]]), 0)
+  # no "Ignoring unknown aesthetics" warnings during build
+  expect_no_warning(ggplot2::ggplot_build(s1@gg))
 })
 
 test_that("mark_sankey errors without source/target mapping", {
-  skip_if_not_installed("ggsankey")
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
   expect_error(mark_sankey(p), "source")
 })
 
 test_that("mark_sankey supports flow_alpha", {
-  skip_if_not_installed("ggsankey")
-  df <- data.frame(
-    source = c("A", "A", "B"),
-    target = c("B", "C", "C"),
-    value  = c(10, 5, 8)
-  )
-  p <- df |>
+  s2 <- .sankey_df() |>
     plotit(encode(source = source, target = target, value = value)) |>
     mark_sankey(flow_alpha = 0.8)
-  expect_s3_class(p, "plotit::plotit")
-  # flow.alpha applies to the flow layer (GeomPolygon) only; the node
-  # layer (GeomRect) stays opaque
-  alphas <- vapply(p@gg$layers, function(l) l$aes_params$alpha %||% NA_real_, numeric(1))
-  expect_true(any(alphas == 0.8, na.rm = TRUE))
-  expect_true(anyNA(alphas))
+  alphas <- vapply(
+    s2@gg$layers,
+    function(l) l$aes_params$alpha %||% NA_real_, numeric(1)
+  )
+  expect_true(any(alphas == 0.8, na.rm = TRUE)) # ribbon layer only
+  expect_true(anyNA(alphas)) # node/text layers stay opaque
 })
 
 test_that("mark_sankey keeps numeric fill values numeric (#5)", {
-  skip_if_not_installed("ggsankey")
-  df <- data.frame(
-    source = c("A", "A", "B"),
-    target = c("B", "C", "C"),
-    value  = c(10, 5, 8),
-    weight = c(1.5, 2.5, 3.5)
-  )
+  df <- .sankey_df()
+  df$weight <- c(1.5, 2.5, 3.5, 4.5, 5.5)
   p <- df |>
     plotit(encode(
       source = source, target = target,
       value = value, fill = weight
     )) |>
     mark_sankey()
-  # Numeric fill columns stay numeric so continuous scales keep their
-  # semantics
   expect_type(p@gg$layers[[1]]$data$fill_grp, "double")
   expect_no_warning(ggplot2::ggplot_build(p@gg))
+})
+
+test_that("mark_sankey: node fill uses first-occurrence identity by default", {
+  s3 <- .sankey_df() |>
+    plotit(encode(source = source, target = target, value = value)) |>
+    mark_sankey(node_colour = "grey30")
+  # D first appears as target of edge B->D, so it inherits B's identity
+  expect_identical(
+    unname(s3@graph$nodes$fill_grp),
+    c("A", "B", "C", "B")
+  )
+  # static colour on the node layer when no fill mapping
+  rect_layer <- s3@gg$layers[[2]]
+  expect_identical(rect_layer$aes_params$fill, "grey30")
 })
 
 # ---- mark_treemap ----
@@ -785,37 +767,142 @@ test_that("mark_treemap supports rasterize", {
 
 # ---- mark_network ----
 test_that("[BDD] mark_network builds network (nodes + edges API)", {
-  skip_if_not_installed("ggraph")
   skip_if_not_installed("igraph")
   nodes <- data.frame(
-    name  = c("A", "B", "C", "D"),
+    name = c("A", "B", "C", "D"),
     group = c("X", "Y", "X", "Y"),
     value = c(10, 20, 15, 25)
   )
   edges <- data.frame(
-    from   = c("A", "A", "B", "C"),
-    to     = c("B", "C", "C", "D"),
+    from = c("A", "A", "B", "C"),
+    to = c("B", "C", "C", "D"),
     weight = c(1, 2, 3, 4)
   )
   p <- nodes |>
     plotit(encode(color = group, size = value, label = name)) |>
     mark_network(
       edges = edges,
-      encode_edges = encode(source = from, target = to, weight = weight)
+      encode_edges = encode(source = from, target = to, value = weight),
+      seed = 1
     )
   expect_s3_class(p, "plotit::plotit")
+  # edge + node + label layers
   expect_length(ggplot2::ggplot_build(p@gg)$data, 3)
+  # laid-out graph stored for further ~table references
+  expect_setequal(names(p@graph), c("nodes", "edges"))
+})
+
+test_that("mark_network: encode_edges(weight=) is deprecated but works", {
+  skip_if_not_installed("igraph")
+  nodes <- data.frame(name = c("A", "B"), group = c("X", "Y"))
+  edges <- data.frame(from = "A", to = "B", weight = 2)
+  expect_warning(
+    p <- nodes |>
+      plotit() |>
+      mark_network(
+        edges = edges,
+        encode_edges = encode(
+          source = from, target = to,
+          weight = weight
+        )
+      ),
+    "deprecated"
+  )
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("mark_network is additive: prior layers survive", {
+  skip_if_not_installed("igraph")
+  nodes <- data.frame(name = c("A", "B", "C"), group = c("X", "Y", "X"))
+  edges <- data.frame(from = c("A", "B"), to = c("B", "C"))
+  base <- nodes |>
+    plotit(encode(color = group)) |>
+    mark_point(alpha = .3)
+  n_before <- length(base@gg$layers) # the prior point layer
+  p <- base |>
+    mark_network(
+      edges = edges,
+      encode_edges = encode(source = from, target = to)
+    )
+  expect_length(p@gg$layers, n_before + 2) # edge + node (no label aes)
+})
+
+test_that("mark_network manual layout uses node x/y columns", {
+  nodes <- cbind(
+    data.frame(name = c("A", "B", "C")),
+    x = c(1, 2, 3), y = c(1, 2, 1)
+  )
+  edges <- data.frame(from = c("A", "B"), to = c("B", "C"))
+
+  # without igraph installed this must still work
+  p <- nodes |>
+    plotit() |>
+    mark_network(
+      edges = edges,
+      encode_edges = encode(source = from, target = to),
+      layout = "manual"
+    )
+  built <- ggplot2::ggplot_build(p@gg)
+  expect_length(built$plot$layers, 2)
+
+  err <- tryCatch(
+    plotit(data.frame(
+      name = c("A", "B", "C"),
+      x = c("a", "b", "c"), y = 1:3
+    )) |>
+      mark_network(
+        edges = edges,
+        encode_edges = encode(source = from, target = to),
+        layout = "manual"
+      ),
+    error = function(e) conditionMessage(e)
+  )
+  expect_match(err, "numeric")
+})
+
+test_that("mark_network linear/bipartite layouts are deprecated with fallback", {
+  skip_if_not_installed("igraph")
+  nodes <- data.frame(name = c("A", "B", "C"))
+  edges <- data.frame(from = c("A", "B"), to = c("B", "C"))
+  expect_warning(
+    p <- nodes |>
+      plotit() |>
+      mark_network(
+        edges = edges,
+        encode_edges = encode(source = from, target = to),
+        layout = "bipartite"
+      ),
+    "deprecated"
+  )
+  expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("[BDD] mark_network maps edge visual channels from edge columns", {
+  skip_if_not_installed("igraph")
+  nodes <- data.frame(name = c("A", "B", "C"))
+  edges <- data.frame(
+    from = c("A", "B"), to = c("B", "C"),
+    type = c("x", "y")
+  )
+  p <- nodes |>
+    plotit() |>
+    mark_network(
+      edges = edges,
+      encode_edges = encode(
+        source = from, target = to,
+        colour = type
+      )
+    )
+  mp <- p@gg$layers[[2]]$mapping # edge segment layer
+  expect_false(is.null(mp$colour))
 })
 
 test_that("mark_network errors on non-node data", {
-  skip_if_not_installed("ggraph")
-  skip_if_not_installed("igraph")
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
   expect_error(mark_network(p), "node id")
 })
 
 test_that("mark_network supports circle layout", {
-  skip_if_not_installed("ggraph")
   skip_if_not_installed("igraph")
   nodes <- data.frame(name = c("A", "B", "C", "D"), group = c("X", "Y", "X", "Y"))
   edges <- data.frame(from = c("A", "A", "B", "C"), to = c("B", "C", "C", "D"))
@@ -831,51 +918,111 @@ test_that("mark_network supports circle layout", {
 })
 
 # ---- mark_chord ----
-test_that("[BDD] mark_chord builds chord diagram (legacy from/to API)", {
-  skip_if_not_installed("circlize")
-  mat <- matrix(c(0, 5, 3, 2, 0, 4, 1, 3, 0), nrow = 3)
-  rownames(mat) <- colnames(mat) <- c("A", "B", "C")
-  # Convert to long form data frame
-  df <- as.data.frame(as.table(mat))
-  names(df) <- c("from", "to", "value")
-  pdf(NULL)
-  on.exit(dev.off(), add = TRUE)
-  p <- plotit(df, encode()) |> mark_chord()
-  expect_s3_class(p, "plotit::plotit")
-  expect_s3_class(p@gg, "ggplot")
-})
-
-test_that("mark_chord errors without circlize", {
-  if (requireNamespace("circlize", quietly = TRUE)) {
-    skip("circlize is installed, cannot test error path")
-  }
-  p <- plotit(iris, encode()) |> mark_point()
-  expect_error(mark_chord(p), "circlize")
-})
-
-test_that("mark_chord accepts matrix data", {
-  skip_if_not_installed("circlize")
-  mat <- matrix(c(0, 3, 2, 3, 0, 1, 2, 1, 0), nrow = 3)
-  rownames(mat) <- colnames(mat) <- c("A", "B", "C")
-  df <- as.data.frame(as.table(mat))
-  names(df) <- c("from", "to", "value")
-  pdf(NULL)
-  on.exit(dev.off(), add = TRUE)
-  p <- plotit(df, encode()) |> mark_chord()
-  expect_s3_class(p, "plotit::plotit")
-})
-
-test_that("mark_chord supports edges-table API", {
-  skip_if_not_installed("circlize")
-  df <- data.frame(
-    source = c("A", "A", "B", "B"),
-    target = c("B", "C", "C", "D"),
-    value  = c(5, 3, 4, 2)
+.chord_df <- function() {
+  data.frame(
+    source = c("A", "A", "B", "B", "C"),
+    target = c("B", "C", "C", "D", "D"),
+    value = c(5, 3, 4, 2, 6)
   )
-  pdf(NULL)
-  on.exit(dev.off(), add = TRUE)
-  p <- df |>
-    plotit(encode(source = source, target = target, value = value)) |>
+}
+
+test_that("[BDD] mark_chord builds chord diagram (sugar over layout_chord)", {
+  p <- .chord_df() |>
+    plotit(encode(
+      source = source, target = target,
+      value = value, fill = source
+    )) |>
     mark_chord()
   expect_s3_class(p, "plotit::plotit")
+  # four laid-out tables, two polygon layers (bands + sectors)
+  expect_setequal(names(p@graph), c("nodes", "edges", "arcs", "ribbons"))
+  built <- suppressWarnings(ggplot2::ggplot_build(p@gg))
+  expect_length(built$plot$layers, 2)
+  expect_s3_class(built$plot$layers[[1]]$geom, "GeomPolygon")
+  expect_s3_class(built$plot$layers[[2]]$geom, "GeomPolygon")
+  # native-renderer escape hatch fully retired
+  expect_null(attr(p@meta, "plotit_native_render", exact = TRUE))
+  expect_no_warning(ggplot2::ggplot_build(p@gg))
+})
+
+test_that("mark_chord accepts legacy from/to and direct matrix data", {
+  mat <- matrix(c(0, 5, 3, 2, 0, 4, 1, 3, 0), nrow = 3)
+  rownames(mat) <- colnames(mat) <- c("A", "B", "C")
+
+  long <- as.data.frame(as.table(mat))
+  names(long) <- c("from", "to", "value")
+  long <- long[long$value > 0, ]
+
+  p1 <- plotit(long, encode()) |> mark_chord()
+  expect_setequal(names(p1@graph), c("nodes", "edges", "arcs", "ribbons"))
+
+  # raw matrices must be passed via the data argument (plotit()'s main
+  # slot fortifies matrices before the mark can see them)
+  p2 <- plotit(data.frame(x = 1), encode()) |> mark_chord(data = mat)
+  expect_setequal(names(p2@graph), c("nodes", "edges", "arcs", "ribbons"))
+  for (p in list(p1, p2)) {
+    expect_length(suppressWarnings(
+      ggplot2::ggplot_build(p@gg)$plot$layers
+    ), 2)
+  }
+})
+
+test_that("mark_chord: link_alpha applies to bands only; dots are rejected", {
+  msgs <- character(0)
+  p <- withCallingHandlers(
+    .chord_df() |>
+      plotit(encode(source = source, target = target, value = value)) |>
+      mark_chord(link_alpha = 0.7, curvature = 0.9),
+    warning = function(w) {
+      msgs <<- c(msgs, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+  alphas <- vapply(
+    p@gg$layers,
+    function(l) l$aes_params$alpha %||% NA_real_, numeric(1)
+  )
+  expect_true(any(alphas == 0.7, na.rm = TRUE)) # band layer only
+  expect_true(anyNA(alphas))
+  expect_true(any(grepl("ignored", msgs)))
+})
+
+# ---- transform_corr ----
+test_that("[BDD] transform_corr melts correlations into long form", {
+  d <- mtcars[, c("mpg", "disp", "hp")]
+  out <- transform_corr(d)
+
+  expect_setequal(names(out), c("Var1", "Var2", "value"))
+  expect_equal(nrow(out), 3^2)
+  expect_s3_class(out$Var1, "factor")
+  # diagonal is perfectly correlated
+  diag_rows <- out[out$Var1 == out$Var2, ]
+  expect_true(all(diag_rows$value == 1))
+})
+
+test_that("transform_corr: reorder preserves the value multiset", {
+  d <- mtcars[, c("mpg", "disp", "hp", "wt")]
+  r1 <- transform_corr(d, reorder = TRUE)
+  r0 <- transform_corr(d, reorder = FALSE)
+
+  expect_false(identical(levels(r1$Var1), levels(r0$Var1)))
+  expect_identical(sort(r1$value), sort(r0$value))
+})
+
+test_that("transform_corr validates inputs", {
+  expect_error(transform_corr(data.frame(a = 1)), "numeric")
+  expect_error(transform_corr(as.matrix(iris[, 1:2])), "data.frame")
+})
+
+test_that("transform_corr skips reorder on NA matrix with warning", {
+  d <- data.frame(x = c(1, 1, 1), y = 1:3) # zero-variance x -> NA corr
+  expect_warning(out <- transform_corr(d), "skipping reorder")
+  expect_true(anyNA(out$value))
+})
+
+test_that("mark_corr is sugar over transform_corr + tile layer", {
+  p <- plotit(mtcars, encode()) |> mark_corr()
+  built <- ggplot2::ggplot_build(p@gg)
+  expect_length(built$plot$layers, 1)
+  expect_equal(nrow(built$data[[1]]), ncol(mtcars)^2)
 })
