@@ -53,6 +53,11 @@ reference:
   desc: Control how data maps to visual properties.
   contents:
   - starts_with("scale_")
+- title: Graph Data & Layout
+  desc: Build relational graphs and compute layouts (Vega-style data transforms).
+  contents:
+  - as_graph
+  - starts_with("layout_")
 - title: Labels
   desc: Set titles, axis labels, and legend text.
   contents:

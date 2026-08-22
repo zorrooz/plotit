@@ -76,11 +76,52 @@ plotit_metadata <- S7::new_class(
   }
 )
 
+# ---- plotit_graph: relational multi-table container ----
+# An S3 class registered with S7 so that it can type the plotit@graph
+# property, validate table contents on assignment, and serve as a method
+# dispatch target for layout_*.  A graph is a named list of data.frames
+# (canonical tables: nodes / edges; composite layouts may add more, e.g.
+# ribbons).  Instances are plain lists -- value semantics throughout.
+plotit_graph_cls <- S7::new_S3_class(
+  c("plotit_graph", "list"),
+  constructor = function(.data = list()) {
+    class(.data) <- c("plotit_graph", "list")
+    .data
+  },
+  validator = function(x) {
+    nms <- names(x)
+    if (is.null(nms) || any(!nzchar(nms))) {
+      return("all tables must be named")
+    }
+    if (anyDuplicated(nms) > 0) {
+      return("table names must be unique")
+    }
+    bad <- !vapply(x, is.data.frame, logical(1))
+    if (any(bad)) {
+      return(paste0("table(s) not a data frame: ", paste(nms[bad], collapse = ", ")))
+    }
+    NULL
+  }
+)
+
+# Convenience constructor used internally (as_graph, layout engines).
+._new_graph <- function(tables, directed = FALSE) {
+  out <- tables
+  class(out) <- c("plotit_graph", "list")
+  attr(out, "directed") <- directed
+  out
+}
+
+is_graph <- function(x) {
+  inherits(x, "plotit_graph")
+}
+
 plotit_class <- S7::new_class(
   "plotit",
   properties = list(
     gg = S7::class_any,
-    meta = plotit_metadata
+    meta = plotit_metadata,
+    graph = S7::new_property(plotit_graph_cls | NULL, default = NULL)
   ),
   validator = function(self) {
     if (!inherits(self@gg, "ggplot")) {

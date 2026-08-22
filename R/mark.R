@@ -11,6 +11,16 @@ NULL
 ._mark_impl <- function(plot, mapping, data, position, geom_fun,
                         rasterize, rasterize_dpi, rasterize_dev,
                         auto_dodge = TRUE, ...) {
+  # Graph plots: resolve ~table references and auto-bind layout geometry.
+  resolved <- ._resolve_layer_data(data, plot)
+  data <- resolved$data
+  dots <- rlang::list2(...)
+  if (resolved$from_graph) {
+    mapping <- ._auto_bind_geometry(mapping, data)
+    # Layers referencing graph tables carry complete mappings of their own;
+    # never merge the (empty) global mapping on top of them.
+    dots$inherit.aes <- FALSE
+  }
   # Only clear default_color when the layer actually provides colour/fill
   if (!is.null(mapping) && (!is.null(mapping$colour) || !is.null(mapping$fill))) {
     plot <- ._clear_default_color(plot, mapping)
@@ -20,9 +30,9 @@ NULL
     pos <- ggplot2::position_dodge(plot@meta@dodge)
   }
   geom <- if (is.null(pos)) {
-    geom_fun(mapping = mapping, data = data, ...)
+    do.call(geom_fun, c(list(mapping = mapping, data = data), dots))
   } else {
-    geom_fun(mapping = mapping, data = data, position = pos, ...)
+    do.call(geom_fun, c(list(mapping = mapping, data = data, position = pos), dots))
   }
   .add_geom(plot, geom,
     rasterize = rasterize, rasterize_dpi = rasterize_dpi,
@@ -61,8 +71,10 @@ NULL
     plot, mapping = NULL, data = NULL, position = NULL, ...,
     rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
   ) {
-    ._mark_impl(plot, mapping, data, position, geom_fun,
-                rasterize, rasterize_dpi, rasterize_dev, ...)
+    ._mark_impl(
+      plot, mapping, data, position, geom_fun,
+      rasterize, rasterize_dpi, rasterize_dev, ...
+    )
   }
   invisible()
 }
@@ -259,9 +271,10 @@ mark_text <- S7::new_generic(
 
 #' @export
 S7::method(mark_text, plotit_class) <- function(
-    plot, mapping = NULL, data = NULL, position = NULL, ...,
-    repel = FALSE,
-    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  plot, mapping = NULL, data = NULL, position = NULL, ...,
+  repel = FALSE,
+  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+) {
   if (repel) {
     if (!requireNamespace("ggrepel", quietly = TRUE)) {
       cli::cli_abort("{.arg repel = TRUE} requires the {.pkg ggrepel} package.")
@@ -337,8 +350,9 @@ mark_map <- S7::new_generic(
 
 #' @export
 S7::method(mark_map, plotit_class) <- function(
-    plot, mapping = NULL, data = NULL, position = NULL, ...,
-    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  plot, mapping = NULL, data = NULL, position = NULL, ...,
+  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+) {
   if (!requireNamespace("sf", quietly = TRUE)) {
     cli::cli_abort("{.fn mark_map} requires the {.pkg sf} package.")
   }
@@ -419,6 +433,10 @@ mark_rect <- S7::new_generic(
 #' @param colour Line colour
 #' @param linetype Line type
 #' @param linewidth Line width in mm
+#' @param mapping Optional aesthetics for data-driven segments
+#'   (`x`/`xend`/`y`/`yend`); layout tables bind them automatically.
+#' @param data Optional data for segment mode: one segment per row.
+#'   Accepts a data.frame or a `~table` reference into graph data.
 #' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
 #' @param rasterize_dpi DPI for rasterization (default 300).
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
@@ -433,10 +451,20 @@ mark_rect <- S7::new_generic(
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
 #'   mark_rule(xintercept = 3, colour = "red", linetype = "dashed")
+#'
+#' # Data-driven segments: network edges from a layout_* transform
+#' if (requireNamespace("igraph", quietly = TRUE)) {
+#'   e <- data.frame(source = c("a", "a", "b"), target = c("b", "c", "c"))
+#'   as_graph(e) |>
+#'     plotit() |>
+#'     layout_force(seed = 1) |>
+#'     mark_point(data = ~nodes) |>
+#'     mark_rule(data = ~edges, colour = "grey70")
+#' }
 #' @export
 mark_rule <- S7::new_generic(
   "mark_rule", "plot",
-  function(plot,
+  function(plot, mapping = NULL, data = NULL,
            xintercept = NULL, yintercept = NULL,
            slope = NULL, intercept = NULL,
            x = NULL, xend = NULL, y = NULL, yend = NULL,
@@ -449,17 +477,60 @@ mark_rule <- S7::new_generic(
 
 #' @export
 S7::method(mark_rule, plotit_class) <- function(
-    plot,
-    xintercept = NULL, yintercept = NULL,
-    slope = NULL, intercept = NULL,
-    x = NULL, xend = NULL, y = NULL, yend = NULL,
-    colour = NULL, linetype = NULL, linewidth = NULL,
-    ...,
-    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  plot, mapping = NULL, data = NULL,
+  xintercept = NULL, yintercept = NULL,
+  slope = NULL, intercept = NULL,
+  x = NULL, xend = NULL, y = NULL, yend = NULL,
+  colour = NULL, linetype = NULL, linewidth = NULL,
+  ...,
+  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+) {
+  # Data-driven segment mode: render one segment per row (e.g. network
+  # edges from a layout_* transform).  Endpoints come from the mapping
+  # (auto-bound from layout geometry when data is a ~table reference).
+  if (!is.null(data)) {
+    scalar_endpoints <- any(
+      !is.null(x), !is.null(xend),
+      !is.null(y), !is.null(yend)
+    )
+    if (scalar_endpoints) {
+      cli::cli_abort(c(
+        "Scalar endpoints conflict with {.arg data} in {.fn mark_rule}.",
+        "i" = "Map columns via {.code encode(x = ..., xend = ...)} instead."
+      ))
+    }
+    resolved <- ._resolve_layer_data(data, plot)
+    seg_data <- resolved$data
+    if (resolved$from_graph) {
+      mapping <- ._auto_bind_geometry(mapping, seg_data)
+    }
+    need <- c("x", "xend", "y", "yend")
+    if (!all(need %in% names(mapping))) {
+      cli::cli_abort(c(
+        "{.fn mark_rule} with {.arg data} requires aesthetics \\
+         {.val {need}} on the layer.",
+        "i" = "Provide them via {.code encode(...)}; layout tables bind \\
+               them automatically."
+      ))
+    }
+    static <- rlang::list2(...)
+    if (!is.null(colour)) static$colour <- colour
+    if (!is.null(linetype)) static$linetype <- linetype
+    if (!is.null(linewidth)) static$linewidth <- linewidth
+    # Explicit segment mapping: never merge the global aes over it.
+    static$inherit.aes <- FALSE
+    return(._mark_impl(plot, mapping, seg_data,
+      position = NULL,
+      ggplot2::geom_segment,
+      rasterize, rasterize_dpi, rasterize_dev,
+      auto_dodge = FALSE, !!!static
+    ))
+  }
+
   # Build named list of non-NULL params for the geom call
   params <- rlang::list2(...)
-  if (!is.null(colour))    params$colour    <- colour
-  if (!is.null(linetype))  params$linetype  <- linetype
+  if (!is.null(colour)) params$colour <- colour
+  if (!is.null(linetype)) params$linetype <- linetype
   if (!is.null(linewidth)) params$linewidth <- linewidth
 
   # Dispatch by param combination
@@ -470,7 +541,7 @@ S7::method(mark_rule, plotit_class) <- function(
     params$yintercept <- yintercept
     geom_call <- do.call(ggplot2::geom_hline, params)
   } else if (!is.null(slope) || !is.null(intercept)) {
-    if (!is.null(slope))     params$slope     <- slope
+    if (!is.null(slope)) params$slope <- slope
     if (!is.null(intercept)) params$intercept <- intercept
     geom_call <- do.call(ggplot2::geom_abline, params)
   } else if (!is.null(x) && !is.null(xend) && !is.null(y) && !is.null(yend)) {
@@ -478,8 +549,8 @@ S7::method(mark_rule, plotit_class) <- function(
     # constant aes() mappings trigger on multi-row data (R6).  NULL
     # parameters are omitted -- annotate() requires equal-length params.
     ann_args <- list(x = x, xend = xend, y = y, yend = yend)
-    if (!is.null(colour))    ann_args$colour <- colour
-    if (!is.null(linetype))  ann_args$linetype <- linetype
+    if (!is.null(colour)) ann_args$colour <- colour
+    if (!is.null(linetype)) ann_args$linetype <- linetype
     if (!is.null(linewidth)) ann_args$linewidth <- linewidth
     geom_call <- do.call(
       ggplot2::annotate, c(list("segment"), ann_args, rlang::list2(...))
@@ -597,16 +668,19 @@ mark_smooth <- S7::new_generic(
 
 #' @export
 S7::method(mark_smooth, plotit_class) <- function(
-    plot, mapping = NULL, data = NULL, position = NULL, ...,
-    method = NULL, formula = NULL, se = NULL,
-    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  plot, mapping = NULL, data = NULL, position = NULL, ...,
+  method = NULL, formula = NULL, se = NULL,
+  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+) {
   params <- rlang::list2(...)
   params$method <- method
   params$formula <- formula
   params$se <- se
   do.call(function(...) {
-    ._mark_impl(plot, mapping, data, position, ggplot2::geom_smooth,
-                rasterize, rasterize_dpi, rasterize_dev, ...)
+    ._mark_impl(
+      plot, mapping, data, position, ggplot2::geom_smooth,
+      rasterize, rasterize_dpi, rasterize_dev, ...
+    )
   }, params)
 }
 
@@ -630,8 +704,10 @@ S7::method(mark_smooth, plotit_class) <- function(
 #' @references
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/heatmap}{Heatmap} (corelib)
 #' @examples
-#' plotit(ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 1000), ],
-#'        encode(x = carat, y = price)) |> mark_hex(bins = 20)
+#' plotit(
+#'   ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 1000), ],
+#'   encode(x = carat, y = price)
+#' ) |> mark_hex(bins = 20)
 #' @export
 mark_hex <- S7::new_generic(
   "mark_hex", "plot",
@@ -644,17 +720,20 @@ mark_hex <- S7::new_generic(
 
 #' @export
 S7::method(mark_hex, plotit_class) <- function(
-    plot, mapping = NULL, data = NULL, position = NULL, ...,
-    bins = NULL,
-    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  plot, mapping = NULL, data = NULL, position = NULL, ...,
+  bins = NULL,
+  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+) {
   if (!requireNamespace("hexbin", quietly = TRUE)) {
     cli::cli_abort("{.fn mark_hex} requires the {.pkg hexbin} package.")
   }
   params <- rlang::list2(...)
   params$bins <- bins
   do.call(function(...) {
-    ._mark_impl(plot, mapping, data, position, ggplot2::geom_hex,
-                rasterize, rasterize_dpi, rasterize_dev, ...)
+    ._mark_impl(
+      plot, mapping, data, position, ggplot2::geom_hex,
+      rasterize, rasterize_dpi, rasterize_dev, ...
+    )
   }, params)
 }
 
@@ -692,15 +771,18 @@ mark_density_2d <- S7::new_generic(
 
 #' @export
 S7::method(mark_density_2d, plotit_class) <- function(
-    plot, mapping = NULL, data = NULL, position = NULL, ...,
-    filled = FALSE, bins = NULL,
-    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  plot, mapping = NULL, data = NULL, position = NULL, ...,
+  filled = FALSE, bins = NULL,
+  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+) {
   geom_fun <- if (filled) ggplot2::geom_density_2d_filled else ggplot2::geom_density_2d
   dots <- rlang::list2(...)
   if (!is.null(bins)) dots$bins <- bins
   do.call(function(...) {
-    ._mark_impl(plot, mapping, data, position, geom_fun,
-                rasterize, rasterize_dpi, rasterize_dev, ...)
+    ._mark_impl(
+      plot, mapping, data, position, geom_fun,
+      rasterize, rasterize_dpi, rasterize_dev, ...
+    )
   }, dots)
 }
 
@@ -737,9 +819,10 @@ mark_corr <- S7::new_generic(
 
 #' @export
 S7::method(mark_corr, plotit_class) <- function(
-    plot, method = c("pearson", "spearman", "kendall"),
-    reorder = TRUE, ...,
-    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  plot, method = c("pearson", "spearman", "kendall"),
+  reorder = TRUE, ...,
+  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+) {
   method <- match.arg(method)
   # Clear the default_color injected by plotit() so the fill legend appears
   plot <- ._clear_default_color(plot)
@@ -751,8 +834,10 @@ S7::method(mark_corr, plotit_class) <- function(
   }
   # Pairwise complete observations so a single NA column does not
   # invalidate the whole correlation matrix.
-  mat <- stats::cor(raw_data[, num_cols, drop = FALSE], method = method,
-                    use = "pairwise.complete.obs")
+  mat <- stats::cor(raw_data[, num_cols, drop = FALSE],
+    method = method,
+    use = "pairwise.complete.obs"
+  )
   # Hierarchical clustering reorder
   if (reorder) {
     if (anyNA(mat)) {
@@ -804,7 +889,8 @@ S7::method(mark_corr, plotit_class) <- function(
 #' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/errorbar.html}{Errorbar} (composite mark)
 #' @examples
 #' df <- data.frame(
-#'   x = c("A", "B"), y = c(10, 20), ymin = c(8, 18), ymax = c(12, 22))
+#'   x = c("A", "B"), y = c(10, 20), ymin = c(8, 18), ymax = c(12, 22)
+#' )
 #' plotit(df, encode(x = x, y = y, ymin = ymin, ymax = ymax)) |>
 #'   mark_errorbar(width = 0.3)
 #' @export
@@ -819,9 +905,10 @@ mark_errorbar <- S7::new_generic(
 
 #' @export
 S7::method(mark_errorbar, plotit_class) <- function(
-    plot, mapping = NULL, data = NULL, position = NULL, ...,
-    width = 0.5, orientation = c("vertical", "horizontal"),
-    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  plot, mapping = NULL, data = NULL, position = NULL, ...,
+  width = 0.5, orientation = c("vertical", "horizontal"),
+  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+) {
   orientation <- match.arg(orientation)
   geom_fun <- if (orientation == "horizontal") {
     ggplot2::geom_errorbarh
@@ -831,8 +918,10 @@ S7::method(mark_errorbar, plotit_class) <- function(
   params <- rlang::list2(...)
   params$width <- width
   do.call(function(...) {
-    ._mark_impl(plot, mapping, data, position, geom_fun,
-                rasterize, rasterize_dpi, rasterize_dev, ...)
+    ._mark_impl(
+      plot, mapping, data, position, geom_fun,
+      rasterize, rasterize_dpi, rasterize_dev, ...
+    )
   }, params)
 }
 
@@ -870,7 +959,8 @@ S7::method(mark_errorbar, plotit_class) <- function(
 #' df <- data.frame(group = c("A", "B", "C"), value = c(5, 8, 4))
 #' comp <- data.frame(
 #'   group1 = c("A", "A"), group2 = c("B", "C"),
-#'   label = c("**", "ns"))
+#'   label = c("**", "ns")
+#' )
 #' plotit(df, encode(x = group, y = value)) |>
 #'   mark_bar() |>
 #'   mark_significance(comp, y_position = c(9, 6))
@@ -886,9 +976,10 @@ mark_significance <- S7::new_generic(
 
 #' @export
 S7::method(mark_significance, plotit_class) <- function(
-    plot, comparisons, y_position = NULL, y_offset = NULL,
-    line_colour = "grey30", line_width = 0.3,
-    text_size = 3.5, tip_length = 0.02, ...) {
+  plot, comparisons, y_position = NULL, y_offset = NULL,
+  line_colour = "grey30", line_width = 0.3,
+  text_size = 3.5, tip_length = 0.02, ...
+) {
   if (!is.data.frame(comparisons)) {
     cli::cli_abort("{.arg comparisons} must be a data frame.")
   }
@@ -942,18 +1033,21 @@ S7::method(mark_significance, plotit_class) <- function(
     y_pos <- if (i <= length(y_position)) y_position[i] else y_position[1] + (i - 1) * y_span * 0.08
     # Bracket line
     plot@gg <- plot@gg + ggplot2::annotate(
-      "segment", x = x1, xend = x2, y = y_pos, yend = y_pos,
+      "segment",
+      x = x1, xend = x2, y = y_pos, yend = y_pos,
       colour = line_colour, linewidth = line_width
     )
     # Left tick
     tick_len <- if (is_discrete_x) tip_length * length(x_levels) else tip_length * diff(range(c(x1, x2)))
     plot@gg <- plot@gg + ggplot2::annotate(
-      "segment", x = x1, xend = x1, y = y_pos - tick_len, yend = y_pos,
+      "segment",
+      x = x1, xend = x1, y = y_pos - tick_len, yend = y_pos,
       colour = line_colour, linewidth = line_width
     )
     # Right tick
     plot@gg <- plot@gg + ggplot2::annotate(
-      "segment", x = x2, xend = x2, y = y_pos - tick_len, yend = y_pos,
+      "segment",
+      x = x2, xend = x2, y = y_pos - tick_len, yend = y_pos,
       colour = line_colour, linewidth = line_width
     )
     # Label (midpoint in numeric position space for discrete axes)
@@ -963,7 +1057,8 @@ S7::method(mark_significance, plotit_class) <- function(
       (x1 + x2) / 2
     }
     plot@gg <- plot@gg + ggplot2::annotate(
-      "text", x = mid_x, y = y_pos + y_offset,
+      "text",
+      x = mid_x, y = y_pos + y_offset,
       label = comparisons$label[i], size = text_size, ...
     )
   }
@@ -1008,9 +1103,10 @@ mark_lollipop <- S7::new_generic(
 
 #' @export
 S7::method(mark_lollipop, plotit_class) <- function(
-    plot, mapping = NULL, data = NULL,
-    stem_colour = "grey50", stem_width = 0.5,
-    point_size = 3, ref = 0, ...) {
+  plot, mapping = NULL, data = NULL,
+  stem_colour = "grey50", stem_width = 0.5,
+  point_size = 3, ref = 0, ...
+) {
   d <- data %||% plot@gg$data
   m <- mapping %||% plot@gg$mapping
   # Extract x and y from mapping
@@ -1056,8 +1152,10 @@ S7::method(mark_lollipop, plotit_class) <- function(
 #' @param ... Other arguments passed to `mark_point()` calls
 #' @return Modified plotit object
 #' @examples
-#' df <- data.frame(cat = LETTERS[1:5], before = c(3, 5, 2, 8, 4),
-#'                  after = c(7, 6, 5, 10, 6))
+#' df <- data.frame(
+#'   cat = LETTERS[1:5], before = c(3, 5, 2, 8, 4),
+#'   after = c(7, 6, 5, 10, 6)
+#' )
 #' plotit(df, encode(x = cat, y = before, yend = after)) |>
 #'   mark_dumbbell()
 #' @export
@@ -1073,10 +1171,11 @@ mark_dumbbell <- S7::new_generic(
 
 #' @export
 S7::method(mark_dumbbell, plotit_class) <- function(
-    plot, mapping = NULL, data = NULL,
-    colour_start = "#4E79A7", colour_end = "#E15759",
-    line_colour = "grey50", point_size = 3,
-    line_width = 1, ...) {
+  plot, mapping = NULL, data = NULL,
+  colour_start = "#4E79A7", colour_end = "#E15759",
+  line_colour = "grey50", point_size = 3,
+  line_width = 1, ...
+) {
   d <- data %||% plot@gg$data
   m <- mapping %||% plot@gg$mapping
   x_col <- rlang::eval_tidy(m$x, d)
@@ -1102,13 +1201,17 @@ S7::method(mark_dumbbell, plotit_class) <- function(
   # Start point
   start_mapping <- encode(x = !!x_col, y = !!y_col)
   plot <- plot |>
-    mark_point(mapping = start_mapping, data = d,
-               colour = colour_start, size = point_size, ...)
+    mark_point(
+      mapping = start_mapping, data = d,
+      colour = colour_start, size = point_size, ...
+    )
   # End point
   end_mapping <- encode(x = !!x_col, y = !!yend_col)
   plot <- plot |>
-    mark_point(mapping = end_mapping, data = d,
-               colour = colour_end, size = point_size, ...)
+    mark_point(
+      mapping = end_mapping, data = d,
+      colour = colour_end, size = point_size, ...
+    )
   plot
 }
 
@@ -1148,9 +1251,10 @@ mark_beeswarm <- S7::new_generic(
 
 #' @export
 S7::method(mark_beeswarm, plotit_class) <- function(
-    plot, mapping = NULL, data = NULL, position = NULL, ...,
-    method = c("swarm", "compactswarm", "hex", "square", "center", "centre"),
-    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  plot, mapping = NULL, data = NULL, position = NULL, ...,
+  method = c("swarm", "compactswarm", "hex", "square", "center", "centre"),
+  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+) {
   if (!requireNamespace("ggbeeswarm", quietly = TRUE)) {
     cli::cli_abort("{.fn mark_beeswarm} requires the {.pkg ggbeeswarm} package.")
   }
@@ -1161,8 +1265,9 @@ S7::method(mark_beeswarm, plotit_class) <- function(
   # auto-dodge position is not supported (B3).
   do.call(function(...) {
     ._mark_impl(plot, mapping, data, position, ggbeeswarm::geom_beeswarm,
-                rasterize, rasterize_dpi, rasterize_dev,
-                auto_dodge = FALSE, ...)
+      rasterize, rasterize_dpi, rasterize_dev,
+      auto_dodge = FALSE, ...
+    )
   }, params)
 }
 
@@ -1212,8 +1317,9 @@ mark_sankey <- S7::new_generic(
 
 #' @export
 S7::method(mark_sankey, plotit_class) <- function(
-    plot, mapping = NULL, data = NULL, position = NULL, ...,
-    node_colour = "grey30", flow_alpha = 0.5) {
+  plot, mapping = NULL, data = NULL, position = NULL, ...,
+  node_colour = "grey30", flow_alpha = 0.5
+) {
   if (!requireNamespace("ggsankey", quietly = TRUE)) {
     cli::cli_abort("{.fn mark_sankey} requires the {.pkg ggsankey} package.")
   }
@@ -1241,11 +1347,11 @@ S7::method(mark_sankey, plotit_class) <- function(
   n <- length(src)
   stage_levels <- c("source", "target")
   sankey_data <- data.frame(
-    x         = factor(c(rep("source", n), rep("target", n)), levels = stage_levels),
-    node      = c(src, tgt),
-    next_x    = factor(c(rep("target", n), rep(NA, n)), levels = stage_levels),
+    x = factor(c(rep("source", n), rep("target", n)), levels = stage_levels),
+    node = c(src, tgt),
+    next_x = factor(c(rep("target", n), rep(NA, n)), levels = stage_levels),
     next_node = c(tgt, rep(NA, n)),
-    value     = c(val, rep(NA, n)),
+    value = c(val, rep(NA, n)),
     stringsAsFactors = FALSE
   )
 
@@ -1276,8 +1382,10 @@ S7::method(mark_sankey, plotit_class) <- function(
   dots <- rlang::list2(...)
   params_split <- do.call(getFromNamespace("prepare_params", "ggsankey"), dots)
 
-  base_params <- list(na.rm = FALSE, width = 0.1, space = NULL,
-                      smooth = 8, type = "sankey")
+  base_params <- list(
+    na.rm = FALSE, width = 0.1, space = NULL,
+    smooth = 8, type = "sankey"
+  )
   # flow.alpha/flow.* -> flow layer params (prefix stripped upstream);
   # node.fill/node.* -> node layer params.  User-supplied values in `...`
   # override the base defaults (duplicated names collapse to the last).
@@ -1290,8 +1398,10 @@ S7::method(mark_sankey, plotit_class) <- function(
   node_params <- merge_params(base_params, params_split[[2]])
   if (!has_fill) node_params$fill <- node_colour
 
-  layer_args <- list(data = sankey_data, position = "identity",
-                     inherit.aes = FALSE)
+  layer_args <- list(
+    data = sankey_data, position = "identity",
+    inherit.aes = FALSE
+  )
   if ("check.aes" %in% names(formals(ggplot2::layer))) {
     layer_args$check.aes <- FALSE
   }
@@ -1303,14 +1413,18 @@ S7::method(mark_sankey, plotit_class) <- function(
   # Add layers incrementally on top of the existing plot so the theme,
   # scales and previously added layers are preserved (A4).
   plot@gg <- plot@gg + do.call(ggplot2::layer, c(
-    list(stat = getFromNamespace("StatSankeyFlow", "ggsankey"),
-         geom = "polygon", mapping = flow_mapping, params = flow_params),
+    list(
+      stat = getFromNamespace("StatSankeyFlow", "ggsankey"),
+      geom = "polygon", mapping = flow_mapping, params = flow_params
+    ),
     layer_args
   ))
   plot@gg <- plot@gg + do.call(ggplot2::layer, c(
-    list(stat = getFromNamespace("StatSankeyNode", "ggsankey"),
-         geom = ggplot2::GeomRect, mapping = flow_mapping,
-         params = node_params),
+    list(
+      stat = getFromNamespace("StatSankeyNode", "ggsankey"),
+      geom = ggplot2::GeomRect, mapping = flow_mapping,
+      params = node_params
+    ),
     layer_args
   ))
 
@@ -1319,11 +1433,15 @@ S7::method(mark_sankey, plotit_class) <- function(
     x = x, next_x = next_x, node = node, next_node = next_node,
     label = node
   )
-  text_params <- list(na.rm = FALSE, width = 0.1, space = NULL,
-                      type = "sankey", size = 3, check_overlap = FALSE)
+  text_params <- list(
+    na.rm = FALSE, width = 0.1, space = NULL,
+    type = "sankey", size = 3, check_overlap = FALSE
+  )
   plot@gg <- plot@gg + do.call(ggplot2::layer, c(
-    list(stat = getFromNamespace("StatSankeyText", "ggsankey"),
-         geom = "text", mapping = text_mapping, params = text_params),
+    list(
+      stat = getFromNamespace("StatSankeyText", "ggsankey"),
+      geom = "text", mapping = text_mapping, params = text_params
+    ),
     layer_args
   ))
   plot
@@ -1367,8 +1485,9 @@ mark_treemap <- S7::new_generic(
 
 #' @export
 S7::method(mark_treemap, plotit_class) <- function(
-    plot, mapping = NULL, data = NULL, position = NULL, ...,
-    rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  plot, mapping = NULL, data = NULL, position = NULL, ...,
+  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+) {
   if (!requireNamespace("treemapify", quietly = TRUE)) {
     cli::cli_abort("{.fn mark_treemap} requires the {.pkg treemapify} package.")
   }
@@ -1443,12 +1562,13 @@ mark_network <- S7::new_generic(
 
 #' @export
 S7::method(mark_network, plotit_class) <- function(
-    plot,
-    edges = NULL,
-    encode_edges = NULL,
-    layout = c("auto", "circle", "linear", "bipartite", "manual"),
-    edge_colour = "grey70", edge_width = 0.5,
-    node_colour = "#4E79A7", node_size = 5, ...) {
+  plot,
+  edges = NULL,
+  encode_edges = NULL,
+  layout = c("auto", "circle", "linear", "bipartite", "manual"),
+  edge_colour = "grey70", edge_width = 0.5,
+  node_colour = "#4E79A7", node_size = 5, ...
+) {
   if (!requireNamespace("ggraph", quietly = TRUE)) {
     cli::cli_abort("{.fn mark_network} requires the {.pkg ggraph} package.")
   }
@@ -1478,10 +1598,12 @@ S7::method(mark_network, plotit_class) <- function(
   if (!is.null(edges) && !is.null(encode_edges)) {
     edge_src <- as.character(rlang::eval_tidy(encode_edges$source, edges))
     edge_tgt <- as.character(rlang::eval_tidy(encode_edges$target, edges))
-    edge_wt  <- rlang::eval_tidy(encode_edges$weight, edges)
-    edges_df <- data.frame(from = edge_src, to = edge_tgt,
-                           weight = edge_wt %||% rep(1, length(edge_src)),
-                           stringsAsFactors = FALSE)
+    edge_wt <- rlang::eval_tidy(encode_edges$weight, edges)
+    edges_df <- data.frame(
+      from = edge_src, to = edge_tgt,
+      weight = edge_wt %||% rep(1, length(edge_src)),
+      stringsAsFactors = FALSE
+    )
   } else {
     edges_df <- data.frame(from = character(0), to = character(0))
   }
@@ -1492,21 +1614,28 @@ S7::method(mark_network, plotit_class) <- function(
       vertices = nodes,
       directed = FALSE
     ),
-    error = function(e) cli::cli_abort(c(
-      "Failed to build the network graph from nodes and edges.",
-      "x" = conditionMessage(e),
-      "i" = "Ensure {.arg edges} reference node ids from the first column of the nodes data."
-    ))
+    error = function(e) {
+      cli::cli_abort(c(
+        "Failed to build the network graph from nodes and edges.",
+        "x" = conditionMessage(e),
+        "i" = "Ensure {.arg edges} reference node ids from the first column of the nodes data."
+      ))
+    }
   )
 
   layout_name <- switch(layout,
-    auto="fr", circle="circle",
-    linear="linear", bipartite="bipartite",
-    manual="nicely")
+    auto = "fr",
+    circle = "circle",
+    linear = "linear",
+    bipartite = "bipartite",
+    manual = "nicely"
+  )
 
   gg <- ggraph::ggraph(graph_obj, layout = layout_name) +
-    ggraph::geom_edge_link(edge_colour = edge_colour,
-                           edge_width = edge_width, ...)
+    ggraph::geom_edge_link(
+      edge_colour = edge_colour,
+      edge_width = edge_width, ...
+    )
 
   node_aes <- plot@gg$mapping
   node_mapping <- ggplot2::aes()
@@ -1517,18 +1646,20 @@ S7::method(mark_network, plotit_class) <- function(
       node_mapping$colour <- node_aes$colour
     }
     if (!is.null(node_aes$fill) && !inherits(node_aes$fill, "AsIs")) {
-      node_mapping$fill   <- node_aes$fill
+      node_mapping$fill <- node_aes$fill
     }
     if (!is.null(node_aes$size)) node_mapping$size <- node_aes$size
   }
 
   gg <- gg + ggraph::geom_node_point(
-    mapping = node_mapping, fill = node_colour, size = node_size)
+    mapping = node_mapping, fill = node_colour, size = node_size
+  )
 
   if (!is.null(node_aes$label)) {
     gg <- gg + ggraph::geom_node_text(
       mapping = ggplot2::aes(label = !!node_aes$label),
-      repel = FALSE, size = 3)
+      repel = FALSE, size = 3
+    )
   }
 
   # Inherit the plotit theme so the default look is preserved (A4).
@@ -1623,7 +1754,8 @@ mark_chord <- S7::new_generic(
 #' Complete a chord render: placeholder gg + immediate draw + replay capture.
 #' @noRd
 ._finish_chord <- function(plot, mat, grid_col, gap_width, link_alpha, dots) {
-  plot@gg <- ggplot2::ggplot() + ggplot2::theme_void()
+  plot@gg <- ggplot2::ggplot() +
+    ggplot2::theme_void()
   draw <- function() ._chord_draw(mat, grid_col, gap_width, link_alpha, dots)
   attr(plot@meta, "plotit_native_render") <- list(draw = draw)
   draw()
@@ -1632,8 +1764,9 @@ mark_chord <- S7::new_generic(
 
 #' @export
 S7::method(mark_chord, plotit_class) <- function(
-    plot, mapping = NULL, data = NULL,
-    gap_width = 4, link_alpha = 0.5, ...) {
+  plot, mapping = NULL, data = NULL,
+  gap_width = 4, link_alpha = 0.5, ...
+) {
   if (!requireNamespace("circlize", quietly = TRUE)) {
     cli::cli_abort("{.fn mark_chord} requires the {.pkg circlize} package.")
   }
@@ -1671,8 +1804,10 @@ S7::method(mark_chord, plotit_class) <- function(
 
   # --- Build adjacency matrix ---
   all_nodes <- unique(c(src, tgt))
-  mat <- matrix(0, nrow = length(all_nodes), ncol = length(all_nodes),
-                dimnames = list(all_nodes, all_nodes))
+  mat <- matrix(0,
+    nrow = length(all_nodes), ncol = length(all_nodes),
+    dimnames = list(all_nodes, all_nodes)
+  )
   for (i in seq_along(src)) {
     mat[src[i], tgt[i]] <- mat[src[i], tgt[i]] + val[i]
   }

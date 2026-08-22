@@ -45,6 +45,8 @@ Collate:
     'encode.R'
     'mark.R'
     'factory.R'
+    'graph.R'
+    'layout.R'
     'plot.R'
     'project.R'
     'scale.R'

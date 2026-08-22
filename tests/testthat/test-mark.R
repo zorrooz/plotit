@@ -303,7 +303,7 @@ test_that("[BDD] mark_rule with xintercept adds vertical line", {
     mark_rule(xintercept = 3, colour = "red")
   built <- .built(p)
   expect_s3_class(p, "plotit::plotit")
-  expect_true(length(built$data) >= 2)  # point + rule
+  expect_true(length(built$data) >= 2) # point + rule
 })
 
 test_that("[BDD] mark_rule with yintercept adds horizontal line", {
@@ -337,8 +337,10 @@ test_that("mark_rule supports rasterize", {
   skip_if_not_installed("ggrastr")
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
-    mark_rule(xintercept = median(iris$Sepal.Width),
-              rasterize = TRUE, rasterize_dpi = 72)
+    mark_rule(
+      xintercept = median(iris$Sepal.Width),
+      rasterize = TRUE, rasterize_dpi = 72
+    )
   expect_s3_class(p, "plotit::plotit")
 })
 
@@ -418,16 +420,20 @@ test_that("mark_smooth supports colour aesthetic", {
 # ---- mark_hex ----
 test_that("[BDD] mark_hex adds hex bin layer", {
   skip_if_not_installed("hexbin")
-  p <- plotit(ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 1000), ],
-              encode(x = carat, y = price)) |> mark_hex(bins = 15)
+  p <- plotit(
+    ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 1000), ],
+    encode(x = carat, y = price)
+  ) |> mark_hex(bins = 15)
   expect_s3_class(p, "plotit::plotit")
   expect_length(.built(p)$data, 1)
 })
 
 test_that("mark_hex supports bins parameter", {
   skip_if_not_installed("hexbin")
-  p <- plotit(ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 500), ],
-              encode(x = carat, y = price)) |> mark_hex(bins = 10)
+  p <- plotit(
+    ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 500), ],
+    encode(x = carat, y = price)
+  ) |> mark_hex(bins = 10)
   expect_s3_class(p, "plotit::plotit")
 })
 
@@ -491,18 +497,23 @@ test_that("make_mark warns on non-mark_ name", {
 
 test_that("make_theme creates a usable theme function", {
   style_test <- make_theme("style_test",
-    plot.title = ggplot2::element_text(colour = "blue"))
+    plot.title = ggplot2::element_text(colour = "blue")
+  )
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
-    mark_point() |> label_title("Test") |> style_test()
+    mark_point() |>
+    label_title("Test") |>
+    style_test()
   expect_s3_class(p, "plotit::plotit")
 })
 
 test_that("make_theme with custom base theme works", {
   style_custom <- make_theme("style_custom",
     panel.grid.major = ggplot2::element_line(colour = "grey90"),
-    base_theme = ggplot2::theme_bw)
+    base_theme = ggplot2::theme_bw
+  )
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
-    mark_point() |> style_custom()
+    mark_point() |>
+    style_custom()
   expect_s3_class(p, "plotit::plotit")
 })
 
@@ -522,8 +533,10 @@ test_that("[BDD] mark_errorbar adds error bars", {
 })
 
 test_that("mark_errorbar supports horizontal orientation", {
-  df <- data.frame(y = c("A", "B"), x = c(10, 20),
-                   xmin = c(8, 18), xmax = c(12, 22))
+  df <- data.frame(
+    y = c("A", "B"), x = c(10, 20),
+    xmin = c(8, 18), xmax = c(12, 22)
+  )
   p <- plotit(df, encode(x = x, y = y, xmin = xmin, xmax = xmax)) |>
     mark_point() |>
     mark_errorbar(width = 0.3, orientation = "horizontal")
@@ -533,7 +546,8 @@ test_that("mark_errorbar supports horizontal orientation", {
 test_that("mark_errorbar supports local data", {
   df <- data.frame(x = c("A", "B"), y = c(10, 20))
   err <- data.frame(x = c("A", "B"), ymin = c(8, 18), ymax = c(12, 22))
-  p <- plotit(df, encode(x = x, y = y)) |> mark_point() |>
+  p <- plotit(df, encode(x = x, y = y)) |>
+    mark_point() |>
     mark_errorbar(data = err, mapping = encode(x = x, ymin = ymin, ymax = ymax))
   expect_s3_class(p, "plotit::plotit")
 })
@@ -652,7 +666,9 @@ test_that("mark_beeswarm supports local data", {
   built <- suppressWarnings(
     tryCatch(ggplot2::ggplot_build(p@gg), error = function(e) e)
   )
-  if (inherits(built, "error")) return(FALSE)
+  if (inherits(built, "error")) {
+    return(FALSE)
+  }
   nrow(built$data[[1]]) > 0
 }
 
@@ -663,8 +679,12 @@ test_that("[BDD] mark_sankey builds sankey (edges-table API)", {
     target = c("B", "C", "C", "D", "D"),
     value  = c(10, 5, 8, 3, 6)
   )
-  p <- df |> plotit(encode(source = source, target = target,
-                           value = value, fill = source)) |> mark_sankey()
+  p <- df |>
+    plotit(encode(
+      source = source, target = target,
+      value = value, fill = source
+    )) |>
+    mark_sankey()
   expect_s3_class(p, "plotit::plotit")
   if (!.sankey_renders(p)) {
     skip("ggsankey x ggplot2 renders 0 rows (environment incompatible, A2)")
@@ -696,7 +716,8 @@ test_that("mark_sankey supports flow_alpha", {
     target = c("B", "C", "C"),
     value  = c(10, 5, 8)
   )
-  p <- df |> plotit(encode(source = source, target = target, value = value)) |>
+  p <- df |>
+    plotit(encode(source = source, target = target, value = value)) |>
     mark_sankey(flow_alpha = 0.8)
   expect_s3_class(p, "plotit::plotit")
   # flow.alpha applies to the flow layer (GeomPolygon) only; the node
@@ -714,8 +735,12 @@ test_that("mark_sankey keeps numeric fill values numeric (#5)", {
     value  = c(10, 5, 8),
     weight = c(1.5, 2.5, 3.5)
   )
-  p <- df |> plotit(encode(source = source, target = target,
-                           value = value, fill = weight)) |> mark_sankey()
+  p <- df |>
+    plotit(encode(
+      source = source, target = target,
+      value = value, fill = weight
+    )) |>
+    mark_sankey()
   # Numeric fill columns stay numeric so continuous scales keep their
   # semantics
   expect_type(p@gg$layers[[1]]$data$fill_grp, "double")
@@ -730,8 +755,10 @@ test_that("[BDD] mark_treemap builds treemap", {
     subgroup = c("a1", "a2", "b1"),
     size = c(30, 20, 50)
   )
-  p <- plotit(df, encode(area = size, fill = group,
-                          subgroup = subgroup)) |>
+  p <- plotit(df, encode(
+    area = size, fill = group,
+    subgroup = subgroup
+  )) |>
     mark_treemap()
   expect_s3_class(p, "plotit::plotit")
 })
@@ -770,9 +797,12 @@ test_that("[BDD] mark_network builds network (nodes + edges API)", {
     to     = c("B", "C", "C", "D"),
     weight = c(1, 2, 3, 4)
   )
-  p <- nodes |> plotit(encode(color = group, size = value, label = name)) |>
-    mark_network(edges = edges,
-                 encode_edges = encode(source = from, target = to, weight = weight))
+  p <- nodes |>
+    plotit(encode(color = group, size = value, label = name)) |>
+    mark_network(
+      edges = edges,
+      encode_edges = encode(source = from, target = to, weight = weight)
+    )
   expect_s3_class(p, "plotit::plotit")
   expect_length(ggplot2::ggplot_build(p@gg)$data, 3)
 })
@@ -789,10 +819,13 @@ test_that("mark_network supports circle layout", {
   skip_if_not_installed("igraph")
   nodes <- data.frame(name = c("A", "B", "C", "D"), group = c("X", "Y", "X", "Y"))
   edges <- data.frame(from = c("A", "A", "B", "C"), to = c("B", "C", "C", "D"))
-  p <- nodes |> plotit(encode(color = group)) |>
-    mark_network(edges = edges,
-                 encode_edges = encode(source = from, target = to),
-                 layout = "circle")
+  p <- nodes |>
+    plotit(encode(color = group)) |>
+    mark_network(
+      edges = edges,
+      encode_edges = encode(source = from, target = to),
+      layout = "circle"
+    )
   expect_s3_class(p, "plotit::plotit")
   expect_length(ggplot2::ggplot_build(p@gg)$data, 2)
 })
@@ -841,7 +874,8 @@ test_that("mark_chord supports edges-table API", {
   )
   pdf(NULL)
   on.exit(dev.off(), add = TRUE)
-  p <- df |> plotit(encode(source = source, target = target, value = value)) |>
+  p <- df |>
+    plotit(encode(source = source, target = target, value = value)) |>
     mark_chord()
   expect_s3_class(p, "plotit::plotit")
 })

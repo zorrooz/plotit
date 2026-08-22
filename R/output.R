@@ -40,7 +40,9 @@ S7::method(format, plotit_composite) <- function(x, ...) ""
 # suppress the text dump.
 #' @exportS3Method pkgdown::pkgdown_print
 pkgdown_print.plotit <- function(x, visible = TRUE) {
-  if (!visible) return(invisible())
+  if (!visible) {
+    return(invisible())
+  }
   # Native renderers (e.g. mark_chord via circlize) draw directly on the
   # device; the underlying gg is an empty ggplot that would overwrite the
   # plot, so keep it and let evaluate record the device output.
@@ -52,7 +54,9 @@ pkgdown_print.plotit <- function(x, visible = TRUE) {
 
 #' @exportS3Method pkgdown::pkgdown_print
 pkgdown_print.plotit_composite <- function(x, visible = TRUE) {
-  if (!visible) return(invisible())
+  if (!visible) {
+    return(invisible())
+  }
   ._apply_annotations(x) |> print()
   invisible()
 }
@@ -73,7 +77,7 @@ S7::method(print, plotit_class) <- function(x, ...) {
   # Fall back to the default theme when the plot was built without one
   # (e.g. mark_chord replaces gg with an empty ggplot).
   if (is.null(attr(x@meta, "plotit_theme_managed", exact = TRUE)) ||
-      length(x@gg$theme) == 0) {
+    length(x@gg$theme) == 0) {
     x@gg <- x@gg + .theme_default()
     attr(x@meta, "plotit_theme_managed") <- TRUE
   }
@@ -112,7 +116,7 @@ print.plotit <- function(x, ...) {
     return(invisible(x))
   }
   if (is.null(attr(x@meta, "plotit_theme_managed", exact = TRUE)) ||
-      length(x@gg$theme) == 0) {
+    length(x@gg$theme) == 0) {
     x@gg <- x@gg + .theme_default()
     attr(x@meta, "plotit_theme_managed") <- TRUE
   }
@@ -197,18 +201,24 @@ S7::method(export, plotit_class) <- function(
     dev_fun <- device
     if (is.character(dev_fun)) {
       dev_fun <- switch(dev_fun,
-        pdf = grDevices::pdf, png = grDevices::png,
-        jpeg = grDevices::jpeg, jpg = grDevices::jpeg,
-        bmp = grDevices::bmp, tiff = grDevices::tiff,
+        pdf = grDevices::pdf,
+        png = grDevices::png,
+        jpeg = grDevices::jpeg,
+        jpg = grDevices::jpeg,
+        bmp = grDevices::bmp,
+        tiff = grDevices::tiff,
         cli::cli_abort("Unknown device {.val {device}}.")
       )
     }
     if (is.null(dev_fun)) {
       ext <- tolower(tools::file_ext(filename))
       dev_fun <- switch(ext,
-        pdf = grDevices::pdf, png = grDevices::png,
-        jpg = grDevices::jpeg, jpeg = grDevices::jpeg,
-        bmp = grDevices::bmp, tiff = grDevices::tiff,
+        pdf = grDevices::pdf,
+        png = grDevices::png,
+        jpg = grDevices::jpeg,
+        jpeg = grDevices::jpeg,
+        bmp = grDevices::bmp,
+        tiff = grDevices::tiff,
         grDevices::pdf
       )
     }
