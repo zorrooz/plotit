@@ -87,6 +87,20 @@ Control how data maps to visual properties.
 - [`scale_y()`](https://zorrooz.github.io/plotit/reference/scale_y.md) :
   Y-axis position scale
 
+## Graph Data & Layout
+
+Build relational graphs and compute layouts (Vega-style data
+transforms).
+
+- [`as_graph()`](https://zorrooz.github.io/plotit/reference/as_graph.md)
+  : Convert relational data to a plotit graph
+- [`layout_circle()`](https://zorrooz.github.io/plotit/reference/layout_circle.md)
+  : Circular layout
+- [`layout_force()`](https://zorrooz.github.io/plotit/reference/layout_force.md)
+  : Force-directed layout
+- [`layout_tree()`](https://zorrooz.github.io/plotit/reference/layout_tree.md)
+  : Tree layout
+
 ## Labels
 
 Set titles, axis labels, and legend text.

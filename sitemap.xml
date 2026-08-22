@@ -1,7 +1,6 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://zorrooz.github.io/plotit/404.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/AGENTS.html</loc></url>
-<url><loc>https://zorrooz.github.io/plotit/CODE_REVIEW.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/LICENSE-text.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/LICENSE.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/README_ZH.html</loc></url>
@@ -12,6 +11,7 @@
 <url><loc>https://zorrooz.github.io/plotit/authors.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/index.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/news/index.html</loc></url>
+<url><loc>https://zorrooz.github.io/plotit/reference/as_graph.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/compose.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/compose_grid.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/compose_inset.html</loc></url>
@@ -24,6 +24,9 @@
 <url><loc>https://zorrooz.github.io/plotit/reference/label_legend.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/label_subtitle.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/label_title.html</loc></url>
+<url><loc>https://zorrooz.github.io/plotit/reference/layout_circle.html</loc></url>
+<url><loc>https://zorrooz.github.io/plotit/reference/layout_force.html</loc></url>
+<url><loc>https://zorrooz.github.io/plotit/reference/layout_tree.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/make_mark.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/make_theme.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/mark_area.html</loc></url>

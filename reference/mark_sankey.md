@@ -13,10 +13,7 @@ mark_sankey(
   position = NULL,
   ...,
   node_colour = "grey30",
-  flow_alpha = 0.5,
-  rasterize = FALSE,
-  rasterize_dpi = 300,
-  rasterize_dev = "cairo"
+  flow_alpha = 0.5
 )
 ```
 
@@ -43,7 +40,8 @@ mark_sankey(
 
 - ...:
 
-  Other arguments passed to `geom_sankey`
+  Other arguments passed to the underlying sankey layers (`width`,
+  `smooth`, `type`, `flow.*`, `node.*`)
 
 - node_colour:
 
@@ -53,19 +51,6 @@ mark_sankey(
 - flow_alpha:
 
   Alpha transparency for flow ribbons (default 0.5).
-
-- rasterize:
-
-  If `TRUE`, rasterize via
-  [`ggrastr::rasterise()`](https://rdrr.io/pkg/ggrastr/man/rasterise.html).
-
-- rasterize_dpi:
-
-  DPI for rasterization (default 300).
-
-- rasterize_dev:
-
-  Graphics device for rasterization (default `"cairo"`).
 
 ## Value
 
@@ -96,22 +81,4 @@ df |> plotit(encode(source = source, target = target,
                     value = value, fill = source)) |>
   mark_sankey() |>
   scale_fill(range = "viridis")
-#> Warning: Ignoring unknown aesthetics: next_x, node, next_node, and value
-#> Warning: Ignoring unknown aesthetics: next_x, node, next_node, and value
-#> Warning: Ignoring unknown aesthetics: next_x, node, and next_node
-#> Warning: There was 1 warning in `dplyr::mutate()`.
-#> ℹ In argument: `dplyr::across(c(x, next_x), ~as.numeric(.), .names =
-#>   ("n_{.col}"))`.
-#> Caused by warning:
-#> ! NAs introduced by coercion
-#> Warning: There was 1 warning in `dplyr::mutate()`.
-#> ℹ In argument: `dplyr::across(c(x, next_x), ~as.numeric(.), .names =
-#>   ("n_{.col}"))`.
-#> Caused by warning:
-#> ! NAs introduced by coercion
-#> Warning: There was 1 warning in `dplyr::mutate()`.
-#> ℹ In argument: `dplyr::across(c(x, next_x), ~as.numeric(.), .names =
-#>   ("n_{.col}"))`.
-#> Caused by warning:
-#> ! NAs introduced by coercion
 ```

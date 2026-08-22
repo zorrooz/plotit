@@ -12,9 +12,6 @@ mark_chord(
   data = NULL,
   gap_width = 4,
   link_alpha = 0.5,
-  rasterize = FALSE,
-  rasterize_dpi = 300,
-  rasterize_dev = "cairo",
   ...
 )
 ```
@@ -44,19 +41,6 @@ mark_chord(
 
   Alpha transparency for links (default 0.5).
 
-- rasterize:
-
-  If `TRUE`, rasterize via
-  [`ggrastr::rasterise()`](https://rdrr.io/pkg/ggrastr/man/rasterise.html).
-
-- rasterize_dpi:
-
-  DPI for rasterization (default 300).
-
-- rasterize_dev:
-
-  Graphics device for rasterization (default `"cairo"`).
-
 - ...:
 
   Other arguments passed to
@@ -70,7 +54,10 @@ Modified plotit object
 current graphics device (not through the ggplot2 build system) and
 replaces the plot's `gg` with an empty ggplot. Layers added before or
 after it therefore do not share a coordinate system – treat it as a
-standalone renderer.
+standalone renderer. [`print()`](https://rdrr.io/r/base/print.html)
+skips the placeholder and
+[`export()`](https://zorrooz.github.io/plotit/reference/export.md)
+replays the render on the target device.
 
 ## Details
 
