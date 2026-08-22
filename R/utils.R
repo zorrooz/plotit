@@ -9,8 +9,9 @@ NULL
 
 # Clear the global default_color injected by plotit() so that legends
 # appear when a layer or scale introduces its own colour/fill mapping.
-# Called from mark_* (with mapping), scale_color/fill (unconditional),
-# and project_parallel (when group introduces colour).
+# Called from the unified mark path (._mark_impl with layer mapping),
+# hand-written marks (map/corr/treemap/sankey), scale_color/fill
+# (unconditional), and project_parallel (when group introduces colour).
 #
 # @param plot A plotit object.
 # @param mapping Optional layer mapping.  If provided, the function only

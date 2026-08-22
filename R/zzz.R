@@ -75,6 +75,7 @@ for (.generic_name in c(
   "mark_lollipop", "mark_dumbbell",
   "mark_beeswarm", "mark_sankey", "mark_treemap",
   "mark_network", "mark_chord",
+  "layout_force", "layout_circle", "layout_tree",
   "scale_color", "scale_fill", "scale_size", "scale_alpha",
   "scale_shape", "scale_linetype", "scale_x", "scale_y",
   "project_cartesian", "project_polar", "project_parallel",

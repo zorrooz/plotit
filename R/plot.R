@@ -33,6 +33,22 @@ plotit <- function(
     ))
   }
 
+  # Graph input: mappings are declared at mark level (~nodes / ~edges),
+  # so a non-empty global mapping has no well-defined target table.
+  graph_input <- inherits(data, "plotit_graph")
+  if (graph_input && length(mapping) > 0) {
+    cli::cli_abort(c(
+      "Graph plots declare aesthetics at the mark level.",
+      "x" = "{.arg mapping} must be empty for {.cls plotit_graph} data.",
+      "i" = "Use {.code mark_point(data = ~nodes, encode(...))} instead."
+    ))
+  }
+  if (graph_input && !missing(default_color) && !is.null(default_color)) {
+    cli::cli_warn(
+      "{.arg default_color} is ignored for {.cls plotit_graph} data."
+    )
+  }
+
   if (!autofit && (is.null(width) || is.null(height))) {
     cli::cli_abort(
       "When {.code autofit = FALSE}, both {.arg width} and {.arg height} must be provided."
@@ -50,28 +66,35 @@ plotit <- function(
     )
   }
 
-  if (is.null(dodge)) {
-    disc_x <- !is.null(mapping$x) && is_discrete(data, mapping$x)
-    disc_y <- !is.null(mapping$y) && is_discrete(data, mapping$y)
-    dodge <- if (disc_x || disc_y) 0.8 else 0
-  }
-
-  has_color <- "colour" %in% names(mapping)
-  has_fill <- "fill" %in% names(mapping)
-
-  # Inject I(default_color) to both colour and fill so that all geoms
-  # (points, bars, tiles, ...) pick up the same single-color appearance.
-  use_default <- !is.null(default_color) && !has_color && !has_fill
-  if (use_default) {
-    # Clone mapping to avoid mutating the caller's encode() object
-    mapping <- structure(
-      utils::modifyList(mapping, list(colour = I(default_color), fill = I(default_color))),
-      class = c("plotit_encode", "uneval")
-    )
-    p <- ggplot2::ggplot(data, mapping) +
-      ggplot2::guides(colour = "none", fill = "none")
+  if (graph_input) {
+    # No global mapping: no discrete heuristic, no default color injection.
+    dodge <- dodge %||% 0
+    use_default <- FALSE
+    p <- ggplot2::ggplot()
   } else {
-    p <- ggplot2::ggplot(data, mapping)
+    if (is.null(dodge)) {
+      disc_x <- !is.null(mapping$x) && is_discrete(data, mapping$x)
+      disc_y <- !is.null(mapping$y) && is_discrete(data, mapping$y)
+      dodge <- if (disc_x || disc_y) 0.8 else 0
+    }
+
+    has_color <- "colour" %in% names(mapping)
+    has_fill <- "fill" %in% names(mapping)
+
+    # Inject I(default_color) to both colour and fill so that all geoms
+    # (points, bars, tiles, ...) pick up the same single-color appearance.
+    use_default <- !is.null(default_color) && !has_color && !has_fill
+    if (use_default) {
+      # Clone mapping to avoid mutating the caller's encode() object
+      mapping <- structure(
+        utils::modifyList(mapping, list(colour = I(default_color), fill = I(default_color))),
+        class = c("plotit_encode", "uneval")
+      )
+      p <- ggplot2::ggplot(data, mapping) +
+        ggplot2::guides(colour = "none", fill = "none")
+    } else {
+      p <- ggplot2::ggplot(data, mapping)
+    }
   }
 
   meta_labels <- plotit_labels()
@@ -90,7 +113,7 @@ plotit <- function(
   # Stored on meta, not gg$theme -- patchwork wrapping would shadow $theme
   attr(meta, "plotit_theme_managed") <- TRUE
 
-  out <- plotit_class(gg = p, meta = meta)
+  out <- plotit_class(gg = p, meta = meta, graph = if (graph_input) data else NULL)
   # Prepend unqualified class so S3 dispatch (e.g. print.plotit) fires
   # before the S7-default print.S7_object.  The namespaced class remains
   # in the vector for S7 method dispatch.

@@ -131,11 +131,11 @@ NULL
 
 # Table mapping dirty slot → (theme element, labs name).
 ._LABEL_SYNC_MAP <- list(
-  title    = list(theme = "plot.title",    labs = "title"),
+  title    = list(theme = "plot.title", labs = "title"),
   subtitle = list(theme = "plot.subtitle", labs = "subtitle"),
-  caption  = list(theme = "plot.caption",  labs = "caption"),
-  x        = list(theme = "axis.title.x",  labs = "x"),
-  y        = list(theme = "axis.title.y",  labs = "y")
+  caption  = list(theme = "plot.caption", labs = "caption"),
+  x        = list(theme = "axis.title.x", labs = "x"),
+  y        = list(theme = "axis.title.y", labs = "y")
 )
 
 #' Sync meta@labels to gg at print/export time.

@@ -11,10 +11,7 @@ mark_sankey(
   position = NULL,
   ...,
   node_colour = "grey30",
-  flow_alpha = 0.5,
-  rasterize = FALSE,
-  rasterize_dpi = 300,
-  rasterize_dev = "cairo"
+  flow_alpha = 0.5
 )
 }
 \arguments{
@@ -29,18 +26,13 @@ identity, compatible with \code{scale_fill_*}).}
 
 \item{position}{Position adjustment.}
 
-\item{...}{Other arguments passed to \code{geom_sankey}}
+\item{...}{Other arguments passed to the underlying sankey layers
+(\code{width}, \code{smooth}, \code{type}, \code{flow.*}, \code{node.*})}
 
 \item{node_colour}{Default colour for node rectangles (used when no
 \code{fill} mapping is present, default \code{"grey30"}).}
 
 \item{flow_alpha}{Alpha transparency for flow ribbons (default 0.5).}
-
-\item{rasterize}{If \code{TRUE}, rasterize via \code{ggrastr::rasterise()}.}
-
-\item{rasterize_dpi}{DPI for rasterization (default 300).}
-
-\item{rasterize_dev}{Graphics device for rasterization (default \code{"cairo"}).}
 }
 \value{
 Modified plotit object

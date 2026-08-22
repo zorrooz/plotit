@@ -10,9 +10,6 @@ mark_chord(
   data = NULL,
   gap_width = 4,
   link_alpha = 0.5,
-  rasterize = FALSE,
-  rasterize_dpi = 300,
-  rasterize_dev = "cairo",
   ...
 )
 }
@@ -30,12 +27,6 @@ identity, compatible with \code{scale_fill_*}).}
 
 \item{link_alpha}{Alpha transparency for links (default 0.5).}
 
-\item{rasterize}{If \code{TRUE}, rasterize via \code{ggrastr::rasterise()}.}
-
-\item{rasterize_dpi}{DPI for rasterization (default 300).}
-
-\item{rasterize_dev}{Graphics device for rasterization (default \code{"cairo"}).}
-
 \item{...}{Other arguments passed to \code{circlize::chordDiagram}}
 }
 \value{
@@ -45,7 +36,8 @@ Modified plotit object
 current graphics device (not through the ggplot2 build system) and
 replaces the plot's \code{gg} with an empty ggplot.  Layers added before or
 after it therefore do not share a coordinate system -- treat it as a
-standalone renderer.
+standalone renderer.  \code{print()} skips the placeholder and \code{export()}
+replays the render on the target device.
 }
 \description{
 Creates a chord diagram showing pairwise relationships between groups.
