@@ -46,7 +46,9 @@ lost when that function returns.
 ``` r
 style_dark <- make_theme("style_dark",
   plot.background = ggplot2::element_rect(fill = "#1a1a1a"),
-  text = ggplot2::element_text(colour = "white"))
+  text = ggplot2::element_text(colour = "white")
+)
 plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
-  mark_point() |> style_dark()
+  mark_point() |>
+  style_dark()
 ```

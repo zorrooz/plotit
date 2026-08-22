@@ -37,6 +37,7 @@ df <- data.frame(
   radius = rep(0.3, 5)
 )
 # Now usable in the pipeline:
-df |> plotit(encode(x = x, y = y, angle = angle, radius = radius)) |>
+df |>
+  plotit(encode(x = x, y = y, angle = angle, radius = radius)) |>
   mark_spoke()
 ```

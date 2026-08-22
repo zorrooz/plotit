@@ -49,7 +49,8 @@ g$nodes
 #> 2  b -1.0921567 1.0286396
 #> 3  c -0.1223654 1.2650731
 
-as_graph(e) |> plotit() |>
+as_graph(e) |>
+  plotit() |>
   layout_force(seed = 1) |>
   mark_point(data = ~nodes) |>
   mark_rule(data = ~edges, colour = "grey70")

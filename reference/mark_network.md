@@ -1,7 +1,12 @@
-# Network / force-directed graph layer
+# Network / force-directed graph layer (sugar)
 
-Creates a network visualization with nodes and edges. Requires the
-ggraph and igraph packages.
+Creates a network visualization from a **nodes** table (main data) plus
+an **edges** table. Equivalent to the pipeline
+`as_graph() |> layout_force()/layout_circle() |> mark_point(data = ~nodes) |> mark_rule(data = ~edges)`
+– the composite form exists so common network plots stay one-call
+simple. The laid-out graph is stored on `@graph`, so subsequent marks
+can reference `~nodes` / `~edges` directly, and layers/scales/theme
+added *before* this call are preserved (additive composition).
 
 ## Usage
 
@@ -11,6 +16,7 @@ mark_network(
   edges = NULL,
   encode_edges = NULL,
   layout = c("auto", "circle", "linear", "bipartite", "manual"),
+  seed = NULL,
   edge_colour = "grey70",
   edge_width = 0.5,
   node_colour = "#4E79A7",
@@ -23,7 +29,8 @@ mark_network(
 
 - plot:
 
-  A plotit object. The data should be a data.frame of **nodes**.
+  A plotit object. The data should be a data.frame of **nodes** whose
+  first column is a unique id.
 
 - edges:
 
@@ -32,21 +39,31 @@ mark_network(
 - encode_edges:
 
   An [`encode()`](https://zorrooz.github.io/plotit/reference/encode.md)
-  object with `source` (required), `target` (required), `weight`
-  (optional).
+  object with `source` (required), `target` (required), `value`
+  (optional magnitude; `weight` is a deprecated alias). Visual channels
+  supported on edges: `colour`/`linewidth`/`linetype`/`alpha`,
+  referenced against original edge columns. When omitted, `edges` may
+  carry literal `source`/`target`/`value` columns.
 
 - layout:
 
-  Layout algorithm: `"auto"`, `"circle"`, `"linear"`, `"bipartite"`, or
-  `"manual"`.
+  Layout algorithm: `"auto"` (force-directed), `"circle"`, or
+  `"manual"`. `"linear"` and `"bipartite"` are deprecated and fall back
+  to `"auto"`.
+
+- seed:
+
+  Random seed for the force layout (reproducibility).
 
 - edge_colour:
 
-  Default colour for edges (default `"grey70"`).
+  Default edge colour (default `"grey70"`) when no edge colour channel
+  is mapped.
 
 - edge_width:
 
-  Default width for edges (default 0.5).
+  Default edge width (default 0.5) when no edge linewidth channel is
+  mapped.
 
 - node_colour:
 
@@ -58,20 +75,17 @@ mark_network(
 
 - ...:
 
-  Other arguments passed to
-  [`ggraph::geom_edge_link`](https://ggraph.data-imaginist.com/reference/geom_edge_link.html)
+  Other arguments passed to the edge segment layer (e.g. `arrow`).
 
 ## Value
 
-Modified plotit object
+Modified plotit object; `@graph` holds the laid-out tables.
 
 ## Details
 
-**Dual data source design**: The main data (passed to
-[`plotit()`](https://zorrooz.github.io/plotit/reference/plotit.md)) is a
-**nodes** data.frame. Edges are passed via the `edges` parameter with
-their own `encode_edges`. Node aesthetics (`color`, `size`, `label`)
-work with standard `scale_*` functions.
+Requires igraph, except `layout = "manual"` which consumes pre-computed
+numeric `x`/`y` columns on the nodes table. Edges render as straight
+segments; curved edges are a known limitation of the sugar form.
 
 ## References
 
@@ -94,9 +108,9 @@ edges <- data.frame(
 nodes |> plotit(encode(color = group, size = value, label = name)) |>
   mark_network(
     edges = edges,
-    encode_edges = encode(source = from, target = to, weight = weight)
+    encode_edges = encode(source = from, target = to, value = weight),
+    seed = 1
   ) |>
   scale_color(range = "viridis") |>
   scale_size(range = c(5, 20))
-#> Warning: Using size for a discrete variable is not advised.
 ```

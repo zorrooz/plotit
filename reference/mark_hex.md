@@ -71,6 +71,8 @@ AntV G2: [Heatmap](https://g2.antv.antgroup.com/en/api/mark/heatmap)
 ## Examples
 
 ``` r
-plotit(ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 1000), ],
-       encode(x = carat, y = price)) |> mark_hex(bins = 20)
+plotit(
+  ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 1000), ],
+  encode(x = carat, y = price)
+) |> mark_hex(bins = 20)
 ```

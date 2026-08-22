@@ -1,7 +1,11 @@
-# Sankey flow diagram layer
+# Sankey flow diagram layer (sugar)
 
-Creates a Sankey diagram showing directed flows between nodes. Requires
-the ggsankey package.
+Creates a Sankey diagram showing directed flows between nodes.
+Equivalent to the pipeline
+`as_graph() |> layout_sankey() |> mark_polygon(data = ~ribbons) |> mark_rect(data = ~nodes)`
+– see §3.3.4a. Accepts an **edges table** with `source`, `target`, and
+optionally `value` columns; node and ribbon geometry come from the
+built-in layered layout (deterministic, dependency-free).
 
 ## Usage
 
@@ -25,23 +29,23 @@ mark_sankey(
 
 - mapping:
 
-  Aesthetics. Structural aesthetics: `source` (required), `target`
-  (required), `value` (optional). Visual aesthetics: `fill` (node
-  colour, default maps to node identity, compatible with
-  `scale_fill_*`).
+  Structural aesthetics: `source` (required), `target` (required),
+  `value` (optional). Visual: `fill` colours ribbons and nodes alike;
+  ribbons default to source identity.
 
 - data:
 
-  Optional data for this layer
+  Optional edges data.frame for this layer
 
 - position:
 
-  Position adjustment.
+  Position adjustment (ignored; the layout owns placement)
 
 - ...:
 
-  Other arguments passed to the underlying sankey layers (`width`,
-  `smooth`, `type`, `flow.*`, `node.*`)
+  Unused; fine-tuning (padding, curvature, node width) lives on
+  [`layout_sankey()`](https://zorrooz.github.io/plotit/reference/layout_sankey.md)
+  in the explicit pipeline form.
 
 - node_colour:
 
@@ -54,15 +58,13 @@ mark_sankey(
 
 ## Value
 
-Modified plotit object
+Modified plotit object; `@graph` holds the laid-out tables.
 
 ## Details
 
-Accepts an **edges table** (data.frame) with `source`, `target`, and
-optionally `value` columns. The mark internally builds the node-link
-structure — no need for
-[`ggsankey::make_long()`](https://rdrr.io/pkg/ggsankey/man/make_long.html)
-preprocessing.
+The laid-out graph (`nodes` / `edges` / `ribbons` tables) is stored on
+`@graph`, so subsequent marks can reference any table directly for
+tuning beyond this sugar's two parameters.
 
 ## References
 
@@ -77,8 +79,11 @@ df <- data.frame(
   target = c("B", "C", "C", "D", "D"),
   value  = c(10, 5, 8, 3, 6)
 )
-df |> plotit(encode(source = source, target = target,
-                    value = value, fill = source)) |>
+df |>
+  plotit(encode(
+    source = source, target = target,
+    value = value, fill = source
+  )) |>
   mark_sankey() |>
   scale_fill(range = "viridis")
 ```

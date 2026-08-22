@@ -24,9 +24,13 @@
 <url><loc>https://zorrooz.github.io/plotit/reference/label_legend.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/label_subtitle.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/label_title.html</loc></url>
+<url><loc>https://zorrooz.github.io/plotit/reference/layout_chord.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/layout_circle.html</loc></url>
+<url><loc>https://zorrooz.github.io/plotit/reference/layout_dendrogram.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/layout_force.html</loc></url>
+<url><loc>https://zorrooz.github.io/plotit/reference/layout_sankey.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/layout_tree.html</loc></url>
+<url><loc>https://zorrooz.github.io/plotit/reference/layout_treemap.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/make_mark.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/make_theme.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/mark_area.html</loc></url>
@@ -74,5 +78,6 @@
 <url><loc>https://zorrooz.github.io/plotit/reference/split_wrap.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/style.html</loc></url>
 <url><loc>https://zorrooz.github.io/plotit/reference/style_default.html</loc></url>
+<url><loc>https://zorrooz.github.io/plotit/reference/transform_corr.html</loc></url>
 </urlset>
 

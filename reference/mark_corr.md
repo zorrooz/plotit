@@ -1,7 +1,10 @@
-# Correlation matrix heatmap
+# Correlation matrix heatmap (sugar)
 
 Computes a correlation matrix from numeric data columns, optionally
 reorders by hierarchical clustering, and renders it as a tile heatmap.
+Sugar over
+[`transform_corr()`](https://zorrooz.github.io/plotit/reference/transform_corr.md)
+plus a tile layer.
 
 ## Usage
 

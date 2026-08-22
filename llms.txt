@@ -216,9 +216,9 @@ Add visual marks to your plot.
 - [`mark_boxplot()`](https://zorrooz.github.io/plotit/reference/mark_boxplot.md)
   : Boxplot layer
 - [`mark_chord()`](https://zorrooz.github.io/plotit/reference/mark_chord.md)
-  : Chord diagram layer
+  : Chord diagram layer (sugar)
 - [`mark_corr()`](https://zorrooz.github.io/plotit/reference/mark_corr.md)
-  : Correlation matrix heatmap
+  : Correlation matrix heatmap (sugar)
 - [`mark_density()`](https://zorrooz.github.io/plotit/reference/mark_density.md)
   : Density layer
 - [`mark_density_2d()`](https://zorrooz.github.io/plotit/reference/mark_density_2d.md)
@@ -238,7 +238,7 @@ Add visual marks to your plot.
 - [`mark_map()`](https://zorrooz.github.io/plotit/reference/mark_map.md)
   : Map layer
 - [`mark_network()`](https://zorrooz.github.io/plotit/reference/mark_network.md)
-  : Network / force-directed graph layer
+  : Network / force-directed graph layer (sugar)
 - [`mark_path()`](https://zorrooz.github.io/plotit/reference/mark_path.md)
   : Path layer
 - [`mark_point()`](https://zorrooz.github.io/plotit/reference/mark_point.md)
@@ -250,7 +250,7 @@ Add visual marks to your plot.
 - [`mark_rule()`](https://zorrooz.github.io/plotit/reference/mark_rule.md)
   : Reference line / segment layer
 - [`mark_sankey()`](https://zorrooz.github.io/plotit/reference/mark_sankey.md)
-  : Sankey flow diagram layer
+  : Sankey flow diagram layer (sugar)
 - [`mark_significance()`](https://zorrooz.github.io/plotit/reference/mark_significance.md)
   : Significance annotation layer
 - [`mark_smooth()`](https://zorrooz.github.io/plotit/reference/mark_smooth.md)
@@ -290,12 +290,22 @@ transforms).
 
 - [`as_graph()`](https://zorrooz.github.io/plotit/reference/as_graph.md)
   : Convert relational data to a plotit graph
+- [`layout_chord()`](https://zorrooz.github.io/plotit/reference/layout_chord.md)
+  : Chord layout
 - [`layout_circle()`](https://zorrooz.github.io/plotit/reference/layout_circle.md)
   : Circular layout
+- [`layout_dendrogram()`](https://zorrooz.github.io/plotit/reference/layout_dendrogram.md)
+  : Dendrogram layout
 - [`layout_force()`](https://zorrooz.github.io/plotit/reference/layout_force.md)
   : Force-directed layout
+- [`layout_sankey()`](https://zorrooz.github.io/plotit/reference/layout_sankey.md)
+  : Sankey layout
 - [`layout_tree()`](https://zorrooz.github.io/plotit/reference/layout_tree.md)
   : Tree layout
+- [`layout_treemap()`](https://zorrooz.github.io/plotit/reference/layout_treemap.md)
+  : Treemap layout
+- [`transform_corr()`](https://zorrooz.github.io/plotit/reference/transform_corr.md)
+  : Correlation preprocessing transform
 
 ## Labels
 
