@@ -2,7 +2,7 @@
 % Please edit documentation in R/mark.R
 \name{mark_sankey}
 \alias{mark_sankey}
-\title{Sankey flow diagram layer}
+\title{Sankey flow diagram layer (sugar)}
 \usage{
 mark_sankey(
   plot,
@@ -17,17 +17,16 @@ mark_sankey(
 \arguments{
 \item{plot}{A plotit object}
 
-\item{mapping}{Aesthetics. Structural aesthetics:
-\code{source} (required), \code{target} (required), \code{value} (optional).
-Visual aesthetics: \code{fill} (node colour, default maps to node
-identity, compatible with \code{scale_fill_*}).}
+\item{mapping}{Structural aesthetics: \code{source} (required),
+\code{target} (required), \code{value} (optional).  Visual: \code{fill}
+colours ribbons and nodes alike; ribbons default to source identity.}
 
-\item{data}{Optional data for this layer}
+\item{data}{Optional edges data.frame for this layer}
 
-\item{position}{Position adjustment.}
+\item{position}{Position adjustment (ignored; the layout owns placement)}
 
-\item{...}{Other arguments passed to the underlying sankey layers
-(\code{width}, \code{smooth}, \code{type}, \code{flow.*}, \code{node.*})}
+\item{...}{Unused; fine-tuning (padding, curvature, node width) lives on
+\code{\link[=layout_sankey]{layout_sankey()}} in the explicit pipeline form.}
 
 \item{node_colour}{Default colour for node rectangles (used when no
 \code{fill} mapping is present, default \code{"grey30"}).}
@@ -35,29 +34,34 @@ identity, compatible with \code{scale_fill_*}).}
 \item{flow_alpha}{Alpha transparency for flow ribbons (default 0.5).}
 }
 \value{
-Modified plotit object
+Modified plotit object; \verb{@graph} holds the laid-out tables.
 }
 \description{
 Creates a Sankey diagram showing directed flows between nodes.
-Requires the \pkg{ggsankey} package.
+Equivalent to the pipeline
+\code{as_graph() |> layout_sankey() |> mark_polygon(data = ~ribbons) |> mark_rect(data = ~nodes)} -- see §3.3.4a.  Accepts an \strong{edges table}
+with \code{source}, \code{target}, and optionally \code{value} columns; node and ribbon
+geometry come from the built-in layered layout (deterministic,
+dependency-free).
 }
 \details{
-Accepts an \strong{edges table} (data.frame) with \code{source}, \code{target}, and
-optionally \code{value} columns. The mark internally builds the node-link
-structure — no need for \code{ggsankey::make_long()} preprocessing.
+The laid-out graph (\code{nodes} / \code{edges} / \code{ribbons} tables) is stored on
+\verb{@graph}, so subsequent marks can reference any table directly for
+tuning beyond this sugar's two parameters.
 }
 \examples{
-\dontshow{if ((requireNamespace("ggsankey", quietly = TRUE))) withAutoprint(\{ # examplesIf}
 df <- data.frame(
   source = c("A", "A", "B", "B", "C"),
   target = c("B", "C", "C", "D", "D"),
   value  = c(10, 5, 8, 3, 6)
 )
-df |> plotit(encode(source = source, target = target,
-                    value = value, fill = source)) |>
+df |>
+  plotit(encode(
+    source = source, target = target,
+    value = value, fill = source
+  )) |>
   mark_sankey() |>
   scale_fill(range = "viridis")
-\dontshow{\}) # examplesIf}
 }
 \references{
 AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/sankey}{Sankey} (graphlib)

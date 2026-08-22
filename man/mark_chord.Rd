@@ -2,7 +2,7 @@
 % Please edit documentation in R/mark.R
 \name{mark_chord}
 \alias{mark_chord}
-\title{Chord diagram layer}
+\title{Chord diagram layer (sugar)}
 \usage{
 mark_chord(
   plot,
@@ -16,49 +16,47 @@ mark_chord(
 \arguments{
 \item{plot}{A plotit object}
 
-\item{mapping}{Aesthetics. Structural aesthetics:
-\code{source} (required), \code{target} (required), \code{value} (optional).
-Visual aesthetics: \code{fill} (sector colour, default maps to source
-identity, compatible with \code{scale_fill_*}).}
+\item{mapping}{Structural aesthetics: \code{source} (required),
+\code{target} (required), \code{value} (optional).  Visual:
+\code{fill} colours sectors and bands alike; bands default to source
+identity, compatible with \code{scale_fill_*}.}
 
-\item{data}{Optional data for this layer}
+\item{data}{Optional edges data.frame for this layer.  Legacy formats
+(\code{from}/\code{to}, \code{Var1}/\code{Var2}/\code{Freq}, adjacency
+matrix) are still auto-detected and coerced.}
 
-\item{gap_width}{Gap between sectors in degrees (default 4).}
+\item{gap_width}{Gap between sectors in degrees (default 4); translated
+to the layout's angular padding.}
 
-\item{link_alpha}{Alpha transparency for links (default 0.5).}
+\item{link_alpha}{Alpha transparency for link bands (default 0.5).}
 
-\item{...}{Other arguments passed to \code{circlize::chordDiagram}}
+\item{...}{Unused; fine-tuning (inner radius, curvature, sector order)
+lives on \code{\link[=layout_chord]{layout_chord()}} in the explicit pipeline form.}
 }
 \value{
-Modified plotit object
-
-\strong{Renderer note}: \code{mark_chord} renders natively with \code{circlize} on the
-current graphics device (not through the ggplot2 build system) and
-replaces the plot's \code{gg} with an empty ggplot.  Layers added before or
-after it therefore do not share a coordinate system -- treat it as a
-standalone renderer.  \code{print()} skips the placeholder and \code{export()}
-replays the render on the target device.
+Modified plotit object; \verb{@graph} holds the laid-out tables.
 }
 \description{
 Creates a chord diagram showing pairwise relationships between groups.
-Requires the \pkg{circlize} package.
+Equivalent to the pipeline \code{as_graph() |> layout_chord() |> mark_polygon(data = ~ribbons) |> mark_polygon(data = ~arcs)} -- see
+§3.3.4a.  Accepts an \strong{edges table} with \code{source}, \code{target}, and
+optionally \code{value} columns; sector arcs and bezier bands come from the
+built-in circular layout (deterministic, dependency-free).
 }
 \details{
-Accepts an \strong{edges table} (data.frame) with \code{source}, \code{target},
-and optionally \code{value} columns. The mark internally builds the
-adjacency matrix.
+The laid-out graph (\code{nodes} / \code{edges} / \code{arcs} / \code{ribbons} tables) is
+stored on \verb{@graph}, so subsequent marks can reference any table directly
+for tuning beyond this sugar's two parameters.
 }
 \examples{
-\dontshow{if ((requireNamespace("circlize", quietly = TRUE))) withAutoprint(\{ # examplesIf}
 df <- data.frame(
   source = c("A", "A", "B", "B", "C"),
   target = c("B", "C", "C", "D", "D"),
   value  = c(5, 3, 4, 2, 6)
 )
 df |> plotit(encode(source = source, target = target,
-                    value = value)) |>
+                    value = value, fill = source)) |>
   mark_chord()
-\dontshow{\}) # examplesIf}
 }
 \references{
 AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/chord}{Chord} (graphlib)

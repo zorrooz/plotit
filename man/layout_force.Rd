@@ -31,7 +31,8 @@ e <- data.frame(source = c("a", "a", "b"), target = c("b", "c", "c"))
 g <- as_graph(e) |> layout_force(seed = 1)
 g$nodes
 
-as_graph(e) |> plotit() |>
+as_graph(e) |>
+  plotit() |>
   layout_force(seed = 1) |>
   mark_point(data = ~nodes) |>
   mark_rule(data = ~edges, colour = "grey70")

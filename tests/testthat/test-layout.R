@@ -149,3 +149,314 @@ test_that("layout_* on non-graph plots aborts with setup hint", {
   expect_error(layout_force(plotit(iris, encode(x = Species))), "as_graph")
   expect_error(layout_circle(plotit(iris, encode(x = Species))), "as_graph")
 })
+
+
+# ---- layout_dendrogram ------------------------------------------------------
+
+test_that("[BDD] layout_dendrogram reproduces hclust leaf order", {
+  hc <- hclust(dist(USArrests[1:8, ]))
+  g <- as_graph(hc) |> layout_dendrogram(direction = "down")
+
+  leaves <- g$nodes[g$nodes$leaf %in% TRUE, ]
+  expect_length(leaves$id, length(hc$labels))
+  # merge sides (.side) must survive: left-to-right leaf order == hc$order
+  expect_identical(leaves$id[order(leaves$x)], hc$labels[hc$order])
+  # root sits on top for "down": y equals raw height
+  expect_equal(g$nodes$y, g$nodes$height)
+})
+
+test_that("layout_dendrogram flips orientation per direction", {
+  hc <- hclust(dist(USArrests[1:6, ]))
+  down <- as_graph(hc) |> layout_dendrogram(direction = "down")
+  up <- as_graph(hc) |> layout_dendrogram(direction = "up")
+
+  expect_equal(down$nodes$y, -up$nodes$y)
+  expect_equal(down$nodes$x, up$nodes$x)
+})
+
+test_that("layout_dendrogram maps edge endpoints to node coordinates", {
+  hc <- hclust(dist(USArrests[1:6, ]))
+  g <- as_graph(hc) |> layout_dendrogram()
+  x_of <- stats::setNames(g$nodes$x, g$nodes$id)
+  expect_equal(g$edges$x, unname(x_of[g$edges$source]))
+  expect_equal(g$edges$yend, unname(stats::setNames(g$nodes$y, g$nodes$id)[g$edges$target]))
+})
+
+test_that("layout_dendrogram rejects graphs without merge columns", {
+  g <- as_graph(data.frame(source = c("a", "b"), target = c("b", "c")))
+  expect_error(layout_dendrogram(g), "hclust|height")
+})
+
+# ---- layout_treemap ---------------------------------------------------------
+
+.hierarchy_df <- function() {
+  data.frame(
+    id = c("root", "A", "B", "a1", "a2"),
+    parent = c(NA, "root", "root", "A", "A"),
+    value = c(NA, NA, 50, 30, 20)
+  )
+}
+
+test_that("[BDD] layout_treemap tiles leaves proportional to value", {
+  tg <- .hierarchy_df() |>
+    as_graph() |>
+    plotit() |>
+    layout_treemap()
+  lv <- tg@graph$leaves
+
+  expect_setequal(names(tg@graph), c("nodes", "edges", "leaves"))
+  expect_setequal(lv$id, c("B", "a1", "a2"))
+  expect_true(all(lv$xmin >= 0 & lv$xmax <= 1 &
+    lv$ymin >= 0 & lv$ymax <= 1))
+
+  area <- function(df) with(df, (xmax - xmin) * (ymax - ymin))
+  a1 <- area(lv[lv$id == "a1", ])
+  a2 <- area(lv[lv$id == "a2", ])
+  expect_equal(a1 / a2, 30 / 20, tolerance = 0.05)
+
+  # parent rectangles contain their children
+  pa <- tg@graph$nodes[tg@graph$nodes$id == "A", ]
+  ca <- lv[lv$id %in% c("a1", "a2"), ]
+  expect_gte(pa$xmin, min(ca$xmin) - 1e-9)
+  expect_lte(pa$xmax, max(ca$xmax) + 1e-9)
+  expect_lte(pa$ymax, max(ca$ymax) + 1e-9)
+})
+
+test_that("[BDD] layout_treemap renders via mark_rect(~leaves)", {
+  p <- .hierarchy_df() |>
+    as_graph() |>
+    plotit() |>
+    layout_treemap() |>
+    mark_rect(data = ~leaves, encode(fill = id))
+  built <- suppressWarnings(ggplot2::ggplot_build(p@gg))
+  expect_s3_class(built$plot$layers[[1]]$geom, "GeomRect")
+  expect_equal(nrow(built$data[[1]]), 3)
+  expect_no_warning(ggplot2::ggplot_build(p@gg))
+})
+
+test_that("layout_treemap validates leaf sizes", {
+  bad_missing <- data.frame(
+    id = c("r", "a"), parent = c(NA, "r"), value = c(NA, NA)
+  )
+  expect_error(
+    layout_treemap(as_graph(bad_missing)), "positive finite"
+  )
+  bad_zero <- data.frame(
+    id = c("r", "a"), parent = c(NA, "r"), value = c(NA, 0)
+  )
+  expect_error(
+    layout_treemap(as_graph(bad_zero)), "a"
+  )
+  no_value <- as_graph(data.frame(source = "a", target = "b"))
+  expect_error(layout_treemap(no_value), "value")
+})
+
+# ---- layout_sankey ----------------------------------------------------------
+
+.sankey_edges <- function() {
+  data.frame(
+    source = c("S", "S", "A", "B"),
+    target = c("A", "B", "T", "T"),
+    value = c(5, 5, 5, 5)
+  )
+}
+
+test_that("[BDD] layout_sankey emits three tables with bounded geometry", {
+  sg <- as_graph(.sankey_edges()) |>
+    plotit() |>
+    layout_sankey()
+  g <- sg@graph
+
+  expect_setequal(names(g), c("nodes", "edges", "ribbons"))
+  nr <- g$nodes
+  expect_true(all(nr$xmin >= 0 & nr$xmax <= 1))
+  expect_true(all(nr$ymin >= -1e-12 & nr$ymax <= 1 + 1e-12))
+  # ribbons carry long-form polygon rows plus inherited edge attributes
+  expect_setequal(
+    intersect(
+      c(".ribbon_id", "x", "y", "source", "target", "value"),
+      names(g$ribbons)
+    ),
+    c(".ribbon_id", "x", "y", "source", "target", "value")
+  )
+  expect_equal(nrow(g$ribbons), nrow(.sankey_edges()) * 2 * 50)
+})
+
+test_that("[BDD] layout_sankey stacks same-layer nodes without overlap", {
+  sg <- as_graph(.sankey_edges()) |>
+    plotit() |>
+    layout_sankey()
+  nr <- sg@graph$nodes
+  mid <- nr[nr$id %in% c("A", "B"), ]
+  mid <- mid[order(mid$ymin), ]
+  # vertical gap between stacked siblings is at least the padding
+  expect_gte(mid$ymin[2] - mid$ymax[1], 0.02 - 1e-9)
+})
+
+test_that("layout_sankey requires an acyclic positive-weight DAG", {
+  cyclic <- data.frame(source = c("a", "b"), target = c("b", "a"))
+  expect_error(
+    layout_sankey(as_graph(cyclic, directed = TRUE)),
+    "cycle|DAG"
+  )
+
+  selfloop <- data.frame(source = "a", target = "a", value = 1)
+  expect_error(layout_sankey(as_graph(selfloop)), "self-loop")
+
+  neg <- data.frame(source = "a", target = "b", value = -1)
+  expect_error(layout_sankey(as_graph(neg)), "non-negative")
+})
+
+test_that("layout_sankey is fully deterministic without a seed", {
+  g1 <- as_graph(.sankey_edges()) |> layout_sankey()
+  g2 <- as_graph(.sankey_edges()) |> layout_sankey()
+  expect_identical(g1$nodes, g2$nodes)
+  expect_identical(g1$ribbons, g2$ribbons)
+})
+
+test_that("[BDD] layout_sankey ribbons span their own endpoints", {
+  g <- as_graph(.sankey_edges()) |> layout_sankey()
+  nr <- g$nodes
+  for (r in seq_len(nrow(g$edges))) {
+    rb <- g$ribbons[g$ribbons$.ribbon_id == r, ]
+    sx <- nr$xmax[match(g$edges$source[r], nr$id)]
+    tx <- nr$xmin[match(g$edges$target[r], nr$id)]
+    # each ribbon must traverse exactly its own source->target x range;
+    # regression guard against shared/recycled sampling profiles
+    expect_equal(min(rb$x), sx)
+    expect_equal(max(rb$x), tx)
+    # vertical extent at the left end equals value * node-scale k, where
+    # sum of source-side outgoing thicknesses equals the source height
+    left_rows <- rb[rb$x == min(rb$x), ]
+    expect_equal(diff(range(left_rows$y)) <=
+      nr$ymax[match(g$edges$source[r], nr$id)] -
+        nr$ymin[match(g$edges$source[r], nr$id)] + 1e-12, TRUE)
+  }
+})
+
+test_that("[BDD] layout_sankey renders through polygon + rect marks", {
+  p <- as_graph(.sankey_edges()) |>
+    plotit() |>
+    layout_sankey() |>
+    mark_polygon(
+      data = ~ribbons,
+      encode(fill = source, group = .ribbon_id),
+      alpha = 0.5
+    ) |>
+    mark_rect(data = ~nodes, encode(fill = id))
+  built <- suppressWarnings(ggplot2::ggplot_build(p@gg))
+  expect_length(built$plot$layers, 2)
+  expect_s3_class(built$plot$layers[[1]]$geom, "GeomPolygon")
+  expect_s3_class(built$plot$layers[[2]]$geom, "GeomRect")
+  expect_no_warning(ggplot2::ggplot_build(p@gg))
+})
+
+# ---- layout_chord ----------------------------------------------------------
+
+.chord_edges <- function() {
+  data.frame(
+    source = c("A", "A", "B", "B", "C"),
+    target = c("B", "C", "C", "D", "D"),
+    value = c(10, 5, 8, 3, 6)
+  )
+}
+
+test_that("[BDD] layout_chord: angular budget and proportional sectors", {
+  g <- as_graph(.chord_edges()) |>
+    plotit() |>
+    layout_chord()
+  gr <- g@graph
+  expect_setequal(names(gr), c("nodes", "edges", "arcs", "ribbons"))
+
+  n <- nrow(gr$nodes)
+  spans <- gr$nodes$arc_hi - gr$nodes$arc_lo
+  # full angular coverage: spans + gaps == 2*pi
+  expect_equal(sum(spans) + 0.03 * n, 2 * pi, tolerance = 1e-9)
+  # span exactly proportional to flow_total
+  expected <- gr$nodes$flow_total * (2 * pi - 0.03 * n) / sum(gr$nodes$flow_total)
+  expect_equal(spans, expected, tolerance = 1e-12)
+})
+
+test_that("[BDD] layout_chord orders sectors by descending total by default", {
+  g_total <- as_graph(.chord_edges()) |>
+    plotit() |>
+    layout_chord()
+  g_app <- as_graph(.chord_edges()) |>
+    plotit() |>
+    layout_chord(order_by = "appearance")
+
+  # clockwise sequence from 12 o'clock (max arc_hi) is descending total
+  circ <- g_total@graph$nodes[order(-g_total@graph$nodes$arc_hi), ]
+  expect_true(!is.unsorted(rev(circ$flow_total)))
+
+  # appearance mode starts with the first input node at 12 o'clock
+  top_app <- g_app@graph$nodes[which.max(g_app@graph$nodes$arc_hi), ]
+  expect_identical(top_app$id, "A")
+})
+
+test_that("[BDD] layout_chord ribbons attach at the ring and bow inward", {
+  g <- as_graph(.chord_edges()) |>
+    plotit() |>
+    layout_chord()
+  gr <- g@graph
+  r_in <- 0.65
+  np <- 60
+
+  # every ribbon point stays inside (or on) the attach radius
+  expect_lte(max(sqrt(gr$ribbons$x^2 + gr$ribbons$y^2)), r_in + 1e-9)
+
+  for (r in seq_len(nrow(gr$edges))) {
+    rb <- gr$ribbons[gr$ribbons$.ribbon_id == r, ]
+    # first chain = source attach arc: every point exactly on the ring
+    src_r <- sqrt(rb$x[1:np]^2 + rb$y[1:np]^2)
+    expect_equal(unique(round(src_r, 10)), r_in)
+    # interior bows strictly below the ring (nonzero curvature)
+    expect_lt(min(sqrt(rb$x^2 + rb$y^2)), r_in - 0.05)
+    # angular containment of the source sub-span within its node arc
+    src_row <- gr$edges$source[r]
+    arc <- gr$nodes[gr$nodes$id == src_row, ]
+    th <- atan2(rb$y[src_idx <- 1:np], rb$x[src_idx])
+    # wrap sampled angles into the arc's own domain (arcs may cross -pi)
+    th_wrapped <- arc$arc_lo + ((th - arc$arc_lo) %% (2 * pi))
+    expect_true(all(th_wrapped <= arc$arc_hi + 1e-9))
+  }
+})
+
+test_that("[BDD] layout_chord aggregates duplicate pairs; self-loops split", {
+  e_dup <- rbind(.chord_edges(), .chord_edges()[1, ]) # duplicate A->B
+  g2 <- as_graph(e_dup) |> layout_chord()
+  expect_equal(nrow(g2$ribbons) / (4 * 60 - 2), 5) # still 5 bands
+  # duplicated A->B rows sum into that pair only: A = (10+10) + 5
+  a_total <- g2$nodes$flow_total[g2$nodes$id == "A"]
+  expect_equal(a_total, 25)
+
+  e_sl <- data.frame(
+    source = c("X", "X"), target = c("Y", "X"),
+    value = c(4, 2)
+  )
+  g3 <- as_graph(e_sl) |> layout_chord()
+  expect_equal(nrow(g3$nodes), 2)
+  expect_equal(nrow(g3$ribbons), 2 * (4 * 60 - 2))
+  # X: out(4) + self-loop counted at both ends (2 + 2)
+  expect_equal(g3$nodes$flow_total[g3$nodes$id == "X"], 8)
+  expect_equal(g3$nodes$flow_total[g3$nodes$id == "Y"], 4)
+})
+
+test_that("layout_chord validates inputs", {
+  neg <- data.frame(source = "a", target = "b", value = -1)
+  expect_error(layout_chord(as_graph(neg)), "non-negative")
+
+  empty <- as_graph(data.frame(
+    source = character(),
+    target = character()
+  ))
+  expect_error(layout_chord(empty), "at least one edge")
+})
+
+test_that("layout_chord is fully deterministic", {
+  g1 <- as_graph(.chord_edges()) |> layout_chord()
+  g2 <- as_graph(.chord_edges()) |> layout_chord()
+  expect_identical(g1$nodes, g2$nodes)
+  expect_identical(g1$arcs, g2$arcs)
+  expect_identical(g1$ribbons, g2$ribbons)
+})

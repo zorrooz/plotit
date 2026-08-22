@@ -58,6 +58,7 @@ reference:
   contents:
   - as_graph
   - starts_with("layout_")
+  - transform_corr
 - title: Labels
   desc: Set titles, axis labels, and legend text.
   contents:

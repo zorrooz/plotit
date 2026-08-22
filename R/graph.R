@@ -18,6 +18,28 @@ NULL
   "xmin", "xmax", "ymin", "ymax"
 )
 
+# Per-mark binding scopes: geometry columns each mark family understands.
+# Restricting the scope prevents e.g. rect corners leaking onto text layers
+# (which would trigger ggplot2 "unknown aesthetics" warnings).  Marks not
+# listed fall back to the full whitelist.
+._MARK_BIND_AES <- list(
+  mark_point     = c("x", "y"),
+  mark_line      = c("x", "y"),
+  mark_path      = c("x", "y"),
+  mark_polygon   = c("x", "y"),
+  mark_text      = c("x", "y"),
+  mark_area      = c("x", "y"),
+  mark_density   = c("x", "y"),
+  mark_histogram = c("x", "y"),
+  mark_boxplot   = c("x", "y"),
+  mark_violin    = c("x", "y"),
+  mark_smooth    = c("x", "y"),
+  mark_hex       = c("x", "y"),
+  mark_bar       = c("x", "y"),
+  mark_rule      = c("x", "y", "xend", "yend"),
+  mark_rect      = c("xmin", "xmax", "ymin", "ymax", "x", "y")
+)
+
 # Resolve an argument that may be a bare symbol or a single string into a
 # column name.  NULL passes through (optional arguments).
 ._arg_name <- function(q, arg) {
@@ -132,7 +154,9 @@ NULL
 }
 
 # hclust / dendrogram -> binary merge tree.  Node heights are stored on the
-# node table so a dendrogram layout engine can consume them later.
+# node table so a dendrogram layout engine can consume them later.  The
+# merge side (1 = left, 2 = right) is kept on the edge table (.side) so
+# leaf order -- and thus label ordering -- survives the round trip.
 ._graph_from_hclust <- function(hc, directed = TRUE) {
   n_leaves <- length(hc$labels)
   n_nodes <- 2 * n_leaves - 1
@@ -148,13 +172,50 @@ NULL
 
   src <- character(0)
   tgt <- character(0)
+  side <- integer(0)
   for (s in seq_len(n_leaves - 1)) {
-    for (child in hc$merge[s, ]) {
+    for (j in seq_along(hc$merge[s, ])) {
+      child <- hc$merge[s, j]
       src <- c(src, internal_ids[s])
       tgt <- c(tgt, if (child < 0) as.character(hc$labels[-child]) else ids[n_leaves + child])
+      side <- c(side, j)
     }
   }
-  edges <- data.frame(source = src, target = tgt, value = rep(1, length(src)))
+  edges <- data.frame(
+    source = src,
+    target = tgt,
+    value = rep(1, length(src)),
+    .side = side,
+    stringsAsFactors = FALSE
+  )
+  ._new_graph(list(nodes = nodes, edges = edges), directed = TRUE)
+}
+
+# Flat hierarchy table (id + parent columns, optional value on leaves).
+# Edges are synthesized child <- parent; all node attributes survive.
+._graph_from_hierarchy <- function(h, directed = TRUE) {
+  ids <- as.character(h$id)
+  if (anyNA(ids) || anyDuplicated(ids) > 0) {
+    cli::cli_abort("Hierarchy {.col id} values must be non-missing and unique.")
+  }
+  root_mask <- is.na(h$parent)
+  par <- as.character(h$parent)
+  unknown <- setdiff(unique(par[!root_mask]), ids)
+  if (length(unknown) > 0) {
+    cli::cli_abort(
+      "Hierarchy {.col parent} references unknown ids: {.val {unknown}}."
+    )
+  }
+  if (any(ids == par, na.rm = TRUE)) {
+    cli::cli_abort("Nodes cannot be their own {.col parent}.")
+  }
+  edges <- data.frame(
+    source = par[!root_mask],
+    target = ids[!root_mask],
+    value = rep(1, sum(!root_mask)),
+    stringsAsFactors = FALSE
+  )
+  nodes <- h[, c("id", setdiff(names(h), "id")), drop = FALSE]
   ._new_graph(list(nodes = nodes, edges = edges), directed = TRUE)
 }
 
@@ -238,6 +299,11 @@ as_graph <- function(edges, nodes = NULL,
     return(._graph_from_matrix(edges, directed))
   }
   if (is.data.frame(edges)) {
+    # Flat hierarchy table (id + parent) wins over the edgelist reading;
+    # documented precedence for tables that carry both conventions.
+    if (all(c("id", "parent") %in% names(edges))) {
+      return(._graph_from_hierarchy(edges, directed = TRUE))
+    }
     return(._graph_from_edgelist(
       edges, nodes,
       source_col %||% "source",
@@ -307,16 +373,17 @@ as_graph <- function(edges, nodes = NULL,
 
 # Bind layout-produced geometry columns (x/y/xend/yend/xmin...) onto the
 # layer mapping when the user did not map them.  Explicit mappings always
-# win.  Only called for formula-resolved layers.
+# win.  Only called for formula-resolved layers; `scope` restricts the
+# candidate aesthetics to what the target mark understands.
 #
 #' Auto-bind geometry columns for formula-resolved layers.
 #' @noRd
 #' @keywords internal
-._auto_bind_geometry <- function(mapping, data) {
+._auto_bind_geometry <- function(mapping, data, scope = NULL) {
   if (is.null(mapping)) {
     mapping <- ggplot2::aes()
   }
-  cols <- intersect(.GRAPH_GEOM_AES, names(data))
+  cols <- intersect(scope %||% .GRAPH_GEOM_AES, names(data))
   todo <- setdiff(cols, names(mapping))
   for (col in todo) {
     mapping[[col]] <- rlang::sym(col)

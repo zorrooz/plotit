@@ -118,3 +118,40 @@ test_that("[BDD] plotit accepts graph data and rejects global mappings", {
   expect_error(plotit(g, encode(x = id)), "mark level")
   expect_warning(plotit(g, default_color = "red"), "ignored")
 })
+
+test_that("[BDD] as_graph: hierarchy tables (id/parent) synthesize edges", {
+  h <- data.frame(
+    id = c("root", "A", "B", "a1"),
+    parent = c(NA, "root", "root", "A"),
+    value = c(NA, NA, 50, 30)
+  )
+  g <- as_graph(h)
+
+  expect_true(attr(g, "directed"))
+  expect_equal(nrow(g$edges), 3)
+  # edges point parent -> child
+  expect_true(all(g$edges$source %in% g$nodes$id))
+  expect_setequal(g$edges$target, c("A", "B", "a1"))
+  # node attributes survive (value stays on the node table)
+  expect_true("value" %in% names(g$nodes))
+})
+
+test_that("as_graph: hierarchy guards unknown parents, self-parent, dup ids", {
+  bad_parent <- data.frame(id = c("a"), parent = c("ghost"))
+  expect_error(as_graph(bad_parent), "unknown ids")
+
+  selfp <- data.frame(id = c("a"), parent = c("a"))
+  expect_error(as_graph(selfp), "own")
+
+  dup <- data.frame(id = c("a", "a"), parent = c(NA, NA))
+  expect_error(as_graph(dup), "unique")
+})
+
+test_that("[BDD] as_graph: hclust edges carry merge sides for leaf order", {
+  hc <- hclust(dist(USArrests[1:8, ]))
+  g <- as_graph(hc)
+  expect_true(".side" %in% names(g$edges))
+  # every internal node has exactly one left (.side==1) and one right child
+  tab <- table(g$edges$source, g$edges$.side)
+  expect_true(all(tab[, "1"] == 1 & tab[, "2"] == 1))
+})

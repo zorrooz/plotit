@@ -52,8 +52,10 @@ Equivalent expansion:
 }
 }
 \examples{
-df <- data.frame(cat = LETTERS[1:5], before = c(3, 5, 2, 8, 4),
-                 after = c(7, 6, 5, 10, 6))
+df <- data.frame(
+  cat = LETTERS[1:5], before = c(3, 5, 2, 8, 4),
+  after = c(7, 6, 5, 10, 6)
+)
 plotit(df, encode(x = cat, y = before, yend = after)) |>
   mark_dumbbell()
 }

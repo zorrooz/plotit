@@ -61,7 +61,8 @@ Equivalent expansion:
 df <- data.frame(group = c("A", "B", "C"), value = c(5, 8, 4))
 comp <- data.frame(
   group1 = c("A", "A"), group2 = c("B", "C"),
-  label = c("**", "ns"))
+  label = c("**", "ns")
+)
 plotit(df, encode(x = group, y = value)) |>
   mark_bar() |>
   mark_significance(comp, y_position = c(9, 6))

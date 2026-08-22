@@ -2,13 +2,14 @@
 % Please edit documentation in R/mark.R
 \name{mark_network}
 \alias{mark_network}
-\title{Network / force-directed graph layer}
+\title{Network / force-directed graph layer (sugar)}
 \usage{
 mark_network(
   plot,
   edges = NULL,
   encode_edges = NULL,
   layout = c("auto", "circle", "linear", "bipartite", "manual"),
+  seed = NULL,
   edge_colour = "grey70",
   edge_width = 0.5,
   node_colour = "#4E79A7",
@@ -17,41 +18,56 @@ mark_network(
 )
 }
 \arguments{
-\item{plot}{A plotit object. The data should be a data.frame of \strong{nodes}.}
+\item{plot}{A plotit object. The data should be a data.frame of \strong{nodes}
+whose first column is a unique id.}
 
 \item{edges}{A data.frame of \strong{edges}.}
 
-\item{encode_edges}{An \code{encode()} object with \code{source} (required),
-\code{target} (required), \code{weight} (optional).}
+\item{encode_edges}{An \code{encode()} object with \code{source}
+(required), \code{target} (required), \code{value} (optional magnitude;
+\code{weight} is a deprecated alias).  Visual channels supported on
+edges: \code{colour}/\code{linewidth}/\code{linetype}/\code{alpha},
+referenced against original edge columns.  When omitted, \code{edges}
+may carry literal \code{source}/\code{target}/\code{value} columns.}
 
-\item{layout}{Layout algorithm: \code{"auto"}, \code{"circle"},
-\code{"linear"}, \code{"bipartite"}, or \code{"manual"}.}
+\item{layout}{Layout algorithm: \code{"auto"} (force-directed),
+\code{"circle"}, or \code{"manual"}.  \code{"linear"} and
+\code{"bipartite"} are deprecated and fall back to \code{"auto"}.}
 
-\item{edge_colour}{Default colour for edges (default \code{"grey70"}).}
+\item{seed}{Random seed for the force layout (reproducibility).}
 
-\item{edge_width}{Default width for edges (default 0.5).}
+\item{edge_colour}{Default edge colour (default \code{"grey70"}) when no
+edge colour channel is mapped.}
+
+\item{edge_width}{Default edge width (default 0.5) when no edge linewidth
+channel is mapped.}
 
 \item{node_colour}{Default fill colour for nodes (default \code{"#4E79A7"}).}
 
 \item{node_size}{Default size for nodes (default 5).}
 
-\item{...}{Other arguments passed to \code{ggraph::geom_edge_link}}
+\item{...}{Other arguments passed to the edge segment layer (e.g.
+\code{arrow}).}
 }
 \value{
-Modified plotit object
+Modified plotit object; \verb{@graph} holds the laid-out tables.
 }
 \description{
-Creates a network visualization with nodes and edges.
-Requires the \pkg{ggraph} and \pkg{igraph} packages.
+Creates a network visualization from a \strong{nodes} table (main data) plus an
+\strong{edges} table.  Equivalent to the pipeline
+\code{as_graph() |> layout_force()/layout_circle() |> mark_point(data = ~nodes) |> mark_rule(data = ~edges)} -- the composite
+form exists so common network plots stay one-call simple.  The laid-out
+graph is stored on \verb{@graph}, so subsequent marks can reference
+\code{~nodes} / \code{~edges} directly, and layers/scales/theme added \emph{before} this
+call are preserved (additive composition).
 }
 \details{
-\strong{Dual data source design}: The main data (passed to \code{plotit()}) is a
-\strong{nodes} data.frame.  Edges are passed via the \code{edges} parameter with
-their own \code{encode_edges}.  Node aesthetics (\code{color}, \code{size},
-\code{label}) work with standard \code{scale_*} functions.
+Requires \pkg{igraph}, except \code{layout = "manual"} which consumes
+pre-computed numeric \code{x}/\code{y} columns on the nodes table.  Edges render as
+straight segments; curved edges are a known limitation of the sugar form.
 }
 \examples{
-\dontshow{if ((requireNamespace("ggraph", quietly = TRUE) && requireNamespace("igraph", quietly = TRUE))) withAutoprint(\{ # examplesIf}
+\dontshow{if ((requireNamespace("igraph", quietly = TRUE))) withAutoprint(\{ # examplesIf}
 nodes <- data.frame(
   name  = c("A", "B", "C", "D"),
   group = c("X", "Y", "X", "Y"),
@@ -65,7 +81,8 @@ edges <- data.frame(
 nodes |> plotit(encode(color = group, size = value, label = name)) |>
   mark_network(
     edges = edges,
-    encode_edges = encode(source = from, target = to, weight = weight)
+    encode_edges = encode(source = from, target = to, value = weight),
+    seed = 1
   ) |>
   scale_color(range = "viridis") |>
   scale_size(range = c(5, 20))
