@@ -95,8 +95,8 @@ scales, <code>label_*()</code> sets labels.</p>
 <div class="section level2">
 <h2 id="pipeline-grammar">Pipeline Grammar<a class="anchor" aria-label="anchor" href="#pipeline-grammar"></a>
 </h2>
-<p>Every plotit pipeline follows the same six-step grammar:</p>
-<pre><code>data |&gt; plotit(encode(...)) |&gt; mark_*() |&gt; scale_*() |&gt; label_*() |&gt; style() |&gt; export()</code></pre>
+<p>Every plotit pipeline follows the same grammar:</p>
+<pre><code>data |&gt; plotit(encode(...)) |&gt; mark_*() |&gt; scale_*() |&gt; layout_*() |&gt; split_*() |&gt; project_*() |&gt; label_*() |&gt; style() |&gt; export()</code></pre>
 <table class="table">
 <thead><tr class="header">
 <th align="left">Step</th>
@@ -120,17 +120,32 @@ scales, <code>label_*()</code> sets labels.</p>
 <td align="left">Control data-to-visual mapping</td>
 </tr>
 <tr class="even">
-<td align="left">4. Label</td>
+<td align="left">4. Layout</td>
+<td align="left"><code>layout_*()</code></td>
+<td align="left">Compute relational layouts (optional)</td>
+</tr>
+<tr class="odd">
+<td align="left">5. Facet</td>
+<td align="left"><code>split_*()</code></td>
+<td align="left">Split into small multiples</td>
+</tr>
+<tr class="even">
+<td align="left">6. Coordinate</td>
+<td align="left"><code>project_*()</code></td>
+<td align="left">Choose a coordinate system</td>
+</tr>
+<tr class="odd">
+<td align="left">7. Label</td>
 <td align="left"><code>label_*()</code></td>
 <td align="left">Set titles, axis labels, legends</td>
 </tr>
-<tr class="odd">
-<td align="left">5. Style</td>
+<tr class="even">
+<td align="left">8. Style</td>
 <td align="left"><code><a href="../reference/style.html">style()</a></code></td>
 <td align="left">Apply a ggplot2 theme</td>
 </tr>
-<tr class="even">
-<td align="left">6. Export</td>
+<tr class="odd">
+<td align="left">9. Export</td>
 <td align="left"><code><a href="../reference/export.html">export()</a></code></td>
 <td align="left">Render to file</td>
 </tr>
@@ -144,10 +159,11 @@ scales, <code>label_*()</code> sets labels.</p>
 <h3 id="mark_-geometric-layers">
 <code>mark_*()</code> — Geometric Layers<a class="anchor" aria-label="anchor" href="#mark_-geometric-layers"></a>
 </h3>
-<p>Six mark functions add visual elements to your plot. All share a
-unified signature: <code>mapping</code>, <code>data</code>,
-<code>position</code>, <code>rasterize</code>, and <code>...</code>
-forwarded to the underlying geom.</p>
+<p>Twenty-seven mark functions add visual elements to your plot,
+spanning basic geometry, statistical summaries, and composite/relational
+sugar. Standard marks share a unified signature: <code>mapping</code>,
+<code>data</code>, <code>position</code>, <code>rasterize</code>, and
+<code>...</code> forwarded to the underlying geom.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Scatter plot</span></span>
 <span><span class="va">mtcars</span> <span class="op">|&gt;</span></span>
@@ -280,14 +296,40 @@ custom vectors:</p>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Sepal.Width</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span>, colour <span class="op">=</span> <span class="va">Species</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/scale_color.html">scale_color</a></span><span class="op">(</span>range <span class="op">=</span> <span class="st">"viridis"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/style.html">style</a></span><span class="op">(</span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">14</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/style.html">style</a></span><span class="op">(</span>base_theme <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">14</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="plotit_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="672"></p>
 </div>
 </div>
 <div class="section level2">
+<h2 id="relational-data">Relational Data<a class="anchor" aria-label="anchor" href="#relational-data"></a>
+</h2>
+<p>Edge tables can be plotted directly through the graph data family.
+Layouts are deterministic data transforms — coordinates are baked into
+the tables, and any sub-table (<code>~nodes</code>, <code>~edges</code>,
+<code>~ribbons</code>) can be rendered by a mark:</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">flows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  source <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"A"</span>, <span class="st">"B"</span>, <span class="st">"B"</span>, <span class="st">"C"</span><span class="op">)</span>,</span>
+<span>  target <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"B"</span>, <span class="st">"C"</span>, <span class="st">"C"</span>, <span class="st">"D"</span>, <span class="st">"D"</span><span class="op">)</span>,</span>
+<span>  value  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">5</span>, <span class="fl">8</span>, <span class="fl">3</span>, <span class="fl">6</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">flows</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span></span>
+<span>    source <span class="op">=</span> <span class="va">source</span>, target <span class="op">=</span> <span class="va">target</span>,</span>
+<span>    value <span class="op">=</span> <span class="va">value</span>, fill <span class="op">=</span> <span class="va">source</span></span>
+<span>  <span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/mark_sankey.html">mark_sankey</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p><img src="plotit_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="672"></p>
+<p>For full control, build the graph explicitly with
+<code><a href="../reference/as_graph.html">as_graph()</a></code>, apply a <code>layout_*()</code> transform, then
+reference its sub-tables from any mark. See <code><a href="../reference/as_graph.html">?as_graph</a></code> and
+<code><a href="../reference/layout_force.html">?layout_force</a></code>.</p>
+</div>
+<div class="section level2">
 <h2 id="export">Export<a class="anchor" aria-label="anchor" href="#export"></a>
 </h2>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="va">mtcars</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">wt</span>, y <span class="op">=</span> <span class="va">mpg</span>, colour <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">|&gt;</span></span>

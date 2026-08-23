@@ -64,7 +64,7 @@ built-in circular layout (deterministic, dependency-free).</p>
 <span>  mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  gap_width <span class="op">=</span> <span class="fl">4</span>,</span>
-<span>  link_alpha <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  link_alpha <span class="op">=</span> <span class="va">._MARK_STYLE</span><span class="op">$</span><span class="va">alpha_link</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -96,7 +96,8 @@ to the layout's angular padding.</p></dd>
 
 
 <dt id="arg-link-alpha">link_alpha<a class="anchor" aria-label="anchor" href="#arg-link-alpha"></a></dt>
-<dd><p>Alpha transparency for link bands (default 0.5).</p></dd>
+<dd><p>Alpha transparency for link bands
+(default <code>._MARK_STYLE$alpha_link</code> = 0.5).</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -126,8 +127,11 @@ for tuning beyond this sugar's two parameters.</p>
 <span class="r-in"><span>  target <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"B"</span>, <span class="st">"C"</span>, <span class="st">"C"</span>, <span class="st">"D"</span>, <span class="st">"D"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  value  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">2</span>, <span class="fl">6</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">df</span> <span class="op">|&gt;</span> <span class="fu"><a href="plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="encode.html">encode</a></span><span class="op">(</span>source <span class="op">=</span> <span class="va">source</span>, target <span class="op">=</span> <span class="va">target</span>,</span></span>
-<span class="r-in"><span>                    value <span class="op">=</span> <span class="va">value</span>, fill <span class="op">=</span> <span class="va">source</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span><span class="va">df</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="encode.html">encode</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    source <span class="op">=</span> <span class="va">source</span>, target <span class="op">=</span> <span class="va">target</span>,</span></span>
+<span class="r-in"><span>    value <span class="op">=</span> <span class="va">value</span>, fill <span class="op">=</span> <span class="va">source</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu">mark_chord</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="mark_chord-1.png" alt="" width="700" height="433"></span>
 </code></pre></div>

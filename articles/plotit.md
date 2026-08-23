@@ -26,26 +26,30 @@ iris |>
 
 ## Pipeline Grammar
 
-Every plotit pipeline follows the same six-step grammar:
+Every plotit pipeline follows the same grammar:
 
-    data |> plotit(encode(...)) |> mark_*() |> scale_*() |> label_*() |> style() |> export()
+    data |> plotit(encode(...)) |> mark_*() |> scale_*() |> layout_*() |> split_*() |> project_*() |> label_*() |> style() |> export()
 
 | Step | Function | Job |
 |:---|:---|:---|
 | 1\. Init | [`plotit()`](https://zorrooz.github.io/plotit/reference/plotit.md) | Create plot with data & aesthetics |
 | 2\. Mark | `mark_*()` | Add geometric layers |
 | 3\. Scale | `scale_*()` | Control data-to-visual mapping |
-| 4\. Label | `label_*()` | Set titles, axis labels, legends |
-| 5\. Style | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | Apply a ggplot2 theme |
-| 6\. Export | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | Render to file |
+| 4\. Layout | `layout_*()` | Compute relational layouts (optional) |
+| 5\. Facet | `split_*()` | Split into small multiples |
+| 6\. Coordinate | `project_*()` | Choose a coordinate system |
+| 7\. Label | `label_*()` | Set titles, axis labels, legends |
+| 8\. Style | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | Apply a ggplot2 theme |
+| 9\. Export | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | Render to file |
 
 ## Function Families
 
 ### `mark_*()` — Geometric Layers
 
-Six mark functions add visual elements to your plot. All share a unified
-signature: `mapping`, `data`, `position`, `rasterize`, and `...`
-forwarded to the underlying geom.
+Twenty-seven mark functions add visual elements to your plot, spanning
+basic geometry, statistical summaries, and composite/relational sugar.
+Standard marks share a unified signature: `mapping`, `data`, `position`,
+`rasterize`, and `...` forwarded to the underlying geom.
 
 ``` r
 
@@ -187,10 +191,43 @@ iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
   mark_point() |>
   scale_color(range = "viridis") |>
-  style(ggplot2::theme_minimal(base_size = 14))
+  style(base_theme = ggplot2::theme_minimal(base_size = 14))
 ```
 
 ![](plotit_files/figure-html/unnamed-chunk-13-1.png)
+
+## Relational Data
+
+Edge tables can be plotted directly through the graph data family.
+Layouts are deterministic data transforms — coordinates are baked into
+the tables, and any sub-table (`~nodes`, `~edges`, `~ribbons`) can be
+rendered by a mark:
+
+``` r
+
+flows <- data.frame(
+  source = c("A", "A", "B", "B", "C"),
+  target = c("B", "C", "C", "D", "D"),
+  value  = c(10, 5, 8, 3, 6)
+)
+
+flows |>
+  plotit(encode(
+    source = source, target = target,
+    value = value, fill = source
+  )) |>
+  mark_sankey()
+```
+
+![](plotit_files/figure-html/unnamed-chunk-14-1.png)
+
+For full control, build the graph explicitly with
+[`as_graph()`](https://zorrooz.github.io/plotit/reference/as_graph.md),
+apply a `layout_*()` transform, then reference its sub-tables from any
+mark. See
+[`?as_graph`](https://zorrooz.github.io/plotit/reference/as_graph.md)
+and
+[`?layout_force`](https://zorrooz.github.io/plotit/reference/layout_force.md).
 
 ## Export
 

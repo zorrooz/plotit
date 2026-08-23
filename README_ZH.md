@@ -31,7 +31,7 @@ iris |>
   mark_point(size = 2, alpha = 0.7) |>
   scale_color(range = "viridis") |>
   label_title("Iris Sepal Dimensions") |>
-  style(ggplot2::theme_minimal(base_size = 14)) |>
+  style(base_theme = ggplot2::theme_minimal(base_size = 14)) |>
   export("iris_plot.pdf")
 ```
 
@@ -72,24 +72,36 @@ p2 <- plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot()
 compose_grid(p1, p2, tag_levels = "A") |>
   label_title("Iris Dashboard") |>
   export("dashboard.png")
+
+# 由边表绘制桑基流向图
+flows <- data.frame(
+  source = c("A", "A", "B", "B", "C"),
+  target = c("B", "C", "C", "D", "D"),
+  value  = c(10, 5, 8, 3, 6)
+)
+flows |>
+  plotit(encode(source = source, target = target,
+                value = value, fill = source)) |>
+  mark_sankey()
 ```
 
 ## 管道模式
 
 每个 plotit 图表都遵循一致的管道：
 
-    data |> plotit(encode(...)) |> mark_*() |> scale_*() |> split_*() |> project_*() |> label_*() |> style() |> export()
+    data |> plotit(encode(...)) |> mark_*() |> scale_*() |> layout_*() |> split_*() |> project_*() |> label_*() |> style() |> export()
 
 | 步骤 | 动词 | 职责 |
 |:---|:---|:---|
 | 1\. 初始化 | [`plotit()`](https://zorrooz.github.io/plotit/reference/plotit.md) + [`encode()`](https://zorrooz.github.io/plotit/reference/encode.md) | 绑定数据与美学映射 |
 | 2\. 图层 | `mark_*()` | 添加几何图层（点、线、柱等） |
 | 3\. 标度 | `scale_*()` | 控制数据到视觉属性的映射 |
-| 4\. 分面 | `split_*()` | 拆分为小倍数图 |
-| 5\. 坐标 | `project_*()` | 选择坐标系（笛卡尔、极坐标、地图） |
-| 6\. 标签 | `label_*()` | 设置标题、轴标签、图例标题 |
-| 7\. 主题 | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | 应用主题样式 |
-| 8\. 导出 | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | 渲染为文件 |
+| 4\. 布局 | `layout_*()` | 计算关系图布局（可选；桑基、网络、弦图、树图） |
+| 5\. 分面 | `split_*()` | 拆分为小倍数图 |
+| 6\. 坐标 | `project_*()` | 选择坐标系（笛卡尔、极坐标、地图） |
+| 7\. 标签 | `label_*()` | 设置标题、轴标签、图例标题 |
+| 8\. 主题 | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | 应用主题样式 |
+| 9\. 导出 | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | 渲染为文件 |
 
 多图组合遵循最外层管道：
 
@@ -99,18 +111,75 @@ compose_grid(p1, p2, tag_levels = "A") |>
 
 ### `mark_*` — 几何图层
 
-| 函数 | ggplot2 | 说明 |
+共 27 种 mark，分三层体系：基础几何、统计、复合/关系。 复合与关系 mark
+均为下层原语的文档化语法糖 （如
+[`mark_significance()`](https://zorrooz.github.io/plotit/reference/mark_significance.md)
+≈
+[`mark_rule()`](https://zorrooz.github.io/plotit/reference/mark_rule.md) +
+[`mark_text()`](https://zorrooz.github.io/plotit/reference/mark_text.md)）。
+
+| 函数 | 底层引擎 | 说明 |
 |:---|:---|:---|
-| [`mark_point()`](https://zorrooz.github.io/plotit/reference/mark_point.md) | `geom_point()` | 散点图 |
+| [`mark_point()`](https://zorrooz.github.io/plotit/reference/mark_point.md) | `geom_point()` | 散点/气泡图 |
 | [`mark_line()`](https://zorrooz.github.io/plotit/reference/mark_line.md) | `geom_line()` | 折线与趋势线 |
-| [`mark_area()`](https://zorrooz.github.io/plotit/reference/mark_area.md) | `geom_area()` | 面积图/河流图 |
+| [`mark_area()`](https://zorrooz.github.io/plotit/reference/mark_area.md) | `geom_area()` / `geom_ribbon()` | 面积图 |
 | [`mark_bar()`](https://zorrooz.github.io/plotit/reference/mark_bar.md) | `geom_bar()` / `geom_col()` | 柱状图 |
-| [`mark_text()`](https://zorrooz.github.io/plotit/reference/mark_text.md) | `geom_text()` / `ggrepel` | 文本标签与数据标注 |
-| [`mark_boxplot()`](https://zorrooz.github.io/plotit/reference/mark_boxplot.md) | `geom_boxplot()` | 箱线图 |
+| [`mark_rect()`](https://zorrooz.github.io/plotit/reference/mark_rect.md) | `geom_tile()` / `geom_rect()` | 热力图单元格/矩形 |
+| [`mark_polygon()`](https://zorrooz.github.io/plotit/reference/mark_polygon.md) | `geom_polygon()` | 多边形/自定义形状 |
+| [`mark_text()`](https://zorrooz.github.io/plotit/reference/mark_text.md) | `geom_text()` / ggrepel | 文本标签与数据标注 |
+| [`mark_rule()`](https://zorrooz.github.io/plotit/reference/mark_rule.md) | `geom_hline/vline/abline/segment` | 参考线/参考区域 |
+| [`mark_path()`](https://zorrooz.github.io/plotit/reference/mark_path.md) | `geom_path()` | 路径/轨迹 |
 | [`mark_histogram()`](https://zorrooz.github.io/plotit/reference/mark_histogram.md) | `geom_histogram()` | 直方图 |
-| [`mark_density()`](https://zorrooz.github.io/plotit/reference/mark_density.md) | `geom_density()` | 1D 核密度估计 |
+| [`mark_density()`](https://zorrooz.github.io/plotit/reference/mark_density.md) | `geom_density()` | 1D 核密度曲线 |
+| [`mark_boxplot()`](https://zorrooz.github.io/plotit/reference/mark_boxplot.md) | `geom_boxplot()` | 箱线图 |
 | [`mark_violin()`](https://zorrooz.github.io/plotit/reference/mark_violin.md) | `geom_violin()` | 小提琴图 |
-| [`mark_map()`](https://zorrooz.github.io/plotit/reference/mark_map.md) | `geom_sf()` | 地图/地理空间 |
+| [`mark_map()`](https://zorrooz.github.io/plotit/reference/mark_map.md) | sf + `geom_sf()` | 地图/地理空间 |
+| [`mark_smooth()`](https://zorrooz.github.io/plotit/reference/mark_smooth.md) | `geom_smooth()` | 回归拟合 + 置信带 |
+| [`mark_hex()`](https://zorrooz.github.io/plotit/reference/mark_hex.md) | `geom_hex()` | 2D 六边形分箱热力图 |
+| [`mark_density_2d()`](https://zorrooz.github.io/plotit/reference/mark_density_2d.md) | `geom_density_2d()` | 2D 密度等高线 |
+| [`mark_corr()`](https://zorrooz.github.io/plotit/reference/mark_corr.md) | [`transform_corr()`](https://zorrooz.github.io/plotit/reference/transform_corr.md) + `geom_tile()` | 相关性矩阵热力图 |
+| [`mark_errorbar()`](https://zorrooz.github.io/plotit/reference/mark_errorbar.md) | `geom_errorbar()` / `-h` | 误差棒 |
+| [`mark_significance()`](https://zorrooz.github.io/plotit/reference/mark_significance.md) | 语法糖：rule + text | 显著性标记（括号+星号） |
+| [`mark_lollipop()`](https://zorrooz.github.io/plotit/reference/mark_lollipop.md) | 语法糖：point + 线段 | 棒棒糖图 |
+| [`mark_dumbbell()`](https://zorrooz.github.io/plotit/reference/mark_dumbbell.md) | 语法糖：双 point + 线段 | 哑铃对比图 |
+| [`mark_beeswarm()`](https://zorrooz.github.io/plotit/reference/mark_beeswarm.md) | ggbeeswarm | 蜂群散点（碰撞检测） |
+| [`mark_sankey()`](https://zorrooz.github.io/plotit/reference/mark_sankey.md) | [`layout_sankey()`](https://zorrooz.github.io/plotit/reference/layout_sankey.md) 语法糖 | 桑基流向图 |
+| [`mark_treemap()`](https://zorrooz.github.io/plotit/reference/mark_treemap.md) | treemapify | 矩形树图 |
+| [`mark_network()`](https://zorrooz.github.io/plotit/reference/mark_network.md) | `layout_force()/circle()` 语法糖 | 力导向网络图 |
+| [`mark_chord()`](https://zorrooz.github.io/plotit/reference/mark_chord.md) | [`layout_chord()`](https://zorrooz.github.io/plotit/reference/layout_chord.md) 语法糖 | 弦图 |
+
+### 关系数据 — `as_graph()` + `layout_*()`
+
+关系数据遵循 Vega 风格的数据变换模型：先将数据收编为 graph 对象，
+再把布局坐标烘焙进表，最后通过 `data = ~table` 引用任意子表渲染。
+
+| 函数 | 说明 |
+|:---|:---|
+| [`as_graph()`](https://zorrooz.github.io/plotit/reference/as_graph.md) | 将边表、矩阵、hclust 或层次表收编为 graph 对象 |
+| [`layout_force()`](https://zorrooz.github.io/plotit/reference/layout_force.md) | 力导向节点布局（强制 seed，可复现） |
+| [`layout_circle()`](https://zorrooz.github.io/plotit/reference/layout_circle.md) | 环形节点布局 |
+| [`layout_tree()`](https://zorrooz.github.io/plotit/reference/layout_tree.md) | 树布局 |
+| [`layout_dendrogram()`](https://zorrooz.github.io/plotit/reference/layout_dendrogram.md) | 基于 hclust 的树状图布局 |
+| [`layout_chord()`](https://zorrooz.github.io/plotit/reference/layout_chord.md) | 弦图扇区布局（arcs + ribbons） |
+| [`layout_sankey()`](https://zorrooz.github.io/plotit/reference/layout_sankey.md) | 确定性分层桑基布局（nodes/edges/ribbons） |
+| [`layout_treemap()`](https://zorrooz.github.io/plotit/reference/layout_treemap.md) | squarified 矩形树图布局 |
+| [`transform_corr()`](https://zorrooz.github.io/plotit/reference/transform_corr.md) | [`mark_corr()`](https://zorrooz.github.io/plotit/reference/mark_corr.md) 的相关性矩阵预处理 |
+
+``` r
+
+edges <- data.frame(source = c("A", "A", "B"),
+                    target = c("B", "C", "C"),
+                    value  = c(3, 1, 2))
+edges |>
+  as_graph() |>
+  plotit() |>
+  layout_circle() |>
+  mark_point(data = ~nodes) |>
+  mark_rule(data = ~edges)
+```
+
+[`as_graph()`](https://zorrooz.github.io/plotit/reference/as_graph.md)
+按列名自动识别 `source`/`target`/`value` （可用同名参数显式指定列）。
 
 ### `scale_*` — 数据到视觉的映射
 

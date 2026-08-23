@@ -30,7 +30,7 @@ iris |>
   mark_point(size = 2, alpha = 0.7) |>
   scale_color(range = "viridis") |>
   label_title("Iris Sepal Dimensions") |>
-  style(ggplot2::theme_minimal(base_size = 14)) |>
+  style(base_theme = ggplot2::theme_minimal(base_size = 14)) |>
   export("iris_plot.pdf")
 ```
 
@@ -71,24 +71,36 @@ p2 <- plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot()
 compose_grid(p1, p2, tag_levels = "A") |>
   label_title("Iris Dashboard") |>
   export("dashboard.png")
+
+# Sankey flow diagram from an edge table
+flows <- data.frame(
+  source = c("A", "A", "B", "B", "C"),
+  target = c("B", "C", "C", "D", "D"),
+  value  = c(10, 5, 8, 3, 6)
+)
+flows |>
+  plotit(encode(source = source, target = target,
+                value = value, fill = source)) |>
+  mark_sankey()
 ```
 
 ## The pipeline
 
 Every plotit chart follows a consistent pipeline:
 
-    data |> plotit(encode(...)) |> mark_*() |> scale_*() |> split_*() |> project_*() |> label_*() |> style() |> export()
+    data |> plotit(encode(...)) |> mark_*() |> scale_*() |> layout_*() |> split_*() |> project_*() |> label_*() |> style() |> export()
 
 | Step | Verb | Role |
 |:---|:---|:---|
 | 1\. Initialise | [`plotit()`](https://zorrooz.github.io/plotit/reference/plotit.md) + [`encode()`](https://zorrooz.github.io/plotit/reference/encode.md) | Bind data and aesthetic mappings |
 | 2\. Layer | `mark_*()` | Add geometric layers (points, lines, bars, …) |
 | 3\. Scale | `scale_*()` | Control how data maps to visual properties |
-| 4\. Facet | `split_*()` | Split into small multiples |
-| 5\. Coordinate | `project_*()` | Choose coordinate system (cartesian, polar, map) |
-| 6\. Label | `label_*()` | Set titles, axis labels, legend titles |
-| 7\. Theme | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | Apply a complete theme |
-| 8\. Export | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | Render to file |
+| 4\. Layout | `layout_*()` | Compute relational layouts (optional; sankey, network, chord, treemap) |
+| 5\. Facet | `split_*()` | Split into small multiples |
+| 6\. Coordinate | `project_*()` | Choose coordinate system (cartesian, polar, map) |
+| 7\. Label | `label_*()` | Set titles, axis labels, legend titles |
+| 8\. Theme | [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | Apply a complete theme |
+| 9\. Export | [`export()`](https://zorrooz.github.io/plotit/reference/export.md) | Render to file |
 
 Multi-plot compositions follow their own outermost pipeline:
 
@@ -98,18 +110,78 @@ Multi-plot compositions follow their own outermost pipeline:
 
 ### `mark_*` — Geometric layers
 
-| Function | ggplot2 | Description |
+27 marks across three tiers: basic geometry, statistical, and
+composite/relational. Composite and relational marks are documented
+syntax sugar over the primitives below
+(e.g. [`mark_significance()`](https://zorrooz.github.io/plotit/reference/mark_significance.md)
+≈
+[`mark_rule()`](https://zorrooz.github.io/plotit/reference/mark_rule.md) +
+[`mark_text()`](https://zorrooz.github.io/plotit/reference/mark_text.md)).
+
+| Function | Engine | Description |
 |:---|:---|:---|
-| [`mark_point()`](https://zorrooz.github.io/plotit/reference/mark_point.md) | `geom_point()` | Scatter plots |
+| [`mark_point()`](https://zorrooz.github.io/plotit/reference/mark_point.md) | `geom_point()` | Scatter / bubble plots |
 | [`mark_line()`](https://zorrooz.github.io/plotit/reference/mark_line.md) | `geom_line()` | Lines and trends |
-| [`mark_area()`](https://zorrooz.github.io/plotit/reference/mark_area.md) | `geom_area()` | Filled area / stream graph |
+| [`mark_area()`](https://zorrooz.github.io/plotit/reference/mark_area.md) | `geom_area()` / `geom_ribbon()` | Filled area charts |
 | [`mark_bar()`](https://zorrooz.github.io/plotit/reference/mark_bar.md) | `geom_bar()` / `geom_col()` | Bar charts |
-| [`mark_text()`](https://zorrooz.github.io/plotit/reference/mark_text.md) | `geom_text()` / `ggrepel` | Text labels and annotations |
-| [`mark_boxplot()`](https://zorrooz.github.io/plotit/reference/mark_boxplot.md) | `geom_boxplot()` | Box-and-whisker plots |
+| [`mark_rect()`](https://zorrooz.github.io/plotit/reference/mark_rect.md) | `geom_tile()` / `geom_rect()` | Heatmap cells / rectangles |
+| [`mark_polygon()`](https://zorrooz.github.io/plotit/reference/mark_polygon.md) | `geom_polygon()` | Polygons / custom shapes |
+| [`mark_text()`](https://zorrooz.github.io/plotit/reference/mark_text.md) | `geom_text()` / ggrepel | Text labels and annotations |
+| [`mark_rule()`](https://zorrooz.github.io/plotit/reference/mark_rule.md) | `geom_hline/vline/abline/segment` | Reference lines and ranges |
+| [`mark_path()`](https://zorrooz.github.io/plotit/reference/mark_path.md) | `geom_path()` | Paths and trajectories |
 | [`mark_histogram()`](https://zorrooz.github.io/plotit/reference/mark_histogram.md) | `geom_histogram()` | Histograms |
-| [`mark_density()`](https://zorrooz.github.io/plotit/reference/mark_density.md) | `geom_density()` | 1D kernel density |
+| [`mark_density()`](https://zorrooz.github.io/plotit/reference/mark_density.md) | `geom_density()` | 1D kernel density curves |
+| [`mark_boxplot()`](https://zorrooz.github.io/plotit/reference/mark_boxplot.md) | `geom_boxplot()` | Box-and-whisker plots |
 | [`mark_violin()`](https://zorrooz.github.io/plotit/reference/mark_violin.md) | `geom_violin()` | Violin plots |
-| [`mark_map()`](https://zorrooz.github.io/plotit/reference/mark_map.md) | `geom_sf()` | Geographic maps |
+| [`mark_map()`](https://zorrooz.github.io/plotit/reference/mark_map.md) | sf + `geom_sf()` | Geographic maps |
+| [`mark_smooth()`](https://zorrooz.github.io/plotit/reference/mark_smooth.md) | `geom_smooth()` | Regression fits with confidence bands |
+| [`mark_hex()`](https://zorrooz.github.io/plotit/reference/mark_hex.md) | `geom_hex()` | 2D hexagonal binning |
+| [`mark_density_2d()`](https://zorrooz.github.io/plotit/reference/mark_density_2d.md) | `geom_density_2d()` | 2D density contours |
+| [`mark_corr()`](https://zorrooz.github.io/plotit/reference/mark_corr.md) | [`transform_corr()`](https://zorrooz.github.io/plotit/reference/transform_corr.md) + `geom_tile()` | Correlation heatmap |
+| [`mark_errorbar()`](https://zorrooz.github.io/plotit/reference/mark_errorbar.md) | `geom_errorbar()` / `-h` | Error bars |
+| [`mark_significance()`](https://zorrooz.github.io/plotit/reference/mark_significance.md) | sugar: rule + text | Significance brackets |
+| [`mark_lollipop()`](https://zorrooz.github.io/plotit/reference/mark_lollipop.md) | sugar: point + stem | Lollipop charts |
+| [`mark_dumbbell()`](https://zorrooz.github.io/plotit/reference/mark_dumbbell.md) | sugar: two points + stem | Dumbbell comparison charts |
+| [`mark_beeswarm()`](https://zorrooz.github.io/plotit/reference/mark_beeswarm.md) | ggbeeswarm | Beeswarm scatter (collision detection) |
+| [`mark_sankey()`](https://zorrooz.github.io/plotit/reference/mark_sankey.md) | [`layout_sankey()`](https://zorrooz.github.io/plotit/reference/layout_sankey.md) sugar | Sankey flow diagrams |
+| [`mark_treemap()`](https://zorrooz.github.io/plotit/reference/mark_treemap.md) | treemapify | Treemaps |
+| [`mark_network()`](https://zorrooz.github.io/plotit/reference/mark_network.md) | `layout_force()/circle()` sugar | Force-directed network graphs |
+| [`mark_chord()`](https://zorrooz.github.io/plotit/reference/mark_chord.md) | [`layout_chord()`](https://zorrooz.github.io/plotit/reference/layout_chord.md) sugar | Chord diagrams |
+
+### Relational data — `as_graph()` + `layout_*()`
+
+Relational data follows a Vega-style transform model: normalise your
+data into a graph, bake layout coordinates into it, then render any
+sub-table via `data = ~table`.
+
+| Function | Description |
+|:---|:---|
+| [`as_graph()`](https://zorrooz.github.io/plotit/reference/as_graph.md) | Normalise edge tables, matrices, hclust, or hierarchical data into a graph object |
+| [`layout_force()`](https://zorrooz.github.io/plotit/reference/layout_force.md) | Force-directed node placement (seeded, reproducible) |
+| [`layout_circle()`](https://zorrooz.github.io/plotit/reference/layout_circle.md) | Circular node placement |
+| [`layout_tree()`](https://zorrooz.github.io/plotit/reference/layout_tree.md) | Tree layout |
+| [`layout_dendrogram()`](https://zorrooz.github.io/plotit/reference/layout_dendrogram.md) | Dendrogram from `hclust` |
+| [`layout_chord()`](https://zorrooz.github.io/plotit/reference/layout_chord.md) | Chord sector layout (arcs + ribbons) |
+| [`layout_sankey()`](https://zorrooz.github.io/plotit/reference/layout_sankey.md) | Deterministic layered sankey layout (nodes/edges/ribbons) |
+| [`layout_treemap()`](https://zorrooz.github.io/plotit/reference/layout_treemap.md) | Squarified treemap layout |
+| [`transform_corr()`](https://zorrooz.github.io/plotit/reference/transform_corr.md) | Correlation-matrix preprocessing for [`mark_corr()`](https://zorrooz.github.io/plotit/reference/mark_corr.md) |
+
+``` r
+
+edges <- data.frame(source = c("A", "A", "B"),
+                    target = c("B", "C", "C"),
+                    value  = c(3, 1, 2))
+edges |>
+  as_graph() |>
+  plotit() |>
+  layout_circle() |>
+  mark_point(data = ~nodes) |>
+  mark_rule(data = ~edges)
+```
+
+[`as_graph()`](https://zorrooz.github.io/plotit/reference/as_graph.md)
+picks up `source`/`target`/`value` by column name (override via the
+like-named arguments).
 
 ### `scale_*` — Data-to-visual mapping
 

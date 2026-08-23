@@ -15,7 +15,7 @@ mark_chord(
   mapping = NULL,
   data = NULL,
   gap_width = 4,
-  link_alpha = 0.5,
+  link_alpha = ._MARK_STYLE$alpha_link,
   ...
 )
 ```
@@ -45,7 +45,8 @@ mark_chord(
 
 - link_alpha:
 
-  Alpha transparency for link bands (default 0.5).
+  Alpha transparency for link bands (default `._MARK_STYLE$alpha_link` =
+  0.5).
 
 - ...:
 
@@ -76,7 +77,10 @@ df <- data.frame(
   target = c("B", "C", "C", "D", "D"),
   value  = c(5, 3, 4, 2, 6)
 )
-df |> plotit(encode(source = source, target = target,
-                    value = value, fill = source)) |>
+df |>
+  plotit(encode(
+    source = source, target = target,
+    value = value, fill = source
+  )) |>
   mark_chord()
 ```

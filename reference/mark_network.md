@@ -17,9 +17,9 @@ mark_network(
   encode_edges = NULL,
   layout = c("auto", "circle", "linear", "bipartite", "manual"),
   seed = NULL,
-  edge_colour = "grey70",
-  edge_width = 0.5,
-  node_colour = "#4E79A7",
+  edge_colour = ._MARK_STYLE$faint,
+  edge_width = ._MARK_STYLE$lw_thin,
+  node_colour = ._MARK_STYLE$primary,
   node_size = 5,
   ...
 )
@@ -57,17 +57,18 @@ mark_network(
 
 - edge_colour:
 
-  Default edge colour (default `"grey70"`) when no edge colour channel
-  is mapped.
+  Default edge colour when no edge colour channel is mapped (default
+  `._MARK_STYLE$faint` = `"grey70"`).
 
 - edge_width:
 
-  Default edge width (default 0.5) when no edge linewidth channel is
-  mapped.
+  Default edge width when no edge linewidth channel is mapped (default
+  `._MARK_STYLE$lw_thin` = 0.5).
 
 - node_colour:
 
-  Default fill colour for nodes (default `"#4E79A7"`).
+  Default fill colour for nodes (default `._MARK_STYLE$primary` =
+  `"#4E79A7"`).
 
 - node_size:
 

@@ -11,11 +11,11 @@ mark_dumbbell(
   plot,
   mapping = NULL,
   data = NULL,
-  colour_start = "#4E79A7",
-  colour_end = "#E15759",
-  line_colour = "grey50",
-  point_size = 3,
-  line_width = 1,
+  colour_start = ._MARK_STYLE$primary,
+  colour_end = ._MARK_STYLE$secondary,
+  line_colour = ._MARK_STYLE$soft,
+  point_size = ._MARK_STYLE$point_head,
+  line_width = ._MARK_STYLE$lw_data,
   ...
 )
 ```
@@ -36,15 +36,18 @@ mark_dumbbell(
 
 - colour_start:
 
-  Colour for the start point (default `"#4E79A7"`).
+  Colour for the start point (default `._MARK_STYLE$primary` =
+  `"#4E79A7"`).
 
 - colour_end:
 
-  Colour for the end point (default `"#E15759"`).
+  Colour for the end point (default `._MARK_STYLE$secondary` =
+  `"#E15759"`).
 
 - line_colour:
 
-  Colour for the connecting line (default `"grey50"`).
+  Colour for the connecting line (default `._MARK_STYLE$soft` =
+  `"grey50"`).
 
 - point_size:
 
@@ -52,7 +55,7 @@ mark_dumbbell(
 
 - line_width:
 
-  Width for the connecting line (default 1).
+  Width for the connecting line (default 0.9).
 
 - ...:
 

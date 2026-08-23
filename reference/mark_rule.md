@@ -78,7 +78,8 @@ mark_rule(
 
 - colour:
 
-  Line colour
+  Line colour (default `"grey50"`, the unified soft neutral; ggplot2's
+  black is restored by passing `colour = "black"`).
 
 - linetype:
 
@@ -86,7 +87,7 @@ mark_rule(
 
 - linewidth:
 
-  Line width in mm
+  Line width in mm (default 0.5).
 
 - ...:
 

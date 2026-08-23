@@ -82,7 +82,7 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <span>  <span class="fu"><a href="reference/mark_point.html">mark_point</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">2</span>, alpha <span class="op">=</span> <span class="fl">0.7</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="reference/scale_color.html">scale_color</a></span><span class="op">(</span>range <span class="op">=</span> <span class="st">"viridis"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="reference/label_title.html">label_title</a></span><span class="op">(</span><span class="st">"Iris Sepal Dimensions"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="reference/style.html">style</a></span><span class="op">(</span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">14</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/style.html">style</a></span><span class="op">(</span>base_theme <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">14</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="reference/export.html">export</a></span><span class="op">(</span><span class="st">"iris_plot.pdf"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -119,13 +119,24 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <span><span class="va">p2</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/plotit.html">plotit</a></span><span class="op">(</span><span class="va">iris</span>, <span class="fu"><a href="reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Species</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/mark_boxplot.html">mark_boxplot</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/compose_grid.html">compose_grid</a></span><span class="op">(</span><span class="va">p1</span>, <span class="va">p2</span>, tag_levels <span class="op">=</span> <span class="st">"A"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="reference/label_title.html">label_title</a></span><span class="op">(</span><span class="st">"Iris Dashboard"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="reference/export.html">export</a></span><span class="op">(</span><span class="st">"dashboard.png"</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="reference/export.html">export</a></span><span class="op">(</span><span class="st">"dashboard.png"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Sankey flow diagram from an edge table</span></span>
+<span><span class="va">flows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  source <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"A"</span>, <span class="st">"B"</span>, <span class="st">"B"</span>, <span class="st">"C"</span><span class="op">)</span>,</span>
+<span>  target <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"B"</span>, <span class="st">"C"</span>, <span class="st">"C"</span>, <span class="st">"D"</span>, <span class="st">"D"</span><span class="op">)</span>,</span>
+<span>  value  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">5</span>, <span class="fl">8</span>, <span class="fl">3</span>, <span class="fl">6</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">flows</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="reference/encode.html">encode</a></span><span class="op">(</span>source <span class="op">=</span> <span class="va">source</span>, target <span class="op">=</span> <span class="va">target</span>,</span>
+<span>                value <span class="op">=</span> <span class="va">value</span>, fill <span class="op">=</span> <span class="va">source</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/mark_sankey.html">mark_sankey</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="the-pipeline">The pipeline<a class="anchor" aria-label="anchor" href="#the-pipeline"></a>
 </h2>
 <p>Every plotit chart follows a consistent pipeline:</p>
-<pre><code>data |&gt; plotit(encode(...)) |&gt; mark_*() |&gt; scale_*() |&gt; split_*() |&gt; project_*() |&gt; label_*() |&gt; style() |&gt; export()</code></pre>
+<pre><code>data |&gt; plotit(encode(...)) |&gt; mark_*() |&gt; scale_*() |&gt; layout_*() |&gt; split_*() |&gt; project_*() |&gt; label_*() |&gt; style() |&gt; export()</code></pre>
 <table class="table">
 <colgroup>
 <col width="33%">
@@ -156,27 +167,32 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <td align="left">Control how data maps to visual properties</td>
 </tr>
 <tr>
-<td align="left">4. Facet</td>
+<td align="left">4. Layout</td>
+<td align="left"><code>layout_*()</code></td>
+<td align="left">Compute relational layouts (optional; sankey, network, chord, treemap)</td>
+</tr>
+<tr>
+<td align="left">5. Facet</td>
 <td align="left"><code>split_*()</code></td>
 <td align="left">Split into small multiples</td>
 </tr>
 <tr>
-<td align="left">5. Coordinate</td>
+<td align="left">6. Coordinate</td>
 <td align="left"><code>project_*()</code></td>
 <td align="left">Choose coordinate system (cartesian, polar, map)</td>
 </tr>
 <tr>
-<td align="left">6. Label</td>
+<td align="left">7. Label</td>
 <td align="left"><code>label_*()</code></td>
 <td align="left">Set titles, axis labels, legend titles</td>
 </tr>
 <tr>
-<td align="left">7. Theme</td>
+<td align="left">8. Theme</td>
 <td align="left"><code><a href="reference/style.html">style()</a></code></td>
 <td align="left">Apply a complete theme</td>
 </tr>
 <tr>
-<td align="left">8. Export</td>
+<td align="left">9. Export</td>
 <td align="left"><code><a href="reference/export.html">export()</a></code></td>
 <td align="left">Render to file</td>
 </tr>
@@ -192,6 +208,7 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <h3 id="mark_--geometric-layers">
 <code>mark_*</code> — Geometric layers<a class="anchor" aria-label="anchor" href="#mark_--geometric-layers"></a>
 </h3>
+<p>27 marks across three tiers: basic geometry, statistical, and composite/relational. Composite and relational marks are documented syntax sugar over the primitives below (e.g. <code><a href="reference/mark_significance.html">mark_significance()</a></code> ≈ <code><a href="reference/mark_rule.html">mark_rule()</a></code> + <code><a href="reference/mark_text.html">mark_text()</a></code>).</p>
 <table class="table">
 <colgroup>
 <col width="33%">
@@ -200,14 +217,14 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 </colgroup>
 <thead><tr>
 <th align="left">Function</th>
-<th align="left">ggplot2</th>
+<th align="left">Engine</th>
 <th align="left">Description</th>
 </tr></thead>
 <tbody>
 <tr>
 <td align="left"><code><a href="reference/mark_point.html">mark_point()</a></code></td>
 <td align="left"><code>geom_point()</code></td>
-<td align="left">Scatter plots</td>
+<td align="left">Scatter / bubble plots</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/mark_line.html">mark_line()</a></code></td>
@@ -216,8 +233,10 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 </tr>
 <tr>
 <td align="left"><code><a href="reference/mark_area.html">mark_area()</a></code></td>
-<td align="left"><code>geom_area()</code></td>
-<td align="left">Filled area / stream graph</td>
+<td align="left">
+<code>geom_area()</code> / <code>geom_ribbon()</code>
+</td>
+<td align="left">Filled area charts</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/mark_bar.html">mark_bar()</a></code></td>
@@ -227,16 +246,32 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <td align="left">Bar charts</td>
 </tr>
 <tr>
+<td align="left"><code><a href="reference/mark_rect.html">mark_rect()</a></code></td>
+<td align="left">
+<code>geom_tile()</code> / <code>geom_rect()</code>
+</td>
+<td align="left">Heatmap cells / rectangles</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_polygon.html">mark_polygon()</a></code></td>
+<td align="left"><code>geom_polygon()</code></td>
+<td align="left">Polygons / custom shapes</td>
+</tr>
+<tr>
 <td align="left"><code><a href="reference/mark_text.html">mark_text()</a></code></td>
 <td align="left">
-<code>geom_text()</code> / <code>ggrepel</code>
-</td>
+<code>geom_text()</code> / ggrepel</td>
 <td align="left">Text labels and annotations</td>
 </tr>
 <tr>
-<td align="left"><code><a href="reference/mark_boxplot.html">mark_boxplot()</a></code></td>
-<td align="left"><code>geom_boxplot()</code></td>
-<td align="left">Box-and-whisker plots</td>
+<td align="left"><code><a href="reference/mark_rule.html">mark_rule()</a></code></td>
+<td align="left"><code>geom_hline/vline/abline/segment</code></td>
+<td align="left">Reference lines and ranges</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_path.html">mark_path()</a></code></td>
+<td align="left"><code>geom_path()</code></td>
+<td align="left">Paths and trajectories</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/mark_histogram.html">mark_histogram()</a></code></td>
@@ -246,7 +281,12 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <tr>
 <td align="left"><code><a href="reference/mark_density.html">mark_density()</a></code></td>
 <td align="left"><code>geom_density()</code></td>
-<td align="left">1D kernel density</td>
+<td align="left">1D kernel density curves</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_boxplot.html">mark_boxplot()</a></code></td>
+<td align="left"><code>geom_boxplot()</code></td>
+<td align="left">Box-and-whisker plots</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/mark_violin.html">mark_violin()</a></code></td>
@@ -255,11 +295,151 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 </tr>
 <tr>
 <td align="left"><code><a href="reference/mark_map.html">mark_map()</a></code></td>
-<td align="left"><code>geom_sf()</code></td>
+<td align="left">sf + <code>geom_sf()</code>
+</td>
 <td align="left">Geographic maps</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_smooth.html">mark_smooth()</a></code></td>
+<td align="left"><code>geom_smooth()</code></td>
+<td align="left">Regression fits with confidence bands</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_hex.html">mark_hex()</a></code></td>
+<td align="left"><code>geom_hex()</code></td>
+<td align="left">2D hexagonal binning</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_density_2d.html">mark_density_2d()</a></code></td>
+<td align="left"><code>geom_density_2d()</code></td>
+<td align="left">2D density contours</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_corr.html">mark_corr()</a></code></td>
+<td align="left">
+<code><a href="reference/transform_corr.html">transform_corr()</a></code> + <code>geom_tile()</code>
+</td>
+<td align="left">Correlation heatmap</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_errorbar.html">mark_errorbar()</a></code></td>
+<td align="left">
+<code>geom_errorbar()</code> / <code>-h</code>
+</td>
+<td align="left">Error bars</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_significance.html">mark_significance()</a></code></td>
+<td align="left">sugar: rule + text</td>
+<td align="left">Significance brackets</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_lollipop.html">mark_lollipop()</a></code></td>
+<td align="left">sugar: point + stem</td>
+<td align="left">Lollipop charts</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_dumbbell.html">mark_dumbbell()</a></code></td>
+<td align="left">sugar: two points + stem</td>
+<td align="left">Dumbbell comparison charts</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_beeswarm.html">mark_beeswarm()</a></code></td>
+<td align="left">ggbeeswarm</td>
+<td align="left">Beeswarm scatter (collision detection)</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_sankey.html">mark_sankey()</a></code></td>
+<td align="left">
+<code><a href="reference/layout_sankey.html">layout_sankey()</a></code> sugar</td>
+<td align="left">Sankey flow diagrams</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_treemap.html">mark_treemap()</a></code></td>
+<td align="left">treemapify</td>
+<td align="left">Treemaps</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_network.html">mark_network()</a></code></td>
+<td align="left">
+<code>layout_force()/circle()</code> sugar</td>
+<td align="left">Force-directed network graphs</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_chord.html">mark_chord()</a></code></td>
+<td align="left">
+<code><a href="reference/layout_chord.html">layout_chord()</a></code> sugar</td>
+<td align="left">Chord diagrams</td>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="section level3">
+<h3 id="relational-data--as_graph--layout_">Relational data — <code>as_graph()</code> + <code>layout_*()</code>
+<a class="anchor" aria-label="anchor" href="#relational-data--as_graph--layout_"></a>
+</h3>
+<p>Relational data follows a Vega-style transform model: normalise your data into a graph, bake layout coordinates into it, then render any sub-table via <code>data = ~table</code>.</p>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr>
+<th align="left">Function</th>
+<th align="left">Description</th>
+</tr></thead>
+<tbody>
+<tr>
+<td align="left"><code><a href="reference/as_graph.html">as_graph()</a></code></td>
+<td align="left">Normalise edge tables, matrices, hclust, or hierarchical data into a graph object</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/layout_force.html">layout_force()</a></code></td>
+<td align="left">Force-directed node placement (seeded, reproducible)</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/layout_circle.html">layout_circle()</a></code></td>
+<td align="left">Circular node placement</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/layout_tree.html">layout_tree()</a></code></td>
+<td align="left">Tree layout</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/layout_dendrogram.html">layout_dendrogram()</a></code></td>
+<td align="left">Dendrogram from <code>hclust</code>
+</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/layout_chord.html">layout_chord()</a></code></td>
+<td align="left">Chord sector layout (arcs + ribbons)</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/layout_sankey.html">layout_sankey()</a></code></td>
+<td align="left">Deterministic layered sankey layout (nodes/edges/ribbons)</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/layout_treemap.html">layout_treemap()</a></code></td>
+<td align="left">Squarified treemap layout</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/transform_corr.html">transform_corr()</a></code></td>
+<td align="left">Correlation-matrix preprocessing for <code><a href="reference/mark_corr.html">mark_corr()</a></code>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">edges</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>source <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>,</span>
+<span>                    target <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"B"</span>, <span class="st">"C"</span>, <span class="st">"C"</span><span class="op">)</span>,</span>
+<span>                    value  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">edges</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/as_graph.html">as_graph</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/plotit.html">plotit</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/layout_circle.html">layout_circle</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/mark_point.html">mark_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="op">~</span><span class="va">nodes</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/mark_rule.html">mark_rule</a></span><span class="op">(</span>data <span class="op">=</span> <span class="op">~</span><span class="va">edges</span><span class="op">)</span></span></code></pre></div>
+<p><code><a href="reference/as_graph.html">as_graph()</a></code> picks up <code>source</code>/<code>target</code>/<code>value</code> by column name (override via the like-named arguments).</p>
 </div>
 <div class="section level3">
 <h3 id="scale_--data-to-visual-mapping">

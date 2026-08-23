@@ -2,7 +2,10 @@
 
 Divides the x-y plane into hexagonal bins and fills each by the count
 (or other aggregation) of observations in that bin. Ideal for
-visualizing overplotting in large datasets.
+visualizing overplotting in large datasets. The count fill scale
+defaults to viridis; chain
+[`scale_fill()`](https://zorrooz.github.io/plotit/reference/scale_fill.md)
+afterwards to replace it (last call wins).
 
 ## Usage
 

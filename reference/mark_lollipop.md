@@ -11,9 +11,9 @@ mark_lollipop(
   plot,
   mapping = NULL,
   data = NULL,
-  stem_colour = "grey50",
-  stem_width = 0.5,
-  point_size = 3,
+  stem_colour = ._MARK_STYLE$soft,
+  stem_width = ._MARK_STYLE$lw_thin,
+  point_size = ._MARK_STYLE$point_head,
   ref = 0,
   ...
 )
@@ -35,7 +35,7 @@ mark_lollipop(
 
 - stem_colour:
 
-  Colour for the stem lines (default `"grey50"`).
+  Colour for the stem lines (default `._MARK_STYLE$soft` = `"grey50"`).
 
 - stem_width:
 

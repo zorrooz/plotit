@@ -83,11 +83,16 @@ g$nodes[, c("id", "flow_total")]
 #> 3  C         19
 #> 4  D          9
 
-as_graph(e) |> plotit() |>
+as_graph(e) |>
+  plotit() |>
   layout_chord() |>
-  mark_polygon(data = ~ribbons,
-               encode(fill = source, group = .ribbon_id),
-               alpha = 0.4) |>
-  mark_polygon(data = ~arcs,
-               encode(fill = id, group = .arc_id))
+  mark_polygon(
+    data = ~ribbons,
+    encode(fill = source, group = .ribbon_id),
+    alpha = 0.4
+  ) |>
+  mark_polygon(
+    data = ~arcs,
+    encode(fill = id, group = .arc_id)
+  )
 ```

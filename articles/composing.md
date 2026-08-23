@@ -247,7 +247,7 @@ Composite objects are exported the same way as single plots:
 
 dashboard <- compose_grid(p1, p2, p3, p4, ncol = 2, tag_levels = "A") |>
   label_title("Dashboard") |>
-  style(ggplot2::theme_minimal(base_size = 12))
+  style(base_theme = ggplot2::theme_minimal(base_size = 12))
 
 export(dashboard, "dashboard.png", width = 12, height = 8, dpi = 300)
 ```

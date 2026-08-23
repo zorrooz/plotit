@@ -2,7 +2,11 @@
 
 Adds 2D kernel density estimate contours. Use `filled = TRUE` for filled
 density bands via
-[ggplot2::geom_density_2d_filled](https://ggplot2.tidyverse.org/reference/geom_density_2d.html).
+[ggplot2::geom_density_2d_filled](https://ggplot2.tidyverse.org/reference/geom_density_2d.html);
+filled bands default to a discrete viridis fill scale, replaceable by
+chaining
+[`scale_fill()`](https://zorrooz.github.io/plotit/reference/scale_fill.md)
+afterwards.
 
 ## Usage
 

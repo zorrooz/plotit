@@ -62,7 +62,7 @@ plotit 处于活跃的预发布开发中。每次更新都<strong>极有可能</
 <span>  <span class="fu"><a href="reference/mark_point.html">mark_point</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">2</span>, alpha <span class="op">=</span> <span class="fl">0.7</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="reference/scale_color.html">scale_color</a></span><span class="op">(</span>range <span class="op">=</span> <span class="st">"viridis"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="reference/label_title.html">label_title</a></span><span class="op">(</span><span class="st">"Iris Sepal Dimensions"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="reference/style.html">style</a></span><span class="op">(</span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">14</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/style.html">style</a></span><span class="op">(</span>base_theme <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">14</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="reference/export.html">export</a></span><span class="op">(</span><span class="st">"iris_plot.pdf"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -97,13 +97,24 @@ plotit 处于活跃的预发布开发中。每次更新都<strong>极有可能</
 <span><span class="va">p2</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/plotit.html">plotit</a></span><span class="op">(</span><span class="va">iris</span>, <span class="fu"><a href="reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Species</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/mark_boxplot.html">mark_boxplot</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/compose_grid.html">compose_grid</a></span><span class="op">(</span><span class="va">p1</span>, <span class="va">p2</span>, tag_levels <span class="op">=</span> <span class="st">"A"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="reference/label_title.html">label_title</a></span><span class="op">(</span><span class="st">"Iris Dashboard"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="reference/export.html">export</a></span><span class="op">(</span><span class="st">"dashboard.png"</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="reference/export.html">export</a></span><span class="op">(</span><span class="st">"dashboard.png"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># 由边表绘制桑基流向图</span></span>
+<span><span class="va">flows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  source <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"A"</span>, <span class="st">"B"</span>, <span class="st">"B"</span>, <span class="st">"C"</span><span class="op">)</span>,</span>
+<span>  target <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"B"</span>, <span class="st">"C"</span>, <span class="st">"C"</span>, <span class="st">"D"</span>, <span class="st">"D"</span><span class="op">)</span>,</span>
+<span>  value  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">5</span>, <span class="fl">8</span>, <span class="fl">3</span>, <span class="fl">6</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">flows</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="reference/encode.html">encode</a></span><span class="op">(</span>source <span class="op">=</span> <span class="va">source</span>, target <span class="op">=</span> <span class="va">target</span>,</span>
+<span>                value <span class="op">=</span> <span class="va">value</span>, fill <span class="op">=</span> <span class="va">source</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/mark_sankey.html">mark_sankey</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="管道模式">管道模式<a class="anchor" aria-label="anchor" href="#%E7%AE%A1%E9%81%93%E6%A8%A1%E5%BC%8F"></a></h2>
 <p>每个 plotit 图表都遵循一致的管道：</p>
-<pre><code>data |&gt; plotit(encode(...)) |&gt; mark_*() |&gt; scale_*() |&gt; split_*() |&gt; project_*() |&gt; label_*() |&gt; style() |&gt; export()</code></pre>
-<table class="table"><thead><tr><th align="left">步骤</th>
+<pre><code>data |&gt; plotit(encode(...)) |&gt; mark_*() |&gt; scale_*() |&gt; layout_*() |&gt; split_*() |&gt; project_*() |&gt; label_*() |&gt; style() |&gt; export()</code></pre>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th align="left">步骤</th>
 <th align="left">动词</th>
 <th align="left">职责</th>
 </tr></thead><tbody><tr><td align="left">1. 初始化</td>
@@ -117,19 +128,22 @@ plotit 处于活跃的预发布开发中。每次更新都<strong>极有可能</
 </tr><tr><td align="left">3. 标度</td>
 <td align="left"><code>scale_*()</code></td>
 <td align="left">控制数据到视觉属性的映射</td>
-</tr><tr><td align="left">4. 分面</td>
+</tr><tr><td align="left">4. 布局</td>
+<td align="left"><code>layout_*()</code></td>
+<td align="left">计算关系图布局（可选；桑基、网络、弦图、树图）</td>
+</tr><tr><td align="left">5. 分面</td>
 <td align="left"><code>split_*()</code></td>
 <td align="left">拆分为小倍数图</td>
-</tr><tr><td align="left">5. 坐标</td>
+</tr><tr><td align="left">6. 坐标</td>
 <td align="left"><code>project_*()</code></td>
 <td align="left">选择坐标系（笛卡尔、极坐标、地图）</td>
-</tr><tr><td align="left">6. 标签</td>
+</tr><tr><td align="left">7. 标签</td>
 <td align="left"><code>label_*()</code></td>
 <td align="left">设置标题、轴标签、图例标题</td>
-</tr><tr><td align="left">7. 主题</td>
+</tr><tr><td align="left">8. 主题</td>
 <td align="left"><code><a href="reference/style.html">style()</a></code></td>
 <td align="left">应用主题样式</td>
-</tr><tr><td align="left">8. 导出</td>
+</tr><tr><td align="left">9. 导出</td>
 <td align="left"><code><a href="reference/export.html">export()</a></code></td>
 <td align="left">渲染为文件</td>
 </tr></tbody></table><p>多图组合遵循最外层管道：</p>
@@ -140,44 +154,144 @@ plotit 处于活跃的预发布开发中。每次更新都<strong>极有可能</
 <div class="section level3">
 <h3 id="mark_--几何图层">
 <code>mark_*</code> — 几何图层<a class="anchor" aria-label="anchor" href="#mark_--%E5%87%A0%E4%BD%95%E5%9B%BE%E5%B1%82"></a></h3>
-<table class="table"><thead><tr><th align="left">函数</th>
-<th align="left">ggplot2</th>
+<p>共 27 种 mark，分三层体系：基础几何、统计、复合/关系。 复合与关系 mark 均为下层原语的文档化语法糖 （如 <code><a href="reference/mark_significance.html">mark_significance()</a></code> ≈ <code><a href="reference/mark_rule.html">mark_rule()</a></code> + <code><a href="reference/mark_text.html">mark_text()</a></code>）。</p>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th align="left">函数</th>
+<th align="left">底层引擎</th>
 <th align="left">说明</th>
 </tr></thead><tbody><tr><td align="left"><code><a href="reference/mark_point.html">mark_point()</a></code></td>
 <td align="left"><code>geom_point()</code></td>
-<td align="left">散点图</td>
+<td align="left">散点/气泡图</td>
 </tr><tr><td align="left"><code><a href="reference/mark_line.html">mark_line()</a></code></td>
 <td align="left"><code>geom_line()</code></td>
 <td align="left">折线与趋势线</td>
 </tr><tr><td align="left"><code><a href="reference/mark_area.html">mark_area()</a></code></td>
-<td align="left"><code>geom_area()</code></td>
-<td align="left">面积图/河流图</td>
+<td align="left">
+<code>geom_area()</code> / <code>geom_ribbon()</code>
+</td>
+<td align="left">面积图</td>
 </tr><tr><td align="left"><code><a href="reference/mark_bar.html">mark_bar()</a></code></td>
 <td align="left">
 <code>geom_bar()</code> / <code>geom_col()</code>
 </td>
 <td align="left">柱状图</td>
+</tr><tr><td align="left"><code><a href="reference/mark_rect.html">mark_rect()</a></code></td>
+<td align="left">
+<code>geom_tile()</code> / <code>geom_rect()</code>
+</td>
+<td align="left">热力图单元格/矩形</td>
+</tr><tr><td align="left"><code><a href="reference/mark_polygon.html">mark_polygon()</a></code></td>
+<td align="left"><code>geom_polygon()</code></td>
+<td align="left">多边形/自定义形状</td>
 </tr><tr><td align="left"><code><a href="reference/mark_text.html">mark_text()</a></code></td>
 <td align="left">
-<code>geom_text()</code> / <code>ggrepel</code>
-</td>
+<code>geom_text()</code> / ggrepel</td>
 <td align="left">文本标签与数据标注</td>
-</tr><tr><td align="left"><code><a href="reference/mark_boxplot.html">mark_boxplot()</a></code></td>
-<td align="left"><code>geom_boxplot()</code></td>
-<td align="left">箱线图</td>
+</tr><tr><td align="left"><code><a href="reference/mark_rule.html">mark_rule()</a></code></td>
+<td align="left"><code>geom_hline/vline/abline/segment</code></td>
+<td align="left">参考线/参考区域</td>
+</tr><tr><td align="left"><code><a href="reference/mark_path.html">mark_path()</a></code></td>
+<td align="left"><code>geom_path()</code></td>
+<td align="left">路径/轨迹</td>
 </tr><tr><td align="left"><code><a href="reference/mark_histogram.html">mark_histogram()</a></code></td>
 <td align="left"><code>geom_histogram()</code></td>
 <td align="left">直方图</td>
 </tr><tr><td align="left"><code><a href="reference/mark_density.html">mark_density()</a></code></td>
 <td align="left"><code>geom_density()</code></td>
-<td align="left">1D 核密度估计</td>
+<td align="left">1D 核密度曲线</td>
+</tr><tr><td align="left"><code><a href="reference/mark_boxplot.html">mark_boxplot()</a></code></td>
+<td align="left"><code>geom_boxplot()</code></td>
+<td align="left">箱线图</td>
 </tr><tr><td align="left"><code><a href="reference/mark_violin.html">mark_violin()</a></code></td>
 <td align="left"><code>geom_violin()</code></td>
 <td align="left">小提琴图</td>
 </tr><tr><td align="left"><code><a href="reference/mark_map.html">mark_map()</a></code></td>
-<td align="left"><code>geom_sf()</code></td>
+<td align="left">sf + <code>geom_sf()</code>
+</td>
 <td align="left">地图/地理空间</td>
+</tr><tr><td align="left"><code><a href="reference/mark_smooth.html">mark_smooth()</a></code></td>
+<td align="left"><code>geom_smooth()</code></td>
+<td align="left">回归拟合 + 置信带</td>
+</tr><tr><td align="left"><code><a href="reference/mark_hex.html">mark_hex()</a></code></td>
+<td align="left"><code>geom_hex()</code></td>
+<td align="left">2D 六边形分箱热力图</td>
+</tr><tr><td align="left"><code><a href="reference/mark_density_2d.html">mark_density_2d()</a></code></td>
+<td align="left"><code>geom_density_2d()</code></td>
+<td align="left">2D 密度等高线</td>
+</tr><tr><td align="left"><code><a href="reference/mark_corr.html">mark_corr()</a></code></td>
+<td align="left">
+<code><a href="reference/transform_corr.html">transform_corr()</a></code> + <code>geom_tile()</code>
+</td>
+<td align="left">相关性矩阵热力图</td>
+</tr><tr><td align="left"><code><a href="reference/mark_errorbar.html">mark_errorbar()</a></code></td>
+<td align="left">
+<code>geom_errorbar()</code> / <code>-h</code>
+</td>
+<td align="left">误差棒</td>
+</tr><tr><td align="left"><code><a href="reference/mark_significance.html">mark_significance()</a></code></td>
+<td align="left">语法糖：rule + text</td>
+<td align="left">显著性标记（括号+星号）</td>
+</tr><tr><td align="left"><code><a href="reference/mark_lollipop.html">mark_lollipop()</a></code></td>
+<td align="left">语法糖：point + 线段</td>
+<td align="left">棒棒糖图</td>
+</tr><tr><td align="left"><code><a href="reference/mark_dumbbell.html">mark_dumbbell()</a></code></td>
+<td align="left">语法糖：双 point + 线段</td>
+<td align="left">哑铃对比图</td>
+</tr><tr><td align="left"><code><a href="reference/mark_beeswarm.html">mark_beeswarm()</a></code></td>
+<td align="left">ggbeeswarm</td>
+<td align="left">蜂群散点（碰撞检测）</td>
+</tr><tr><td align="left"><code><a href="reference/mark_sankey.html">mark_sankey()</a></code></td>
+<td align="left">
+<code><a href="reference/layout_sankey.html">layout_sankey()</a></code> 语法糖</td>
+<td align="left">桑基流向图</td>
+</tr><tr><td align="left"><code><a href="reference/mark_treemap.html">mark_treemap()</a></code></td>
+<td align="left">treemapify</td>
+<td align="left">矩形树图</td>
+</tr><tr><td align="left"><code><a href="reference/mark_network.html">mark_network()</a></code></td>
+<td align="left">
+<code>layout_force()/circle()</code> 语法糖</td>
+<td align="left">力导向网络图</td>
+</tr><tr><td align="left"><code><a href="reference/mark_chord.html">mark_chord()</a></code></td>
+<td align="left">
+<code><a href="reference/layout_chord.html">layout_chord()</a></code> 语法糖</td>
+<td align="left">弦图</td>
 </tr></tbody></table></div>
+<div class="section level3">
+<h3 id="关系数据--as_graph--layout_">关系数据 — <code>as_graph()</code> + <code>layout_*()</code>
+<a class="anchor" aria-label="anchor" href="#%E5%85%B3%E7%B3%BB%E6%95%B0%E6%8D%AE--as_graph--layout_"></a></h3>
+<p>关系数据遵循 Vega 风格的数据变换模型：先将数据收编为 graph 对象， 再把布局坐标烘焙进表，最后通过 <code>data = ~table</code> 引用任意子表渲染。</p>
+<table class="table"><thead><tr><th align="left">函数</th>
+<th align="left">说明</th>
+</tr></thead><tbody><tr><td align="left"><code><a href="reference/as_graph.html">as_graph()</a></code></td>
+<td align="left">将边表、矩阵、hclust 或层次表收编为 graph 对象</td>
+</tr><tr><td align="left"><code><a href="reference/layout_force.html">layout_force()</a></code></td>
+<td align="left">力导向节点布局（强制 seed，可复现）</td>
+</tr><tr><td align="left"><code><a href="reference/layout_circle.html">layout_circle()</a></code></td>
+<td align="left">环形节点布局</td>
+</tr><tr><td align="left"><code><a href="reference/layout_tree.html">layout_tree()</a></code></td>
+<td align="left">树布局</td>
+</tr><tr><td align="left"><code><a href="reference/layout_dendrogram.html">layout_dendrogram()</a></code></td>
+<td align="left">基于 hclust 的树状图布局</td>
+</tr><tr><td align="left"><code><a href="reference/layout_chord.html">layout_chord()</a></code></td>
+<td align="left">弦图扇区布局（arcs + ribbons）</td>
+</tr><tr><td align="left"><code><a href="reference/layout_sankey.html">layout_sankey()</a></code></td>
+<td align="left">确定性分层桑基布局（nodes/edges/ribbons）</td>
+</tr><tr><td align="left"><code><a href="reference/layout_treemap.html">layout_treemap()</a></code></td>
+<td align="left">squarified 矩形树图布局</td>
+</tr><tr><td align="left"><code><a href="reference/transform_corr.html">transform_corr()</a></code></td>
+<td align="left">
+<code><a href="reference/mark_corr.html">mark_corr()</a></code> 的相关性矩阵预处理</td>
+</tr></tbody></table><div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">edges</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>source <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>,</span>
+<span>                    target <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"B"</span>, <span class="st">"C"</span>, <span class="st">"C"</span><span class="op">)</span>,</span>
+<span>                    value  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">edges</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/as_graph.html">as_graph</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/plotit.html">plotit</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/layout_circle.html">layout_circle</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/mark_point.html">mark_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="op">~</span><span class="va">nodes</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/mark_rule.html">mark_rule</a></span><span class="op">(</span>data <span class="op">=</span> <span class="op">~</span><span class="va">edges</span><span class="op">)</span></span></code></pre></div>
+<p><code><a href="reference/as_graph.html">as_graph()</a></code> 按列名自动识别 <code>source</code>/<code>target</code>/<code>value</code> （可用同名参数显式指定列）。</p>
+</div>
 <div class="section level3">
 <h3 id="scale_--数据到视觉的映射">
 <code>scale_*</code> — 数据到视觉的映射<a class="anchor" aria-label="anchor" href="#scale_--%E6%95%B0%E6%8D%AE%E5%88%B0%E8%A7%86%E8%A7%89%E7%9A%84%E6%98%A0%E5%B0%84"></a></h3>

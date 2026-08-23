@@ -16,8 +16,8 @@ mark_sankey(
   data = NULL,
   position = NULL,
   ...,
-  node_colour = "grey30",
-  flow_alpha = 0.5
+  node_colour = ._MARK_STYLE$ink,
+  flow_alpha = ._MARK_STYLE$alpha_link
 )
 ```
 
@@ -50,11 +50,12 @@ mark_sankey(
 - node_colour:
 
   Default colour for node rectangles (used when no `fill` mapping is
-  present, default `"grey30"`).
+  present, default `._MARK_STYLE$ink` = `"grey30"`).
 
 - flow_alpha:
 
-  Alpha transparency for flow ribbons (default 0.5).
+  Alpha transparency for flow ribbons (default `._MARK_STYLE$alpha_link`
+  = 0.5).
 
 ## Value
 

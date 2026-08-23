@@ -68,8 +68,8 @@ dependency-free).</p>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  position <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span>,</span>
-<span>  node_colour <span class="op">=</span> <span class="st">"grey30"</span>,</span>
-<span>  flow_alpha <span class="op">=</span> <span class="fl">0.5</span></span>
+<span>  node_colour <span class="op">=</span> <span class="va">._MARK_STYLE</span><span class="op">$</span><span class="va">ink</span>,</span>
+<span>  flow_alpha <span class="op">=</span> <span class="va">._MARK_STYLE</span><span class="op">$</span><span class="va">alpha_link</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -102,11 +102,13 @@ colours ribbons and nodes alike; ribbons default to source identity.</p></dd>
 
 <dt id="arg-node-colour">node_colour<a class="anchor" aria-label="anchor" href="#arg-node-colour"></a></dt>
 <dd><p>Default colour for node rectangles (used when no
-<code>fill</code> mapping is present, default <code>"grey30"</code>).</p></dd>
+<code>fill</code> mapping is present, default <code>._MARK_STYLE$ink</code> =
+<code>"grey30"</code>).</p></dd>
 
 
 <dt id="arg-flow-alpha">flow_alpha<a class="anchor" aria-label="anchor" href="#arg-flow-alpha"></a></dt>
-<dd><p>Alpha transparency for flow ribbons (default 0.5).</p></dd>
+<dd><p>Alpha transparency for flow ribbons
+(default <code>._MARK_STYLE$alpha_link</code> = 0.5).</p></dd>
 
 </dl></div>
     <div class="section level2">

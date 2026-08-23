@@ -12,9 +12,9 @@ mark_significance(
   comparisons,
   y_position = NULL,
   y_offset = NULL,
-  line_colour = "grey30",
-  line_width = 0.3,
-  text_size = 3.5,
+  line_colour = ._MARK_STYLE$ink,
+  line_width = ._MARK_STYLE$lw_thin,
+  text_size = ._MARK_STYLE$txt_note,
   tip_length = 0.02,
   ...
 )
@@ -43,15 +43,16 @@ mark_significance(
 
 - line_colour:
 
-  Colour for the bracket lines (default `"grey30"`).
+  Colour for the bracket lines (default `._MARK_STYLE$ink` =
+  `"grey30"`).
 
 - line_width:
 
-  Width of bracket lines (default 0.3).
+  Width of bracket lines (default 0.5).
 
 - text_size:
 
-  Size of significance label text (default 3.5).
+  Size of significance label text (default 3.2).
 
 - tip_length:
 
