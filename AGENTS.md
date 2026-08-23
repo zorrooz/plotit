@@ -188,7 +188,7 @@ G2 的每个复合 Mark 内部展开为 2-5 个基础 Mark 的组合，这与 pl
 | 22 | 复合 | `mark_dumbbell` | 图表 | `mark_point`×2 + `mark_line` 语法糖 | G2 `link`(corelib) | 哑铃对比图 ✅ |
 | | **第三层（关系）** | | | | | |
 | 23 | 复合 | `mark_beeswarm` | 分布 | `ggbeeswarm::geom_beeswarm` | G2 `beeswarm`(corelib) | 蜂群散点（碰撞检测） ✅ |
-| 24 | 复合 | `mark_sankey` | 关系 | `ggsankey`（edges-table API） | G2 `sankey`(graphlib) | 桑基流向图 ✅ |
+| 24 | 复合 | `mark_sankey` | 关系 | `layout_sankey()` + polygon/rect 语法糖（edges-table API） | G2 `sankey`(graphlib) | 桑基流向图 ✅ |
 | 25 | 复合 | `mark_treemap` | 关系 | `treemapify` | G2 `treemap`(graphlib) | 矩形树图 ✅ |
 | 26 | 复合 | `mark_network` | 关系 | `layout_force/circle()` + point/rule 语法糖（nodes+edges 双数据源） | G2 `forceGraph`(graphlib) | 力导向网络图 ✅ |
 | 27 | 复合 | `mark_chord` | 关系 | `layout_chord()` + polygon 语法糖（edges-table API） | G2 `chord`(graphlib) | 弦图 ✅ |
@@ -464,11 +464,13 @@ x/y 的 `range` 表示数据在面板上的视觉占比，通过 `limits` + `exp
 关系数据走「布局即数据变换」路线：`as_graph()` 收编为 `plotit_graph`（命名表集合，canonical 表 `nodes`/`edges`），`layout_*()` 从拓扑计算坐标并烘焙进表，mark 通过公式引用子表渲染。
 
 ```
-data |> as_graph(source, target, value) |> plotit() |>
+data |> as_graph() |> plotit() |>
   layout_force(seed = 1) |>
-  mark_point(data = ~nodes, encode(colour = group)) |>
+  mark_point(data = ~nodes) |>
   mark_rule(data = ~edges)
 ```
+
+> `as_graph()` 按列名自动识别 `source`/`target`/`value`（可用同名参数显式指定列）。位置传列名非法——第二个位置参数是 `nodes` 节点表。
 
 | 函数 | 引擎 | 关键参数 |
 |---|---|---|
@@ -809,13 +811,13 @@ export(p, "output.pdf", dpi = 300)
 |---|---|---|---|---|---|
 | 3.1 | `mark_path` | 基础几何 | ggplot2 | 低 | `geom_path` |
 | 3.2 | `mark_polygon` | 基础几何 | ggplot2 | 低 | `geom_polygon` |
-| 3.3 | `mark_sankey` | 关系层次 | ggsankey（Suggests） | 高 | `ggsankey` stat（直接 layer 构造，兼容 ggplot2 ≥ 4.0，见 §3.3b） |
+| 3.3 | `mark_sankey` | 关系层次 | 无（纯 R 确定性布局引擎） | 高 | `layout_sankey()` + `mark_polygon(~ribbons)`/`mark_rect(~nodes)` 语法糖（初版 ggsankey 实现已退役，见 §3.3.4a） |
 
 **阶段 3 风险**：
 
 | 风险 | 缓解措施 |
 |---|---|
-| ggsankey API 不稳定 | 锁定最低版本，`mark_sankey` 只暴露稳定参数 |
+| ggsankey API 不稳定 | ✅ 已关闭：ggsankey 已退役，改为内置确定性分层布局引擎，零外部依赖 |
 
 ---
 
@@ -823,15 +825,15 @@ export(p, "output.pdf", dpi = 300)
 
 | # | mark | 类别 | 依赖包 | 复杂度 | 对应实现 |
 |---|---|---|---|---|---|
-| 4.1 | `mark_network` | 关系层次 | ggraph + igraph（Suggests） | 高 | `ggraph::geom_edge_*` + `ggraph::geom_node_*` |
-| 4.2 | `mark_chord` | 关系层次 | circlize（Suggests） | 高 | `circlize::chordDiagram` 原生渲染器（直绘设备 + 重放导出，见 §3.3b） |
+| 4.1 | `mark_network` | 关系层次 | igraph（Suggests，仅布局引擎） | 高 | `layout_force()`/`layout_circle()` + point/rule/text 语法糖（初版 ggraph 实现已退役，见 §3.3.4a） |
+| 4.2 | `mark_chord` | 关系层次 | 无（纯 R 确定性布局引擎） | 高 | `layout_chord()` + `mark_polygon(~ribbons)`/`mark_polygon(~arcs)` 语法糖（初版 circlize 实现已退役，见 §3.3.4a） |
 
 **阶段 4 风险**：
 
 | 风险 | 缓解措施 |
 |---|---|
-| `mark_network` 依赖两个重包（ggraph + igraph） | 设为 Suggests，示例用 `\dontrun{}` |
-| circlize 使用 base R 图形系统非 ggplot2 → 集成复杂 | 评估用 `geom_segment` + `geom_polygon` 纯 ggplot2 实现替代 |
+| `mark_network` 依赖两个重包（ggraph + igraph） | ✅ 已关闭：ggraph 已退役；igraph 仅用于 `layout_force`/`layout_tree` 布局引擎，渲染全部为 ggplot2 原语 |
+| circlize 使用 base R 图形系统非 ggplot2 → 集成复杂 | ✅ 已关闭：circlize 已退役，改为纯 R 确定性环形布局（§3.3.4a） |
 
 ### 9.2a 组合收录（不新增 mark 的 recipe）
 

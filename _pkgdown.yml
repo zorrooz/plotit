@@ -95,4 +95,3 @@ reference:
 # removes AGENTS.html post-build — see .github/workflows/pkgdown.yaml.
 exclude:
 - AGENTS.md
-- AGENTS.new.md
