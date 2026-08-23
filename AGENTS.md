@@ -399,6 +399,19 @@ style_dark <- make_theme("style_dark",
 └── 需要外部布局算法 / 非 ggplot2 渲染 → 新增「基础 Mark」（引入新 geom）
 ```
 
+#### 3.3.3c 统一 Mark 默认样式（style tokens）
+
+所有 mark 的样式字面量集中于 `R/mark_style.R`，单一事实来源：
+
+- **`._MARK_STYLE`（token 表）**：`primary="#4E79A7"`、`secondary="#E15759"`；中性灰阶 `ink`(grey30，强注释：显著性括号/sankey 节点)、`soft`(grey50，中连接线：棒棒糖茎/哑铃连线/参考线)、`faint`(grey70，弱结构：network 边)、`band`(grey80)/`arc`(grey85)（chord 回退填充）；线宽阶梯 `lw_data`(0.9，折线/路径/平滑) > `lw_thin`(0.5，细描边/括号/误差棒) > `lw_border`(0.25，柱/tile 白色发丝边框)；注释字号 `txt_note`(3.2)；半透明填充 `alpha_fill`(0.6，density/violin)、连接带 `alpha_link`(0.5，sankey/chord)；复合点径 `point_head`(3)。token 属 §1.4 可迭代层。
+- **`._MARK_DEFAULTS`（按 mark 注入的静态默认）**：line/path（linewidth 0.9 + round 端点）、smooth（linewidth 0.9）、bar/histogram/rect（白色发丝边框）、area/polygon（linewidth 0 去描边）、density/violin（alpha 0.6）、rule（colour soft + linewidth thin）、errorbar（linewidth 0.5）。经 `._mark_impl()` 统一注入，标准 mark 由工厂自动携带 mark 名，手写 mark 显式传 `mark_name=`。
+- **合并规则**（`._apply_mark_defaults()`）：**用户显式参数 > 已映射美学（层或全局，含注入的 AsIs 常量）> mark 默认**。因此分组柱状图自动获得白色分隔边框、单色注入柱保持无边框、映射了 alpha 的图层不被默认覆盖。
+- **特例**：
+  - `mark_boxplot` 在 default_color 注入存活且用户未指定 colour 时自动改用 `ink` 描边（避免蓝底蓝线中位线不可读），见 `._user_owned_aes()` 对 AsIs 注入常量的豁免逻辑；
+  - `mark_rule` 标量路径与 annotate 段路径同样只对「用户自有」美学让位（注入常量不渲染在参数型 geom 上，不应阻塞默认值）。
+- **封闭统计 Mark 自动 viridis**：`mark_corr` / `mark_hex` / `mark_density_2d(filled=TRUE)` 的内部 fill 通道（value/count/level）由 mark 自有，自动附加 viridis fill scale（连续 `_c`、离散 `_d`）；同时清除注入的 default_color 常量（否则覆盖统计 fill）。用户之后链式 `scale_*()` 即替换（后执行者胜；ggplot2 会输出替换提示消息）。
+- **make_mark 自定义 mark**：不在 `._MARK_DEFAULTS` 中时零行为差异。
+
 #### 3.3.4 `scale_*` — 比例尺
 
 设计对标 **Vega/Vega-Lite** 的 scale 模型（`type`/`domain`/`range`/`scheme` → `trans`/`limits`/`range`/`name`）。
@@ -682,6 +695,8 @@ export(p, "output.pdf", dpi = 300)
 
 - **主题**：基于 `theme_minimal`，背景透明，无网格线，保留浅灰轴线，无衬线字体，层级分明字号。极坐标系自动关闭轴线/刻度线/轴文本。平行坐标系：`std`/`global` 模式共享原生 y 轴，`none` 模式每列渲染主题匹配轴线。
 - **调色板**：保持多样性与简便性并重。无映射时默认 Tableau 蓝 `#4E79A7`（同时 `colour`+`fill`，图例隐藏）。有映射：连续默认 viridis（色盲友好），离散默认 hue（ggplot2 色相轮，见 §3.3.4 range 语义）。`range="scheme_name"` 接口持续扩展（brewer/viridis/grey/hue），最小配置成本获得美观默认值。
+- **Mark 统一默认样式**：全部 mark 的样式字面量集中于 `R/mark_style.R`（详见 §3.3.3c）——品牌色 primary `#4E79A7` / secondary `#E15759`；中性灰阶 ink(grey30)/soft(grey50)/faint(grey70)；线宽阶梯 lw_data(0.9) > lw_thin(0.5) > lw_border(0.25)；注释字号 txt_note(3.2)；半透明填充 alpha_fill(0.6)、连接带 alpha_link(0.5)。用户显式参数与已映射美学始终优先于默认。
+- **封闭统计 Mark 自动 viridis**：`mark_corr` / `mark_hex` / `mark_density_2d(filled=TRUE)` 的内部 fill 通道自动附加 viridis scale（连续用 `_c`、离散用 `_d`）；用户之后链式调用 `scale_*()` 即替换（后执行者胜，ggplot2 会给出替换提示）。
 - **图例**：右侧，背景透明，简洁边框。
 - **尺寸**：自适应关闭时默认约 7×5 英寸，导出 300 dpi。
 

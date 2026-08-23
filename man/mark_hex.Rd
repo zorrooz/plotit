@@ -42,6 +42,8 @@ Modified plotit object
 Divides the x-y plane into hexagonal bins and fills each by the
 count (or other aggregation) of observations in that bin.
 Ideal for visualizing overplotting in large datasets.
+The count fill scale defaults to viridis; chain \code{\link[=scale_fill]{scale_fill()}}
+afterwards to replace it (last call wins).
 }
 \examples{
 plotit(

@@ -1,16 +1,19 @@
-#' @include class.R graph.R
+#' @include class.R graph.R mark_style.R
 NULL
 
 # ---- Internal helpers ----
 
 # Shared mark logic: resolve position (auto-dodge or explicit), build geom,
-# clear default_color if the layer provides colour/fill, rasterize.
-#' Shared mark implementation: resolve position, clear default_color, rasterise.
+# clear default_color if the layer provides colour/fill, apply unified style
+# defaults, rasterize.
+#' Shared mark implementation: resolve position, clear default_color,
+#' apply style defaults, rasterise.
 #' @noRd
 #' @keywords internal
 ._mark_impl <- function(plot, mapping, data, position, geom_fun,
                         rasterize, rasterize_dpi, rasterize_dev,
-                        auto_dodge = TRUE, bind_aes = NULL, ...) {
+                        auto_dodge = TRUE, bind_aes = NULL, mark_name = NULL,
+                        ...) {
   # Graph plots: resolve ~table references and auto-bind layout geometry.
   resolved <- ._resolve_layer_data(data, plot)
   data <- resolved$data
@@ -25,6 +28,9 @@ NULL
   if (!is.null(mapping) && (!is.null(mapping$colour) || !is.null(mapping$fill))) {
     plot <- ._clear_default_color(plot, mapping)
   }
+  # Unified mark style defaults (see R/mark_style.R).  Runs after the
+  # default_color clear so gating sees the final mapping state.
+  dots <- ._apply_mark_defaults(plot, mapping, dots, mark_name)
   pos <- position
   if (is.null(pos) && auto_dodge && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
     pos <- ggplot2::position_dodge(plot@meta@dodge)
@@ -66,8 +72,9 @@ NULL
 ._register_mark_method <- function(generic, geom_fun) {
   force(generic)
   force(geom_fun)
+  mark_name <- deparse(substitute(generic))
   # Restrict graph auto-binding to what this mark family understands.
-  bind_aes <- ._MARK_BIND_AES[[deparse(substitute(generic))]]
+  bind_aes <- ._MARK_BIND_AES[[mark_name]]
 
   S7::method(generic, plotit_class) <- function(
     plot, mapping = NULL, data = NULL, position = NULL, ...,
@@ -75,7 +82,7 @@ NULL
   ) {
     ._mark_impl(plot, mapping, data, position, geom_fun,
       rasterize, rasterize_dpi, rasterize_dev,
-      bind_aes = bind_aes, ...
+      bind_aes = bind_aes, mark_name = mark_name, ...
     )
   }
   invisible()
@@ -288,7 +295,7 @@ S7::method(mark_text, plotit_class) <- function(
   ._mark_impl(
     plot, mapping, data, position, geom_fun,
     rasterize, rasterize_dpi, rasterize_dev,
-    bind_aes = ._MARK_BIND_AES$mark_text, ...
+    bind_aes = ._MARK_BIND_AES$mark_text, mark_name = "mark_text", ...
   )
 }
 
@@ -427,7 +434,7 @@ S7::method(mark_rect, plotit_class) <- function(
   geom_fun <- if (corners) ggplot2::geom_rect else ggplot2::geom_tile
   ._mark_impl(plot, mapping, data, position, geom_fun,
     rasterize, rasterize_dpi, rasterize_dev,
-    bind_aes = ._MARK_BIND_AES$mark_rect, ...
+    bind_aes = ._MARK_BIND_AES$mark_rect, mark_name = "mark_rect", ...
   )
 }
 
@@ -453,9 +460,10 @@ S7::method(mark_rect, plotit_class) <- function(
 #' @param xend End x coordinate(s) for segment
 #' @param y Start y coordinate(s) for segment
 #' @param yend End y coordinate(s) for segment
-#' @param colour Line colour
+#' @param colour Line colour (default `"grey50"`, the unified soft neutral;
+#'   ggplot2's black is restored by passing `colour = "black"`).
 #' @param linetype Line type
-#' @param linewidth Line width in mm
+#' @param linewidth Line width in mm (default 0.5).
 #' @param mapping Optional aesthetics for data-driven segments
 #'   (`x`/`xend`/`y`/`yend`); layout tables bind them automatically.
 #' @param data Optional data for segment mode: one segment per row.
@@ -552,7 +560,8 @@ S7::method(mark_rule, plotit_class) <- function(
         list(plot, mapping, seg_data,
           position = NULL, ggplot2::geom_segment,
           rasterize, rasterize_dpi, rasterize_dev,
-          auto_dodge = FALSE
+          auto_dodge = FALSE,
+          mark_name = "mark_rule"
         ),
         static
       )
@@ -564,6 +573,16 @@ S7::method(mark_rule, plotit_class) <- function(
   if (!is.null(colour)) params$colour <- colour
   if (!is.null(linetype)) params$linetype <- linetype
   if (!is.null(linewidth)) params$linewidth <- linewidth
+  # Unified reference-line default (R/mark_style.R): soft neutral stroke
+  # unless the user supplies a colour or maps one themselves.  The AsIs
+  # constants injected by plotit() do not render on param geoms, so they
+  # must not block the default either (._user_owned_aes).
+  if (is.null(params$colour) && !"colour" %in% ._user_owned_aes(plot, mapping)) {
+    params$colour <- ._MARK_STYLE$soft
+  }
+  if (is.null(params$linewidth) && !"linewidth" %in% ._user_owned_aes(plot, mapping)) {
+    params$linewidth <- ._MARK_STYLE$lw_thin
+  }
 
   # Dispatch by param combination
   if (!is.null(xintercept)) {
@@ -584,6 +603,9 @@ S7::method(mark_rule, plotit_class) <- function(
     if (!is.null(colour)) ann_args$colour <- colour
     if (!is.null(linetype)) ann_args$linetype <- linetype
     if (!is.null(linewidth)) ann_args$linewidth <- linewidth
+    if (is.null(ann_args$colour) && !"colour" %in% ._user_owned_aes(plot, mapping)) {
+      ann_args$colour <- ._MARK_STYLE$soft
+    }
     geom_call <- do.call(
       ggplot2::annotate, c(list("segment"), ann_args, rlang::list2(...))
     )
@@ -712,7 +734,7 @@ S7::method(mark_smooth, plotit_class) <- function(
     ._mark_impl(
       plot, mapping, data, position, ggplot2::geom_smooth,
       rasterize, rasterize_dpi, rasterize_dev,
-      bind_aes = ._MARK_BIND_AES$mark_smooth, ...
+      bind_aes = ._MARK_BIND_AES$mark_smooth, mark_name = "mark_smooth", ...
     )
   }, params)
 }
@@ -723,6 +745,8 @@ S7::method(mark_smooth, plotit_class) <- function(
 #' Divides the x-y plane into hexagonal bins and fills each by the
 #' count (or other aggregation) of observations in that bin.
 #' Ideal for visualizing overplotting in large datasets.
+#' The count fill scale defaults to viridis; chain [scale_fill()]
+#' afterwards to replace it (last call wins).
 #'
 #' @param plot A plotit object
 #' @param mapping Optional new aesthetics
@@ -760,22 +784,37 @@ S7::method(mark_hex, plotit_class) <- function(
   if (!requireNamespace("hexbin", quietly = TRUE)) {
     cli::cli_abort("{.fn mark_hex} requires the {.pkg hexbin} package.")
   }
+  # Track whether the user owns the fill channel before the injected
+  # default_color constants are cleared below.
+  user_fill <- !is.null(mapping$fill) ||
+    (!is.null(plot@gg$mapping$fill) && !inherits(plot@gg$mapping$fill, "AsIs"))
+  # The bin-count fill is owned by this closed statistical mark: drop the
+  # injected single-colour constants so the count scale can render.
+  plot <- ._clear_default_color(plot)
   params <- rlang::list2(...)
   params$bins <- bins
-  do.call(function(...) {
+  plot <- do.call(function(...) {
     ._mark_impl(
       plot, mapping, data, position, ggplot2::geom_hex,
       rasterize, rasterize_dpi, rasterize_dev,
-      bind_aes = ._MARK_BIND_AES$mark_hex, ...
+      bind_aes = ._MARK_BIND_AES$mark_hex, mark_name = "mark_hex", ...
     )
   }, params)
+  # Default continuous fill (AGENTS.md §6): viridis unless the user mapped
+  # their own fill.  A later scale_fill() call replaces it (last wins).
+  if (!user_fill) {
+    plot <- scale_fill(plot, trans = "identity", range = "viridis")
+  }
+  plot
 }
 
 # ---- mark_density_2d ----
 #' 2D density contour layer
 #'
 #' Adds 2D kernel density estimate contours. Use `filled = TRUE`
-#' for filled density bands via [ggplot2::geom_density_2d_filled].
+#' for filled density bands via [ggplot2::geom_density_2d_filled];
+#' filled bands default to a discrete viridis fill scale, replaceable
+#' by chaining [scale_fill()] afterwards.
 #'
 #' @param plot A plotit object
 #' @param mapping Optional new aesthetics
@@ -812,13 +851,23 @@ S7::method(mark_density_2d, plotit_class) <- function(
   geom_fun <- if (filled) ggplot2::geom_density_2d_filled else ggplot2::geom_density_2d
   dots <- rlang::list2(...)
   if (!is.null(bins)) dots$bins <- bins
-  do.call(function(...) {
+  # Filled bands map fill to a computed `level` factor owned by this closed
+  # statistical mark: clear injected colour constants and default the band
+  # scale to viridis (AGENTS.md §6).
+  if (filled) {
+    plot <- ._clear_default_color(plot)
+  }
+  plot <- do.call(function(...) {
     ._mark_impl(
       plot, mapping, data, position, geom_fun,
       rasterize, rasterize_dpi, rasterize_dev,
-      bind_aes = ._MARK_BIND_AES$mark_density, ...
+      bind_aes = ._MARK_BIND_AES$mark_density, mark_name = "mark_density_2d", ...
     )
   }, dots)
+  if (filled) {
+    plot <- scale_fill(plot, trans = "discrete", range = "viridis")
+  }
+  plot
 }
 
 # ---- transform_corr ----
@@ -884,7 +933,9 @@ transform_corr <- function(data,
 #'
 #' Computes a correlation matrix from numeric data columns, optionally
 #' reorders by hierarchical clustering, and renders it as a tile heatmap.
-#' Sugar over [transform_corr()] plus a tile layer.
+#' Sugar over [transform_corr()] plus a tile layer.  The value fill scale
+#' defaults to viridis (colour-blind safe); chain [scale_fill()] afterwards
+#' to replace it (last call wins).
 #'
 #' @param plot A plotit object. Numeric columns are extracted from the
 #'   plot data for correlation computation.
@@ -927,10 +978,15 @@ S7::method(mark_corr, plotit_class) <- function(
   df <- transform_corr(raw_data, method = method, reorder = reorder)
   mapping <- encode(x = Var1, y = Var2, fill = value)
   geom <- ggplot2::geom_tile(mapping = mapping, data = df, ...)
-  .add_geom(plot, geom,
+  plot <- .add_geom(plot, geom,
     rasterize = rasterize, rasterize_dpi = rasterize_dpi,
     rasterize_dev = rasterize_dev
   )
+  # The correlation value fill is owned by this closed statistical mark;
+  # default it to the colour-blind-safe continuous scheme (AGENTS.md §6).
+  # A later scale_fill() call replaces it (last wins).
+  plot <- scale_fill(plot, trans = "identity", range = "viridis")
+  plot
 }
 
 # ---- mark_errorbar ----
@@ -988,7 +1044,7 @@ S7::method(mark_errorbar, plotit_class) <- function(
     ._mark_impl(
       plot, mapping, data, position, geom_fun,
       rasterize, rasterize_dpi, rasterize_dev,
-      bind_aes = ._MARK_BIND_AES$mark_point, ...
+      bind_aes = ._MARK_BIND_AES$mark_point, mark_name = "mark_errorbar", ...
     )
   }, params)
 }
@@ -1016,9 +1072,10 @@ S7::method(mark_errorbar, plotit_class) <- function(
 #'   If omitted, auto-computed from data range.
 #' @param y_offset Text offset above the bracket line (default 0.5).
 #'   In data units.
-#' @param line_colour Colour for the bracket lines (default `"grey30"`).
-#' @param line_width Width of bracket lines (default 0.3).
-#' @param text_size Size of significance label text (default 3.5).
+#' @param line_colour Colour for the bracket lines
+#'   (default `._MARK_STYLE$ink` = `"grey30"`).
+#' @param line_width Width of bracket lines (default 0.5).
+#' @param text_size Size of significance label text (default 3.2).
 #' @param tip_length Length of bracket end-tick lines (default 0.02
 #'   as fraction of x-axis range).
 #' @param ... Additional arguments passed to `mark_text()`
@@ -1036,8 +1093,8 @@ S7::method(mark_errorbar, plotit_class) <- function(
 mark_significance <- S7::new_generic(
   "mark_significance", "plot",
   function(plot, comparisons, y_position = NULL, y_offset = NULL,
-           line_colour = "grey30", line_width = 0.3,
-           text_size = 3.5, tip_length = 0.02, ...) {
+           line_colour = ._MARK_STYLE$ink, line_width = ._MARK_STYLE$lw_thin,
+           text_size = ._MARK_STYLE$txt_note, tip_length = 0.02, ...) {
     S7::S7_dispatch()
   }
 )
@@ -1045,8 +1102,8 @@ mark_significance <- S7::new_generic(
 #' @export
 S7::method(mark_significance, plotit_class) <- function(
   plot, comparisons, y_position = NULL, y_offset = NULL,
-  line_colour = "grey30", line_width = 0.3,
-  text_size = 3.5, tip_length = 0.02, ...
+  line_colour = ._MARK_STYLE$ink, line_width = ._MARK_STYLE$lw_thin,
+  text_size = ._MARK_STYLE$txt_note, tip_length = 0.02, ...
 ) {
   if (!is.data.frame(comparisons)) {
     cli::cli_abort("{.arg comparisons} must be a data frame.")
@@ -1149,7 +1206,8 @@ S7::method(mark_significance, plotit_class) <- function(
 #' @param plot A plotit object
 #' @param mapping Optional new aesthetics
 #' @param data Optional data for this layer
-#' @param stem_colour Colour for the stem lines (default `"grey50"`).
+#' @param stem_colour Colour for the stem lines
+#'   (default `._MARK_STYLE$soft` = `"grey50"`).
 #' @param stem_width Line width for stems (default 0.5).
 #' @param point_size Point size for the lollipop head (default 3).
 #' @param ref Baseline value for the stems (default 0).
@@ -1163,8 +1221,8 @@ S7::method(mark_significance, plotit_class) <- function(
 mark_lollipop <- S7::new_generic(
   "mark_lollipop", "plot",
   function(plot, mapping = NULL, data = NULL,
-           stem_colour = "grey50", stem_width = 0.5,
-           point_size = 3, ref = 0, ...) {
+           stem_colour = ._MARK_STYLE$soft, stem_width = ._MARK_STYLE$lw_thin,
+           point_size = ._MARK_STYLE$point_head, ref = 0, ...) {
     S7::S7_dispatch()
   }
 )
@@ -1172,8 +1230,8 @@ mark_lollipop <- S7::new_generic(
 #' @export
 S7::method(mark_lollipop, plotit_class) <- function(
   plot, mapping = NULL, data = NULL,
-  stem_colour = "grey50", stem_width = 0.5,
-  point_size = 3, ref = 0, ...
+  stem_colour = ._MARK_STYLE$soft, stem_width = ._MARK_STYLE$lw_thin,
+  point_size = ._MARK_STYLE$point_head, ref = 0, ...
 ) {
   d <- data %||% plot@gg$data
   m <- mapping %||% plot@gg$mapping
@@ -1212,11 +1270,14 @@ S7::method(mark_lollipop, plotit_class) <- function(
 #' @param plot A plotit object
 #' @param mapping Optional new aesthetics
 #' @param data Optional data for this layer
-#' @param colour_start Colour for the start point (default `"#4E79A7"`).
-#' @param colour_end Colour for the end point (default `"#E15759"`).
-#' @param line_colour Colour for the connecting line (default `"grey50"`).
+#' @param colour_start Colour for the start point
+#'   (default `._MARK_STYLE$primary` = `"#4E79A7"`).
+#' @param colour_end Colour for the end point
+#'   (default `._MARK_STYLE$secondary` = `"#E15759"`).
+#' @param line_colour Colour for the connecting line
+#'   (default `._MARK_STYLE$soft` = `"grey50"`).
 #' @param point_size Size for both dumbbell points (default 3).
-#' @param line_width Width for the connecting line (default 1).
+#' @param line_width Width for the connecting line (default 0.9).
 #' @param ... Other arguments passed to `mark_point()` calls
 #' @return Modified plotit object
 #' @examples
@@ -1230,9 +1291,11 @@ S7::method(mark_lollipop, plotit_class) <- function(
 mark_dumbbell <- S7::new_generic(
   "mark_dumbbell", "plot",
   function(plot, mapping = NULL, data = NULL,
-           colour_start = "#4E79A7", colour_end = "#E15759",
-           line_colour = "grey50", point_size = 3,
-           line_width = 1, ...) {
+           colour_start = ._MARK_STYLE$primary,
+           colour_end = ._MARK_STYLE$secondary,
+           line_colour = ._MARK_STYLE$soft,
+           point_size = ._MARK_STYLE$point_head,
+           line_width = ._MARK_STYLE$lw_data, ...) {
     S7::S7_dispatch()
   }
 )
@@ -1240,9 +1303,11 @@ mark_dumbbell <- S7::new_generic(
 #' @export
 S7::method(mark_dumbbell, plotit_class) <- function(
   plot, mapping = NULL, data = NULL,
-  colour_start = "#4E79A7", colour_end = "#E15759",
-  line_colour = "grey50", point_size = 3,
-  line_width = 1, ...
+  colour_start = ._MARK_STYLE$primary,
+  colour_end = ._MARK_STYLE$secondary,
+  line_colour = ._MARK_STYLE$soft,
+  point_size = ._MARK_STYLE$point_head,
+  line_width = ._MARK_STYLE$lw_data, ...
 ) {
   d <- data %||% plot@gg$data
   m <- mapping %||% plot@gg$mapping
@@ -1334,7 +1399,8 @@ S7::method(mark_beeswarm, plotit_class) <- function(
   do.call(function(...) {
     ._mark_impl(plot, mapping, data, position, ggbeeswarm::geom_beeswarm,
       rasterize, rasterize_dpi, rasterize_dev,
-      auto_dodge = FALSE, bind_aes = ._MARK_BIND_AES$mark_point, ...
+      auto_dodge = FALSE, bind_aes = ._MARK_BIND_AES$mark_point,
+      mark_name = "mark_beeswarm", ...
     )
   }, params)
 }
@@ -1361,8 +1427,10 @@ S7::method(mark_beeswarm, plotit_class) <- function(
 #' @param data Optional edges data.frame for this layer
 #' @param position Position adjustment (ignored; the layout owns placement)
 #' @param node_colour Default colour for node rectangles (used when no
-#'   \code{fill} mapping is present, default \code{"grey30"}).
-#' @param flow_alpha Alpha transparency for flow ribbons (default 0.5).
+#'   \code{fill} mapping is present, default `._MARK_STYLE$ink` =
+#'   \code{"grey30"}).
+#' @param flow_alpha Alpha transparency for flow ribbons
+#'   (default `._MARK_STYLE$alpha_link` = 0.5).
 #' @param ... Unused; fine-tuning (padding, curvature, node width) lives on
 #'   [layout_sankey()] in the explicit pipeline form.
 #' @return Modified plotit object; `@graph` holds the laid-out tables.
@@ -1385,7 +1453,8 @@ S7::method(mark_beeswarm, plotit_class) <- function(
 mark_sankey <- S7::new_generic(
   "mark_sankey", "plot",
   function(plot, mapping = NULL, data = NULL, position = NULL, ...,
-           node_colour = "grey30", flow_alpha = 0.5) {
+           node_colour = ._MARK_STYLE$ink,
+           flow_alpha = ._MARK_STYLE$alpha_link) {
     S7::S7_dispatch()
   }
 )
@@ -1393,7 +1462,8 @@ mark_sankey <- S7::new_generic(
 #' @export
 S7::method(mark_sankey, plotit_class) <- function(
   plot, mapping = NULL, data = NULL, position = NULL, ...,
-  node_colour = "grey30", flow_alpha = 0.5
+  node_colour = ._MARK_STYLE$ink,
+  flow_alpha = ._MARK_STYLE$alpha_link
 ) {
   dots <- rlang::list2(...)
   if (length(dots) > 0) {
@@ -1497,7 +1567,10 @@ S7::method(mark_sankey, plotit_class) <- function(
   txt_mapping$x <- rlang::sym("xc")
   txt_mapping$y <- rlang::sym("yc")
   txt_mapping$label <- rlang::sym("id")
-  plot <- mark_text(plot, mapping = txt_mapping, data = ~nodes, size = 3)
+  plot <- mark_text(plot,
+    mapping = txt_mapping, data = ~nodes,
+    size = ._MARK_STYLE$txt_note
+  )
   plot
 }
 # ---- mark_treemap ----
@@ -1586,11 +1659,12 @@ S7::method(mark_treemap, plotit_class) <- function(
 #'   \code{"circle"}, or \code{"manual"}.  \code{"linear"} and
 #'   \code{"bipartite"} are deprecated and fall back to \code{"auto"}.
 #' @param seed Random seed for the force layout (reproducibility).
-#' @param edge_colour Default edge colour (default \code{"grey70"}) when no
-#'   edge colour channel is mapped.
-#' @param edge_width Default edge width (default 0.5) when no edge linewidth
-#'   channel is mapped.
-#' @param node_colour Default fill colour for nodes (default \code{"#4E79A7"}).
+#' @param edge_colour Default edge colour when no edge colour channel is
+#'   mapped (default `._MARK_STYLE$faint` = \code{"grey70"}).
+#' @param edge_width Default edge width when no edge linewidth channel is
+#'   mapped (default `._MARK_STYLE$lw_thin` = 0.5).
+#' @param node_colour Default fill colour for nodes
+#'   (default `._MARK_STYLE$primary` = \code{"#4E79A7"}).
 #' @param node_size Default size for nodes (default 5).
 #' @param ... Other arguments passed to the edge segment layer (e.g.
 #'   \code{arrow}).
@@ -1624,8 +1698,8 @@ mark_network <- S7::new_generic(
            encode_edges = NULL,
            layout = c("auto", "circle", "linear", "bipartite", "manual"),
            seed = NULL,
-           edge_colour = "grey70", edge_width = 0.5,
-           node_colour = "#4E79A7", node_size = 5, ...) {
+           edge_colour = ._MARK_STYLE$faint, edge_width = ._MARK_STYLE$lw_thin,
+           node_colour = ._MARK_STYLE$primary, node_size = 5, ...) {
     S7::S7_dispatch()
   }
 )
@@ -1637,8 +1711,8 @@ S7::method(mark_network, plotit_class) <- function(
   encode_edges = NULL,
   layout = c("auto", "circle", "linear", "bipartite", "manual"),
   seed = NULL,
-  edge_colour = "grey70", edge_width = 0.5,
-  node_colour = "#4E79A7", node_size = 5, ...
+  edge_colour = ._MARK_STYLE$faint, edge_width = ._MARK_STYLE$lw_thin,
+  node_colour = ._MARK_STYLE$primary, node_size = 5, ...
 ) {
   layout <- match.arg(layout)
   if (layout %in% c("linear", "bipartite")) {
@@ -1829,7 +1903,8 @@ S7::method(mark_network, plotit_class) <- function(
     label_mapping$label <- node_aes$label
     plot <- mark_text(plot,
       mapping = label_mapping, data = ~nodes,
-      position = ggplot2::position_identity(), size = 3
+      position = ggplot2::position_identity(),
+      size = ._MARK_STYLE$txt_note
     )
   }
 
@@ -1881,7 +1956,8 @@ S7::method(mark_network, plotit_class) <- function(
 #'   matrix) are still auto-detected and coerced.
 #' @param gap_width Gap between sectors in degrees (default 4); translated
 #'   to the layout's angular padding.
-#' @param link_alpha Alpha transparency for link bands (default 0.5).
+#' @param link_alpha Alpha transparency for link bands
+#'   (default `._MARK_STYLE$alpha_link` = 0.5).
 #' @param ... Unused; fine-tuning (inner radius, curvature, sector order)
 #'   lives on [layout_chord()] in the explicit pipeline form.
 #' @return Modified plotit object; `@graph` holds the laid-out tables.
@@ -1903,7 +1979,7 @@ S7::method(mark_network, plotit_class) <- function(
 mark_chord <- S7::new_generic(
   "mark_chord", "plot",
   function(plot, mapping = NULL, data = NULL,
-           gap_width = 4, link_alpha = 0.5, ...) {
+           gap_width = 4, link_alpha = ._MARK_STYLE$alpha_link, ...) {
     S7::S7_dispatch()
   }
 )
@@ -1911,7 +1987,7 @@ mark_chord <- S7::new_generic(
 #' @export
 S7::method(mark_chord, plotit_class) <- function(
   plot, mapping = NULL, data = NULL,
-  gap_width = 4, link_alpha = 0.5, ...
+  gap_width = 4, link_alpha = ._MARK_STYLE$alpha_link, ...
 ) {
   dots <- rlang::list2(...)
   if (length(dots) > 0) {
@@ -2034,7 +2110,7 @@ S7::method(mark_chord, plotit_class) <- function(
     plot = plot, data = ~ribbons,
     mapping = band_mapping, alpha = link_alpha
   )
-  if (!has_fill) band_args$fill <- "grey80"
+  if (!has_fill) band_args$fill <- ._MARK_STYLE$band
   plot <- do.call(mark_polygon, band_args)
 
   arc_mapping <- ggplot2::aes()
@@ -2043,7 +2119,7 @@ S7::method(mark_chord, plotit_class) <- function(
     arc_mapping$fill <- rlang::sym("fill_grp")
     plot <- mark_polygon(plot, mapping = arc_mapping, data = ~arcs)
   } else {
-    plot <- mark_polygon(plot, data = ~arcs, fill = "grey85")
+    plot <- mark_polygon(plot, data = ~arcs, fill = ._MARK_STYLE$arc)
   }
   plot
 }
@@ -2089,6 +2165,6 @@ S7::method(mark_bar, plotit_class) <- function(plot, mapping = NULL, data = NULL
   ._mark_impl(
     plot, mapping, data, position, geom_fun,
     rasterize, rasterize_dpi, rasterize_dev,
-    bind_aes = ._MARK_BIND_AES$mark_bar, ...
+    bind_aes = ._MARK_BIND_AES$mark_bar, mark_name = "mark_bar", ...
   )
 }

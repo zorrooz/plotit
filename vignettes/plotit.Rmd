@@ -191,8 +191,10 @@ flows <- data.frame(
 )
 
 flows |>
-  plotit(encode(source = source, target = target,
-                value = value, fill = source)) |>
+  plotit(encode(
+    source = source, target = target,
+    value = value, fill = source
+  )) |>
   mark_sankey()
 ```
 
