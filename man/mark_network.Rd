@@ -10,9 +10,9 @@ mark_network(
   encode_edges = NULL,
   layout = c("auto", "circle", "linear", "bipartite", "manual"),
   seed = NULL,
-  edge_colour = "grey70",
-  edge_width = 0.5,
-  node_colour = "#4E79A7",
+  edge_colour = ._MARK_STYLE$faint,
+  edge_width = ._MARK_STYLE$lw_thin,
+  node_colour = ._MARK_STYLE$primary,
   node_size = 5,
   ...
 )
@@ -36,13 +36,14 @@ may carry literal \code{source}/\code{target}/\code{value} columns.}
 
 \item{seed}{Random seed for the force layout (reproducibility).}
 
-\item{edge_colour}{Default edge colour (default \code{"grey70"}) when no
-edge colour channel is mapped.}
+\item{edge_colour}{Default edge colour when no edge colour channel is
+mapped (default \code{._MARK_STYLE$faint} = \code{"grey70"}).}
 
-\item{edge_width}{Default edge width (default 0.5) when no edge linewidth
-channel is mapped.}
+\item{edge_width}{Default edge width when no edge linewidth channel is
+mapped (default \code{._MARK_STYLE$lw_thin} = 0.5).}
 
-\item{node_colour}{Default fill colour for nodes (default \code{"#4E79A7"}).}
+\item{node_colour}{Default fill colour for nodes
+(default \code{._MARK_STYLE$primary} = \code{"#4E79A7"}).}
 
 \item{node_size}{Default size for nodes (default 5).}
 

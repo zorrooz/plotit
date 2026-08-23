@@ -9,7 +9,7 @@ mark_chord(
   mapping = NULL,
   data = NULL,
   gap_width = 4,
-  link_alpha = 0.5,
+  link_alpha = ._MARK_STYLE$alpha_link,
   ...
 )
 }
@@ -28,7 +28,8 @@ matrix) are still auto-detected and coerced.}
 \item{gap_width}{Gap between sectors in degrees (default 4); translated
 to the layout's angular padding.}
 
-\item{link_alpha}{Alpha transparency for link bands (default 0.5).}
+\item{link_alpha}{Alpha transparency for link bands
+(default \code{._MARK_STYLE$alpha_link} = 0.5).}
 
 \item{...}{Unused; fine-tuning (inner radius, curvature, sector order)
 lives on \code{\link[=layout_chord]{layout_chord()}} in the explicit pipeline form.}
@@ -54,8 +55,11 @@ df <- data.frame(
   target = c("B", "C", "C", "D", "D"),
   value  = c(5, 3, 4, 2, 6)
 )
-df |> plotit(encode(source = source, target = target,
-                    value = value, fill = source)) |>
+df |>
+  plotit(encode(
+    source = source, target = target,
+    value = value, fill = source
+  )) |>
   mark_chord()
 }
 \references{

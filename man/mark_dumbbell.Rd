@@ -8,11 +8,11 @@ mark_dumbbell(
   plot,
   mapping = NULL,
   data = NULL,
-  colour_start = "#4E79A7",
-  colour_end = "#E15759",
-  line_colour = "grey50",
-  point_size = 3,
-  line_width = 1,
+  colour_start = ._MARK_STYLE$primary,
+  colour_end = ._MARK_STYLE$secondary,
+  line_colour = ._MARK_STYLE$soft,
+  point_size = ._MARK_STYLE$point_head,
+  line_width = ._MARK_STYLE$lw_data,
   ...
 )
 }
@@ -23,15 +23,18 @@ mark_dumbbell(
 
 \item{data}{Optional data for this layer}
 
-\item{colour_start}{Colour for the start point (default \code{"#4E79A7"}).}
+\item{colour_start}{Colour for the start point
+(default \code{._MARK_STYLE$primary} = \code{"#4E79A7"}).}
 
-\item{colour_end}{Colour for the end point (default \code{"#E15759"}).}
+\item{colour_end}{Colour for the end point
+(default \code{._MARK_STYLE$secondary} = \code{"#E15759"}).}
 
-\item{line_colour}{Colour for the connecting line (default \code{"grey50"}).}
+\item{line_colour}{Colour for the connecting line
+(default \code{._MARK_STYLE$soft} = \code{"grey50"}).}
 
 \item{point_size}{Size for both dumbbell points (default 3).}
 
-\item{line_width}{Width for the connecting line (default 1).}
+\item{line_width}{Width for the connecting line (default 0.9).}
 
 \item{...}{Other arguments passed to \code{mark_point()} calls}
 }

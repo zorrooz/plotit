@@ -38,7 +38,9 @@ Modified plotit object
 \description{
 Computes a correlation matrix from numeric data columns, optionally
 reorders by hierarchical clustering, and renders it as a tile heatmap.
-Sugar over \code{\link[=transform_corr]{transform_corr()}} plus a tile layer.
+Sugar over \code{\link[=transform_corr]{transform_corr()}} plus a tile layer.  The value fill scale
+defaults to viridis (colour-blind safe); chain \code{\link[=scale_fill]{scale_fill()}} afterwards
+to replace it (last call wins).
 }
 \examples{
 plotit(mtcars, encode()) |> mark_corr()

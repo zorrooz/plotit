@@ -62,11 +62,16 @@ e <- data.frame(
 g <- as_graph(e) |> layout_chord()
 g$nodes[, c("id", "flow_total")]
 
-as_graph(e) |> plotit() |>
+as_graph(e) |>
+  plotit() |>
   layout_chord() |>
-  mark_polygon(data = ~ribbons,
-               encode(fill = source, group = .ribbon_id),
-               alpha = 0.4) |>
-  mark_polygon(data = ~arcs,
-               encode(fill = id, group = .arc_id))
+  mark_polygon(
+    data = ~ribbons,
+    encode(fill = source, group = .ribbon_id),
+    alpha = 0.4
+  ) |>
+  mark_polygon(
+    data = ~arcs,
+    encode(fill = id, group = .arc_id)
+  )
 }

@@ -188,7 +188,7 @@ G2 的每个复合 Mark 内部展开为 2-5 个基础 Mark 的组合，这与 pl
 | 22 | 复合 | `mark_dumbbell` | 图表 | `mark_point`×2 + `mark_line` 语法糖 | G2 `link`(corelib) | 哑铃对比图 ✅ |
 | | **第三层（关系）** | | | | | |
 | 23 | 复合 | `mark_beeswarm` | 分布 | `ggbeeswarm::geom_beeswarm` | G2 `beeswarm`(corelib) | 蜂群散点（碰撞检测） ✅ |
-| 24 | 复合 | `mark_sankey` | 关系 | `ggsankey`（edges-table API） | G2 `sankey`(graphlib) | 桑基流向图 ✅ |
+| 24 | 复合 | `mark_sankey` | 关系 | `layout_sankey()` + polygon/rect 语法糖（edges-table API） | G2 `sankey`(graphlib) | 桑基流向图 ✅ |
 | 25 | 复合 | `mark_treemap` | 关系 | `treemapify` | G2 `treemap`(graphlib) | 矩形树图 ✅ |
 | 26 | 复合 | `mark_network` | 关系 | `layout_force/circle()` + point/rule 语法糖（nodes+edges 双数据源） | G2 `forceGraph`(graphlib) | 力导向网络图 ✅ |
 | 27 | 复合 | `mark_chord` | 关系 | `layout_chord()` + polygon 语法糖（edges-table API） | G2 `chord`(graphlib) | 弦图 ✅ |
@@ -399,6 +399,19 @@ style_dark <- make_theme("style_dark",
 └── 需要外部布局算法 / 非 ggplot2 渲染 → 新增「基础 Mark」（引入新 geom）
 ```
 
+#### 3.3.3c 统一 Mark 默认样式（style tokens）
+
+所有 mark 的样式字面量集中于 `R/mark_style.R`，单一事实来源：
+
+- **`._MARK_STYLE`（token 表）**：`primary="#4E79A7"`、`secondary="#E15759"`；中性灰阶 `ink`(grey30，强注释：显著性括号/sankey 节点)、`soft`(grey50，中连接线：棒棒糖茎/哑铃连线/参考线)、`faint`(grey70，弱结构：network 边)、`band`(grey80)/`arc`(grey85)（chord 回退填充）；线宽阶梯 `lw_data`(0.9，折线/路径/平滑) > `lw_thin`(0.5，细描边/括号/误差棒) > `lw_border`(0.25，柱/tile 白色发丝边框)；注释字号 `txt_note`(3.2)；半透明填充 `alpha_fill`(0.6，density/violin)、连接带 `alpha_link`(0.5，sankey/chord)；复合点径 `point_head`(3)。token 属 §1.4 可迭代层。
+- **`._MARK_DEFAULTS`（按 mark 注入的静态默认）**：line/path（linewidth 0.9 + round 端点）、smooth（linewidth 0.9）、bar/histogram/rect（白色发丝边框）、area/polygon（linewidth 0 去描边）、density/violin（alpha 0.6）、rule（colour soft + linewidth thin）、errorbar（linewidth 0.5）。经 `._mark_impl()` 统一注入，标准 mark 由工厂自动携带 mark 名，手写 mark 显式传 `mark_name=`。
+- **合并规则**（`._apply_mark_defaults()`）：**用户显式参数 > 已映射美学（层或全局，含注入的 AsIs 常量）> mark 默认**。因此分组柱状图自动获得白色分隔边框、单色注入柱保持无边框、映射了 alpha 的图层不被默认覆盖。
+- **特例**：
+  - `mark_boxplot` 在 default_color 注入存活且用户未指定 colour 时自动改用 `ink` 描边（避免蓝底蓝线中位线不可读），见 `._user_owned_aes()` 对 AsIs 注入常量的豁免逻辑；
+  - `mark_rule` 标量路径与 annotate 段路径同样只对「用户自有」美学让位（注入常量不渲染在参数型 geom 上，不应阻塞默认值）。
+- **封闭统计 Mark 自动 viridis**：`mark_corr` / `mark_hex` / `mark_density_2d(filled=TRUE)` 的内部 fill 通道（value/count/level）由 mark 自有，自动附加 viridis fill scale（连续 `_c`、离散 `_d`）；同时清除注入的 default_color 常量（否则覆盖统计 fill）。用户之后链式 `scale_*()` 即替换（后执行者胜；ggplot2 会输出替换提示消息）。
+- **make_mark 自定义 mark**：不在 `._MARK_DEFAULTS` 中时零行为差异。
+
 #### 3.3.4 `scale_*` — 比例尺
 
 设计对标 **Vega/Vega-Lite** 的 scale 模型（`type`/`domain`/`range`/`scheme` → `trans`/`limits`/`range`/`name`）。
@@ -464,11 +477,13 @@ x/y 的 `range` 表示数据在面板上的视觉占比，通过 `limits` + `exp
 关系数据走「布局即数据变换」路线：`as_graph()` 收编为 `plotit_graph`（命名表集合，canonical 表 `nodes`/`edges`），`layout_*()` 从拓扑计算坐标并烘焙进表，mark 通过公式引用子表渲染。
 
 ```
-data |> as_graph(source, target, value) |> plotit() |>
+data |> as_graph() |> plotit() |>
   layout_force(seed = 1) |>
-  mark_point(data = ~nodes, encode(colour = group)) |>
+  mark_point(data = ~nodes) |>
   mark_rule(data = ~edges)
 ```
+
+> `as_graph()` 按列名自动识别 `source`/`target`/`value`（可用同名参数显式指定列）。位置传列名非法——第二个位置参数是 `nodes` 节点表。
 
 | 函数 | 引擎 | 关键参数 |
 |---|---|---|
@@ -680,6 +695,8 @@ export(p, "output.pdf", dpi = 300)
 
 - **主题**：基于 `theme_minimal`，背景透明，无网格线，保留浅灰轴线，无衬线字体，层级分明字号。极坐标系自动关闭轴线/刻度线/轴文本。平行坐标系：`std`/`global` 模式共享原生 y 轴，`none` 模式每列渲染主题匹配轴线。
 - **调色板**：保持多样性与简便性并重。无映射时默认 Tableau 蓝 `#4E79A7`（同时 `colour`+`fill`，图例隐藏）。有映射：连续默认 viridis（色盲友好），离散默认 hue（ggplot2 色相轮，见 §3.3.4 range 语义）。`range="scheme_name"` 接口持续扩展（brewer/viridis/grey/hue），最小配置成本获得美观默认值。
+- **Mark 统一默认样式**：全部 mark 的样式字面量集中于 `R/mark_style.R`（详见 §3.3.3c）——品牌色 primary `#4E79A7` / secondary `#E15759`；中性灰阶 ink(grey30)/soft(grey50)/faint(grey70)；线宽阶梯 lw_data(0.9) > lw_thin(0.5) > lw_border(0.25)；注释字号 txt_note(3.2)；半透明填充 alpha_fill(0.6)、连接带 alpha_link(0.5)。用户显式参数与已映射美学始终优先于默认。
+- **封闭统计 Mark 自动 viridis**：`mark_corr` / `mark_hex` / `mark_density_2d(filled=TRUE)` 的内部 fill 通道自动附加 viridis scale（连续用 `_c`、离散用 `_d`）；用户之后链式调用 `scale_*()` 即替换（后执行者胜，ggplot2 会给出替换提示）。
 - **图例**：右侧，背景透明，简洁边框。
 - **尺寸**：自适应关闭时默认约 7×5 英寸，导出 300 dpi。
 
@@ -809,13 +826,13 @@ export(p, "output.pdf", dpi = 300)
 |---|---|---|---|---|---|
 | 3.1 | `mark_path` | 基础几何 | ggplot2 | 低 | `geom_path` |
 | 3.2 | `mark_polygon` | 基础几何 | ggplot2 | 低 | `geom_polygon` |
-| 3.3 | `mark_sankey` | 关系层次 | ggsankey（Suggests） | 高 | `ggsankey` stat（直接 layer 构造，兼容 ggplot2 ≥ 4.0，见 §3.3b） |
+| 3.3 | `mark_sankey` | 关系层次 | 无（纯 R 确定性布局引擎） | 高 | `layout_sankey()` + `mark_polygon(~ribbons)`/`mark_rect(~nodes)` 语法糖（初版 ggsankey 实现已退役，见 §3.3.4a） |
 
 **阶段 3 风险**：
 
 | 风险 | 缓解措施 |
 |---|---|
-| ggsankey API 不稳定 | 锁定最低版本，`mark_sankey` 只暴露稳定参数 |
+| ggsankey API 不稳定 | ✅ 已关闭：ggsankey 已退役，改为内置确定性分层布局引擎，零外部依赖 |
 
 ---
 
@@ -823,15 +840,15 @@ export(p, "output.pdf", dpi = 300)
 
 | # | mark | 类别 | 依赖包 | 复杂度 | 对应实现 |
 |---|---|---|---|---|---|
-| 4.1 | `mark_network` | 关系层次 | ggraph + igraph（Suggests） | 高 | `ggraph::geom_edge_*` + `ggraph::geom_node_*` |
-| 4.2 | `mark_chord` | 关系层次 | circlize（Suggests） | 高 | `circlize::chordDiagram` 原生渲染器（直绘设备 + 重放导出，见 §3.3b） |
+| 4.1 | `mark_network` | 关系层次 | igraph（Suggests，仅布局引擎） | 高 | `layout_force()`/`layout_circle()` + point/rule/text 语法糖（初版 ggraph 实现已退役，见 §3.3.4a） |
+| 4.2 | `mark_chord` | 关系层次 | 无（纯 R 确定性布局引擎） | 高 | `layout_chord()` + `mark_polygon(~ribbons)`/`mark_polygon(~arcs)` 语法糖（初版 circlize 实现已退役，见 §3.3.4a） |
 
 **阶段 4 风险**：
 
 | 风险 | 缓解措施 |
 |---|---|
-| `mark_network` 依赖两个重包（ggraph + igraph） | 设为 Suggests，示例用 `\dontrun{}` |
-| circlize 使用 base R 图形系统非 ggplot2 → 集成复杂 | 评估用 `geom_segment` + `geom_polygon` 纯 ggplot2 实现替代 |
+| `mark_network` 依赖两个重包（ggraph + igraph） | ✅ 已关闭：ggraph 已退役；igraph 仅用于 `layout_force`/`layout_tree` 布局引擎，渲染全部为 ggplot2 原语 |
+| circlize 使用 base R 图形系统非 ggplot2 → 集成复杂 | ✅ 已关闭：circlize 已退役，改为纯 R 确定性环形布局（§3.3.4a） |
 
 ### 9.2a 组合收录（不新增 mark 的 recipe）
 

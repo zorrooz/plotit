@@ -38,6 +38,7 @@ Collate:
     'label.R'
     'compose.R'
     'encode.R'
+    'mark_style.R'
     'graph.R'
     'mark.R'
     'factory.R'

@@ -50,11 +50,12 @@ Accepts a data.frame or a \code{~table} reference into graph data.}
 
 \item{yend}{End y coordinate(s) for segment}
 
-\item{colour}{Line colour}
+\item{colour}{Line colour (default \code{"grey50"}, the unified soft neutral;
+ggplot2's black is restored by passing \code{colour = "black"}).}
 
 \item{linetype}{Line type}
 
-\item{linewidth}{Line width in mm}
+\item{linewidth}{Line width in mm (default 0.5).}
 
 \item{...}{Other arguments passed to the underlying geom}
 

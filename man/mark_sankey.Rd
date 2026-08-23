@@ -10,8 +10,8 @@ mark_sankey(
   data = NULL,
   position = NULL,
   ...,
-  node_colour = "grey30",
-  flow_alpha = 0.5
+  node_colour = ._MARK_STYLE$ink,
+  flow_alpha = ._MARK_STYLE$alpha_link
 )
 }
 \arguments{
@@ -29,9 +29,11 @@ colours ribbons and nodes alike; ribbons default to source identity.}
 \code{\link[=layout_sankey]{layout_sankey()}} in the explicit pipeline form.}
 
 \item{node_colour}{Default colour for node rectangles (used when no
-\code{fill} mapping is present, default \code{"grey30"}).}
+\code{fill} mapping is present, default \code{._MARK_STYLE$ink} =
+\code{"grey30"}).}
 
-\item{flow_alpha}{Alpha transparency for flow ribbons (default 0.5).}
+\item{flow_alpha}{Alpha transparency for flow ribbons
+(default \code{._MARK_STYLE$alpha_link} = 0.5).}
 }
 \value{
 Modified plotit object; \verb{@graph} holds the laid-out tables.

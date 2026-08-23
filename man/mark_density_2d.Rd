@@ -43,7 +43,9 @@ Modified plotit object
 }
 \description{
 Adds 2D kernel density estimate contours. Use \code{filled = TRUE}
-for filled density bands via \link[ggplot2:geom_density_2d]{ggplot2::geom_density_2d_filled}.
+for filled density bands via \link[ggplot2:geom_density_2d]{ggplot2::geom_density_2d_filled};
+filled bands default to a discrete viridis fill scale, replaceable
+by chaining \code{\link[=scale_fill]{scale_fill()}} afterwards.
 }
 \examples{
 plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
