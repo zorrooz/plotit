@@ -64,12 +64,12 @@ graph is stored on \verb{@graph}, so subsequent marks can reference
 call are preserved (additive composition).
 }
 \details{
-Requires \pkg{igraph}, except \code{layout = "manual"} which consumes
-pre-computed numeric \code{x}/\code{y} columns on the nodes table.  Edges render as
-straight segments; curved edges are a known limitation of the sugar form.
+Fully self-contained: the force/circle layouts run on plotit's own
+deterministic engines and rendering is plain ggplot2 layers.  Edges
+render as straight segments; curved edges are a known limitation of the
+sugar form.
 }
 \examples{
-\dontshow{if ((requireNamespace("igraph", quietly = TRUE))) withAutoprint(\{ # examplesIf}
 nodes <- data.frame(
   name  = c("A", "B", "C", "D"),
   group = c("X", "Y", "X", "Y"),
@@ -88,7 +88,6 @@ nodes |> plotit(encode(color = group, size = value, label = name)) |>
   ) |>
   scale_color(range = "viridis") |>
   scale_size(range = c(5, 20))
-\dontshow{\}) # examplesIf}
 }
 \references{
 AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/force-graph}{ForceGraph}

@@ -729,45 +729,75 @@ test_that("mark_sankey: node fill uses first-occurrence identity by default", {
   expect_identical(rect_layer$aes_params$fill, "grey30")
 })
 
-# ---- mark_treemap ----
-test_that("[BDD] mark_treemap builds treemap", {
-  skip_if_not_installed("treemapify")
-  df <- data.frame(
-    group = c("A", "B", "C"),
-    subgroup = c("a1", "a2", "b1"),
-    size = c(30, 20, 50)
-  )
-  p <- plotit(df, encode(
-    area = size, fill = group,
-    subgroup = subgroup
-  )) |>
-    mark_treemap()
+# ---- mark_treemap (native squarify, no treemapify) ----
+.hier <- data.frame(
+  id = c("root", "A", "B", "a1", "a2", "b1"),
+  parent = c(NA, "root", "root", "A", "A", "B"),
+  value = c(NA, NA, NA, 30, 20, 50)
+)
+
+test_that("[BDD] mark_treemap lays out leaves from a hierarchy table", {
+  p <- plotit(.hier, encode()) |> mark_treemap()
   expect_s3_class(p, "plotit::plotit")
+  # laid-out graph exposed for ~table references
+  expect_setequal(names(p@graph), c("nodes", "edges", "leaves"))
+  lv <- p@graph$leaves
+  expect_setequal(lv$id, c("a1", "a2", "b1"))
+  # areas proportional to values within the unit square
+  area <- with(lv, (xmax - xmin) * (ymax - ymin))
+  expect_equal(area / sum(area), c(30, 20, 50) / 100, tolerance = 0.01)
+
+  built <- ggplot2::ggplot_build(p@gg)
+  # rect layer + label layer
+  expect_length(built$plot$layers, 2)
+  rects <- built$data[[1]]
+  # unified white hairline separators on tiles
+  expect_true(all(rects$colour == "white"))
+  # labels drawn at tile centres
+  lbl <- built$data[[2]]
+  expect_setequal(as.character(lbl$label), c("a1", "a2", "b1"))
 })
 
-test_that("mark_treemap errors without treemapify", {
-  if (requireNamespace("treemapify", quietly = TRUE)) {
-    skip("treemapify is installed, cannot test error path")
-  }
-  df <- data.frame(group = c("A", "B"), subgroup = c("a", "b"), size = c(10, 20))
-  p <- plotit(df, encode(area = size, fill = group, subgroup = subgroup))
-  expect_error(mark_treemap(p), "treemapify")
+test_that("mark_treemap maps fill through the global encoding", {
+  p <- plotit(.hier, encode(fill = id)) |> mark_treemap()
+  b <- ggplot2::ggplot_build(p@gg)
+  fills <- unique(b$data[[1]]$fill)
+  expect_gte(length(fills), 3) # one colour per leaf identity
+  # mapped-fill labels fall back to near-black for contrast control
+  expect_identical(unique(b$data[[2]]$colour), "grey20")
+})
+
+test_that("mark_treemap static fill and label colour without mapping", {
+  p <- plotit(.hier, encode()) |> mark_treemap(node_colour = "#123456")
+  b <- ggplot2::ggplot_build(p@gg)
+  expect_identical(unique(b$data[[1]]$fill), "#123456")
+  expect_identical(unique(b$data[[2]]$colour), "white") # contrast on blue
+})
+
+test_that("mark_treemap blanks coordinate axes", {
+  p <- plotit(.hier, encode()) |> mark_treemap()
+  thm <- ggplot2::ggplot_build(p@gg)$plot$theme
+  expect_true(inherits(thm$axis.line, "element_blank"))
+  expect_true(inherits(thm$axis.text, "element_blank"))
+})
+
+test_that("mark_treemap rejects non-hierarchy input and unknown dots", {
+  bad <- data.frame(group = c("a", "b"), size = c(1, 2))
+  expect_error(plotit(bad, encode()) |> mark_treemap(), "hierarchy table|id")
+
+  good <- plotit(.hier, encode())
+  expect_warning(mark_treemap(good, whatever = 1), "ignored")
 })
 
 test_that("mark_treemap supports rasterize", {
-  skip_if_not_installed("treemapify")
   skip_if_not_installed("ggrastr")
-  df <- data.frame(
-    group = c("A", "B"), subgroup = c("a", "b"), size = c(10, 20)
-  )
-  p <- plotit(df, encode(area = size, fill = group, subgroup = subgroup)) |>
+  p <- plotit(.hier, encode()) |>
     mark_treemap(rasterize = TRUE, rasterize_dpi = 72)
   expect_s3_class(p, "plotit::plotit")
 })
 
 # ---- mark_network ----
 test_that("[BDD] mark_network builds network (nodes + edges API)", {
-  skip_if_not_installed("igraph")
   nodes <- data.frame(
     name = c("A", "B", "C", "D"),
     group = c("X", "Y", "X", "Y"),
@@ -793,7 +823,6 @@ test_that("[BDD] mark_network builds network (nodes + edges API)", {
 })
 
 test_that("mark_network: encode_edges(weight=) is deprecated but works", {
-  skip_if_not_installed("igraph")
   nodes <- data.frame(name = c("A", "B"), group = c("X", "Y"))
   edges <- data.frame(from = "A", to = "B", weight = 2)
   expect_warning(
@@ -812,7 +841,6 @@ test_that("mark_network: encode_edges(weight=) is deprecated but works", {
 })
 
 test_that("mark_network is additive: prior layers survive", {
-  skip_if_not_installed("igraph")
   nodes <- data.frame(name = c("A", "B", "C"), group = c("X", "Y", "X"))
   edges <- data.frame(from = c("A", "B"), to = c("B", "C"))
   base <- nodes |>
@@ -834,7 +862,7 @@ test_that("mark_network manual layout uses node x/y columns", {
   )
   edges <- data.frame(from = c("A", "B"), to = c("B", "C"))
 
-  # without igraph installed this must still work
+  # manual mode consumes pre-computed coordinates verbatim
   p <- nodes |>
     plotit() |>
     mark_network(
@@ -861,7 +889,6 @@ test_that("mark_network manual layout uses node x/y columns", {
 })
 
 test_that("mark_network linear/bipartite layouts are deprecated with fallback", {
-  skip_if_not_installed("igraph")
   nodes <- data.frame(name = c("A", "B", "C"))
   edges <- data.frame(from = c("A", "B"), to = c("B", "C"))
   expect_warning(
@@ -878,7 +905,6 @@ test_that("mark_network linear/bipartite layouts are deprecated with fallback", 
 })
 
 test_that("[BDD] mark_network maps edge visual channels from edge columns", {
-  skip_if_not_installed("igraph")
   nodes <- data.frame(name = c("A", "B", "C"))
   edges <- data.frame(
     from = c("A", "B"), to = c("B", "C"),
@@ -893,7 +919,7 @@ test_that("[BDD] mark_network maps edge visual channels from edge columns", {
         colour = type
       )
     )
-  mp <- p@gg$layers[[2]]$mapping # edge segment layer
+  mp <- p@gg$layers[[1]]$mapping # edge segment layer (drawn beneath nodes)
   expect_false(is.null(mp$colour))
 })
 
@@ -903,7 +929,6 @@ test_that("mark_network errors on non-node data", {
 })
 
 test_that("mark_network supports circle layout", {
-  skip_if_not_installed("igraph")
   nodes <- data.frame(name = c("A", "B", "C", "D"), group = c("X", "Y", "X", "Y"))
   edges <- data.frame(from = c("A", "A", "B", "C"), to = c("B", "C", "C", "D"))
   p <- nodes |>
@@ -934,12 +959,13 @@ test_that("[BDD] mark_chord builds chord diagram (sugar over layout_chord)", {
     )) |>
     mark_chord()
   expect_s3_class(p, "plotit::plotit")
-  # four laid-out tables, two polygon layers (bands + sectors)
+  # four laid-out tables, three layers (bands + sectors + ring labels)
   expect_setequal(names(p@graph), c("nodes", "edges", "arcs", "ribbons"))
   built <- suppressWarnings(ggplot2::ggplot_build(p@gg))
-  expect_length(built$plot$layers, 2)
+  expect_length(built$plot$layers, 3)
   expect_s3_class(built$plot$layers[[1]]$geom, "GeomPolygon")
   expect_s3_class(built$plot$layers[[2]]$geom, "GeomPolygon")
+  expect_s3_class(built$plot$layers[[3]]$geom, "GeomText")
   # native-renderer escape hatch fully retired
   expect_null(attr(p@meta, "plotit_native_render", exact = TRUE))
   expect_no_warning(ggplot2::ggplot_build(p@gg))
@@ -963,7 +989,7 @@ test_that("mark_chord accepts legacy from/to and direct matrix data", {
   for (p in list(p1, p2)) {
     expect_length(suppressWarnings(
       ggplot2::ggplot_build(p@gg)$plot$layers
-    ), 2)
+    ), 3) # bands + sectors + ring labels
   }
 })
 

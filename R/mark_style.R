@@ -132,3 +132,20 @@ NULL
   }
   dots
 }
+
+# Relational diagrams (network / sankey / chord / treemap) are coordinate-
+# free canvases: blank every axis element so the shared theme's axis lines,
+# ticks and titles do not frame an unframed layout.  One helper keeps the
+# whole family visually uniform.
+#' Blank all axis elements for coordinate-free relational diagrams.
+#' @noRd
+#' @keywords internal
+._theme_blank_axes <- function(plot) {
+  plot@gg <- plot@gg + ggplot2::theme(
+    axis.line = ggplot2::element_blank(),
+    axis.ticks = ggplot2::element_blank(),
+    axis.text = ggplot2::element_blank(),
+    axis.title = ggplot2::element_blank()
+  )
+  plot
+}

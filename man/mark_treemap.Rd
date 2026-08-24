@@ -2,13 +2,13 @@
 % Please edit documentation in R/mark.R
 \name{mark_treemap}
 \alias{mark_treemap}
-\title{Treemap layer}
+\title{Treemap layer (sugar)}
 \usage{
 mark_treemap(
   plot,
-  mapping = NULL,
   data = NULL,
-  position = NULL,
+  node_colour = ._MARK_STYLE$primary,
+  show_labels = TRUE,
   ...,
   rasterize = FALSE,
   rasterize_dpi = 300,
@@ -16,16 +16,23 @@ mark_treemap(
 )
 }
 \arguments{
-\item{plot}{A plotit object}
+\item{plot}{A plotit object whose data is a hierarchy table with \code{id},
+\code{parent}, and leaf-level \code{value} columns (build via
+\code{as_graph()} on the same shape).  A global \code{encode(fill = ...)}
+maps tile fill against any hierarchy column.}
 
-\item{mapping}{Optional new aesthetics. Must include \code{area} for
-rectangle sizing.}
+\item{data}{Optional hierarchy table for this layer.}
 
-\item{data}{Optional data for this layer}
+\item{node_colour}{Default tile fill when no fill aesthetic is mapped
+(default \code{._MARK_STYLE$primary} = \code{"#4E79A7"}).}
 
-\item{position}{Position adjustment.}
+\item{show_labels}{If \code{TRUE} (default), draw leaf ids at tile centres.
+Labels render white over the unmapped brand-blue fill; when a fill is
+mapped they fall back to near-black -- chain
+\code{mark_text(data = ~leaves, colour = ...)} for full control.}
 
-\item{...}{Other arguments passed to \code{geom_treemap}}
+\item{...}{Unused; tiling fine-tuning lives on \code{\link[=layout_treemap]{layout_treemap()}} in the
+explicit pipeline form.}
 
 \item{rasterize}{If \code{TRUE}, rasterize via \code{ggrastr::rasterise()}.}
 
@@ -34,23 +41,27 @@ rectangle sizing.}
 \item{rasterize_dev}{Graphics device for rasterization (default \code{"cairo"}).}
 }
 \value{
-Modified plotit object
+Modified plotit object; \verb{@graph} holds nodes/edges/leaves.
 }
 \description{
-Creates a treemap showing hierarchical data as nested rectangles.
-Requires the \pkg{treemapify} package. Data should contain
-\code{area}, \code{subgroup}, and optionally \code{subgroup2} columns.
+Creates a treemap from a \strong{hierarchy table} (\code{id}/\code{parent} columns, leaf
+sizes in a \code{value} column) using plotit's self-contained squarified
+tiling.  Equivalent to the pipeline \code{as_graph(hierarchy) |> layout_treemap() |> mark_rect(data = ~leaves)}; the laid-out tables
+(\code{nodes}/\code{edges}/\code{leaves}) are stored on \verb{@graph} for further tuning.
+}
+\details{
+Fully self-contained: no \pkg{treemapify} dependency, deterministic
+Bruls squarify layout.  Tiles receive the unified white hairline
+separators and coordinate axes are blanked (the diagram is
+coordinate-free).
 }
 \examples{
-\dontshow{if ((requireNamespace("treemapify", quietly = TRUE))) withAutoprint(\{ # examplesIf}
-df <- data.frame(
-  group = c("A", "B", "C"),
-  subgroup = c("a1", "a2", "b1"),
-  size = c(30, 20, 50))
-plotit(df, encode(area = size, fill = group,
-                  subgroup = subgroup)) |>
-  mark_treemap()
-\dontshow{\}) # examplesIf}
+h <- data.frame(
+  id     = c("root", "A", "B", "a1", "a2", "b1"),
+  parent = c(NA, "root", "root", "A", "A", "B"),
+  value  = c(NA, NA, NA, 30, 20, 50)
+)
+h |> plotit(encode(fill = id)) |> mark_treemap()
 }
 \references{
 AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/treemap}{Treemap} (graphlib)

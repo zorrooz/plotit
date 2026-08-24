@@ -48,16 +48,19 @@ test_that("[BDD] layout_tree orients root per direction and supports hclust", {
   down <- as_graph(hc) |> layout_tree(direction = "down")
   up <- as_graph(hc) |> layout_tree(direction = "up")
 
-  root_down <- down$nodes$id[!down$nodes$leaf]
+  # The tree root is the one node never referenced as a child.
+  root_id <- setdiff(down$nodes$id, down$edges$target)
+  expect_length(root_id, 1)
+
   leaves <- down$nodes$id[down$nodes$leaf]
   expect_length(leaves, sum(down$nodes$leaf))
   expect_false(anyNA(c(down$nodes$x, up$nodes$x)))
   # root on top for "down": maximal y among internal nodes
   internal <- down$nodes[!down$nodes$leaf, ]
-  expect_identical(internal$id[which.max(internal$y)], root_down[1])
+  expect_identical(internal$id[which.max(internal$y)], root_id)
   # flipped direction puts the root at the bottom
   internal_up <- up$nodes[!up$nodes$leaf, ]
-  expect_identical(internal_up$id[which.min(internal_up$y)], root_down[1])
+  expect_identical(internal_up$id[which.min(internal_up$y)], root_id)
 })
 
 test_that("layout_tree: cyclic graph aborts with guidance", {
@@ -68,8 +71,6 @@ test_that("layout_tree: cyclic graph aborts with guidance", {
 })
 
 test_that("[BDD] pipeline: plotit(graph) |> layout_* |> marks builds layers", {
-  skip_if_not_installed("igraph")
-
   p <- plotit(mk_graph()) |>
     layout_force(seed = 3) |>
     mark_point(data = ~nodes) |>
@@ -460,4 +461,96 @@ test_that("layout_chord is fully deterministic", {
   expect_identical(g1$nodes, g2$nodes)
   expect_identical(g1$arcs, g2$arcs)
   expect_identical(g1$ribbons, g2$ribbons)
+})
+
+# ---- self-contained force engine (no igraph) -------------------------------
+
+test_that("layout_force preserves the caller's RNG stream", {
+  set.seed(7)
+  ref <- rnorm(3)
+  invisible(layout_force(mk_graph(), seed = 9))
+  set.seed(7)
+  expect_equal(ref, c(rnorm(1), rnorm(1), rnorm(1)))
+})
+
+test_that("layout_force output stays finite inside the unit box", {
+  g <- layout_force(mk_graph(), seed = 3, iterations = 200)
+  expect_true(all(is.finite(g$nodes$x)) && all(is.finite(g$nodes$y)))
+  expect_true(all(abs(g$nodes$x) <= 0.51) && all(abs(g$nodes$y) <= 0.51))
+})
+
+test_that("layout_force weights change attraction and validate input", {
+  base <- layout_force(mk_graph(), seed = 5)$nodes
+  weighted <- layout_force(mk_graph(), seed = 5, weights = c(9, 9, 9, 9))$nodes
+  expect_false(isTRUE(all.equal(base$x, weighted$x)))
+
+  expect_error(
+    layout_force(mk_graph(), seed = 1, weights = c(-1, 1, 1, 1)),
+    "non-negative"
+  )
+})
+
+test_that("layout_force warns on unknown passthrough arguments", {
+  expect_warning(
+    layout_force(mk_graph(), seed = 1, area = 3),
+    "weights"
+  )
+})
+
+test_that("layout_force tolerates self-loops and single nodes", {
+  solo <- as_graph(data.frame(source = "solo", target = "solo"))
+  g <- layout_force(solo, seed = 1)
+  expect_length(g$nodes$id, 1)
+  expect_true(is.finite(g$nodes$x))
+
+  expect_error(
+    layout_force(as_graph(data.frame(
+      source = character(), target = character()
+    )), seed = 1),
+    "at least one node"
+  )
+})
+
+# ---- self-contained tree engine (no igraph) --------------------------------
+
+mk_tree <- function() {
+  as_graph(data.frame(
+    id = c("r", "A", "B", "a1", "a2"),
+    parent = c(NA, "r", "r", "A", "A")
+  ))
+}
+
+test_that("layout_tree orders leaves left-to-right with internal means", {
+  g <- layout_tree(mk_tree(), "down")
+  pos <- stats::setNames(g$nodes$x, g$nodes$id)
+  # leaves a1 < a2 strictly ordered; parent A sits at their mean
+  expect_lt(pos[["a1"]], pos[["a2"]])
+  expect_equal(pos[["A"]], mean(c(pos[["a1"]], pos[["a2"]])))
+  # root sits above its children (down: y decreases from the root)
+  ypos <- stats::setNames(g$nodes$y, g$nodes$id)
+  expect_lt(max(ypos[c("A", "B")]), ypos[["r"]])
+})
+
+test_that("layout_tree supports all four orientations and forests", {
+  h <- data.frame(
+    id = c("r1", "r2", "x"),
+    parent = c(NA, NA, "r1")
+  )
+  for (dir in c("down", "up", "left", "right")) {
+    g <- layout_tree(as_graph(h), dir)
+    expect_true(all(is.finite(g$nodes$x)), info = dir)
+    expect_false(anyNA(g$nodes$y), info = dir)
+  }
+  # forest: two roots, x under r1
+  gr <- layout_tree(as_graph(h), "right")
+  xpos <- stats::setNames(gr$nodes$x, gr$nodes$id)
+  expect_gt(xpos[["x"]], xpos[["r1"]]) # depth grows to the right
+})
+
+test_that("layout_tree rejects cycles and edgeless input", {
+  cyclic <- data.frame(source = c("a", "b"), target = c("b", "a"))
+  expect_error(layout_tree(as_graph(cyclic)), "root|cycle|unreachable")
+
+  lonely <- as_graph(data.frame(id = "only", parent = NA_character_))
+  expect_error(layout_tree(lonely), "at least one edge")
 })

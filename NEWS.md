@@ -3,6 +3,50 @@
 * Active development stage — frequent breaking changes expected.
 * See [GitHub releases](https://github.com/zorrooz/plotit/releases) for version history.
 
+## Relational charts: full self-implementation
+
+### Breaking
+
+- `igraph` removed from Suggests entirely:
+  - `layout_force()` now runs a self-contained Fruchterman-Reingold engine
+    (pairwise repulsion, edge attraction with optional `weights`, linear
+    cooling). Unknown passthrough arguments are ignored with a warning
+    (previously forwarded to `igraph::layout_with_fr`).
+  - `layout_tree()` now uses an in-house leaf-ordering walk shared with
+    `layout_dendrogram()` (`._hierarchy_leaf_x`). Leaf x positions are
+    sequential left-to-right; internal nodes sit at mean child position.
+    Orientation semantics per `direction` are unchanged.
+  - `as_graph()` tbl_graph input detects directedness via igraph when
+    available and degrades to undirected otherwise.
+- `treemapify` removed from Suggests; `mark_treemap()` rewritten as sugar
+  over the self-contained `layout_treemap()` squarify engine. It now takes
+  a hierarchy table (`id`/`parent`/leaf `value`) instead of treemapify's
+  `area`/`subgroup` aesthetics, renders through `mark_rect(data = ~leaves)`
+  with white hairline separators, draws centred leaf labels, blanks the
+  coordinate axes, and stores nodes/edges/leaves on `@graph`.
+
+### Default style consistency / beauty (relational family)
+
+- `mark_network()`: edges render **beneath** node points (previously lines
+  crossed over markers), labels float above points instead of overlapping,
+  the panel gains `coord_fixed()` so layouts are not stretched, and axis
+  blanking moves to the shared helper.
+- `mark_chord()`: sector ids are labelled outside the ring on the layout's
+  anchors, and the panel gets `coord_fixed(clip = "off")` so sectors stay
+  circular without cropping.
+- `mark_sankey()`: node labels switch to contrast-aware colours (white over
+  the default ink fill, near-black over mapped fills); axes blanked.
+- New shared helper `._theme_blank_axes()` unifies the coordinate-free look
+  across network/sankey/chord/treemap.
+
+### Types
+
+- Relational type coverage audited against ECharts/G6-G2/D3/Plotly/
+  Highcharts (see AGENTS.md §3.2c). Core relational domain fully covered;
+  sunburst/icicle/radial-tree documented as composition recipes
+  (radial-tree recipe added to §3.2b); bubble packing (`layout_pack`)
+  remains explicitly deferred.
+
 ## Refactoring pass: completeness, consistency, defaults
 
 ### Bug fixes

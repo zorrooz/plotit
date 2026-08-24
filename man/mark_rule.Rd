@@ -87,14 +87,12 @@ plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
   mark_rule(xintercept = 3, colour = "red", linetype = "dashed")
 
 # Data-driven segments: network edges from a layout_* transform
-if (requireNamespace("igraph", quietly = TRUE)) {
-  e <- data.frame(source = c("a", "a", "b"), target = c("b", "c", "c"))
-  as_graph(e) |>
-    plotit() |>
-    layout_force(seed = 1) |>
-    mark_point(data = ~nodes) |>
-    mark_rule(data = ~edges, colour = "grey70")
-}
+e <- data.frame(source = c("a", "a", "b"), target = c("b", "c", "c"))
+as_graph(e) |>
+  plotit() |>
+  layout_force(seed = 1) |>
+  mark_point(data = ~nodes) |>
+  mark_rule(data = ~edges, colour = "grey70")
 }
 \references{
 Vega-Lite: \href{https://vega.github.io/vega-lite/docs/rule.html}{Rule}

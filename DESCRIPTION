@@ -15,14 +15,12 @@ Suggests:
     ggrastr,
     ggrepel,
     hexbin,
-    igraph,
     knitr,
     mapproj,
     rmarkdown,
     sf,
     testthat (>= 3.0.0),
-    tidygraph,
-    treemapify
+    tidygraph
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Imports: 
