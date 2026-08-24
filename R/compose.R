@@ -24,15 +24,16 @@ NULL
   )
 }
 
-# plotit() applies plot_layout(widths = unit(7, "in"), ...) for single-plot
-# panel sizing.  This would force every sub-plot to a fixed physical size
-# when assembled by wrap_plots(), causing overflow and cropping.  Strip it
+# plotit() bakes absolute panel dimensions into each sub-plot's ggplot theme
+# (panel.widths / panel.heights, WYSIWYG sizing).  Inside a composite these
+# would force fixed physical sizes that overflow patchwork cells.  Strip them
 # here so the composite controls layout.
-#' Strip fixed panel sizing from a patchwork object.
-#' Called before composite assembly to prevent cropping.
+#' Strip baked panel sizing from a plot before composite assembly.
+#' Called to prevent cropping inside patchwork layouts.
 #' @noRd
 #' @keywords internal
 ._reset_sizing <- function(gg) {
+  gg <- ._strip_panel_size(gg)
   if (!inherits(gg, "patchwork")) {
     return(gg)
   }

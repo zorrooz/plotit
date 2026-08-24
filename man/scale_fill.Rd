@@ -27,7 +27,7 @@ Unsupported values (e.g. \code{"log"}) produce a targeted error message.}
 \item{limits}{Data domain.}
 
 \item{range}{Output range. Same as \code{\link[=scale_color]{scale_color()}}: colour vector, or \code{"viridis"},
-\code{"brewer"}, \code{"grey"}, \code{"hue"}.}
+\code{"brewer"}, \code{"grey"}, \code{"friendly"}, \code{"hue"}.}
 
 \item{breaks}{Legend key positions.}
 

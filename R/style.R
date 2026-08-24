@@ -1,35 +1,9 @@
-#' @include class.R utils.R
+#' @include class.R utils.R theme.R
 NULL
 
-# ---- Internal theme builder ----
-# Constructs the default plotit theme object (not exported -- use style_default())
-._theme_default <- function(base_size = NULL, base_family = NULL) {
-  ggplot2::theme_minimal(
-    base_size = base_size %||% 11,
-    base_family = base_family %||% ""
-  ) + ggplot2::theme(
-    # Clean white panel, no grid
-    panel.background = ggplot2::element_rect(fill = "white", colour = NA),
-    panel.grid = ggplot2::element_blank(),
-    panel.grid.major = ggplot2::element_blank(),
-    panel.grid.minor = ggplot2::element_blank(),
-    # Transparent outer elements
-    plot.background = ggplot2::element_rect(fill = NA, colour = NA),
-    legend.background = ggplot2::element_rect(fill = NA, colour = NA),
-    legend.key = ggplot2::element_rect(fill = NA, colour = NA),
-    legend.box.background = ggplot2::element_rect(fill = NA, colour = NA),
-    legend.box.spacing = ggplot2::unit(0, "cm"),
-    strip.background = ggplot2::element_rect(fill = NA, colour = NA),
-    # Axis lines and ticks (Cartesian)
-    axis.line = ggplot2::element_line(colour = "grey50", linewidth = 0.3),
-    axis.ticks = ggplot2::element_line(colour = "grey50", linewidth = 0.3),
-    legend.position = "right",
-    plot.title = ggplot2::element_text(face = "bold", hjust = 0),
-    plot.subtitle = ggplot2::element_text(hjust = 0),
-    axis.title = ggplot2::element_text(size = ggplot2::rel(0.9)),
-    axis.text = ggplot2::element_text(size = ggplot2::rel(0.8))
-  )
-}
+# The default theme builder (._theme_default) and every global visual token
+# live in theme.R -- the single style source of truth (AGENTS.md 3.3.11).
+# This file only exposes the user-facing style() / style_default() generics.
 
 # ---- style ----
 #' Modify plot theme (aligns with ggplot2::theme)

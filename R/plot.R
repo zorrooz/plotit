@@ -110,6 +110,18 @@ plotit <- function(
 
   p <- p + ._theme_default()
 
+  # Curated default colour scales for mapped colour/fill aesthetics
+  # (friendly discrete / viridis continuous).  Skipped for the injected
+  # single-colour path, which owns its static brand blue.
+  if (!graph_input && !use_default) {
+    p <- ._attach_default_colour_scale(p, data, mapping)
+  }
+
+  # Bake absolute panel dimensions into the ggplot object so every render
+  # context (IDE, knitr, pkgdown, export) shares identical content
+  # proportions (WYSIWYG; AGENTS.md 3.3.11).
+  p <- ._apply_panel_size(p, meta@width, meta@height, meta@unit)
+
   # Stored on meta, not gg$theme -- patchwork wrapping would shadow $theme
   attr(meta, "plotit_theme_managed") <- TRUE
 

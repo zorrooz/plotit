@@ -3,6 +3,53 @@
 * Active development stage — frequent breaking changes expected.
 * See [GitHub releases](https://github.com/zorrooz/plotit/releases) for version history.
 
+## Default visual system overhaul (tidyplots-inspired)
+
+### New: centralised style module
+
+- New `R/theme.R` — single source of truth for every global default visual
+  decision (`._STYLE_TOKENS` tokens, ink/paper anchors, palette sampling,
+  theme builder, WYSIWYG panel sizing). Changing the package look now
+  requires editing one file. `style.R` keeps only the user-facing
+  `style()` / `style_default()` generics.
+
+### WYSIWYG sizing (IDE preview == export)
+
+- `plotit()` bakes absolute panel dimensions into the ggplot object via
+  ggplot2 >= 3.5 `theme(panel.widths =, panel.heights =)`. The physical
+  panel size is now identical on every render path — IDE device, knitr,
+  pkgdown reference examples, and `ggsave()`/`export()`. Verified: a
+  7x5 in plot renders its panel at exactly 7x5 in on 6x6, 9x7 and 14x10
+  inch devices (previously the content stretched with the device).
+- Composites strip the constraint before patchwork assembly
+  (`._reset_sizing()` -> `._strip_panel_size()`), using only the public
+  `+ theme(panel.widths = NULL)` reset for ggplot2 4.x S7-theme safety.
+- Graceful degradation when ggplot2 < 3.5 is installed.
+
+### Academic-minimal default theme
+
+- Pure-ink hairline axis lines and ticks at linewidth 0.25 (was grey50 at
+  0.3); gridless paper panel; fully transparent chrome.
+- Calibrated type hierarchy: plain left-aligned title at rel(1.15)
+  (was bold), muted subtitle/caption, axis.title rel(0.95), axis.text
+  rel(0.85), legend text rel(0.85) with 3.5 mm keys.
+
+### Curated default palettes (constructed-in, override-friendly)
+
+- Mapped discrete `colour`/`fill` aesthetics now receive the colourblind-
+  safe "friendly" scheme by default (Okabe-Ito six-colour set with the
+  bright yellow darkened to `#F5C710`; even subsampling up to six levels,
+  interpolation beyond). Previously fell through to the raw hue wheel.
+- Mapped continuous aesthetics default to viridis.
+- Defaults attach at construction time; any later user `scale_*()` still
+  wins (last-wins). AsIs constants (`encode(colour = I("red"))`) bypass
+  the default scales and keep identity rendering; the unmapped
+  single-colour injection stays Tableau blue `#4E79A7`.
+- `scale_color()`/`scale_fill()` gain the explicit `"friendly"` scheme;
+  `"hue"` remains opt-in. Discrete defaults route through
+  `discrete_scale(palette=)` because ggplot2 >= 4.0's backward-compatibility
+  layer mis-executes palette functions passed to `scale_*_discrete(type=)`.
+
 ## Relational charts: full self-implementation
 
 ### Breaking

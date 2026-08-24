@@ -32,6 +32,7 @@ Imports:
 Collate:
     'class.R'
     'utils.R'
+    'theme.R'
     'style.R'
     'output.R'
     'label.R'
