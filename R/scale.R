@@ -89,8 +89,8 @@ NULL
   if (aes == "colour") fun_c else fun_f
 }
 
-# Scheme-based dispatch: viridis, brewer, grey, hue
-#' Dispatch to colour/fill scale by scheme name (viridis, brewer, grey, hue).
+# Scheme-based dispatch: viridis, brewer, grey, friendly, hue
+#' Dispatch to colour/fill scale by scheme name.
 #' @noRd
 #' @keywords internal
 ._scale_scheme <- function(aes, scheme, discrete, binned, reverse, ...) {
@@ -102,6 +102,15 @@ NULL
       grey = ._cf(aes, ggplot2::scale_colour_grey, ggplot2::scale_fill_grey)(
         start = if (reverse) 0.8 else 0.2,
         end = if (reverse) 0.2 else 0.8,
+        ...
+      ),
+      friendly = ggplot2::discrete_scale(
+        aesthetics = aes,
+        palette = if (reverse) {
+          function(n) rev(._palette_discrete(n))
+        } else {
+          function(n) ._palette_discrete(n)
+        },
         ...
       ),
       hue = ._cf(aes, ggplot2::scale_colour_discrete, ggplot2::scale_fill_discrete)(direction = dir, ...),
@@ -171,12 +180,16 @@ NULL
   if (is.character(range) && length(range) >= 2) {
     do.call(._scale_custom, c(list(aes, range, discrete, binned, reverse), extra_args))
   } else {
-    scheme <- range %||% if (binned) "viridis" else if (discrete) "hue" else "viridis"
+    scheme <- range %||% if (binned) "viridis" else if (discrete) "friendly" else "viridis"
     # Single color name -> helpful error instead of "unknown scheme"
-    if (is.character(range) && length(range) == 1 && !(scheme %in% c("viridis", "brewer", "grey", "hue"))) {
+    known_schemes <- c("viridis", "brewer", "grey", "friendly", "hue")
+    single_unknown_scheme <- is.character(range) &&
+      length(range) == 1 && !(scheme %in% known_schemes)
+    if (single_unknown_scheme) {
       cli::cli_abort(c(
         "{.val {range}} is not a known colour scheme name.",
-        "i" = "Use {.code range = c({range})} for a single custom colour, or one of: viridis, brewer, grey, hue."
+        "i" = "Use {.code range = c({range})} for a single custom colour,
+        or one of: viridis, brewer, grey, friendly, hue."
       ))
     }
     do.call(._scale_scheme, c(list(aes, scheme, discrete, binned, reverse), extra_args))
@@ -320,9 +333,9 @@ NULL
 #'   `"identity"`, `"discrete"`, `"reverse"`, `"binned"`.
 #'   Unsupported values (e.g. `"log"`) produce a targeted error message.
 #' @param limits Data domain. `c(min, max)` for continuous; character vector for discrete limits.
-#' @param range Output range. `NULL` = auto (discrete->hue, continuous->viridis).
+#' @param range Output range. `NULL` = auto (discrete->friendly, continuous->viridis).
 #'   A colour vector (`c("blue","red")`) for manual colours, or a scheme name:
-#'   `"viridis"`, `"brewer"`, `"grey"`, `"hue"`.
+#'   `"viridis"`, `"brewer"`, `"grey"`, `"friendly"`, `"hue"`.
 #'   For binned: only `"viridis"`, `"brewer"`.
 #'   For continuous: only `"viridis"`, `"brewer"`.
 #' @param breaks Legend key positions.
@@ -372,7 +385,7 @@ S7::method(scale_color, plotit_class) <- function(plot, name = ggplot2::waiver()
 #'   Unsupported values (e.g. `"log"`) produce a targeted error message.
 #' @param limits Data domain.
 #' @param range Output range. Same as [scale_color()]: colour vector, or `"viridis"`,
-#'   `"brewer"`, `"grey"`, `"hue"`.
+#'   `"brewer"`, `"grey"`, `"friendly"`, `"hue"`.
 #' @param breaks Legend key positions.
 #' @param labels Legend key labels.
 #' @param ... Passed to the underlying ggplot2 scale function.

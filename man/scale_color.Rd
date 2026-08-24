@@ -26,9 +26,9 @@ Unsupported values (e.g. \code{"log"}) produce a targeted error message.}
 
 \item{limits}{Data domain. \code{c(min, max)} for continuous; character vector for discrete limits.}
 
-\item{range}{Output range. \code{NULL} = auto (discrete->hue, continuous->viridis).
+\item{range}{Output range. \code{NULL} = auto (discrete->friendly, continuous->viridis).
 A colour vector (\code{c("blue","red")}) for manual colours, or a scheme name:
-\code{"viridis"}, \code{"brewer"}, \code{"grey"}, \code{"hue"}.
+\code{"viridis"}, \code{"brewer"}, \code{"grey"}, \code{"friendly"}, \code{"hue"}.
 For binned: only \code{"viridis"}, \code{"brewer"}.
 For continuous: only \code{"viridis"}, \code{"brewer"}.}
 

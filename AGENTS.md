@@ -490,7 +490,7 @@ trans_legal <- list(
 
 | aesthetic | `range = NULL` | `range = "name"` | `range = c(a, b)` |
 |---|---|---|---|
-| colour/fill | 离散→hue，连续→viridis | `"viridis"` `"brewer"` `"grey"`(仅离散) `"hue"` | 颜色向量 |
+| colour/fill | 离散→friendly，连续→viridis | `"viridis"` `"brewer"` `"grey"`(仅离散) `"friendly"` `"hue"` | 颜色向量 |
 | size | `c(1, 6)` | — | 数值范围 |
 | alpha | `c(0.1, 1)` | — | 数值范围 |
 | shape | 默认形状集 | — | 形状编号 |
@@ -615,6 +615,26 @@ data |> as_graph() |> plotit() |>
 > 单图侧已实现：`plotit()` 不再调用 `plot_layout()`，`@gg` 为纯 ggplot 对象；`print()`/`export()` 通过 `._build_fixed_gtable()` 固定面板尺寸。
 > 组合图侧待实现：`compose_*` 仍依赖 `patchwork::wrap_plots()` / `plot_layout()`；`._reset_sizing()`、`._assemble_plots()` 仍以 patchwork 为核心。
 
+#### 3.3.11 统一主题模块（`R/theme.R` — 单一风格源头）
+
+全局默认视觉决策全部集中于 `R/theme.R`，高内聚低耦合：换风格只改此文件。Mark 级字面量仍归 `mark_style.R`（§3.3.3c），两表互不引用。
+
+| 组件 | 职责 |
+|---|---|
+| `._STYLE_TOKENS` | 全局视觉 token：paper/ink 锚点、派生灰阶、轴线宽 0.25、字号相对层级、legend.key 3.5mm、离散/连续策划色板 |
+| `._ink_mix(prop)` | ink→paper 颜色混合，token 派生灰阶的基础设施 |
+| `._palette_discrete(n)` | friendly 六锚点取样：≤6 档均匀子采样保对比度，>6 档 `colorRampPalette` 插值 |
+| `._theme_default(base_size, base_family)` | 学术简洁主题构建器（style.R 仅保留用户泛型，构建体已迁出） |
+| `._attach_default_colour_scale(p, data, mapping)` | 构造期自动挂载策划色板：映射的离散 colour/fill→friendly、连续→viridis；AsIs 常量与解析失败静默跳过 |
+| `._apply_panel_size(gg, w, h, unit)` / `._strip_panel_size(gg)` / `._panel_sizing_supported()` | WYSIWYG 烘焙/剥离/能力探测 |
+
+**关键约定**：
+
+- **WYSIWYG**：`autofit=FALSE` 时构造期把 meta 尺寸烘焙为 `theme(panel.widths=, panel.heights=)`（ggplot2 ≥3.5，旧版优雅降级）。任意渲染路径面板物理尺寸恒定；`export()` 的 gtable 测量与之数值一致。
+- **剥离**：组合图组装前 `._reset_sizing()` 先调 `._strip_panel_size()`（公开 API `+ theme(panel.widths=NULL)` 重置，不直改 `gg$theme`——ggplot2 ≥4.0 theme 为 S7 对象，list 子集赋值会校验失败）。
+- **ggplot2 4.0 兼容**：默认离散 scale 用 `discrete_scale(aesthetics=, palette=fn)` 而非 `scale_*_discrete(type=fn)`——后者的 palette 函数会被 4.0 backward-compatibility 层当 scale 构造器误 exec。
+- **覆盖语义**：构造期默认 scale 是"最先挂载"，任何用户 `scale_*()` 后执行者胜；`default_color` 注入路径（未映射）不受影响。
+
 ### 3.4 `compose_*` 组合
 
 全部返回 `plotit_composite`（`@gg` + `@plots` + `@layout` + `@annotations`）。
@@ -724,14 +744,15 @@ export(p, "output.pdf", dpi = 300)
 
 ## 6. 默认美观要求
 
-属于 §1.4 可迭代范围，具体参数可随版本调整。
+属于 §1.4 可迭代范围，具体参数可随版本调整。全部默认视觉决策集中于 `R/theme.R` 单一源头模块（§3.3.11），改一处全局生效。
 
-- **主题**：基于 `theme_minimal`，背景透明，无网格线，保留浅灰轴线，无衬线字体，层级分明字号。极坐标系自动关闭轴线/刻度线/轴文本。平行坐标系：`std`/`global` 模式共享原生 y 轴，`none` 模式每列渲染主题匹配轴线。
-- **调色板**：保持多样性与简便性并重。无映射时默认 Tableau 蓝 `#4E79A7`（同时 `colour`+`fill`，图例隐藏）。有映射：连续默认 viridis（色盲友好），离散默认 hue（ggplot2 色相轮，见 §3.3.4 range 语义）。`range="scheme_name"` 接口持续扩展（brewer/viridis/grey/hue），最小配置成本获得美观默认值。
+- **主题**：学术简洁风（对标 tidyplots `theme_tidyplot` 配方并适配 plotit 画布）——基于 `theme_minimal`，白色纸面 + 纯黑 ink 发丝轴线/刻度线（linewidth 0.25），无网格线，背景全透明，层级分明字号（title rel(1.15) plain 左对齐 / subtitle rel(0.95) 灰 / axis.title rel(0.95) / axis.text rel(0.85) 灰 / legend rel(0.85)，legend.key 3.5mm）。极坐标系自动关闭轴线/刻度线/轴文本。平行坐标系：`std`/`global` 模式共享原生 y 轴，`none` 模式每列渲染主题匹配轴线。
+- **WYSIWYG 所见即所得**：`plotit()` 构造时把 meta 面板尺寸经 ggplot2 ≥3.5 的 `theme(panel.widths=, panel.heights=)` 烘焙进 `@gg`——IDE 设备、knitr、pkgdown、ggsave 任意渲染路径下面板物理尺寸恒定，内容比例与导出完全一致（实测 6×6/9×7/14×10 英寸设备上面板恒等于声明值）。组合图组装前由 `._reset_sizing()` 剥离该约束交由 patchwork 布局。
+- **调色板**：无映射时默认 Tableau 蓝 `#4E79A7`（同时 `colour`+`fill`，图例隐藏）。有映射时构造期自动挂载策划色板：**离散默认 friendly**（Okabe-Ito 色盲安全六色，黄位加深为 `#F5C710`：`#0072B2 #56B4E9 #009E73 #F5C710 #E69F00 #D55E00`；>6 档锚点插值，<6 档均匀取样），连续默认 viridis。用户之后链式 `scale_*()` 即替换（后执行者胜）；`encode(colour = I(...))` AsIs 常量走 identity 不被劫持；hue 色相轮退居可选方案 `range="hue"`。
 - **Mark 统一默认样式**：全部 mark 的样式字面量集中于 `R/mark_style.R`（详见 §3.3.3c）——品牌色 primary `#4E79A7` / secondary `#E15759`；中性灰阶 ink(grey30)/soft(grey50)/faint(grey70)；线宽阶梯 lw_data(0.9) > lw_thin(0.5) > lw_border(0.25)；注释字号 txt_note(3.2)；半透明填充 alpha_fill(0.6)、连接带 alpha_link(0.5)。用户显式参数与已映射美学始终优先于默认。
-- **封闭统计 Mark 自动 viridis**：`mark_corr` / `mark_hex` / `mark_density_2d(filled=TRUE)` 的内部 fill 通道自动附加 viridis scale（连续用 `_c`、离散用 `_d`）；用户之后链式调用 `scale_*()` 即替换（后执行者胜，ggplot2 会给出替换提示）。
-- **图例**：右侧，背景透明，简洁边框。
-- **尺寸**：自适应关闭时默认约 7×5 英寸，导出 300 dpi。
+- **封闭统计 Mark 自动 viridis**：`mark_corr` / `mark_hex` / `mark_density_2d(filled=TRUE)` 的内部 fill 通道自动附加 viridis scale（连续用 `_c`、离散用 `_d`）；关系类语法糖派生通道同理（sankey 恒定、chord/treemap 映射时、network 映射节点 colour 时）。用户之后链式调用 `scale_*()` 即替换（后执行者胜，ggplot2 会给出替换提示）。
+- **图例**：右侧，无边框透明背景，紧凑 key 尺寸。
+- **尺寸**：自适应关闭时默认约 7×5 英寸面板，导出 300 dpi。
 
 ---
 
