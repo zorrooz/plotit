@@ -1,5 +1,5 @@
 # ============================================================
-# project_* function family <U+2014> coordinate transforms
+# project_* function family -- coordinate transforms
 # ============================================================
 library(plotit)
 
@@ -177,7 +177,7 @@ test_that("project_parallel handles NA values without crash", {
 
 test_that("project_parallel errors on reserved column names", {
   df <- iris
-  df$.plotit_id <- 1:nrow(df)
+  df$.plotit_id <- seq_len(nrow(df))
   p <- plotit(df, encode())
   expect_error(
     project_parallel(p, columns = c("Sepal.Width")),

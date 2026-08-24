@@ -1,6 +1,6 @@
 # ============================================================
 # mark_* function family -- BDD tests (assert rendered output)
-# AGENTS.md <U+00A7>4.8: <U+65AD><U+8A00><U+884C><U+4E3A><U+800C><U+975E><U+5185><U+90E8><U+72B6><U+6001>
+# AGENTS.md 4.8: assert rendered behaviour, not internal state
 # ============================================================
 library(plotit)
 

@@ -74,7 +74,7 @@
 
 - **OOP**：**S7**。核心类：`plotit_labels`（文本字段）、`plotit_metadata`（配置项）、`plotit`（持有 `gg` + `meta`）。若 S7 发生不兼容变更，锁定版本或评估迁移至 S3/R6。
 - **核心依赖**：ggplot2、S7、cli、rlang、patchwork。`ggrastr` 为可选增强（图层栅格化）。
-- **可选依赖**（Suggests，按 mark 按需加载）：ggrepel、ggbeeswarm、treemapify、igraph、hexbin、sf、mapproj、ggrastr、knitr、rmarkdown。（ggsankey/ggraph/circlize 已于关系数据体系改造中退役：sankey/network/chord 均改为 `layout_*` + 原语图层语法糖。）
+- **可选依赖**（Suggests，按 mark 按需加载）：ggrepel、ggbeeswarm、treemapify、igraph、tidygraph（仅 `as_graph()` 收编 tbl_graph 输入）、hexbin、sf、mapproj、ggrastr、knitr、rmarkdown。（ggsankey/ggraph/circlize 已于关系数据体系改造中退役：sankey/network/chord 均改为 `layout_*` + 原语图层语法糖。）
 
 ---
 
@@ -404,7 +404,7 @@ style_dark <- make_theme("style_dark",
 所有 mark 的样式字面量集中于 `R/mark_style.R`，单一事实来源：
 
 - **`._MARK_STYLE`（token 表）**：`primary="#4E79A7"`、`secondary="#E15759"`；中性灰阶 `ink`(grey30，强注释：显著性括号/sankey 节点)、`soft`(grey50，中连接线：棒棒糖茎/哑铃连线/参考线)、`faint`(grey70，弱结构：network 边)、`band`(grey80)/`arc`(grey85)（chord 回退填充）；线宽阶梯 `lw_data`(0.9，折线/路径/平滑) > `lw_thin`(0.5，细描边/括号/误差棒) > `lw_border`(0.25，柱/tile 白色发丝边框)；注释字号 `txt_note`(3.2)；半透明填充 `alpha_fill`(0.6，density/violin)、连接带 `alpha_link`(0.5，sankey/chord)；复合点径 `point_head`(3)。token 属 §1.4 可迭代层。
-- **`._MARK_DEFAULTS`（按 mark 注入的静态默认）**：line/path（linewidth 0.9 + round 端点）、smooth（linewidth 0.9）、bar/histogram/rect（白色发丝边框）、area/polygon（linewidth 0 去描边）、density/violin（alpha 0.6）、rule（colour soft + linewidth thin）、errorbar（linewidth 0.5）。经 `._mark_impl()` 统一注入，标准 mark 由工厂自动携带 mark 名，手写 mark 显式传 `mark_name=`。
+- **`._MARK_DEFAULTS`（按 mark 注入的静态默认）**：line/path（linewidth 0.9 + round 端点）、smooth（linewidth 0.9）、bar/histogram/rect（白色发丝边框）、area/polygon（linewidth 0 去描边）、density/violin（alpha 0.6）、rule（colour soft + linewidth thin）、errorbar（linewidth 0.5）、corr/treemap（白色发丝分隔；treemap 经旧式 `size` 通道，geom_treemap 不接受 linewidth）。经 `._mark_impl()` 统一注入，标准 mark 由工厂自动携带 mark 名，手写 mark 显式传 `mark_name=`。
 - **合并规则**（`._apply_mark_defaults()`）：**用户显式参数 > 已映射美学（层或全局，含注入的 AsIs 常量）> mark 默认**。因此分组柱状图自动获得白色分隔边框、单色注入柱保持无边框、映射了 alpha 的图层不被默认覆盖。
 - **特例**：
   - `mark_boxplot` 在 default_color 注入存活且用户未指定 colour 时自动改用 `ink` 描边（避免蓝底蓝线中位线不可读），见 `._user_owned_aes()` 对 AsIs 注入常量的豁免逻辑；
@@ -933,7 +933,7 @@ export(p, "output.pdf", dpi = 300)
 | # | 事项 | 优先级 | 状态 |
 |---|------|--------|------|
 | AD-1 | Patchwork 剥离（§3.3.10） | 中 | 单图侧已完成；组合图仍依赖 patchwork |
-| AD-2 | `._collect_aes_names` 访问内部 `gg$layers` | 低 | 违反 §4.6 禁止规则。移除后 label_legend(aes=NULL) 的图例标题不应用到图层级美学映射，需评估替代方案 |
+| AD-2 | `._collect_aes_names` 访问内部 `gg$layers` | 低 | 违反 §4.6 禁止规则。移除后 label_legend(aes=NULL) 的图例标题不应用到图层级美学映射，需评估替代方案。同类已知例外：`mark_significance` 读取 `plot@gg$scales$get_scales("x")` 检测离散 x 轴（无公开 API 可查询已安装 scale 的类/limits），已在源码注释标记 |
 | AD-3 | `._sync_labels` 5 个几乎相同 if 块 | 低 | ✅ 已抽象为 `._sync_one_label()` + `._LABEL_SYNC_MAP` 查找表 |
 | AD-4 | S7 版本锁定 | 低 | DESCRIPTION 已限制 |
 | AD-5 | mark_* 样板代码 | 低 | ✅ 已引入 `._register_mark_method()` 工厂函数（`R/mark.R`），10 个标准 mark 从 ~200 行缩减为 1 行调用 |

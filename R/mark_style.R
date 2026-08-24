@@ -57,7 +57,14 @@ NULL
   mark_density = list(alpha = ._MARK_STYLE$alpha_fill),
   mark_violin = list(alpha = ._MARK_STYLE$alpha_fill),
   mark_rule = list(colour = ._MARK_STYLE$soft, linewidth = ._MARK_STYLE$lw_thin),
-  mark_errorbar = list(linewidth = ._MARK_STYLE$lw_thin)
+  mark_errorbar = list(linewidth = ._MARK_STYLE$lw_thin),
+  # Closed statistical / relational marks rendered through tile-like geoms:
+  # white hairline separators keep adjacent cells readable (same token as
+  # bar/histogram/rect).
+  mark_corr = list(colour = "white", linewidth = ._MARK_STYLE$lw_border),
+  # geom_treemap draws borders with the legacy `size` channel (it does not
+  # accept `linewidth`); reuse the hairline token value.
+  mark_treemap = list(colour = "white", size = ._MARK_STYLE$lw_border)
 )
 
 # Collect aesthetics mapped on the layer or globally.  Used to gate static

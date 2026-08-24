@@ -3,7 +3,7 @@ NULL
 
 # ---- Internal theme builder ----
 # Constructs the default plotit theme object (not exported -- use style_default())
-.theme_default <- function(base_size = NULL, base_family = NULL) {
+._theme_default <- function(base_size = NULL, base_family = NULL) {
   ggplot2::theme_minimal(
     base_size = base_size %||% 11,
     base_family = base_family %||% ""
@@ -69,7 +69,7 @@ S7::method(style, plotit_class) <- function(
   base_family = NULL,
   base_theme = NULL
 ) {
-  thm <- base_theme %||% .theme_default(base_size, base_family)
+  thm <- base_theme %||% ._theme_default(base_size, base_family)
   plot@gg <- plot@gg + thm + ggplot2::theme(...)
   attr(plot@meta, "plotit_theme_managed") <- TRUE
   plot

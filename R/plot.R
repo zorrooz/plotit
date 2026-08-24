@@ -108,7 +108,7 @@ plotit <- function(
     labels = meta_labels
   )
 
-  p <- p + .theme_default()
+  p <- p + ._theme_default()
 
   # Stored on meta, not gg$theme -- patchwork wrapping would shadow $theme
   attr(meta, "plotit_theme_managed") <- TRUE

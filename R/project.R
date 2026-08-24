@@ -188,8 +188,6 @@ S7::method(project_polar, plotit_class) <- function(
 #'   `"global"`: min-max normalise across all columns to 0-1.
 #'   `"none"`: no normalisation, each column keeps its own range.
 #' @param alpha,size Passed to `geom_line()` / `geom_point()`.
-#' @param clip Currently unused (parallel coordinates do not apply a
-#'   coordinate system). Accepted for signature consistency.
 #' @param ... Passed to `geom_line()`.
 #' @return Modified plotit object.
 #' @examples
@@ -200,7 +198,7 @@ project_parallel <- S7::new_generic(
   "project_parallel",
   "plot",
   function(plot, columns, group = NULL, scale = c("std", "global", "none"),
-           alpha = 0.5, size = 1, clip = "on", ...) {
+           alpha = 0.5, size = 1, ...) {
     S7::S7_dispatch()
   }
 )
@@ -374,7 +372,6 @@ S7::method(project_parallel, plotit_class) <- function(
   scale = c("std", "global", "none"),
   alpha = 0.5,
   size = 1,
-  clip = "on",
   ...
 ) {
   scale <- match.arg(scale)
@@ -461,9 +458,9 @@ S7::method(project_parallel, plotit_class) <- function(
 
   # ---- Axis rendering: three mutually exclusive modes ----
   #
-  #   std    -- per-column normalised to 0-1  <U+2192>  shared native y-axis
-  #   global -- globally normalised to 0-1     <U+2192>  shared native y-axis
-  #   none   -- no normalisation                <U+2192>  per-column axes
+  #   std    -- per-column normalised to 0-1  ->  shared native y-axis
+  #   global -- globally normalised to 0-1     ->  shared native y-axis
+  #   none   -- no normalisation                ->  per-column axes
   #
   #  Shared-scale modes delegate tick & label rendering to the native
   #  scale_y_continuous() guide -- this guarantees visual consistency with

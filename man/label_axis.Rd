@@ -13,7 +13,7 @@ label_axis(plot, text = NULL, aes = NULL, hide = FALSE, reset = FALSE, ...)
 
 \item{aes}{Which axis to apply to: "x" or "y" (required).}
 
-\item{hide}{If TRUE, hide the axis title entirely (�lement_blank()).}
+\item{hide}{If TRUE, hide the axis title entirely (\code{element_blank()}).}
 
 \item{reset}{If TRUE, restore the axis title to the variable name.}
 

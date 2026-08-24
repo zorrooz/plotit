@@ -88,6 +88,19 @@ NULL
   invisible()
 }
 
+# Standard mark generic: every basic mark shares one signature, so the
+# declaration collapses to `mark_x <- ._make_mark_generic("mark_x")`.
+# Marks with extra parameters (e.g. mark_text) keep their own generic.
+._make_mark_generic <- function(name) {
+  S7::new_generic(
+    name, "plot",
+    function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+             rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+      S7::S7_dispatch()
+    }
+  )
+}
+
 # ---- mark_point ----
 #' Point layer
 #'
@@ -106,13 +119,7 @@ NULL
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
 #' @export
-mark_point <- S7::new_generic(
-  "mark_point", "plot",
-  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
-           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
-    S7::S7_dispatch()
-  }
-)
+mark_point <- ._make_mark_generic("mark_point")
 ._register_mark_method(mark_point, ggplot2::geom_point)
 
 # ---- mark_line ----
@@ -132,13 +139,7 @@ mark_point <- S7::new_generic(
 #' @examples
 #' plotit(ggplot2::economics, encode(x = date, y = unemploy)) |> mark_line()
 #' @export
-mark_line <- S7::new_generic(
-  "mark_line", "plot",
-  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
-           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
-    S7::S7_dispatch()
-  }
-)
+mark_line <- ._make_mark_generic("mark_line")
 ._register_mark_method(mark_line, ggplot2::geom_line)
 
 # ---- mark_boxplot ----
@@ -158,13 +159,7 @@ mark_line <- S7::new_generic(
 #' @examples
 #' plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot()
 #' @export
-mark_boxplot <- S7::new_generic(
-  "mark_boxplot", "plot",
-  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
-           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
-    S7::S7_dispatch()
-  }
-)
+mark_boxplot <- ._make_mark_generic("mark_boxplot")
 ._register_mark_method(mark_boxplot, ggplot2::geom_boxplot)
 
 # ---- mark_histogram ----
@@ -184,13 +179,7 @@ mark_boxplot <- S7::new_generic(
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width)) |> mark_histogram()
 #' @export
-mark_histogram <- S7::new_generic(
-  "mark_histogram", "plot",
-  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
-           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
-    S7::S7_dispatch()
-  }
-)
+mark_histogram <- ._make_mark_generic("mark_histogram")
 ._register_mark_method(mark_histogram, ggplot2::geom_histogram)
 
 # ---- mark_density ----
@@ -210,13 +199,7 @@ mark_histogram <- S7::new_generic(
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width)) |> mark_density()
 #' @export
-mark_density <- S7::new_generic(
-  "mark_density", "plot",
-  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
-           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
-    S7::S7_dispatch()
-  }
-)
+mark_density <- ._make_mark_generic("mark_density")
 ._register_mark_method(mark_density, ggplot2::geom_density)
 
 # ---- mark_area ----
@@ -238,13 +221,7 @@ mark_density <- S7::new_generic(
 #' plotit(ggplot2::economics, encode(x = date, y = unemploy)) |>
 #'   mark_area(alpha = 0.5)
 #' @export
-mark_area <- S7::new_generic(
-  "mark_area", "plot",
-  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
-           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
-    S7::S7_dispatch()
-  }
-)
+mark_area <- ._make_mark_generic("mark_area")
 ._register_mark_method(mark_area, ggplot2::geom_area)
 
 # ---- mark_text ----
@@ -318,13 +295,7 @@ S7::method(mark_text, plotit_class) <- function(
 #' plotit(iris, encode(x = Species, y = Sepal.Length)) |>
 #'   mark_violin(draw_quantiles = 0.5)
 #' @export
-mark_violin <- S7::new_generic(
-  "mark_violin", "plot",
-  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
-           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
-    S7::S7_dispatch()
-  }
-)
+mark_violin <- ._make_mark_generic("mark_violin")
 ._register_mark_method(mark_violin, ggplot2::geom_violin)
 
 # ---- mark_map ----
@@ -350,13 +321,7 @@ mark_violin <- S7::new_generic(
 #' nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
 #' plotit(nc, encode(geometry = geometry)) |> mark_map()
 #' @export
-mark_map <- S7::new_generic(
-  "mark_map", "plot",
-  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
-           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
-    S7::S7_dispatch()
-  }
-)
+mark_map <- ._make_mark_generic("mark_map")
 
 #' @export
 S7::method(mark_map, plotit_class) <- function(
@@ -409,13 +374,7 @@ S7::method(mark_map, plotit_class) <- function(
 #' df$z <- df$x * df$y
 #' plotit(df, encode(x = x, y = y, fill = z)) |> mark_rect()
 #' @export
-mark_rect <- S7::new_generic(
-  "mark_rect", "plot",
-  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
-           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
-    S7::S7_dispatch()
-  }
-)
+mark_rect <- ._make_mark_generic("mark_rect")
 #' @export
 S7::method(mark_rect, plotit_class) <- function(
   plot, mapping = NULL, data = NULL, position = NULL, ...,
@@ -646,13 +605,7 @@ S7::method(mark_rule, plotit_class) <- function(
 #' df <- data.frame(x = 1:10, y = cumsum(runif(10, -1, 1)))
 #' plotit(df, encode(x = x, y = y)) |> mark_path()
 #' @export
-mark_path <- S7::new_generic(
-  "mark_path", "plot",
-  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
-           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
-    S7::S7_dispatch()
-  }
-)
+mark_path <- ._make_mark_generic("mark_path")
 ._register_mark_method(mark_path, ggplot2::geom_path)
 
 # ---- mark_polygon ----
@@ -676,13 +629,7 @@ mark_path <- S7::new_generic(
 #' tri <- data.frame(x = c(0, 1, 0.5), y = c(0, 0, 1))
 #' plotit(tri, encode(x = x, y = y)) |> mark_polygon(fill = "skyblue")
 #' @export
-mark_polygon <- S7::new_generic(
-  "mark_polygon", "plot",
-  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
-           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
-    S7::S7_dispatch()
-  }
-)
+mark_polygon <- ._make_mark_generic("mark_polygon")
 ._register_mark_method(mark_polygon, ggplot2::geom_polygon)
 
 # ---- mark_smooth ----
@@ -974,14 +921,19 @@ S7::method(mark_corr, plotit_class) <- function(
   if (!is.data.frame(raw_data)) {
     cli::cli_abort("{.fn mark_corr} requires tabular plot data.")
   }
-  # Sugar over transform_corr() + tile layer (see §3.3.4a discipline)
+  # Sugar over transform_corr() + tile layer (see §3.3.4a discipline).
+  # Routed through the shared mark path so the unified style defaults apply
+  # (white hairline separators between tiles, matching mark_rect).
   df <- transform_corr(raw_data, method = method, reorder = reorder)
   mapping <- encode(x = Var1, y = Var2, fill = value)
-  geom <- ggplot2::geom_tile(mapping = mapping, data = df, ...)
-  plot <- .add_geom(plot, geom,
-    rasterize = rasterize, rasterize_dpi = rasterize_dpi,
-    rasterize_dev = rasterize_dev
-  )
+  plot <- do.call(function(...) {
+    ._mark_impl(
+      plot, mapping, df,
+      position = NULL, ggplot2::geom_tile,
+      rasterize, rasterize_dpi, rasterize_dev,
+      auto_dodge = FALSE, bind_aes = NULL, mark_name = "mark_corr", ...
+    )
+  }, rlang::list2(...))
   # The correlation value fill is owned by this closed statistical mark;
   # default it to the colour-blind-safe continuous scheme (AGENTS.md §6).
   # A later scale_fill() call replaces it (last wins).
@@ -1044,7 +996,7 @@ S7::method(mark_errorbar, plotit_class) <- function(
     ._mark_impl(
       plot, mapping, data, position, geom_fun,
       rasterize, rasterize_dpi, rasterize_dev,
-      bind_aes = ._MARK_BIND_AES$mark_point, mark_name = "mark_errorbar", ...
+      bind_aes = ._MARK_BIND_AES$mark_errorbar, mark_name = "mark_errorbar", ...
     )
   }, params)
 }
@@ -1136,6 +1088,9 @@ S7::method(mark_significance, plotit_class) <- function(
   # correct even when scale limits reorder or drop levels -- regardless
   # of whether scale_x() runs before or after this mark (#10).
   x_var <- rlang::eval_tidy(plot@gg$mapping$x, d)
+  # NOTE: reads the ggplot scales slot -- an undocumented structure per
+  # AGENTS.md 4.6; known exception tracked alongside AD-2 (there is no
+  # public API to query an installed scale's class/limits).
   x_scale <- plot@gg$scales$get_scales("x")
   is_discrete_x <- inherits(x_scale, "ScaleDiscretePosition") ||
     (is.null(x_scale) && (is.factor(x_var) || is.character(x_var)))
@@ -1529,18 +1484,8 @@ S7::method(mark_sankey, plotit_class) <- function(
   )
   g <- ._layout_engine_sankey(g)
 
-  order_ids <- unique(c(src, tgt))
-  first_pos <- vapply(
-    order_ids, function(z) which(c(src, tgt) == z)[1],
-    integer(1)
-  )
-  # positions live in the concatenated endpoint vector; fold back to the
-  # owning edge row (second half wraps to src - n_edges)
-  first_edge <- ifelse(first_pos > length(src), first_pos - length(src),
-    first_pos
-  )
-  node_fill <- stats::setNames(fill_vals[first_edge], order_ids)
-  g$nodes$fill_grp <- unname(node_fill[g$nodes$id])
+  # Node fill: first-occurrence identity (see ._first_occurrence_fill).
+  g$nodes$fill_grp <- ._first_occurrence_fill(src, tgt, fill_vals, g$nodes$id)
   plot@graph <- g
 
   # The flow/node fills need a legend; drop the default_color guides
@@ -1621,12 +1566,16 @@ S7::method(mark_treemap, plotit_class) <- function(
     plot <- ._clear_default_color(plot, mapping)
   }
   # geom_treemap lays out rectangles itself; the global auto-dodge
-  # position is ignored by treemapify (D6).
-  geom <- treemapify::geom_treemap(mapping = mapping, data = data, ...)
-  plot <- .add_geom(plot, geom,
-    rasterize = rasterize, rasterize_dpi = rasterize_dpi,
-    rasterize_dev = rasterize_dev
-  )
+  # position is ignored (D6).  Routed through the shared mark path so the
+  # unified style defaults apply (white hairline tile separators).
+  plot <- do.call(function(...) {
+    ._mark_impl(
+      plot, mapping, data,
+      position = NULL, treemapify::geom_treemap,
+      rasterize, rasterize_dpi, rasterize_dev,
+      auto_dodge = FALSE, bind_aes = NULL, mark_name = "mark_treemap", ...
+    )
+  }, rlang::list2(...))
   plot
 }
 
@@ -1663,9 +1612,10 @@ S7::method(mark_treemap, plotit_class) <- function(
 #'   mapped (default `._MARK_STYLE$faint` = \code{"grey70"}).
 #' @param edge_width Default edge width when no edge linewidth channel is
 #'   mapped (default `._MARK_STYLE$lw_thin` = 0.5).
-#' @param node_colour Default fill colour for nodes
+#' @param node_colour Default node colour, applied to the `colour` and
+#'   `fill` channels only where they are not mapped
 #'   (default `._MARK_STYLE$primary` = \code{"#4E79A7"}).
-#' @param node_size Default size for nodes (default 5).
+#' @param node_size Default node size when `size` is not mapped (default 5).
 #' @param ... Other arguments passed to the edge segment layer (e.g.
 #'   \code{arrow}).
 #' @return Modified plotit object; `@graph` holds the laid-out tables.
@@ -1840,6 +1790,9 @@ S7::method(mark_network, plotit_class) <- function(
   }
 
   # ---- node layer: reuse extracted global mappings, statics as fallbacks --
+  # Static defaults are gated per channel: a ggplot2 layer parameter would
+  # silently override an aesthetic mapping of the same name, so each static
+  # is only injected when the user did not map that channel.
   node_aes <- plot@gg$mapping
   node_mapping <- ggplot2::aes()
   if (!is.null(node_aes)) {
@@ -1853,15 +1806,21 @@ S7::method(mark_network, plotit_class) <- function(
     }
     if (!is.null(node_aes$size)) node_mapping$size <- node_aes$size
   }
-  plot <- ._mark_impl(plot, node_mapping, ~nodes,
+  node_statics <- list()
+  # node_colour applies to both channels: default shape 19 renders through
+  # `colour`, filled shapes (21+) through `fill`.
+  if (is.null(node_mapping$colour)) node_statics$colour <- node_colour
+  if (is.null(node_mapping$fill)) node_statics$fill <- node_colour
+  if (is.null(node_mapping$size)) node_statics$size <- node_size
+  plot <- do.call(._mark_impl, c(list(
+    plot, node_mapping, ~nodes,
     position = NULL,
     ggplot2::geom_point,
     rasterize = FALSE, rasterize_dpi = 300,
     rasterize_dev = "cairo",
     auto_dodge = FALSE,
-    bind_aes = ._MARK_BIND_AES$mark_point,
-    fill = node_colour, size = node_size
-  )
+    bind_aes = ._MARK_BIND_AES$mark_point
+  ), node_statics))
 
   # ---- edge layer: mapped channels win over statics ----
   edge_mapping <- ggplot2::aes()
@@ -1931,6 +1890,20 @@ S7::method(mark_network, plotit_class) <- function(
     return(e)
   }
   cli::cli_abort("Expected a bare column name.")
+}
+
+# Node-level fill derived from edge-level groups: each node inherits the
+# group of the edge on which it first appears.  Endpoint positions live in
+# the concatenated (source, target) vector; the second half folds back to
+# the owning edge row.  Shared by the sankey and chord sugars.
+#' First-occurrence node fill from edge groups.
+#' @noRd
+#' @keywords internal
+._first_occurrence_fill <- function(src, tgt, fill_vals, ids) {
+  endpoints <- c(src, tgt)
+  pos <- vapply(ids, function(z) which(endpoints == z)[1], integer(1))
+  first_edge <- ifelse(pos > length(src), pos - length(src), pos)
+  stats::setNames(unname(fill_vals[first_edge]), ids)
 }
 # ---- mark_chord ----
 #' Chord diagram layer (sugar)
@@ -2085,17 +2058,9 @@ S7::method(mark_chord, plotit_class) <- function(
   )
   g <- ._layout_engine_chord(g, pad_angle = gap_width * pi / 180)
 
-  # Node-level first-occurrence fill, attached to the arc polygons.
-  order_ids <- unique(c(src, tgt))
-  first_pos <- vapply(
-    order_ids, function(z) which(c(src, tgt) == z)[1],
-    integer(1)
-  )
-  first_edge <- ifelse(first_pos > length(src), first_pos - length(src),
-    first_pos
-  )
-  node_fill <- stats::setNames(fill_vals[first_edge], order_ids)
-  g$arcs$fill_grp <- unname(node_fill[g$arcs$id])
+  # Node-level first-occurrence fill, attached to the arc polygons, keeps
+  # pair aggregation consistent (#11).
+  g$arcs$fill_grp <- ._first_occurrence_fill(src, tgt, fill_vals, g$arcs$id)
   plot@graph <- g
 
   # Fills need legends; drop the default_color guides suppression.

@@ -206,8 +206,9 @@ test_that("[BDD] layout_treemap tiles leaves proportional to value", {
 
   expect_setequal(names(tg@graph), c("nodes", "edges", "leaves"))
   expect_setequal(lv$id, c("B", "a1", "a2"))
-  expect_true(all(lv$xmin >= 0 & lv$xmax <= 1 &
-    lv$ymin >= 0 & lv$ymax <= 1))
+  in_unit_square <- lv$xmin >= 0 & lv$xmax <= 1 &
+    lv$ymin >= 0 & lv$ymax <= 1
+  expect_true(all(in_unit_square))
 
   area <- function(df) with(df, (xmax - xmin) * (ymax - ymin))
   a1 <- area(lv[lv$id == "a1", ])
@@ -328,9 +329,9 @@ test_that("[BDD] layout_sankey ribbons span their own endpoints", {
     # vertical extent at the left end equals value * node-scale k, where
     # sum of source-side outgoing thicknesses equals the source height
     left_rows <- rb[rb$x == min(rb$x), ]
-    expect_equal(diff(range(left_rows$y)) <=
-      nr$ymax[match(g$edges$source[r], nr$id)] -
-        nr$ymin[match(g$edges$source[r], nr$id)] + 1e-12, TRUE)
+    src_top <- nr$ymax[match(g$edges$source[r], nr$id)]
+    src_bot <- nr$ymin[match(g$edges$source[r], nr$id)]
+    expect_true(diff(range(left_rows$y)) <= src_top - src_bot + 1e-12)
   }
 })
 

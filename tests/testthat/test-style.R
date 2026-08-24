@@ -1,6 +1,6 @@
 # ============================================================
 # style function family -- BDD tests (assert rendered theme)
-# AGENTS.md <U+00A7>4.8
+# AGENTS.md 4.8
 # ============================================================
 library(plotit)
 

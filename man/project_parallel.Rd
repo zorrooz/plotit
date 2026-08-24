@@ -11,7 +11,6 @@ project_parallel(
   scale = c("std", "global", "none"),
   alpha = 0.5,
   size = 1,
-  clip = "on",
   ...
 )
 }
@@ -28,9 +27,6 @@ Order matters: the first column is the leftmost axis.}
 \code{"none"}: no normalisation, each column keeps its own range.}
 
 \item{alpha, size}{Passed to \code{geom_line()} / \code{geom_point()}.}
-
-\item{clip}{Currently unused (parallel coordinates do not apply a
-coordinate system). Accepted for signature consistency.}
 
 \item{...}{Passed to \code{geom_line()}.}
 }

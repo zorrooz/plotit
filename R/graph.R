@@ -13,7 +13,7 @@ NULL
 # Aesthetics eligible for automatic binding on formula-resolved layers.
 # Only columns actually present in the resolved table are bound, and only
 # when the user has not mapped that aesthetic explicitly.
-.GRAPH_GEOM_AES <- c(
+._GRAPH_GEOM_AES <- c(
   "x", "y", "xend", "yend",
   "xmin", "xmax", "ymin", "ymax"
 )
@@ -37,7 +37,8 @@ NULL
   mark_hex       = c("x", "y"),
   mark_bar       = c("x", "y"),
   mark_rule      = c("x", "y", "xend", "yend"),
-  mark_rect      = c("xmin", "xmax", "ymin", "ymax", "x", "y")
+  mark_rect      = c("xmin", "xmax", "ymin", "ymax", "x", "y"),
+  mark_errorbar  = c("x", "y", "xmin", "xmax", "ymin", "ymax")
 )
 
 # Resolve an argument that may be a bare symbol or a single string into a
@@ -223,8 +224,8 @@ NULL
   if (!requireNamespace("tidygraph", quietly = TRUE)) {
     cli::cli_abort("Converting {.cls tbl_graph} requires the {.pkg tidygraph} package.")
   }
-  nd <- tibble::as_tibble(tidygraph::activate(g, nodes))
-  ed <- tibble::as_tibble(tidygraph::activate(g, edges))
+  nd <- as.data.frame(tidygraph::activate(g, nodes))
+  ed <- as.data.frame(tidygraph::activate(g, edges))
   directed <- requireNamespace("igraph", quietly = TRUE) &&
     igraph::is_directed(tidygraph::as.igraph(g))
   key <- nd[[1]]
@@ -232,9 +233,7 @@ NULL
   ed$target <- key[ed$to]
   ed$from <- NULL
   ed$to <- NULL
-  nd <- as.data.frame(nd)
   names(nd)[1] <- "id"
-  ed <- as.data.frame(ed)
   weight_col <- intersect(c("weight", "value"), names(ed))[1]
   if (is.na(weight_col)) {
     ed$value <- rep(1, nrow(ed))
@@ -383,7 +382,7 @@ as_graph <- function(edges, nodes = NULL,
   if (is.null(mapping)) {
     mapping <- ggplot2::aes()
   }
-  cols <- intersect(scope %||% .GRAPH_GEOM_AES, names(data))
+  cols <- intersect(scope %||% ._GRAPH_GEOM_AES, names(data))
   todo <- setdiff(cols, names(mapping))
   for (col in todo) {
     mapping[[col]] <- rlang::sym(col)
