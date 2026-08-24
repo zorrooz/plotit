@@ -93,4 +93,6 @@ df |>
   scale_fill(range = "viridis")
 #> Scale for fill is already present.
 #> Adding another scale for fill, which will replace the existing scale.
+#> Scale for fill is already present.
+#> Adding another scale for fill, which will replace the existing scale.
 ```

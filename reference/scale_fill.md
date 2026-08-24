@@ -45,7 +45,8 @@ scale_fill(
 
   Output range. Same as
   [`scale_color()`](https://zorrooz.github.io/plotit/reference/scale_color.md):
-  colour vector, or `"viridis"`, `"brewer"`, `"grey"`, `"hue"`.
+  colour vector, or `"viridis"`, `"brewer"`, `"grey"`, `"friendly"`,
+  `"hue"`.
 
 - breaks:
 
@@ -69,4 +70,6 @@ A modified plotit object.
 plotit(iris, encode(x = Species, fill = Species)) |>
   mark_bar() |>
   scale_fill(range = "viridis")
+#> Scale for fill is already present.
+#> Adding another scale for fill, which will replace the existing scale.
 ```

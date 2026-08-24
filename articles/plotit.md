@@ -20,6 +20,8 @@ iris |>
   label_title("Iris Sepal Dimensions") |>
   label_axis(text = "Sepal Width", aes = "x") |>
   label_axis(text = "Sepal Length", aes = "y")
+#> Scale for colour is already present.
+#> Adding another scale for colour, which will replace the existing scale.
 ```
 
 ![](plotit_files/figure-html/unnamed-chunk-2-1.png)
@@ -104,6 +106,8 @@ mtcars |>
   scale_color(range = "viridis") |>
   scale_x(trans = "log10") |>
   scale_size(range = c(0.5, 8))
+#> Scale for colour is already present.
+#> Adding another scale for colour, which will replace the existing scale.
 ```
 
 ![](plotit_files/figure-html/unnamed-chunk-7-1.png)
@@ -117,6 +121,8 @@ mtcars |>
   plotit(encode(x = wt, y = mpg, colour = factor(cyl))) |>
   mark_point(size = 3) |>
   scale_color(range = c("#E41A1C", "#377EB8", "#4DAF4A"))
+#> Scale for colour is already present.
+#> Adding another scale for colour, which will replace the existing scale.
 ```
 
 ![](plotit_files/figure-html/unnamed-chunk-8-1.png)
@@ -143,6 +149,8 @@ iris |>
   label_axis("Sepal Width (cm)", aes = "x") |>
   label_axis("Sepal Length (cm)", aes = "y") |>
   label_legend("Species", aes = "colour")
+#> Scale for colour is already present.
+#> Adding another scale for colour, which will replace the existing scale.
 ```
 
 ![](plotit_files/figure-html/unnamed-chunk-9-1.png)
@@ -192,6 +200,8 @@ iris |>
   mark_point() |>
   scale_color(range = "viridis") |>
   style(base_theme = ggplot2::theme_minimal(base_size = 14))
+#> Scale for colour is already present.
+#> Adding another scale for colour, which will replace the existing scale.
 ```
 
 ![](plotit_files/figure-html/unnamed-chunk-13-1.png)
@@ -217,6 +227,8 @@ flows |>
     value = value, fill = source
   )) |>
   mark_sankey()
+#> Scale for fill is already present.
+#> Adding another scale for fill, which will replace the existing scale.
 ```
 
 ![](plotit_files/figure-html/unnamed-chunk-14-1.png)

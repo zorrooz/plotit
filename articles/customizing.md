@@ -49,6 +49,8 @@ iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Sepal.Length)) |>
   mark_point(size = 2) |>
   scale_color(trans = "binned", range = "viridis")
+#> Scale for colour is already present.
+#> Adding another scale for colour, which will replace the existing scale.
 ```
 
 ![](customizing_files/figure-html/unnamed-chunk-4-1.png)
@@ -76,6 +78,8 @@ mtcars |>
   plotit(encode(x = wt, y = mpg, colour = hp)) |>
   mark_point(size = 3, alpha = 0.8) |>
   scale_color(range = "viridis")
+#> Scale for colour is already present.
+#> Adding another scale for colour, which will replace the existing scale.
 ```
 
 ![](customizing_files/figure-html/unnamed-chunk-6-1.png)
@@ -87,6 +91,8 @@ iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
   mark_point(size = 2) |>
   scale_color(range = "brewer")
+#> Scale for colour is already present.
+#> Adding another scale for colour, which will replace the existing scale.
 ```
 
 ![](customizing_files/figure-html/unnamed-chunk-7-1.png)
@@ -98,6 +104,8 @@ mtcars |>
   plotit(encode(x = wt, y = mpg, colour = hp)) |>
   mark_point(size = 3) |>
   scale_color(range = c("steelblue", "tomato"))
+#> Scale for colour is already present.
+#> Adding another scale for colour, which will replace the existing scale.
 ```
 
 ![](customizing_files/figure-html/unnamed-chunk-8-1.png)
@@ -145,6 +153,8 @@ iris |>
   label_title("Iris Sepal Measurements") |>
   label_subtitle("Three species, 150 observations") |>
   label_caption("Data: Anderson (1935)")
+#> Scale for colour is already present.
+#> Adding another scale for colour, which will replace the existing scale.
 ```
 
 ![](customizing_files/figure-html/unnamed-chunk-11-1.png)
@@ -160,6 +170,8 @@ iris |>
   label_axis("Sepal Width (cm)", aes = "x") |>
   label_axis("Sepal Length (cm)", aes = "y") |>
   label_legend("Iris Species", aes = "colour")
+#> Scale for colour is already present.
+#> Adding another scale for colour, which will replace the existing scale.
 ```
 
 ![](customizing_files/figure-html/unnamed-chunk-12-1.png)
@@ -176,6 +188,8 @@ iris |>
   scale_color(range = "viridis") |>
   label_title(hide = TRUE) |>
   label_legend(hide = TRUE, aes = "colour")
+#> Scale for colour is already present.
+#> Adding another scale for colour, which will replace the existing scale.
 ```
 
 ![](customizing_files/figure-html/unnamed-chunk-13-1.png)
@@ -213,6 +227,8 @@ iris |>
     legend.position = "bottom"
   ) |>
   label_title("Iris Sepal Measurements")
+#> Scale for colour is already present.
+#> Adding another scale for colour, which will replace the existing scale.
 ```
 
 ![](customizing_files/figure-html/unnamed-chunk-15-1.png)
@@ -227,6 +243,8 @@ iris |>
   mark_point() |>
   scale_color(range = "viridis") |>
   style_default(base_size = 12)
+#> Scale for colour is already present.
+#> Adding another scale for colour, which will replace the existing scale.
 ```
 
 ![](customizing_files/figure-html/unnamed-chunk-16-1.png)

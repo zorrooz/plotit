@@ -43,10 +43,11 @@ scale_color(
 
 - range:
 
-  Output range. `NULL` = auto (discrete-\>hue, continuous-\>viridis). A
-  colour vector (`c("blue","red")`) for manual colours, or a scheme
-  name: `"viridis"`, `"brewer"`, `"grey"`, `"hue"`. For binned: only
-  `"viridis"`, `"brewer"`. For continuous: only `"viridis"`, `"brewer"`.
+  Output range. `NULL` = auto (discrete-\>friendly,
+  continuous-\>viridis). A colour vector (`c("blue","red")`) for manual
+  colours, or a scheme name: `"viridis"`, `"brewer"`, `"grey"`,
+  `"friendly"`, `"hue"`. For binned: only `"viridis"`, `"brewer"`. For
+  continuous: only `"viridis"`, `"brewer"`.
 
 - breaks:
 
@@ -70,4 +71,6 @@ A modified plotit object.
 plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
   mark_point() |>
   scale_color(range = "viridis")
+#> Scale for colour is already present.
+#> Adding another scale for colour, which will replace the existing scale.
 ```

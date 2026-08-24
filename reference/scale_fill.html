@@ -86,7 +86,7 @@ Unsupported values (e.g. <code>"log"</code>) produce a targeted error message.</
 
 <dt id="arg-range">range<a class="anchor" aria-label="anchor" href="#arg-range"></a></dt>
 <dd><p>Output range. Same as <code><a href="scale_color.html">scale_color()</a></code>: colour vector, or <code>"viridis"</code>,
-<code>"brewer"</code>, <code>"grey"</code>, <code>"hue"</code>.</p></dd>
+<code>"brewer"</code>, <code>"grey"</code>, <code>"friendly"</code>, <code>"hue"</code>.</p></dd>
 
 
 <dt id="arg-breaks">breaks<a class="anchor" aria-label="anchor" href="#arg-breaks"></a></dt>
@@ -111,6 +111,8 @@ Unsupported values (e.g. <code>"log"</code>) produce a targeted error message.</
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="plotit.html">plotit</a></span><span class="op">(</span><span class="va">iris</span>, <span class="fu"><a href="encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Species</span>, fill <span class="op">=</span> <span class="va">Species</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="mark_bar.html">mark_bar</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu">scale_fill</span><span class="op">(</span>range <span class="op">=</span> <span class="st">"viridis"</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Scale for <span style="color: #00BB00;">fill</span> is already present.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span>
 <span class="r-plt img"><img src="scale_fill-1.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>

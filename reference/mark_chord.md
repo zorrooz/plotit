@@ -88,4 +88,6 @@ df |>
     value = value, fill = source
   )) |>
   mark_chord()
+#> Scale for fill is already present.
+#> Adding another scale for fill, which will replace the existing scale.
 ```

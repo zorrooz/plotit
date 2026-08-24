@@ -45,6 +45,33 @@
 <ul><li>Active development stage — frequent breaking changes expected.</li>
 <li>See <a href="https://github.com/zorrooz/plotit/releases" class="external-link">GitHub releases</a> for version history.</li>
 </ul><div class="section level3">
+<h3 id="default-visual-system-overhaul-tidyplots-inspired-development-version">Default visual system overhaul (tidyplots-inspired)<a class="anchor" aria-label="anchor" href="#default-visual-system-overhaul-tidyplots-inspired-development-version"></a></h3>
+<div class="section level4">
+<h4 id="new-centralised-style-module-development-version">New: centralised style module<a class="anchor" aria-label="anchor" href="#new-centralised-style-module-development-version"></a></h4>
+<ul><li>New <code>R/theme.R</code> — single source of truth for every global default visual decision (<code>._STYLE_TOKENS</code> tokens, ink/paper anchors, palette sampling, theme builder, WYSIWYG panel sizing). Changing the package look now requires editing one file. <code>style.R</code> keeps only the user-facing <code><a href="../reference/style.html">style()</a></code> / <code><a href="../reference/style_default.html">style_default()</a></code> generics.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="wysiwyg-sizing-ide-preview--export-development-version">WYSIWYG sizing (IDE preview == export)<a class="anchor" aria-label="anchor" href="#wysiwyg-sizing-ide-preview--export-development-version"></a></h4>
+<ul><li>
+<code><a href="../reference/plotit.html">plotit()</a></code> bakes absolute panel dimensions into the ggplot object via ggplot2 &gt;= 3.5 <code>theme(panel.widths =, panel.heights =)</code>. The physical panel size is now identical on every render path — IDE device, knitr, pkgdown reference examples, and <code>ggsave()</code>/<code><a href="../reference/export.html">export()</a></code>. Verified: a 7x5 in plot renders its panel at exactly 7x5 in on 6x6, 9x7 and 14x10 inch devices (previously the content stretched with the device).</li>
+<li>Composites strip the constraint before patchwork assembly (<code>._reset_sizing()</code> -&gt; <code>._strip_panel_size()</code>), using only the public <code>+ theme(panel.widths = NULL)</code> reset for ggplot2 4.x S7-theme safety.</li>
+<li>Graceful degradation when ggplot2 &lt; 3.5 is installed.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="academic-minimal-default-theme-development-version">Academic-minimal default theme<a class="anchor" aria-label="anchor" href="#academic-minimal-default-theme-development-version"></a></h4>
+<ul><li>Pure-ink hairline axis lines and ticks at linewidth 0.25 (was grey50 at 0.3); gridless paper panel; fully transparent chrome.</li>
+<li>Calibrated type hierarchy: plain left-aligned title at rel(1.15) (was bold), muted subtitle/caption, axis.title rel(0.95), axis.text rel(0.85), legend text rel(0.85) with 3.5 mm keys.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="curated-default-palettes-constructed-in-override-friendly-development-version">Curated default palettes (constructed-in, override-friendly)<a class="anchor" aria-label="anchor" href="#curated-default-palettes-constructed-in-override-friendly-development-version"></a></h4>
+<ul><li>Mapped discrete <code>colour</code>/<code>fill</code> aesthetics now receive the colourblind- safe “friendly” scheme by default (Okabe-Ito six-colour set with the bright yellow darkened to <code>#F5C710</code>; even subsampling up to six levels, interpolation beyond). Previously fell through to the raw hue wheel.</li>
+<li>Mapped continuous aesthetics default to viridis.</li>
+<li>Defaults attach at construction time; any later user <code>scale_*()</code> still wins (last-wins). AsIs constants (<code>encode(colour = I("red"))</code>) bypass the default scales and keep identity rendering; the unmapped single-colour injection stays Tableau blue <code>#4E79A7</code>.</li>
+<li>
+<code><a href="../reference/scale_color.html">scale_color()</a></code>/<code><a href="../reference/scale_fill.html">scale_fill()</a></code> gain the explicit <code>"friendly"</code> scheme; <code>"hue"</code> remains opt-in. Discrete defaults route through <code>discrete_scale(palette=)</code> because ggplot2 &gt;= 4.0’s backward-compatibility layer mis-executes palette functions passed to <code>scale_*_discrete(type=)</code>.</li>
+</ul></div>
+</div>
+<div class="section level3">
 <h3 id="relational-charts-full-self-implementation-development-version">Relational charts: full self-implementation<a class="anchor" aria-label="anchor" href="#relational-charts-full-self-implementation-development-version"></a></h3>
 <div class="section level4">
 <h4 id="breaking-development-version">Breaking<a class="anchor" aria-label="anchor" href="#breaking-development-version"></a></h4>

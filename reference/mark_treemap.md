@@ -96,4 +96,6 @@ h <- data.frame(
 h |>
   plotit(encode(fill = id)) |>
   mark_treemap()
+#> Scale for fill is already present.
+#> Adding another scale for fill, which will replace the existing scale.
 ```

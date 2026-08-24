@@ -46,4 +46,6 @@ plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
   mark_point() |>
   scale_color() |>
   label_legend(text = "Species", aes = "colour")
+#> Scale for colour is already present.
+#> Adding another scale for colour, which will replace the existing scale.
 ```

@@ -40,11 +40,15 @@ p1 <- iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
   mark_point(size = 2, alpha = 0.7) |>
   scale_color(range = "viridis")
+#> Scale for colour is already present.
+#> Adding another scale for colour, which will replace the existing scale.
 
 p2 <- iris |>
   plotit(encode(x = Species, y = Sepal.Length, fill = Species)) |>
   mark_boxplot() |>
   scale_fill(range = "brewer")
+#> Scale for fill is already present.
+#> Adding another scale for fill, which will replace the existing scale.
 
 compose_grid(p1, p2) |>
   label_title("Iris Dataset Overview")
@@ -95,11 +99,15 @@ p1 <- iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
   mark_point(alpha = 0.6) |>
   scale_color(range = "viridis")
+#> Scale for colour is already present.
+#> Adding another scale for colour, which will replace the existing scale.
 
 p2 <- iris |>
   plotit(encode(x = Petal.Width, y = Petal.Length, colour = Species)) |>
   mark_point(alpha = 0.6) |>
   scale_color(range = "viridis")
+#> Scale for colour is already present.
+#> Adding another scale for colour, which will replace the existing scale.
 
 # Shared legend, shared axes
 compose_grid(p1, p2, ncol = 2, guides = "collect", axes = "collect") |>
@@ -138,6 +146,8 @@ base <- mtcars |>
   mark_point(size = 2, alpha = 0.7) |>
   scale_color(range = "brewer") |>
   label_title("Weight vs MPG")
+#> Scale for colour is already present.
+#> Adding another scale for colour, which will replace the existing scale.
 
 inset <- mtcars |>
   plotit(encode(x = factor(cyl))) |>
@@ -178,17 +188,23 @@ main <- iris |>
   mark_point(alpha = 0.6) |>
   scale_color(range = "viridis") |>
   label_title("")
+#> Scale for colour is already present.
+#> Adding another scale for colour, which will replace the existing scale.
 
 top <- iris |>
   plotit(encode(x = Sepal.Width, fill = Species)) |>
   mark_histogram(bins = 20, alpha = 0.4) |>
   scale_fill(range = "viridis")
+#> Scale for fill is already present.
+#> Adding another scale for fill, which will replace the existing scale.
 
 right <- iris |>
   plotit(encode(x = Sepal.Length, fill = Species)) |>
   mark_histogram(bins = 20, alpha = 0.4) |>
   scale_fill(range = "viridis") |>
   project_cartesian(flip = TRUE)
+#> Scale for fill is already present.
+#> Adding another scale for fill, which will replace the existing scale.
 
 compose_marginal(main, top, right) |>
   label_title("Iris Sepal Measurements with Marginal Distributions")
@@ -228,6 +244,8 @@ box <- iris |>
   mark_boxplot() |>
   scale_fill(range = "brewer") |>
   label_title("By Species")
+#> Scale for fill is already present.
+#> Adding another scale for fill, which will replace the existing scale.
 
 # Combine them
 compose_grid(scatter_with_marginals, box, widths = c(3, 1)) |>

@@ -122,4 +122,6 @@ nodes |>
   scale_size(range = c(5, 20))
 #> Scale for colour is already present.
 #> Adding another scale for colour, which will replace the existing scale.
+#> Scale for colour is already present.
+#> Adding another scale for colour, which will replace the existing scale.
 ```
