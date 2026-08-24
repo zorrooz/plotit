@@ -47,7 +47,9 @@ built-in circular layout (deterministic, dependency-free).
 \details{
 The laid-out graph (\code{nodes} / \code{edges} / \code{arcs} / \code{ribbons} tables) is
 stored on \verb{@graph}, so subsequent marks can reference any table directly
-for tuning beyond this sugar's two parameters.
+for tuning beyond this sugar's parameters.  Sector ids are labelled just
+outside the ring and the panel keeps a fixed aspect ratio so sectors
+stay circular.
 }
 \examples{
 df <- data.frame(

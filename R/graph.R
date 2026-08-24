@@ -226,8 +226,15 @@ NULL
   }
   nd <- as.data.frame(tidygraph::activate(g, nodes))
   ed <- as.data.frame(tidygraph::activate(g, edges))
-  directed <- requireNamespace("igraph", quietly = TRUE) &&
-    igraph::is_directed(tidygraph::as.igraph(g))
+  # Directedness: read via igraph when available (tidygraph itself imports
+  # igraph, so this fallback branch is theoretical).
+  directed <- FALSE
+  if (requireNamespace("igraph", quietly = TRUE)) {
+    directed <- tryCatch(
+      igraph::is_directed(tidygraph::as.igraph(g)),
+      error = function(e) FALSE
+    )
+  }
   key <- nd[[1]]
   ed$source <- key[ed$from]
   ed$target <- key[ed$to]

@@ -74,7 +74,7 @@
 
 - **OOP**：**S7**。核心类：`plotit_labels`（文本字段）、`plotit_metadata`（配置项）、`plotit`（持有 `gg` + `meta`）。若 S7 发生不兼容变更，锁定版本或评估迁移至 S3/R6。
 - **核心依赖**：ggplot2、S7、cli、rlang、patchwork。`ggrastr` 为可选增强（图层栅格化）。
-- **可选依赖**（Suggests，按 mark 按需加载）：ggrepel、ggbeeswarm、treemapify、igraph、tidygraph（仅 `as_graph()` 收编 tbl_graph 输入）、hexbin、sf、mapproj、ggrastr、knitr、rmarkdown。（ggsankey/ggraph/circlize 已于关系数据体系改造中退役：sankey/network/chord 均改为 `layout_*` + 原语图层语法糖。）
+- **可选依赖**（Suggests，按 mark 按需加载）：ggrepel、ggbeeswarm（唯一保留外部算法的关系类 mark：碰撞检测排列）、tidygraph（仅 `as_graph()` 收编 tbl_graph 输入）、hexbin、sf、mapproj、ggrastr、knitr、rmarkdown。（ggsankey/ggraph/circlize 已于关系数据体系改造中退役；igraph 已随力导向/树布局自研而移除；treemapify 已随 mark_treemap 原生化而移除：sankey/network/chord/treemap/tree/dendrogram 均为 `layout_*` 自研引擎 + 原语图层语法糖。）
 
 ---
 
@@ -138,7 +138,7 @@
 | `mark_dumbbell` | `mark_point`×2 + 线段语法糖 | 哑铃对比图 ✅ |
 | `mark_beeswarm` | `ggbeeswarm::geom_beeswarm` | 蜂群散点 ✅ |
 | `mark_sankey` | `layout_sankey()` + polygon/rect 语法糖（edges-table API） | 桑基流向图 ✅ |
-| `mark_treemap` | `treemapify` | 矩形树图 ✅ |
+| `mark_treemap` | `layout_treemap()` + rect/text 语法糖（自研 squarify） | 矩形树图 ✅ |
 | `mark_network` | `layout_force/circle()` + point/rule 语法糖（nodes+edges 双数据源） | 力导向网络图 ✅ |
 | `mark_chord` | `layout_chord()` + polygon 语法糖（edges-table API） | 弦图 ✅ |
 
@@ -189,7 +189,7 @@ G2 的每个复合 Mark 内部展开为 2-5 个基础 Mark 的组合，这与 pl
 | | **第三层（关系）** | | | | | |
 | 23 | 复合 | `mark_beeswarm` | 分布 | `ggbeeswarm::geom_beeswarm` | G2 `beeswarm`(corelib) | 蜂群散点（碰撞检测） ✅ |
 | 24 | 复合 | `mark_sankey` | 关系 | `layout_sankey()` + polygon/rect 语法糖（edges-table API） | G2 `sankey`(graphlib) | 桑基流向图 ✅ |
-| 25 | 复合 | `mark_treemap` | 关系 | `treemapify` | G2 `treemap`(graphlib) | 矩形树图 ✅ |
+| 25 | 复合 | `mark_treemap` | 关系 | `layout_treemap()` + rect/text 语法糖（自研 Bruls squarify） | G2 `treemap`(graphlib) | 矩形树图 ✅ |
 | 26 | 复合 | `mark_network` | 关系 | `layout_force/circle()` + point/rule 语法糖（nodes+edges 双数据源） | G2 `forceGraph`(graphlib) | 力导向网络图 ✅ |
 | 27 | 复合 | `mark_chord` | 关系 | `layout_chord()` + polygon 语法糖（edges-table API） | G2 `chord`(graphlib) | 弦图 ✅ |
 
@@ -265,6 +265,39 @@ data |> plotit(encode(x = variable, y = value, colour = group)) |>
 #   split_wrap(top_level_var)
 ```
 
+#### 径向树
+
+```r
+# 径向树 — layout_tree("right") 的 x=深度、y=叶子序，经 project_polar 映射为半径/角度
+h <- data.frame(id = c("root","A","B","a1","a2"),
+                parent = c(NA,"root","root","A","A"))
+as_graph(h) |> plotit() |>
+  layout_tree(direction = "right") |>
+  mark_rule(data = ~edges) |>
+  mark_point(data = ~nodes) |>
+  project_polar(theta = "y")
+```
+
+### 3.2c 主流关系图表类型对照
+
+对标 ECharts 5 / AntV G6·G2(graphlib) / D3 v7(hierarchy/chord/force) / Plotly / Vega-Lite：
+
+| 类型 | ECharts | D3 | Plotly | Highcharts | G6/G2 | plotit |
+|---|---|---|---|---|---|---|
+| 力导向网络 | graph(force) | d3-force | 手工散点 | networkgraph | force/GForce | ✅ 自研 `layout_force` |
+| 环形网络 | graph(circular) | — | — | — | circular/radial | ✅ `layout_circle` |
+| 正交树 | tree(orthogonal) | tree/cluster | — | orgchart | dagre/mindmap | ✅ `layout_tree` |
+| 径向树 | tree(radial) | 旋转组合 | — | — | radial | 🧩 recipe（tree+polar，§3.2b） |
+| 树状图 | cluster | cluster | — | — | dendrogram | ✅ `layout_dendrogram` |
+| 桑基 | sankey | d3-sankey(插件) | sankey | sankey | G6 流向 | ✅ 自研 `layout_sankey` |
+| 弦图/依赖环 | —（graph 变体） | d3-chord | — | dependencywheel | arc(v5) | ✅ 自研 `layout_chord`（依赖环=chord 特例） |
+| 矩形树图 | treemap | treemap | treemap | treemap | G2 treemap | ✅ 自研 `layout_treemap` |
+| 旭日 sunburst | sunburst | partition(+arc) | sunburst | sunburst | — | 🧩 recipe（bar+polar 分层，§3.2b） |
+| 冰柱 icicle | —（sunburst 变体） | partition | icicle | icicle(v11) | — | 🧩 recipe（rect 层次预处理 + split） |
+| 气泡填充 pack | — | pack | — | — | — | ⏳ `layout_pack` 显式延期（可自研简单 place 算法） |
+| 平行类别 alluvial | themeRiver | — | parcats | — | — | ➖ 超出核心关系域（多元类别流） |
+
+结论：核心关系域（网络/树系/流/环/层次矩形）**全覆盖且零外部依赖**（beeswarm 为约定豁免）；旭日/冰柱/径向树按组合优先原则以 recipe 收录而非新增 mark；唯一缺口是气泡填充 pack，已显式延期并标注可自研。
 ### 3.3 函数签名概要
 
 #### 3.3.1 `plotit()` — 初始化
@@ -378,14 +411,14 @@ style_dark <- make_theme("style_dark",
 
 **第三层（关系类）：渲染定位**
 
-关系类 mark（`mark_beeswarm`/`mark_sankey`/`mark_treemap`/`mark_network`/`mark_chord`）引入外部包算法/渲染器，与语法糖复合 Mark 不同：
+关系类 mark 中仅 `mark_beeswarm` 引入外部算法（碰撞检测，约定豁免）；其余全部为自研确定性布局引擎 + ggplot2 原语图层：
 
 | mark | 渲染方式 | 定位说明 |
 |---|---|---|
 | `mark_beeswarm` | `ggbeeswarm` geom | 标准 ggplot2 层；跳过全局自动 dodge（碰撞检测自排布） |
 | `mark_sankey` | `layout_sankey()` + `mark_polygon(~ribbons)`/`mark_rect(~nodes)` 语法糖 | 纯 ggplot2 层增量构建；`@graph` 存 nodes/edges/ribbons 三表；确定性分层布局（无外部依赖）；节点填充取首次出现身份，数值 fill 保持 double（#5） |
-| `mark_treemap` | `treemapify` geom | 标准 ggplot2 层；忽略 dodge；另见 `layout_treemap()` 原生路径（§3.3.4a） |
-| `mark_network` | `layout_force/circle()` + point/rule/text 语法糖 | 普通 ggplot2 层**加法式**组合（先前层/scale 全保留）；`@graph` 可供后续 `~nodes/~edges` 引用；直边渲染为已知局限；`linear/bipartite` 弃用回退 force；`weight=` 弃用改 `value=`；`manual` 需节点表自带数值 x/y（此模式免 igraph） |
+| `mark_treemap` | `layout_treemap()` 自研 squarify + `mark_rect(~leaves)`/`mark_text(~leaves)` 语法糖 | 纯 ggplot2 层增量构建；`@graph` 存 nodes/edges/leaves 三表；白色发丝分隔 + 无轴画布 + 叶标签；输入层次表（id/parent/value）；treemapify 已退役 |
+| `mark_network` | `layout_force/circle()` + point/rule/text 语法糖 | 普通 ggplot2 层**加法式**组合（先前层/scale 全保留）；`@graph` 可供后续 `~nodes/~edges` 引用；直边渲染为已知局限；`linear/bipartite` 弃用回退 force；`weight=` 弃用改 `value=`；`manual` 需节点表自带数值 x/y；边绘制于节点下层，标签悬浮于点上方，`coord_fixed` 保持真实比例 |
 | `mark_chord` | `layout_chord()` + `mark_polygon(~ribbons)`/`mark_polygon(~arcs)` 语法糖 | 纯 ggplot2 层增量构建；`@graph` 存 nodes/edges/arcs/ribbons 四表；确定性环形布局（无外部依赖）；重复 (source,target) 对聚合为单带；自环占两个子弧段；`gap_width`(度) 映射布局角距 |
 
 **新增 Mark 判断流程**（更新）：
@@ -487,9 +520,9 @@ data |> as_graph() |> plotit() |>
 
 | 函数 | 引擎 | 关键参数 |
 |---|---|---|
-| `layout_force` | `igraph::layout_with_fr` | `iterations`, `seed`(强制), `...` |
+| `layout_force` | 自研 Fruchterman-Reingold（斥力矩阵 + 引力累加 + 线性降温，确定性 seed） | `iterations`, `seed`(可选), `weights`, `...`（仅 weights，未知参数警告） |
 | `layout_circle` | 三角函数 | `order_by`（`"id"`/`"degree"`） |
-| `layout_tree` | `igraph::layout_as_tree` | `direction`（`down/up/right/left`） |
+| `layout_tree` | 自研叶子序后序遍历 + 深度轴（与 dendrogram 共享 `._hierarchy_leaf_x`） | `direction`（`down/up/right/left`） |
 | `layout_dendrogram` | hclust 高度递归展开（`.side` 保序，免 igraph） | `direction`（`down/up/right/left`） |
 | `layout_chord` | 扇区角度分配 + 贝塞尔带（纯 R，确定性）；输出第三/四表 `arcs`+`ribbons` | `inner_radius`, `pad_angle`(rad), `curvature`, `order_by`（`"total"`/`"appearance"`） |
 | `layout_sankey` | 最长路径分层 + 重心扫描 + 贝塞尔带（纯 R，确定性免 seed） | `node_width`, `padding`, `curvature`, `n_points`, `max_sweeps`；输出第三表 `ribbons` |
@@ -809,14 +842,14 @@ export(p, "output.pdf", dpi = 300)
 |---|---|---|---|---|---|
 | 2.1 | `mark_rect` | 基础几何 | ggplot2 | 低 | `geom_tile`/`geom_rect` |
 | 2.2 | `mark_rule` | 基础几何 | ggplot2 | 中 | `geom_hline`/`geom_vline`/`geom_abline`/`geom_segment` — 按 orientation 自动分发 |
-| 2.3 | `mark_treemap` | 关系层次 | treemapify（Suggests） | 中 | `treemapify::geom_treemap` |
+| 2.3 | `mark_treemap` | 关系层次 | ~~treemapify~~ 已移除（原生化） | 中 | 初版 `treemapify::geom_treemap` 已退役，现为 `layout_treemap()` 自研语法糖（§3.3.4a） |
 
 **阶段 2 风险**：
 
 | 风险 | 缓解措施 |
 |---|---|
 | `mark_rule` 需处理 4 种底层 geom → API 设计复杂 | 统一为 `mark_rule(orientation, intercept, ...)` 签名 |
-| treemapify 维护频率低（最后更新 2023） | 提供 fallback：无 treemapify 时 `mark_rect` + 数据预处理 |
+| treemapify 维护频率低（最后更新 2023） | ✅ 已关闭：treemapify 整体退役，`mark_treemap` 改走自研 `layout_treemap()` 引擎 |
 
 ---
 
@@ -840,14 +873,14 @@ export(p, "output.pdf", dpi = 300)
 
 | # | mark | 类别 | 依赖包 | 复杂度 | 对应实现 |
 |---|---|---|---|---|---|
-| 4.1 | `mark_network` | 关系层次 | igraph（Suggests，仅布局引擎） | 高 | `layout_force()`/`layout_circle()` + point/rule/text 语法糖（初版 ggraph 实现已退役，见 §3.3.4a） |
+| 4.1 | `mark_network` | 关系层次 | ~~igraph~~ 已移除（布局自研） | 高 | `layout_force()`（自研 FR）/`layout_circle()` + rule/point/text 语法糖（初版 ggraph 实现已退役，见 §3.3.4a） |
 | 4.2 | `mark_chord` | 关系层次 | 无（纯 R 确定性布局引擎） | 高 | `layout_chord()` + `mark_polygon(~ribbons)`/`mark_polygon(~arcs)` 语法糖（初版 circlize 实现已退役，见 §3.3.4a） |
 
 **阶段 4 风险**：
 
 | 风险 | 缓解措施 |
 |---|---|
-| `mark_network` 依赖两个重包（ggraph + igraph） | ✅ 已关闭：ggraph 已退役；igraph 仅用于 `layout_force`/`layout_tree` 布局引擎，渲染全部为 ggplot2 原语 |
+| `mark_network` 依赖两个重包（ggraph + igraph） | ✅ 已关闭：ggraph 已退役；igraph 亦已随力导向/树布局自研而整体移除，渲染与布局均为包内实现 |
 | circlize 使用 base R 图形系统非 ggplot2 → 集成复杂 | ✅ 已关闭：circlize 已退役，改为纯 R 确定性环形布局（§3.3.4a） |
 
 ### 9.2a 组合收录（不新增 mark 的 recipe）

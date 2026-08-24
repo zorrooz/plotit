@@ -443,14 +443,12 @@ S7::method(mark_rect, plotit_class) <- function(
 #'   mark_rule(xintercept = 3, colour = "red", linetype = "dashed")
 #'
 #' # Data-driven segments: network edges from a layout_* transform
-#' if (requireNamespace("igraph", quietly = TRUE)) {
-#'   e <- data.frame(source = c("a", "a", "b"), target = c("b", "c", "c"))
-#'   as_graph(e) |>
-#'     plotit() |>
-#'     layout_force(seed = 1) |>
-#'     mark_point(data = ~nodes) |>
-#'     mark_rule(data = ~edges, colour = "grey70")
-#' }
+#' e <- data.frame(source = c("a", "a", "b"), target = c("b", "c", "c"))
+#' as_graph(e) |>
+#'   plotit() |>
+#'   layout_force(seed = 1) |>
+#'   mark_point(data = ~nodes) |>
+#'   mark_rule(data = ~edges, colour = "grey70")
 #' @export
 mark_rule <- S7::new_generic(
   "mark_rule", "plot",
@@ -1512,70 +1510,134 @@ S7::method(mark_sankey, plotit_class) <- function(
   txt_mapping$x <- rlang::sym("xc")
   txt_mapping$y <- rlang::sym("yc")
   txt_mapping$label <- rlang::sym("id")
-  plot <- mark_text(plot,
-    mapping = txt_mapping, data = ~nodes,
+  # Labels sit inside the node strips: white over the default ink fill,
+  # near-black over user-mapped fills (override via mark_text for control).
+  txt_args <- list(
+    plot = plot, mapping = txt_mapping, data = ~nodes,
     size = ._MARK_STYLE$txt_note
   )
+  txt_args$colour <- if (!has_fill) "white" else "grey20"
+  plot <- do.call(mark_text, txt_args)
+
+  # Coordinate-free diagram: no axes around the layout canvas.
+  plot <- ._theme_blank_axes(plot)
   plot
 }
 # ---- mark_treemap ----
-#' Treemap layer
+#' Treemap layer (sugar)
 #'
-#' Creates a treemap showing hierarchical data as nested rectangles.
-#' Requires the \pkg{treemapify} package. Data should contain
-#' `area`, `subgroup`, and optionally `subgroup2` columns.
+#' Creates a treemap from a **hierarchy table** (`id`/`parent` columns, leaf
+#' sizes in a `value` column) using plotit's self-contained squarified
+#' tiling.  Equivalent to the pipeline `as_graph(hierarchy) |>
+#' layout_treemap() |> mark_rect(data = ~leaves)`; the laid-out tables
+#' (`nodes`/`edges`/`leaves`) are stored on `@graph` for further tuning.
 #'
-#' @param plot A plotit object
-#' @param mapping Optional new aesthetics. Must include `area` for
-#'   rectangle sizing.
-#' @param data Optional data for this layer
-#' @param position Position adjustment.
+#' Fully self-contained: no \pkg{treemapify} dependency, deterministic
+#' Bruls squarify layout.  Tiles receive the unified white hairline
+#' separators and coordinate axes are blanked (the diagram is
+#' coordinate-free).
+#'
+#' @param plot A plotit object whose data is a hierarchy table with `id`,
+#'   `parent`, and leaf-level `value` columns (build via
+#'   `as_graph()` on the same shape).  A global `encode(fill = ...)`
+#'   maps tile fill against any hierarchy column.
+#' @param data Optional hierarchy table for this layer.
+#' @param node_colour Default tile fill when no fill aesthetic is mapped
+#'   (default `._MARK_STYLE$primary` = `"#4E79A7"`).
+#' @param show_labels If `TRUE` (default), draw leaf ids at tile centres.
+#'   Labels render white over the unmapped brand-blue fill; when a fill is
+#'   mapped they fall back to near-black -- chain
+#'   `mark_text(data = ~leaves, colour = ...)` for full control.
 #' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
 #' @param rasterize_dpi DPI for rasterization (default 300).
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
-#' @param ... Other arguments passed to `geom_treemap`
-#' @return Modified plotit object
+#' @param ... Unused; tiling fine-tuning lives on [layout_treemap()] in the
+#'   explicit pipeline form.
+#' @return Modified plotit object; `@graph` holds nodes/edges/leaves.
 #' @references
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/treemap}{Treemap} (graphlib)
-#' @examplesIf(requireNamespace("treemapify", quietly = TRUE))
-#' df <- data.frame(
-#'   group = c("A", "B", "C"),
-#'   subgroup = c("a1", "a2", "b1"),
-#'   size = c(30, 20, 50))
-#' plotit(df, encode(area = size, fill = group,
-#'                   subgroup = subgroup)) |>
+#' @examples
+#' h <- data.frame(
+#'   id     = c("root", "A", "B", "a1", "a2", "b1"),
+#'   parent = c(NA, "root", "root", "A", "A", "B"),
+#'   value  = c(NA, NA, NA, 30, 20, 50)
+#' )
+#' h |>
+#'   plotit(encode(fill = id)) |>
 #'   mark_treemap()
 #' @export
 mark_treemap <- S7::new_generic(
   "mark_treemap", "plot",
-  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
-           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+  function(plot, data = NULL, node_colour = ._MARK_STYLE$primary,
+           show_labels = TRUE, ...,
+           rasterize = FALSE, rasterize_dpi = 300,
+           rasterize_dev = "cairo") {
     S7::S7_dispatch()
   }
 )
 
 #' @export
 S7::method(mark_treemap, plotit_class) <- function(
-  plot, mapping = NULL, data = NULL, position = NULL, ...,
+  plot, data = NULL, node_colour = ._MARK_STYLE$primary,
+  show_labels = TRUE, ...,
   rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
 ) {
-  if (!requireNamespace("treemapify", quietly = TRUE)) {
-    cli::cli_abort("{.fn mark_treemap} requires the {.pkg treemapify} package.")
+  dots <- rlang::list2(...)
+  if (length(dots) > 0) {
+    cli::cli_warn(c(
+      "Arguments passed to {.fn mark_treemap} via {.arg ...} are ignored.",
+      "i" = "Use {.fn layout_treemap} in the explicit pipeline to control \\
+             the squarified tiling."
+    ))
   }
-  if (!is.null(mapping) && !is.null(mapping$fill)) {
-    plot <- ._clear_default_color(plot, mapping)
+
+  hier <- data %||% plot@gg$data
+  if (!is.data.frame(hier) || !all(c("id", "parent") %in% names(hier))) {
+    cli::cli_abort(c(
+      "{.fn mark_treemap} requires a hierarchy table with {.col id}, \\
+       {.col parent} and leaf {.col value} columns.",
+      "i" = "Or run {.code as_graph() |> layout_treemap()} yourself and \\
+             render {.code mark_rect(data = ~leaves)}."
+    ))
   }
-  # geom_treemap lays out rectangles itself; the global auto-dodge
-  # position is ignored (D6).  Routed through the shared mark path so the
-  # unified style defaults apply (white hairline tile separators).
-  plot <- do.call(function(...) {
-    ._mark_impl(
-      plot, mapping, data,
-      position = NULL, treemapify::geom_treemap,
-      rasterize, rasterize_dpi, rasterize_dev,
-      auto_dodge = FALSE, bind_aes = NULL, mark_name = "mark_treemap", ...
+
+  g <- ._graph_from_hierarchy(hier, directed = TRUE)
+  g <- ._layout_engine_treemap(g)
+  plot@graph <- g
+
+  # Tile fills need a legend; drop the default_color guides suppression.
+  plot <- ._clear_default_color(plot)
+
+  # Fill channel: mapped aesthetic wins over the static default (gated per
+  # channel, mirroring mark_network's node statics).
+  global_fill <- plot@gg$mapping$fill
+  has_fill <- !is.null(global_fill) && !inherits(global_fill, "AsIs")
+  rect_mapping <- ggplot2::aes()
+  if (has_fill) rect_mapping$fill <- global_fill
+  rect_args <- list(
+    plot = plot, data = ~leaves, mapping = rect_mapping,
+    rasterize = rasterize, rasterize_dpi = rasterize_dpi,
+    rasterize_dev = rasterize_dev
+  )
+  if (!has_fill) rect_args$fill <- node_colour
+  plot <- do.call(mark_rect, rect_args)
+
+  # Leaf labels centred on each tile (xc/yc from the layout engine).
+  if (isTRUE(show_labels)) {
+    lbl_mapping <- ggplot2::aes()
+    lbl_mapping$x <- rlang::sym("xc")
+    lbl_mapping$y <- rlang::sym("yc")
+    lbl_mapping$label <- rlang::sym("id")
+    lbl_args <- list(
+      plot = plot, mapping = lbl_mapping, data = ~leaves,
+      size = ._MARK_STYLE$txt_note
     )
-  }, rlang::list2(...))
+    lbl_args$colour <- if (!has_fill) "white" else "grey20"
+    plot <- do.call(mark_text, lbl_args)
+  }
+
+  # Coordinate-free diagram: no axes around the canvas.
+  plot <- ._theme_blank_axes(plot)
   plot
 }
 
@@ -1591,9 +1653,10 @@ S7::method(mark_treemap, plotit_class) <- function(
 #' `~nodes` / `~edges` directly, and layers/scales/theme added *before* this
 #' call are preserved (additive composition).
 #'
-#' Requires \pkg{igraph}, except `layout = "manual"` which consumes
-#' pre-computed numeric `x`/`y` columns on the nodes table.  Edges render as
-#' straight segments; curved edges are a known limitation of the sugar form.
+#' Fully self-contained: the force/circle layouts run on plotit's own
+#' deterministic engines and rendering is plain ggplot2 layers.  Edges
+#' render as straight segments; curved edges are a known limitation of the
+#' sugar form.
 #'
 #' @param plot A plotit object. The data should be a data.frame of **nodes**
 #'   whose first column is a unique id.
@@ -1621,7 +1684,7 @@ S7::method(mark_treemap, plotit_class) <- function(
 #' @return Modified plotit object; `@graph` holds the laid-out tables.
 #' @references
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/force-graph}{ForceGraph}
-#' @examplesIf(requireNamespace("igraph", quietly = TRUE))
+#' @examples
 #' nodes <- data.frame(
 #'   name  = c("A", "B", "C", "D"),
 #'   group = c("X", "Y", "X", "Y"),
@@ -1632,7 +1695,8 @@ S7::method(mark_treemap, plotit_class) <- function(
 #'   to     = c("B", "C", "C", "D"),
 #'   weight = c(1, 2, 3, 4)
 #' )
-#' nodes |> plotit(encode(color = group, size = value, label = name)) |>
+#' nodes |>
+#'   plotit(encode(color = group, size = value, label = name)) |>
 #'   mark_network(
 #'     edges = edges,
 #'     encode_edges = encode(source = from, target = to, value = weight),
@@ -1789,40 +1853,7 @@ S7::method(mark_network, plotit_class) <- function(
     plot@graph <- g
   }
 
-  # ---- node layer: reuse extracted global mappings, statics as fallbacks --
-  # Static defaults are gated per channel: a ggplot2 layer parameter would
-  # silently override an aesthetic mapping of the same name, so each static
-  # is only injected when the user did not map that channel.
-  node_aes <- plot@gg$mapping
-  node_mapping <- ggplot2::aes()
-  if (!is.null(node_aes)) {
-    # Skip I() constants injected by plotit() (D5): copying them into the
-    # layer would make later scale_color()/scale_fill() calls ineffective.
-    if (!is.null(node_aes$colour) && !inherits(node_aes$colour, "AsIs")) {
-      node_mapping$colour <- node_aes$colour
-    }
-    if (!is.null(node_aes$fill) && !inherits(node_aes$fill, "AsIs")) {
-      node_mapping$fill <- node_aes$fill
-    }
-    if (!is.null(node_aes$size)) node_mapping$size <- node_aes$size
-  }
-  node_statics <- list()
-  # node_colour applies to both channels: default shape 19 renders through
-  # `colour`, filled shapes (21+) through `fill`.
-  if (is.null(node_mapping$colour)) node_statics$colour <- node_colour
-  if (is.null(node_mapping$fill)) node_statics$fill <- node_colour
-  if (is.null(node_mapping$size)) node_statics$size <- node_size
-  plot <- do.call(._mark_impl, c(list(
-    plot, node_mapping, ~nodes,
-    position = NULL,
-    ggplot2::geom_point,
-    rasterize = FALSE, rasterize_dpi = 300,
-    rasterize_dev = "cairo",
-    auto_dodge = FALSE,
-    bind_aes = ._MARK_BIND_AES$mark_point
-  ), node_statics))
-
-  # ---- edge layer: mapped channels win over statics ----
+  # ---- edge layer first (beneath nodes): mapped channels win over statics
   edge_mapping <- ggplot2::aes()
   if (!is.null(encode_edges)) {
     allowed <- c("colour", "linetype", "linewidth", "alpha")
@@ -1857,23 +1888,55 @@ S7::method(mark_network, plotit_class) <- function(
   }
   plot <- do.call(mark_rule, args)
 
+  # ---- node layer on top of edges: statics gated per channel ----
+  # A ggplot2 layer parameter would silently override an aesthetic mapping
+  # of the same name, so each static is only injected when the user did not
+  # map that channel.
+  node_aes <- plot@gg$mapping
+  node_mapping <- ggplot2::aes()
+  if (!is.null(node_aes)) {
+    # Skip I() constants injected by plotit() (D5): copying them into the
+    # layer would make later scale_color()/scale_fill() calls ineffective.
+    if (!is.null(node_aes$colour) && !inherits(node_aes$colour, "AsIs")) {
+      node_mapping$colour <- node_aes$colour
+    }
+    if (!is.null(node_aes$fill) && !inherits(node_aes$fill, "AsIs")) {
+      node_mapping$fill <- node_aes$fill
+    }
+    if (!is.null(node_aes$size)) node_mapping$size <- node_aes$size
+  }
+  node_statics <- list()
+  # node_colour applies to both channels: default shape 19 renders through
+  # `colour`, filled shapes (21+) through `fill`.
+  if (is.null(node_mapping$colour)) node_statics$colour <- node_colour
+  if (is.null(node_mapping$fill)) node_statics$fill <- node_colour
+  if (is.null(node_mapping$size)) node_statics$size <- node_size
+  plot <- do.call(._mark_impl, c(list(
+    plot, node_mapping, ~nodes,
+    position = NULL,
+    ggplot2::geom_point,
+    rasterize = FALSE, rasterize_dpi = 300,
+    rasterize_dev = "cairo",
+    auto_dodge = FALSE,
+    bind_aes = ._MARK_BIND_AES$mark_point
+  ), node_statics))
+
+  # Node labels float just above their points instead of overlapping them.
   if (!is.null(node_aes$label)) {
     label_mapping <- ggplot2::aes()
     label_mapping$label <- node_aes$label
     plot <- mark_text(plot,
       mapping = label_mapping, data = ~nodes,
       position = ggplot2::position_identity(),
-      size = ._MARK_STYLE$txt_note
+      size = ._MARK_STYLE$txt_note,
+      vjust = -0.9
     )
   }
 
-  plot@gg <- plot@gg +
-    ggplot2::theme(
-      axis.line = ggplot2::element_blank(),
-      axis.ticks = ggplot2::element_blank(),
-      axis.text = ggplot2::element_blank(),
-      axis.title = ggplot2::element_blank()
-    )
+  # Coordinate-free canvas with a true aspect ratio so the layout geometry
+  # is not stretched by the panel shape.
+  plot@gg <- plot@gg + ggplot2::coord_fixed()
+  plot <- ._theme_blank_axes(plot)
   plot
 }
 
@@ -1917,7 +1980,9 @@ S7::method(mark_network, plotit_class) <- function(
 #'
 #' The laid-out graph (`nodes` / `edges` / `arcs` / `ribbons` tables) is
 #' stored on `@graph`, so subsequent marks can reference any table directly
-#' for tuning beyond this sugar's two parameters.
+#' for tuning beyond this sugar's parameters.  Sector ids are labelled just
+#' outside the ring and the panel keeps a fixed aspect ratio so sectors
+#' stay circular.
 #'
 #' @param plot A plotit object
 #' @param mapping Structural aesthetics: \code{source} (required),
@@ -2086,6 +2151,21 @@ S7::method(mark_chord, plotit_class) <- function(
   } else {
     plot <- mark_polygon(plot, data = ~arcs, fill = ._MARK_STYLE$arc)
   }
+
+  # Sector labels float outside the ring on the layout's xc/yc anchors.
+  lbl_mapping <- ggplot2::aes()
+  lbl_mapping$x <- rlang::sym("xc")
+  lbl_mapping$y <- rlang::sym("yc")
+  lbl_mapping$label <- rlang::sym("id")
+  plot <- mark_text(plot,
+    mapping = lbl_mapping, data = ~nodes,
+    size = ._MARK_STYLE$txt_note, colour = ._MARK_STYLE$ink
+  )
+
+  # True circles need a fixed aspect ratio; clip off so the outer labels
+  # at radius > 1 are not cropped.  No axes around the canvas.
+  plot@gg <- plot@gg + ggplot2::coord_fixed(clip = "off")
+  plot <- ._theme_blank_axes(plot)
   plot
 }
 

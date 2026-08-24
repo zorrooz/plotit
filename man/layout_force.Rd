@@ -14,19 +14,21 @@ layout_force(plot, iterations = 500, seed = NULL, ...)
 
 \item{seed}{Random seed; pass one for reproducible output.}
 
-\item{...}{Passed to \link[igraph:layout_with_fr]{igraph::layout_with_fr} (e.g. \code{weights}, \code{area}).}
+\item{...}{Optional named argument \code{weights}: non-negative numeric
+vector, one per edge -- higher weights pull endpoints closer together.
+Any other name is ignored with a warning.}
 }
 \value{
 A modified \code{plotit} object (pipeline form), or a new
 \code{plotit_graph} when called on raw graph data.
 }
 \description{
-Positions nodes with a Fruchterman-Reingold force simulation
-(\link[igraph:layout_with_fr]{igraph::layout_with_fr}).  Node table gains \code{x}/\code{y}; edge table gains
-\code{x}, \code{y}, \code{xend}, \code{yend}.
+Positions nodes with a self-contained Fruchterman-Reingold force
+simulation (attractive edge forces, pairwise repulsion, linear cooling).
+No external dependency; runs are deterministic when \code{seed} is given.
+Node table gains \code{x}/\code{y}; edge table gains \code{x}, \code{y}, \code{xend}, \code{yend}.
 }
 \examples{
-\dontshow{if (requireNamespace("igraph", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 e <- data.frame(source = c("a", "a", "b"), target = c("b", "c", "c"))
 g <- as_graph(e) |> layout_force(seed = 1)
 g$nodes
@@ -36,5 +38,4 @@ as_graph(e) |>
   layout_force(seed = 1) |>
   mark_point(data = ~nodes) |>
   mark_rule(data = ~edges, colour = "grey70")
-\dontshow{\}) # examplesIf}
 }

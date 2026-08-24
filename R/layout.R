@@ -16,12 +16,6 @@
 #' @keywords internal
 NULL
 
-._require_igraph <- function() {
-  if (!requireNamespace("igraph", quietly = TRUE)) {
-    cli::cli_abort("This layout requires the {.pkg igraph} package.")
-  }
-}
-
 # Strip computed geometry so every engine recomputes purely from topology.
 ._graph_topology <- function(g) {
   drop <- function(df, cols) df[, setdiff(names(df), intersect(cols, names(df))), drop = FALSE]
@@ -32,14 +26,6 @@ NULL
     )),
     edges = drop(g$edges, c("x", "y", "xend", "yend"))
   )
-}
-
-._check_nodes_table <- function(nodes, fn) {
-  if (!"id" %in% names(nodes)) {
-    cli::cli_abort("{.fn {fn}} requires an {.col id} column on the node table.")
-  }
-  # igraph treats the first vertices column as node names.
-  nodes[, c("id", setdiff(names(nodes), "id")), drop = FALSE]
 }
 
 # Fill edge x/y/xend/yend from node coordinates by id lookup.
@@ -78,15 +64,152 @@ NULL
   setdiff(t$nodes$id, t$edges$target)
 }
 
+# Shared post-order walk for hierarchy engines: leaves are numbered
+# strictly left-to-right across the whole forest (merge-side .side ordering
+# decides which child is "left"), and every internal node sits at the mean
+# leaf position of its children.  Used by layout_tree and
+# layout_dendrogram so both share one ordering convention.
+._hierarchy_leaf_x <- function(kids, roots, ids) {
+  x_of <- stats::setNames(numeric(length(ids)), ids)
+  counter <- 0
+  for (rt in roots) {
+    stack <- list(list(id = rt, phase = 0L))
+    while (length(stack) > 0) {
+      cur <- stack[[length(stack)]]
+      stack[length(stack)] <- NULL
+      if (cur$phase == 0L) {
+        stack[[length(stack) + 1L]] <- list(id = cur$id, phase = 1L)
+        kid_ids <- rev(kids[[cur$id]] %||% character(0))
+        for (k in kid_ids) stack[[length(stack) + 1L]] <- list(id = k, phase = 0L)
+      } else if (is.null(kids[[cur$id]])) {
+        counter <- counter + 1L
+        x_of[[cur$id]] <- as.numeric(counter)
+      } else {
+        x_of[[cur$id]] <- mean(x_of[kids[[cur$id]]])
+      }
+    }
+  }
+  x_of
+}
+
+# Depth of every node below its forest root.  Guards against cycles: a
+# visited node reached again means parent/child edges do not form a tree.
+._hierarchy_depths <- function(kids, roots, ids) {
+  depth <- stats::setNames(numeric(length(ids)), ids)
+  visited <- stats::setNames(logical(length(ids)), ids)
+  for (rt in roots) {
+    stack <- list(list(id = rt, d = 0))
+    while (length(stack) > 0) {
+      cur <- stack[[length(stack)]]
+      stack[length(stack)] <- NULL
+      if (visited[[cur$id]]) next
+      visited[[cur$id]] <- TRUE
+      depth[[cur$id]] <- cur$d
+      for (k in kids[[cur$id]] %||% character(0)) {
+        stack[[length(stack) + 1L]] <- list(id = k, d = cur$d + 1)
+      }
+    }
+  }
+  if (!all(visited[ids])) {
+    cli::cli_abort(
+      "Tree layout found unreachable nodes: edges must point parent -> \\
+       child and must not contain cycles."
+    )
+  }
+  depth
+}
+
+# ---- Fruchterman-Reingold force layout (self-contained) --------------------
+#
+# Classic FR (1991) relaxation on a unit canvas with linear cooling:
+#   repulsion  : k^2 / d between every node pair
+#   attraction : d^2 / k along every edge, optionally scaled by `weights`
+#   movement   : per-iteration displacement capped by the temperature
+# Nodes start on a circle with a tiny jitter so symmetric graphs still
+# relax; runs sharing a seed are identical.
+
+# Accumulate per-node force contributions by integer key (base R only;
+# rowsum() sums duplicate group entries without Matrix dependencies).
+._fr_accum <- function(values, idx, n) {
+  agg <- rowsum(matrix(values, ncol = 1), group = idx, reorder = FALSE)
+  out <- numeric(n)
+  out[as.integer(rownames(agg))] <- agg[, 1]
+  out
+}
+
+._fr_coords <- function(n, from, to, weights, iterations) {
+  k <- 1 / sqrt(max(n, 1)) # ideal edge length on the unit canvas
+  ang <- seq(0, 2 * pi, length.out = n + 1)[seq_len(n)]
+  x <- cos(ang) * 0.4 + stats::runif(n, -0.01, 0.01)
+  y <- sin(ang) * 0.4 + stats::runif(n, -0.01, 0.01)
+  temp0 <- 0.1
+
+  for (iter in seq_len(iterations)) {
+    temp <- temp0 * (1 - iter / (iterations + 1))
+
+    # Pairwise repulsion (vectorized n x n; no self-force via Inf diag).
+    dx <- matrix(x, n, n) - matrix(x, n, n, byrow = TRUE)
+    dy <- matrix(y, n, n) - matrix(y, n, n, byrow = TRUE)
+    d <- sqrt(dx^2 + dy^2)
+    diag(d) <- Inf
+    f_rep <- ifelse(d > 0, (k * k) / d, 0)
+    fx <- rowSums(dx / d * f_rep, na.rm = TRUE)
+    fy <- rowSums(dy / d * f_rep, na.rm = TRUE)
+
+    # Edge attraction in both directions.
+    if (length(from) > 0) {
+      de <- sqrt((x[from] - x[to])^2 + (y[from] - y[to])^2)
+      de <- pmax(de, 1e-9)
+      fa <- de^2 / k * weights
+      ex <- (x[from] - x[to]) / de
+      ey <- (y[from] - y[to]) / de
+      both <- c(from, to)
+      fx <- fx + ._fr_accum(c(ex * fa, -ex * fa), both, n)
+      fy <- fy + ._fr_accum(c(ey * fa, -ey * fa), both, n)
+    }
+
+    # Cap displacement by the cooling temperature.
+    disp <- sqrt(fx^2 + fy^2)
+    scale <- pmin(disp, temp) / pmax(disp, 1e-12)
+    x <- x + fx * scale
+    y <- y + fy * scale
+  }
+  list(x = x, y = y)
+}
+
 #' @noRd
 #' @keywords internal
 ._layout_engine_force <- function(g, iterations = 500, seed = NULL, ...) {
-  ._require_igraph()
   t <- ._graph_topology(g)
   directed <- isTRUE(attr(g, "directed"))
-  if (nrow(t$nodes) == 0) {
+  n <- nrow(t$nodes)
+  if (n == 0) {
     cli::cli_abort("Force layout requires at least one node.")
   }
+  iterations <- floor(iterations)
+  if (iterations < 1) {
+    cli::cli_abort("{.arg iterations} must be >= 1.")
+  }
+
+  dots <- rlang::list2(...)
+  unknown <- setdiff(names(dots), "weights")
+  if (length(unknown) > 0) {
+    cli::cli_warn(c(
+      "{.fn layout_force} ignores unknown arguments: {.val {unknown}}.",
+      "i" = "The self-contained Fruchterman-Reingold engine accepts \\
+             {.arg weights} only."
+    ))
+  }
+  weights <- suppressWarnings(as.numeric(dots$weights %||% rep(1, nrow(t$edges))))
+  if (length(weights) != nrow(t$edges) || anyNA(weights) || any(weights < 0)) {
+    cli::cli_abort("{.arg weights} must be finite non-negative values, one per edge.")
+  }
+
+  # Self-loops carry no attraction in an undirected relaxation.
+  keep <- t$edges$source != t$edges$target
+  from <- match(t$edges$source[keep], t$nodes$id)
+  to <- match(t$edges$target[keep], t$nodes$id)
+
   # Seed locally: save and restore the global RNG state so a reproducible
   # layout does not perturb the caller's random stream.
   if (!is.null(seed)) {
@@ -98,14 +221,14 @@ NULL
     }
     set.seed(seed)
   }
-  gr <- igraph::graph_from_data_frame(
-    t$edges[, c("source", "target"), drop = FALSE],
-    directed = directed,
-    vertices = ._check_nodes_table(t$nodes, "layout_force")
-  )
-  coords <- igraph::layout_with_fr(gr, niter = iterations, ...)
-  t$nodes$x <- coords[, 1]
-  t$nodes$y <- coords[, 2]
+
+  coords <- ._fr_coords(n, from, to, weights[keep], iterations)
+  # Rescale to the unit box, centred at the origin, aspect preserved.
+  xr <- range(coords$x)
+  yr <- range(coords$y)
+  span <- max(diff(xr), diff(yr), 1e-9)
+  t$nodes$x <- (coords$x - mean(xr)) / span
+  t$nodes$y <- (coords$y - mean(yr)) / span
   t$edges <- ._map_edge_coords(t$nodes, t$edges)
   ._new_graph_from_parts(t, directed)
 }
@@ -136,18 +259,12 @@ NULL
 #' @noRd
 #' @keywords internal
 ._layout_engine_tree <- function(g, direction = c("down", "up", "left", "right")) {
-  ._require_igraph()
   direction <- match.arg(direction)
   t <- ._graph_topology(g)
   if (nrow(t$edges) == 0) {
     cli::cli_abort("Tree layout requires at least one edge.")
   }
-  gr <- igraph::graph_from_data_frame(
-    t$edges[, c("source", "target"), drop = FALSE],
-    directed = TRUE,
-    vertices = ._check_nodes_table(t$nodes, "layout_tree")
-  )
-  roots <- which(igraph::degree(gr, mode = "in") == 0)
+  roots <- ._hierarchy_roots(t)
   if (length(roots) == 0) {
     cli::cli_abort(
       c("Tree layout found no root: the graph contains a cycle.",
@@ -155,23 +272,24 @@ NULL
       )
     )
   }
-  coords <- igraph::layout_as_tree(gr, root = roots, mode = "out")
-  x <- coords[, 1]
-  y <- coords[, 2]
-  # Raw layout: x spreads leaves, y is depth from the root (root at 0).
-  # Direction names describe where the tree grows; the root sits opposite.
+  kids <- ._hierarchy_children(t)
+  # Raw layout: x spreads leaves left-to-right, y is depth from the root
+  # (root at 0).  Direction names describe where the tree grows; the root
+  # sits opposite.
+  xx <- unname(._hierarchy_leaf_x(kids, roots, t$nodes$id)[t$nodes$id])
+  hh <- unname(._hierarchy_depths(kids, roots, t$nodes$id)[t$nodes$id])
   if (direction == "down") {
-    t$nodes$x <- x
-    t$nodes$y <- -y
+    t$nodes$x <- xx
+    t$nodes$y <- -hh
   } else if (direction == "up") {
-    t$nodes$x <- x
-    t$nodes$y <- y
+    t$nodes$x <- xx
+    t$nodes$y <- hh
   } else if (direction == "right") {
-    t$nodes$x <- y
-    t$nodes$y <- x
+    t$nodes$x <- hh
+    t$nodes$y <- xx
   } else {
-    t$nodes$x <- -y
-    t$nodes$y <- x
+    t$nodes$x <- -hh
+    t$nodes$y <- xx
   }
   t$edges <- ._map_edge_coords(t$nodes, t$edges)
   ._new_graph(list(nodes = t$nodes, edges = t$edges), directed = TRUE)
@@ -199,30 +317,9 @@ NULL
     )
   }
 
-  is_leaf <- stats::setNames(as.logical(nodes$leaf), nodes$id)
-
-  # Iterative post-order walk.  The leaf counter is shared across forest
-  # roots so leaves are numbered strictly left to right; merge-side
-  # ordering (.side) decides which child is "left".
-  x_of <- stats::setNames(numeric(nrow(nodes)), nodes$id)
-  counter <- 0
-  for (rt in roots) {
-    stack <- list(list(id = rt, phase = 0L))
-    while (length(stack) > 0) {
-      cur <- stack[[length(stack)]]
-      stack[length(stack)] <- NULL
-      if (cur$phase == 0L) {
-        stack[[length(stack) + 1L]] <- list(id = cur$id, phase = 1L)
-        kid_ids <- rev(kids[[cur$id]] %||% character(0))
-        for (k in kid_ids) stack[[length(stack) + 1L]] <- list(id = k, phase = 0L)
-      } else if (isTRUE(is_leaf[[cur$id]])) {
-        counter <- counter + 1L
-        x_of[[cur$id]] <- as.numeric(counter)
-      } else {
-        x_of[[cur$id]] <- mean(x_of[kids[[cur$id]]])
-      }
-    }
-  }
+  # Leaf ordering comes from the shared post-order walk (leaves numbered
+  # left-to-right by merge side; internal nodes at mean child position).
+  x_of <- ._hierarchy_leaf_x(kids, roots, nodes$id)
 
   xx <- unname(x_of[nodes$id])
   hh <- unname(as.numeric(nodes$height))
@@ -840,18 +937,21 @@ NULL
 
 #' Force-directed layout
 #'
-#' Positions nodes with a Fruchterman-Reingold force simulation
-#' ([igraph::layout_with_fr]).  Node table gains `x`/`y`; edge table gains
-#' `x`, `y`, `xend`, `yend`.
+#' Positions nodes with a self-contained Fruchterman-Reingold force
+#' simulation (attractive edge forces, pairwise repulsion, linear cooling).
+#' No external dependency; runs are deterministic when `seed` is given.
+#' Node table gains `x`/`y`; edge table gains `x`, `y`, `xend`, `yend`.
 #'
 #' @param plot A `plotit` object holding graph data (created via
 #'   [as_graph()] + [plotit()]), or a bare `plotit_graph`.
 #' @param iterations Number of simulation steps.
 #' @param seed Random seed; pass one for reproducible output.
-#' @param ... Passed to [igraph::layout_with_fr] (e.g. `weights`, `area`).
+#' @param ... Optional named argument `weights`: non-negative numeric
+#'   vector, one per edge -- higher weights pull endpoints closer together.
+#'   Any other name is ignored with a warning.
 #' @return A modified `plotit` object (pipeline form), or a new
 #'   `plotit_graph` when called on raw graph data.
-#' @examplesIf requireNamespace("igraph", quietly = TRUE)
+#' @examples
 #' e <- data.frame(source = c("a", "a", "b"), target = c("b", "c", "c"))
 #' g <- as_graph(e) |> layout_force(seed = 1)
 #' g$nodes
@@ -895,8 +995,10 @@ layout_circle <- S7::new_generic(
 
 #' Tree layout
 #'
-#' Arranges a rooted hierarchy with [igraph::layout_as_tree].  Edges must
-#' point from parent to child; multiple roots (forests) are supported.
+#' Arranges a rooted hierarchy: leaves spread left-to-right in merge-side
+#' order and internal nodes sit at the mean leaf position of their
+#' children.  Self-contained (no external dependency).  Edges must point
+#' from parent to child; multiple roots (forests) are supported.
 #'
 #' @param plot A `plotit` object holding graph data (created via
 #'   [as_graph()] + [plotit()]), or a bare `plotit_graph`.
@@ -904,9 +1006,12 @@ layout_circle <- S7::new_generic(
 #'   `"up"`, `"right"`, or `"left"`.
 #' @return A modified `plotit` object (pipeline form), or a new
 #'   `plotit_graph` when called on raw graph data.
-#' @examplesIf requireNamespace("igraph", quietly = TRUE)
-#' hc <- hclust(dist(USArrests[, 1:3]))
-#' as_graph(hc) |>
+#' @examples
+#' h <- data.frame(
+#'   id     = c("root", "A", "B", "a1", "a2"),
+#'   parent = c(NA, "root", "root", "A", "A")
+#' )
+#' as_graph(h) |>
 #'   plotit() |>
 #'   layout_tree(direction = "down") |>
 #'   mark_rule(data = ~edges) |>
