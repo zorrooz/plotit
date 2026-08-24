@@ -320,7 +320,7 @@ compose_marginal <- function(
     axis.ticks.y = ggplot2::element_blank()
   )
 
-  # Flat 2<U+00D7>2 design
+  # Flat 2x2 design
   gg <- patchwork::wrap_plots(
     A = top_gg, B = patchwork::plot_spacer(),
     C = main_gg, D = right_gg,
@@ -357,17 +357,8 @@ S7::method(print, plotit_composite) <- function(x, ...) {
   # Device management (consistent with plotit_class print)
   dev_opt <- getOption("plotit.device", "default")
   if (interactive() && !is.null(dev_opt)) {
-    gt <- patchwork::patchworkGrob(gg)
-    pw <- grid::convertWidth(
-      sum(gt$widths) + ggplot2::unit(1, "mm"), "inches",
-      valueOnly = TRUE
-    )
-    ph <- grid::convertHeight(
-      sum(gt$heights) + ggplot2::unit(1, "mm"), "inches",
-      valueOnly = TRUE
-    )
-    use_rstudio <- isTRUE(dev_opt == "rstudio")
-    grDevices::dev.new(width = pw, height = ph, noRStudioGD = !use_rstudio)
+    size_in <- ._measure_inches(patchwork::patchworkGrob(gg))
+    ._open_sized_device(size_in, dev_opt)
   }
   print(gg)
   invisible(x)
@@ -401,23 +392,13 @@ S7::method(export, plotit_composite) <- function(
   }
   meta_unit <- meta_unit %||% getOption("plotit.default_unit", "in")
 
-  if (!is.null(width)) width <- .unit_to_inches(width, meta_unit)
-  if (!is.null(height)) height <- .unit_to_inches(height, meta_unit)
+  if (!is.null(width)) width <- ._unit_to_inches(width, meta_unit)
+  if (!is.null(height)) height <- ._unit_to_inches(height, meta_unit)
 
   if (is.null(width) || is.null(height)) {
-    gt <- patchwork::patchworkGrob(gg)
-    if (is.null(width)) {
-      width <- grid::convertWidth(
-        sum(gt$widths) + ggplot2::unit(1, "mm"), "in",
-        valueOnly = TRUE
-      )
-    }
-    if (is.null(height)) {
-      height <- grid::convertHeight(
-        sum(gt$heights) + ggplot2::unit(1, "mm"), "in",
-        valueOnly = TRUE
-      )
-    }
+    size_in <- ._measure_inches(patchwork::patchworkGrob(gg))
+    if (is.null(width)) width <- size_in$width
+    if (is.null(height)) height <- size_in$height
   }
 
   ggplot2::ggsave(
@@ -435,7 +416,23 @@ S7::method(export, plotit_composite) <- function(
   invisible(plot)
 }
 
-# ---- label_title method (composite) ---------------------------------------
+# ---- composite label_* methods ---------------------------------------------
+# Shared three-parameter protocol setter for composite-level annotations
+# (same text/hide/reset contract as single plots).  Composites store text in
+# @annotations and render lazily via plot_annotation(), so hide/reset just
+# drop the stored entry.
+#' Set or clear a composite-level annotation field.
+#' @noRd
+#' @keywords internal
+._set_composite_annotation <- function(plot, field, text, hide, reset, fun_name) {
+  ._check_text_reset(text, reset, fun_name)
+  if (hide || isTRUE(reset)) {
+    plot@annotations[[field]] <- NULL
+  } else if (!is.null(text)) {
+    plot@annotations[[field]] <- text
+  }
+  plot
+}
 
 #' @export
 S7::method(label_title, plotit_composite) <- function(
@@ -445,16 +442,8 @@ S7::method(label_title, plotit_composite) <- function(
   reset = FALSE,
   ...
 ) {
-  ._check_text_reset(text, reset, "label_title")
-  if (hide || isTRUE(reset)) {
-    plot@annotations$title <- NULL
-  } else if (!is.null(text)) {
-    plot@annotations$title <- text
-  }
-  plot
+  ._set_composite_annotation(plot, "title", text, hide, reset, "label_title")
 }
-
-# ---- label_subtitle method (composite) ------------------------------------
 
 #' @export
 S7::method(label_subtitle, plotit_composite) <- function(
@@ -464,16 +453,8 @@ S7::method(label_subtitle, plotit_composite) <- function(
   reset = FALSE,
   ...
 ) {
-  ._check_text_reset(text, reset, "label_subtitle")
-  if (hide || isTRUE(reset)) {
-    plot@annotations$subtitle <- NULL
-  } else if (!is.null(text)) {
-    plot@annotations$subtitle <- text
-  }
-  plot
+  ._set_composite_annotation(plot, "subtitle", text, hide, reset, "label_subtitle")
 }
-
-# ---- label_caption method (composite) -------------------------------------
 
 #' @export
 S7::method(label_caption, plotit_composite) <- function(
@@ -483,13 +464,7 @@ S7::method(label_caption, plotit_composite) <- function(
   reset = FALSE,
   ...
 ) {
-  ._check_text_reset(text, reset, "label_caption")
-  if (hide || isTRUE(reset)) {
-    plot@annotations$caption <- NULL
-  } else if (!is.null(text)) {
-    plot@annotations$caption <- text
-  }
-  plot
+  ._set_composite_annotation(plot, "caption", text, hide, reset, "label_caption")
 }
 
 # ---- style method (composite) ---------------------------------------------
@@ -502,7 +477,7 @@ S7::method(style, plotit_composite) <- function(
   base_family = NULL,
   base_theme = NULL
 ) {
-  thm <- base_theme %||% .theme_default(base_size, base_family)
+  thm <- base_theme %||% ._theme_default(base_size, base_family)
   plot@gg <- plot@gg + thm + ggplot2::theme(...)
   plot
 }

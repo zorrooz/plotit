@@ -3,7 +3,7 @@ NULL
 
 # ---- Internal helpers ----
 
-.detect_discrete_aes <- function(plot, aes_name) {
+._detect_discrete_aes <- function(plot, aes_name) {
   var <- plot@gg$mapping[[aes_name]]
   if (!is.null(var)) {
     return(is_discrete(plot@gg$data, var))
@@ -19,7 +19,7 @@ NULL
 #' @noRd
 #' @keywords internal
 ._resolve_reverse_discrete <- function(plot, aes_name, trans) {
-  if (identical(trans, "reverse") && .detect_discrete_aes(plot, aes_name)) {
+  if (identical(trans, "reverse") && ._detect_discrete_aes(plot, aes_name)) {
     list(trans = "discrete", force_reverse = TRUE)
   } else {
     list(trans = trans, force_reverse = FALSE)
@@ -27,10 +27,10 @@ NULL
 }
 
 # Per-aesthetic trans validation sets
-.trans_cf <- c("identity", "discrete", "reverse", "binned") # colour/fill (visual_cont)
-.trans_n <- c("identity", "discrete", "reverse", "binned") # size/alpha (visual_cont)
-.trans_sl <- c("discrete", "reverse") # shape/linetype (visual_disc)
-.trans_xy <- c("identity", "discrete", "log", "log10", "log2", "sqrt", "reverse", "binned") # positional
+._TRANS_CF <- c("identity", "discrete", "reverse", "binned") # colour/fill (visual_cont)
+._TRANS_N <- c("identity", "discrete", "reverse", "binned") # size/alpha (visual_cont)
+._TRANS_SL <- c("discrete", "reverse") # shape/linetype (visual_disc)
+._TRANS_XY <- c("identity", "discrete", "log", "log10", "log2", "sqrt", "reverse", "binned") # positional
 
 # Friendly error messages for known-bad trans x aesthetic combinations.
 # Called before the generic allowed-set check so the user gets a targeted
@@ -51,7 +51,8 @@ NULL
   # identity on shape/linetype
   if (aes_name %in% c("shape", "linetype") && trans == "identity") {
     cli::cli_abort(c(
-      "{.val {aes_name}} is a discrete visual aesthetic; continuous mapping ({.code trans = \"identity\"}) is not supported.",
+      "{.val {aes_name}} is a discrete visual aesthetic;
+       continuous mapping ({.code trans = \"identity\"}) is not supported.",
       "i" = "Use {.val 'discrete'} or {.val 'reverse'}."
     ))
   }
@@ -65,9 +66,9 @@ NULL
 }
 
 # Resolve trans=NULL: auto-detect; otherwise validate and return
-.resolve_trans <- function(plot, aes_name, trans, allowed) {
+._resolve_trans <- function(plot, aes_name, trans, allowed) {
   if (is.null(trans)) {
-    return(if (.detect_discrete_aes(plot, aes_name)) "discrete" else "identity")
+    return(if (._detect_discrete_aes(plot, aes_name)) "discrete" else "identity")
   }
   # Friendly error for known-bad combos (before generic allowed-set check)
   ._validate_trans(aes_name, trans, allowed)
@@ -97,9 +98,13 @@ NULL
   if (discrete) {
     switch(scheme,
       viridis = ._cf(aes, ggplot2::scale_colour_viridis_d, ggplot2::scale_fill_viridis_d)(direction = dir, ...),
-      brewer  = ._cf(aes, ggplot2::scale_colour_brewer, ggplot2::scale_fill_brewer)(direction = dir, ...),
-      grey    = ._cf(aes, ggplot2::scale_colour_grey, ggplot2::scale_fill_grey)(start = if (reverse) 0.8 else 0.2, end = if (reverse) 0.2 else 0.8, ...),
-      hue     = ._cf(aes, ggplot2::scale_colour_discrete, ggplot2::scale_fill_discrete)(direction = dir, ...),
+      brewer = ._cf(aes, ggplot2::scale_colour_brewer, ggplot2::scale_fill_brewer)(direction = dir, ...),
+      grey = ._cf(aes, ggplot2::scale_colour_grey, ggplot2::scale_fill_grey)(
+        start = if (reverse) 0.8 else 0.2,
+        end = if (reverse) 0.2 else 0.8,
+        ...
+      ),
+      hue = ._cf(aes, ggplot2::scale_colour_discrete, ggplot2::scale_fill_discrete)(direction = dir, ...),
       cli::cli_abort("Unknown colour scheme: {.val {scheme}}.")
     )
   } else if (binned) {
@@ -138,7 +143,9 @@ NULL
       if (length(range) == 2) {
         ._cf(aes, ggplot2::scale_colour_gradient, ggplot2::scale_fill_gradient)(low = lo, high = hi, ...)
       } else {
-        ._cf(aes, ggplot2::scale_colour_gradient2, ggplot2::scale_fill_gradient2)(low = lo, mid = range[2], high = hi, ...)
+        ._cf(aes, ggplot2::scale_colour_gradient2, ggplot2::scale_fill_gradient2)(
+          low = lo, mid = range[2], high = hi, ...
+        )
       }
     }
   }
@@ -154,7 +161,7 @@ NULL
 }
 
 # Pick the right scale function for colour/fill given trans + range
-.scale_colour_fun <- function(aes, trans, range, ..., force_reverse = FALSE) {
+._scale_colour_fun <- function(aes, trans, range, ..., force_reverse = FALSE) {
   discrete <- trans == "discrete"
   binned <- trans == "binned"
   reverse <- trans == "reverse" || force_reverse
@@ -177,7 +184,7 @@ NULL
 }
 
 # Pick size/alpha scale function
-.scale_numeric_fun <- function(aes, trans, range, ..., force_reverse = FALSE) {
+._scale_numeric_fun <- function(aes, trans, range, ..., force_reverse = FALSE) {
   discrete <- trans == "discrete"
   binned <- trans == "binned"
   reverse <- trans == "reverse" || force_reverse
@@ -199,7 +206,7 @@ NULL
     )
   }
   args <- ._strip_nulls(list(...))
-  # Explicit defaults per AGENTS.md <U+00A7>3.3.4
+  # Explicit defaults per AGENTS.md 3.3.4
   if (is.null(range) && !binned && !discrete) {
     range <- switch(aes,
       size = c(1, 6),
@@ -214,7 +221,7 @@ NULL
 }
 
 # Pick shape/linetype scale function
-.scale_discrete_fun <- function(aes, trans, range, ...) {
+._scale_discrete_fun <- function(aes, trans, range, ...) {
   reverse <- trans == "reverse"
   args <- ._strip_nulls(list(...))
   if (reverse && !is.null(range)) range <- rev(range)
@@ -229,7 +236,7 @@ NULL
 }
 
 # Build args list for scale_x/y
-.scale_xy_impl <- function(plot, aes, name, trans, limits, range, breaks, labels, ...) {
+._scale_xy_impl <- function(plot, aes, name, trans, limits, range, breaks, labels, ...) {
   discrete <- trans == "discrete"
   reverse <- trans == "reverse"
   binned <- trans == "binned"
@@ -237,11 +244,11 @@ NULL
   # When trans="reverse" and the mapped variable is discrete, route to
   # the discrete scale with reversed level order instead of attempting
   # scale_x_continuous(trans="reverse") which breaks on factors.
-  if (reverse && .detect_discrete_aes(plot, aes)) {
+  if (reverse && ._detect_discrete_aes(plot, aes)) {
     discrete <- TRUE
   }
 
-  # range = normalized panel proportion (Vega-aligned, AGENTS.md <U+00A7>3.3.4)
+  # range = normalized panel proportion (Vega-aligned, AGENTS.md 3.3.4)
   if (!is.null(range) && !discrete && !binned) {
     if (!is.null(limits)) {
       cli::cli_warn(c(
@@ -313,7 +320,7 @@ NULL
 #'   `"identity"`, `"discrete"`, `"reverse"`, `"binned"`.
 #'   Unsupported values (e.g. `"log"`) produce a targeted error message.
 #' @param limits Data domain. `c(min, max)` for continuous; character vector for discrete limits.
-#' @param range Output range. `NULL` = auto (discrete<U+2192>hue, continuous<U+2192>viridis).
+#' @param range Output range. `NULL` = auto (discrete->hue, continuous->viridis).
 #'   A colour vector (`c("blue","red")`) for manual colours, or a scheme name:
 #'   `"viridis"`, `"brewer"`, `"grey"`, `"hue"`.
 #'   For binned: only `"viridis"`, `"brewer"`.
@@ -341,11 +348,11 @@ S7::method(scale_color, plotit_class) <- function(plot, name = ggplot2::waiver()
                                                   range = NULL, breaks = NULL,
                                                   labels = NULL, ...) {
   plot <- ._clear_default_color(plot)
-  trans <- .resolve_trans(plot, "colour", trans, .trans_cf)
+  trans <- ._resolve_trans(plot, "colour", trans, ._TRANS_CF)
   rd <- ._resolve_reverse_discrete(plot, "colour", trans)
   trans <- rd$trans
   plot@gg <- plot@gg +
-    .scale_colour_fun("colour", trans, range,
+    ._scale_colour_fun("colour", trans, range,
       name = name, limits = limits, breaks = breaks, labels = labels,
       force_reverse = rd$force_reverse, ...
     )
@@ -389,11 +396,11 @@ S7::method(scale_fill, plotit_class) <- function(plot, name = ggplot2::waiver(),
                                                  range = NULL, breaks = NULL,
                                                  labels = NULL, ...) {
   plot <- ._clear_default_color(plot)
-  trans <- .resolve_trans(plot, "fill", trans, .trans_cf)
+  trans <- ._resolve_trans(plot, "fill", trans, ._TRANS_CF)
   rd <- ._resolve_reverse_discrete(plot, "fill", trans)
   trans <- rd$trans
   plot@gg <- plot@gg +
-    .scale_colour_fun("fill", trans, range,
+    ._scale_colour_fun("fill", trans, range,
       name = name, limits = limits, breaks = breaks, labels = labels,
       force_reverse = rd$force_reverse, ...
     )
@@ -435,11 +442,11 @@ S7::method(scale_size, plotit_class) <- function(plot, name = ggplot2::waiver(),
                                                  trans = NULL, limits = NULL,
                                                  range = NULL, breaks = NULL,
                                                  labels = NULL, ...) {
-  trans <- .resolve_trans(plot, "size", trans, .trans_n)
+  trans <- ._resolve_trans(plot, "size", trans, ._TRANS_N)
   rd <- ._resolve_reverse_discrete(plot, "size", trans)
   trans <- rd$trans
   plot@gg <- plot@gg +
-    .scale_numeric_fun("size", trans, range,
+    ._scale_numeric_fun("size", trans, range,
       name = name, limits = limits, breaks = breaks, labels = labels,
       force_reverse = rd$force_reverse, ...
     )
@@ -481,11 +488,11 @@ S7::method(scale_alpha, plotit_class) <- function(plot, name = ggplot2::waiver()
                                                   trans = NULL, limits = NULL,
                                                   range = NULL, breaks = NULL,
                                                   labels = NULL, ...) {
-  trans <- .resolve_trans(plot, "alpha", trans, .trans_n)
+  trans <- ._resolve_trans(plot, "alpha", trans, ._TRANS_N)
   rd <- ._resolve_reverse_discrete(plot, "alpha", trans)
   trans <- rd$trans
   plot@gg <- plot@gg +
-    .scale_numeric_fun("alpha", trans, range,
+    ._scale_numeric_fun("alpha", trans, range,
       name = name, limits = limits, breaks = breaks, labels = labels,
       force_reverse = rd$force_reverse, ...
     )
@@ -527,9 +534,9 @@ S7::method(scale_shape, plotit_class) <- function(plot, name = ggplot2::waiver()
                                                   trans = "discrete", limits = NULL,
                                                   range = NULL, breaks = NULL,
                                                   labels = NULL, ...) {
-  trans <- .resolve_trans(plot, "shape", trans, .trans_sl)
+  trans <- ._resolve_trans(plot, "shape", trans, ._TRANS_SL)
   plot@gg <- plot@gg +
-    .scale_discrete_fun("shape", trans, range,
+    ._scale_discrete_fun("shape", trans, range,
       name = name, limits = limits, breaks = breaks, labels = labels, ...
     )
   plot
@@ -570,9 +577,9 @@ S7::method(scale_linetype, plotit_class) <- function(plot, name = ggplot2::waive
                                                      trans = "discrete", limits = NULL,
                                                      range = NULL, breaks = NULL,
                                                      labels = NULL, ...) {
-  trans <- .resolve_trans(plot, "linetype", trans, .trans_sl)
+  trans <- ._resolve_trans(plot, "linetype", trans, ._TRANS_SL)
   plot@gg <- plot@gg +
-    .scale_discrete_fun("linetype", trans, range,
+    ._scale_discrete_fun("linetype", trans, range,
       name = name, limits = limits, breaks = breaks, labels = labels, ...
     )
   plot
@@ -613,8 +620,8 @@ S7::method(scale_x, plotit_class) <- function(plot, name = ggplot2::waiver(),
                                               trans = "identity", limits = NULL,
                                               range = NULL, breaks = NULL,
                                               labels = NULL, ...) {
-  trans <- .resolve_trans(plot, "x", trans, .trans_xy)
-  .scale_xy_impl(plot, "x", name, trans, limits, range, breaks, labels, ...)
+  trans <- ._resolve_trans(plot, "x", trans, ._TRANS_XY)
+  ._scale_xy_impl(plot, "x", name, trans, limits, range, breaks, labels, ...)
 }
 
 # ---- scale_y ----
@@ -652,6 +659,6 @@ S7::method(scale_y, plotit_class) <- function(plot, name = ggplot2::waiver(),
                                               trans = "identity", limits = NULL,
                                               range = NULL, breaks = NULL,
                                               labels = NULL, ...) {
-  trans <- .resolve_trans(plot, "y", trans, .trans_xy)
-  .scale_xy_impl(plot, "y", name, trans, limits, range, breaks, labels, ...)
+  trans <- ._resolve_trans(plot, "y", trans, ._TRANS_XY)
+  ._scale_xy_impl(plot, "y", name, trans, limits, range, breaks, labels, ...)
 }

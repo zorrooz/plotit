@@ -2,7 +2,7 @@
 NULL
 
 # ---- Internal helpers for label family ----
-# Three-parameter protocol (AGENTS.md <U+00A7>3.3.7):
+# Three-parameter protocol (AGENTS.md 3.3.7):
 #   text  = NULL     -> no-op (don't change current label)
 #   text  = "str"    -> set custom text
 #   hide  = TRUE     -> remove element from layout (element_blank())
@@ -267,7 +267,7 @@ S7::method(label_caption, plotit_class) <- function(plot, text = NULL, hide = FA
 #' @param plot A plotit object
 #' @param text Axis title text. NULL = don't modify. "str" = custom title.
 #' @param aes Which axis to apply to: "x" or "y" (required).
-#' @param hide If TRUE, hide the axis title entirely (lement_blank()).
+#' @param hide If TRUE, hide the axis title entirely (`element_blank()`).
 #' @param reset If TRUE, restore the axis title to the variable name.
 #' @param ... Currently unused
 #' @return Modified plotit object
@@ -293,19 +293,12 @@ S7::method(label_axis, plotit_class) <- function(plot, text = NULL, aes = NULL,
   if (!(aes %in% c("x", "y"))) {
     cli::cli_abort("{.arg aes} must be one of {.val c('x', 'y')}, not {.val {aes}}.")
   }
-  ._check_text_reset(text, reset, "label_axis")
-
-  if (hide) {
-    S7::prop(plot@meta@labels, aes) <- FALSE
-    plot@meta@labels@dirty[[aes]] <- TRUE
-  } else if (isTRUE(reset)) {
-    S7::prop(plot@meta@labels, aes) <- NULL
-    plot@meta@labels@dirty[[aes]] <- TRUE
-  } else if (!is.null(text)) {
-    S7::prop(plot@meta@labels, aes) <- text
-    plot@meta@labels@dirty[[aes]] <- TRUE
-  }
-  plot
+  # Same three-parameter protocol as title/subtitle/caption; the axis slot
+  # names in meta@labels match the aes argument.
+  ._set_text_label(
+    plot, aes, paste0("axis.title.", aes),
+    text, hide, reset, "label_axis"
+  )
 }
 
 # ---- label_legend ----

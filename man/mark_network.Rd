@@ -42,10 +42,11 @@ mapped (default \code{._MARK_STYLE$faint} = \code{"grey70"}).}
 \item{edge_width}{Default edge width when no edge linewidth channel is
 mapped (default \code{._MARK_STYLE$lw_thin} = 0.5).}
 
-\item{node_colour}{Default fill colour for nodes
+\item{node_colour}{Default node colour, applied to the \code{colour} and
+\code{fill} channels only where they are not mapped
 (default \code{._MARK_STYLE$primary} = \code{"#4E79A7"}).}
 
-\item{node_size}{Default size for nodes (default 5).}
+\item{node_size}{Default node size when \code{size} is not mapped (default 5).}
 
 \item{...}{Other arguments passed to the edge segment layer (e.g.
 \code{arrow}).}

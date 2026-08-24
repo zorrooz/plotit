@@ -87,7 +87,17 @@ NULL
   if (nrow(t$nodes) == 0) {
     cli::cli_abort("Force layout requires at least one node.")
   }
-  if (!is.null(seed)) set.seed(seed)
+  # Seed locally: save and restore the global RNG state so a reproducible
+  # layout does not perturb the caller's random stream.
+  if (!is.null(seed)) {
+    if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+      old_seed <- get(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+      on.exit(assign(".Random.seed", old_seed, envir = .GlobalEnv), add = TRUE)
+    } else {
+      on.exit(rm(".Random.seed", envir = .GlobalEnv), add = TRUE)
+    }
+    set.seed(seed)
+  }
   gr <- igraph::graph_from_data_frame(
     t$edges[, c("source", "target"), drop = FALSE],
     directed = directed,
@@ -215,7 +225,7 @@ NULL
   }
 
   xx <- unname(x_of[nodes$id])
-  hh <- unname(as.numeric(nodes$height)[match(nodes$id, nodes$id)])
+  hh <- unname(as.numeric(nodes$height))
   # Raw heights are root-maximal, so the sign mapping differs from
   # layout_tree (whose raw depth axis is root-minimal).
   if (direction == "down") {
@@ -265,7 +275,7 @@ NULL
   depth <- stats::setNames(rep(NA_real_, length(ids)), ids)
   depth[stats::setNames(!(ids %in% unique(edges$target)), ids)] <- 0
   converged <- FALSE
-  for (round in seq_len(length(ids) + 1L)) {
+  for (pass in seq_len(length(ids) + 1L)) {
     changed <- FALSE
     for (i in seq_len(nrow(edges))) {
       s <- edges$source[[i]]
@@ -660,8 +670,8 @@ NULL
 
   # Sub-span allocation: outgoing ends first pass (sorted by ribbon order),
   # incoming second pass; diagonal consumes two consecutive widths.
-  agg$.sp <- pos_in_circ(agg$source, ids, rank_vec)
-  agg$.tp <- pos_in_circ(agg$target, ids, rank_vec)
+  agg$.sp <- ._pos_in_circ(agg$source, ids, rank_vec)
+  agg$.tp <- ._pos_in_circ(agg$target, ids, rank_vec)
   agg <- agg[order(agg$.sp, agg$.tp), , drop = FALSE]
   is_diag <- agg$source == agg$target
 
@@ -765,7 +775,7 @@ NULL
 }
 
 # Position of each id within the circular sequence defined by rank_vec.
-pos_in_circ <- function(id_vec, ids, rank_vec) {
+._pos_in_circ <- function(id_vec, ids, rank_vec) {
   pos <- integer(length(ids))
   pos[rank_vec] <- seq_along(ids)
   stats::setNames(pos[id_vec], id_vec)
@@ -782,6 +792,48 @@ pos_in_circ <- function(id_vec, ids, rank_vec) {
   }
   plot@graph <- engine(plot@graph, ...)
   plot
+}
+
+# Register both dispatch targets for a layout generic:
+#   plotit_class     -> pipeline form (requires @graph, returns modified plot)
+#   plotit_graph_cls -> bare-graph form (returns a new graph)
+# Mirrors the mark factory in R/mark.R: only the exported generic stays
+# hand-written.  Forwarding bodies name every declared argument explicitly
+# (no `...`) so the method formals stay exactly identical to the generic's.
+#' Register pipeline and bare-graph methods for a layout generic.
+#' @noRd
+#' @keywords internal
+._register_layout_methods <- function(generic, engine) {
+  force(generic)
+  force(engine)
+  fn_name <- deparse(substitute(generic))
+  # Forward every declared argument except `plot`, which both wrappers
+  # consume themselves.  Symbols keep their formal names so the generated
+  # calls pass arguments by name.
+  fwd_args <- setdiff(names(formals(generic)), "plot")
+  arg_syms <- lapply(fwd_args, as.symbol)
+  names(arg_syms) <- fwd_args
+
+  # engine(<all generic args>) -- bare graph passthrough.
+  graph_body <- as.call(c(list(engine), quote(plot), arg_syms))
+  graph_fun <- as.function(
+    c(formals(generic), list(as.call(list(quote(`{`), graph_body)))),
+    envir = parent.frame()
+  )
+
+  # ._apply_layout("<generic>", plot, engine, <all generic args>)
+  pipeline_body <- as.call(c(
+    list(as.name("._apply_layout")),
+    list(fn_name), quote(plot), list(engine), arg_syms
+  ))
+  pipeline_fun <- as.function(
+    c(formals(generic), list(as.call(list(quote(`{`), pipeline_body)))),
+    envir = parent.frame()
+  )
+
+  S7::method(generic, plotit_class) <- pipeline_fun
+  S7::method(generic, plotit_graph_cls) <- graph_fun
+  invisible()
 }
 
 # ---- public API ------------------------------------------------------------
@@ -816,19 +868,7 @@ layout_force <- S7::new_generic(
     S7::S7_dispatch()
   }
 )
-
-#' @export
-S7::method(layout_force, plotit_class) <- function(plot, iterations = 500,
-                                                   seed = NULL, ...) {
-  ._apply_layout("layout_force", plot, ._layout_engine_force,
-    iterations = iterations, seed = seed, ...
-  )
-}
-
-S7::method(layout_force, plotit_graph_cls) <- function(plot, iterations = 500,
-                                                       seed = NULL, ...) {
-  ._layout_engine_force(plot, iterations = iterations, seed = seed, ...)
-}
+._register_layout_methods(layout_force, ._layout_engine_force)
 
 #' Circular layout
 #'
@@ -851,22 +891,7 @@ layout_circle <- S7::new_generic(
     S7::S7_dispatch()
   }
 )
-
-#' @export
-S7::method(layout_circle, plotit_class) <- function(plot,
-                                                    order_by = c("id", "degree")) {
-  order_by <- match.arg(order_by)
-  ._apply_layout("layout_circle", plot, ._layout_engine_circle,
-    order_by = order_by
-  )
-}
-
-S7::method(layout_circle, plotit_graph_cls) <- function(
-  plot, order_by = c("id", "degree")
-) {
-  order_by <- match.arg(order_by)
-  ._layout_engine_circle(plot, order_by = order_by)
-}
+._register_layout_methods(layout_circle, ._layout_engine_circle)
 
 #' Tree layout
 #'
@@ -893,23 +918,7 @@ layout_tree <- S7::new_generic(
     S7::S7_dispatch()
   }
 )
-
-#' @export
-S7::method(layout_tree, plotit_class) <- function(
-  plot, direction = c("down", "up", "left", "right")
-) {
-  direction <- match.arg(direction)
-  ._apply_layout("layout_tree", plot, ._layout_engine_tree,
-    direction = direction
-  )
-}
-
-S7::method(layout_tree, plotit_graph_cls) <- function(
-  plot, direction = c("down", "up", "left", "right")
-) {
-  direction <- match.arg(direction)
-  ._layout_engine_tree(plot, direction = direction)
-}
+._register_layout_methods(layout_tree, ._layout_engine_tree)
 
 # ---- dendrogram ------------------------------------------------------------
 
@@ -943,23 +952,7 @@ layout_dendrogram <- S7::new_generic(
     S7::S7_dispatch()
   }
 )
-
-#' @export
-S7::method(layout_dendrogram, plotit_class) <- function(
-  plot, direction = c("down", "up", "left", "right")
-) {
-  direction <- match.arg(direction)
-  ._apply_layout("layout_dendrogram", plot, ._layout_engine_dendrogram,
-    direction = direction
-  )
-}
-
-S7::method(layout_dendrogram, plotit_graph_cls) <- function(
-  plot, direction = c("down", "up", "left", "right")
-) {
-  direction <- match.arg(direction)
-  ._layout_engine_dendrogram(plot, direction = direction)
-}
+._register_layout_methods(layout_dendrogram, ._layout_engine_dendrogram)
 
 # ---- sankey ----------------------------------------------------------------
 
@@ -1012,28 +1005,7 @@ layout_sankey <- S7::new_generic(
     S7::S7_dispatch()
   }
 )
-
-#' @export
-S7::method(layout_sankey, plotit_class) <- function(
-  plot, node_width = 0.04, padding = 0.02, curvature = 0.5,
-  n_points = 50, max_sweeps = 4L
-) {
-  ._apply_layout("layout_sankey", plot, ._layout_engine_sankey,
-    node_width = node_width, padding = padding, curvature = curvature,
-    n_points = n_points, max_sweeps = max_sweeps
-  )
-}
-
-S7::method(layout_sankey, plotit_graph_cls) <- function(
-  plot, node_width = 0.04, padding = 0.02, curvature = 0.5,
-  n_points = 50, max_sweeps = 4L
-) {
-  ._layout_engine_sankey(plot,
-    node_width = node_width, padding = padding,
-    curvature = curvature, n_points = n_points,
-    max_sweeps = max_sweeps
-  )
-}
+._register_layout_methods(layout_sankey, ._layout_engine_sankey)
 
 # ---- treemap ---------------------------------------------------------------
 
@@ -1071,15 +1043,7 @@ layout_treemap <- S7::new_generic(
     S7::S7_dispatch()
   }
 )
-
-#' @export
-S7::method(layout_treemap, plotit_class) <- function(plot) {
-  ._apply_layout("layout_treemap", plot, ._layout_engine_treemap)
-}
-
-S7::method(layout_treemap, plotit_graph_cls) <- function(plot) {
-  ._layout_engine_treemap(plot)
-}
+._register_layout_methods(layout_treemap, ._layout_engine_treemap)
 
 # ---- chord -----------------------------------------------------------------
 
@@ -1142,27 +1106,4 @@ layout_chord <- S7::new_generic(
     S7::S7_dispatch()
   }
 )
-
-#' @export
-S7::method(layout_chord, plotit_class) <- function(
-  plot, inner_radius = 0.65, pad_angle = 0.03, n_points = 60,
-  curvature = 0.35, order_by = c("total", "appearance")
-) {
-  order_by <- match.arg(order_by)
-  ._apply_layout("layout_chord", plot, ._layout_engine_chord,
-    inner_radius = inner_radius, pad_angle = pad_angle,
-    n_points = n_points, curvature = curvature, order_by = order_by
-  )
-}
-
-S7::method(layout_chord, plotit_graph_cls) <- function(
-  plot, inner_radius = 0.65, pad_angle = 0.03, n_points = 60,
-  curvature = 0.35, order_by = c("total", "appearance")
-) {
-  order_by <- match.arg(order_by)
-  ._layout_engine_chord(plot,
-    inner_radius = inner_radius, pad_angle = pad_angle,
-    n_points = n_points, curvature = curvature,
-    order_by = order_by
-  )
-}
+._register_layout_methods(layout_chord, ._layout_engine_chord)
