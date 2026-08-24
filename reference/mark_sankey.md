@@ -5,7 +5,11 @@ Equivalent to the pipeline
 `as_graph() |> layout_sankey() |> mark_polygon(data = ~ribbons) |> mark_rect(data = ~nodes)`
 – see §3.3.4a. Accepts an **edges table** with `source`, `target`, and
 optionally `value` columns; node and ribbon geometry come from the
-built-in layered layout (deterministic, dependency-free).
+built-in layered layout (deterministic, dependency-free). The derived
+flow/node fill channel ships with plotit's curated viridis default;
+chain
+[`scale_fill()`](https://zorrooz.github.io/plotit/reference/scale_fill.md)
+to replace it (last call wins).
 
 ## Usage
 
@@ -87,4 +91,6 @@ df |>
   )) |>
   mark_sankey() |>
   scale_fill(range = "viridis")
+#> Scale for fill is already present.
+#> Adding another scale for fill, which will replace the existing scale.
 ```

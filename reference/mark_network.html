@@ -145,7 +145,8 @@ mapped (default <code>._MARK_STYLE$lw_thin</code> = 0.5).</p></dd>
     <p>Fully self-contained: the force/circle layouts run on plotit's own
 deterministic engines and rendering is plain ggplot2 layers.  Edges
 render as straight segments; curved edges are a known limitation of the
-sugar form.</p>
+sugar form.  A mapped node <code>colour</code> ships with the curated viridis
+default (chain <code><a href="scale_color.html">scale_color()</a></code> to replace it).</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -164,7 +165,8 @@ sugar form.</p>
 <span class="r-in"><span>  to     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"B"</span>, <span class="st">"C"</span>, <span class="st">"C"</span>, <span class="st">"D"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  weight <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">nodes</span> <span class="op">|&gt;</span> <span class="fu"><a href="plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="encode.html">encode</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">group</span>, size <span class="op">=</span> <span class="va">value</span>, label <span class="op">=</span> <span class="va">name</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span><span class="va">nodes</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="encode.html">encode</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">group</span>, size <span class="op">=</span> <span class="va">value</span>, label <span class="op">=</span> <span class="va">name</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu">mark_network</span><span class="op">(</span></span></span>
 <span class="r-in"><span>    edges <span class="op">=</span> <span class="va">edges</span>,</span></span>
 <span class="r-in"><span>    encode_edges <span class="op">=</span> <span class="fu"><a href="encode.html">encode</a></span><span class="op">(</span>source <span class="op">=</span> <span class="va">from</span>, target <span class="op">=</span> <span class="va">to</span>, value <span class="op">=</span> <span class="va">weight</span><span class="op">)</span>,</span></span>
@@ -172,6 +174,8 @@ sugar form.</p>
 <span class="r-in"><span>  <span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="scale_color.html">scale_color</a></span><span class="op">(</span>range <span class="op">=</span> <span class="st">"viridis"</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="scale_size.html">scale_size</a></span><span class="op">(</span>range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">20</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Scale for <span style="color: #00BB00;">colour</span> is already present.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Adding another scale for <span style="color: #00BB00;">colour</span>, which will replace the existing scale.</span>
 <span class="r-plt img"><img src="mark_network-1.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>

@@ -5,7 +5,10 @@ Equivalent to the pipeline
 `as_graph() |> layout_chord() |> mark_polygon(data = ~ribbons) |> mark_polygon(data = ~arcs)`
 – see §3.3.4a. Accepts an **edges table** with `source`, `target`, and
 optionally `value` columns; sector arcs and bezier bands come from the
-built-in circular layout (deterministic, dependency-free).
+built-in circular layout (deterministic, dependency-free). A mapped
+`fill` channel ships with the curated viridis default (chain
+[`scale_fill()`](https://zorrooz.github.io/plotit/reference/scale_fill.md)
+to replace it); unmapped diagrams stay on the neutral band/arc greys.
 
 ## Usage
 

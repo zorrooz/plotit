@@ -69,6 +69,7 @@
 <li>
 <code><a href="../reference/mark_sankey.html">mark_sankey()</a></code>: node labels switch to contrast-aware colours (white over the default ink fill, near-black over mapped fills); axes blanked.</li>
 <li>New shared helper <code>._theme_blank_axes()</code> unifies the coordinate-free look across network/sankey/chord/treemap.</li>
+<li>Derived fill/colour channels on relational sugars now ship plotit’s curated viridis default instead of raw ggplot2 hues (last call wins): sankey flows/nodes always; chord/treemap when a <code>fill</code> is mapped; network when node <code>colour</code> is mapped. Unmapped chord keeps its neutral band/arc greys; unmapped treemap/network keep the brand-blue static.</li>
 </ul></div>
 <div class="section level4">
 <h4 id="types-development-version">Types<a class="anchor" aria-label="anchor" href="#types-development-version"></a></h4>

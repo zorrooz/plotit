@@ -75,7 +75,10 @@ Modified plotit object; `@graph` holds nodes/edges/leaves.
 
 Fully self-contained: no treemapify dependency, deterministic Bruls
 squarify layout. Tiles receive the unified white hairline separators and
-coordinate axes are blanked (the diagram is coordinate-free).
+coordinate axes are blanked (the diagram is coordinate-free). A mapped
+`fill` column ships with the curated viridis default (chain
+[`scale_fill()`](https://zorrooz.github.io/plotit/reference/scale_fill.md)
+to replace it).
 
 ## References
 
@@ -90,5 +93,7 @@ h <- data.frame(
   parent = c(NA, "root", "root", "A", "A", "B"),
   value  = c(NA, NA, NA, 30, 20, 50)
 )
-h |> plotit(encode(fill = id)) |> mark_treemap()
+h |>
+  plotit(encode(fill = id)) |>
+  mark_treemap()
 ```

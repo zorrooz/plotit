@@ -88,7 +88,10 @@ Modified plotit object; `@graph` holds the laid-out tables.
 Fully self-contained: the force/circle layouts run on plotit's own
 deterministic engines and rendering is plain ggplot2 layers. Edges
 render as straight segments; curved edges are a known limitation of the
-sugar form.
+sugar form. A mapped node `colour` ships with the curated viridis
+default (chain
+[`scale_color()`](https://zorrooz.github.io/plotit/reference/scale_color.md)
+to replace it).
 
 ## References
 
@@ -108,7 +111,8 @@ edges <- data.frame(
   to     = c("B", "C", "C", "D"),
   weight = c(1, 2, 3, 4)
 )
-nodes |> plotit(encode(color = group, size = value, label = name)) |>
+nodes |>
+  plotit(encode(color = group, size = value, label = name)) |>
   mark_network(
     edges = edges,
     encode_edges = encode(source = from, target = to, value = weight),
@@ -116,4 +120,6 @@ nodes |> plotit(encode(color = group, size = value, label = name)) |>
   ) |>
   scale_color(range = "viridis") |>
   scale_size(range = c(5, 20))
+#> Scale for colour is already present.
+#> Adding another scale for colour, which will replace the existing scale.
 ```

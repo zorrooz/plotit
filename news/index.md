@@ -52,6 +52,11 @@
   ink fill, near-black over mapped fills); axes blanked.
 - New shared helper `._theme_blank_axes()` unifies the coordinate-free
   look across network/sankey/chord/treemap.
+- Derived fill/colour channels on relational sugars now ship plotit’s
+  curated viridis default instead of raw ggplot2 hues (last call wins):
+  sankey flows/nodes always; chord/treemap when a `fill` is mapped;
+  network when node `colour` is mapped. Unmapped chord keeps its neutral
+  band/arc greys; unmapped treemap/network keep the brand-blue static.
 
 #### Types
 
