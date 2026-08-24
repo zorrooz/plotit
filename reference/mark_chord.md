@@ -62,7 +62,9 @@ Modified plotit object; `@graph` holds the laid-out tables.
 
 The laid-out graph (`nodes` / `edges` / `arcs` / `ribbons` tables) is
 stored on `@graph`, so subsequent marks can reference any table directly
-for tuning beyond this sugar's two parameters.
+for tuning beyond this sugar's parameters. Sector ids are labelled just
+outside the ring and the panel keeps a fixed aspect ratio so sectors
+stay circular.
 
 ## References
 

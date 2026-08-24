@@ -1,9 +1,9 @@
 # Tree layout
 
-Arranges a rooted hierarchy with
-[igraph::layout_as_tree](https://r.igraph.org/reference/layout_as_tree.html).
-Edges must point from parent to child; multiple roots (forests) are
-supported.
+Arranges a rooted hierarchy: leaves spread left-to-right in merge-side
+order and internal nodes sit at the mean leaf position of their
+children. Self-contained (no external dependency). Edges must point from
+parent to child; multiple roots (forests) are supported.
 
 ## Usage
 
@@ -33,8 +33,11 @@ called on raw graph data.
 ## Examples
 
 ``` r
-hc <- hclust(dist(USArrests[, 1:3]))
-as_graph(hc) |>
+h <- data.frame(
+  id     = c("root", "A", "B", "a1", "a2"),
+  parent = c(NA, "root", "root", "A", "A")
+)
+as_graph(h) |>
   plotit() |>
   layout_tree(direction = "down") |>
   mark_rule(data = ~edges) |>

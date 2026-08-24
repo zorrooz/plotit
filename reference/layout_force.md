@@ -1,7 +1,8 @@
 # Force-directed layout
 
-Positions nodes with a Fruchterman-Reingold force simulation
-([igraph::layout_with_fr](https://r.igraph.org/reference/layout_with_fr.html)).
+Positions nodes with a self-contained Fruchterman-Reingold force
+simulation (attractive edge forces, pairwise repulsion, linear cooling).
+No external dependency; runs are deterministic when `seed` is given.
 Node table gains `x`/`y`; edge table gains `x`, `y`, `xend`, `yend`.
 
 ## Usage
@@ -29,9 +30,9 @@ layout_force(plot, iterations = 500, seed = NULL, ...)
 
 - ...:
 
-  Passed to
-  [igraph::layout_with_fr](https://r.igraph.org/reference/layout_with_fr.html)
-  (e.g. `weights`, `area`).
+  Optional named argument `weights`: non-negative numeric vector, one
+  per edge – higher weights pull endpoints closer together. Any other
+  name is ignored with a warning.
 
 ## Value
 
@@ -44,10 +45,10 @@ called on raw graph data.
 e <- data.frame(source = c("a", "a", "b"), target = c("b", "c", "c"))
 g <- as_graph(e) |> layout_force(seed = 1)
 g$nodes
-#>   id          x         y
-#> 1  a -0.4025036 0.3069924
-#> 2  b -1.0921567 1.0286396
-#> 3  c -0.1223654 1.2650731
+#>   id          x            y
+#> 1  a  0.4368677  0.008629767
+#> 2  b -0.4368677  0.500000000
+#> 3  c -0.4288172 -0.500000000
 
 as_graph(e) |>
   plotit() |>

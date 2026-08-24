@@ -45,6 +45,37 @@
 <ul><li>Active development stage — frequent breaking changes expected.</li>
 <li>See <a href="https://github.com/zorrooz/plotit/releases" class="external-link">GitHub releases</a> for version history.</li>
 </ul><div class="section level3">
+<h3 id="relational-charts-full-self-implementation-development-version">Relational charts: full self-implementation<a class="anchor" aria-label="anchor" href="#relational-charts-full-self-implementation-development-version"></a></h3>
+<div class="section level4">
+<h4 id="breaking-development-version">Breaking<a class="anchor" aria-label="anchor" href="#breaking-development-version"></a></h4>
+<ul><li>
+<code>igraph</code> removed from Suggests entirely:
+<ul><li>
+<code><a href="../reference/layout_force.html">layout_force()</a></code> now runs a self-contained Fruchterman-Reingold engine (pairwise repulsion, edge attraction with optional <code>weights</code>, linear cooling). Unknown passthrough arguments are ignored with a warning (previously forwarded to <code><a href="https://r.igraph.org/reference/layout_with_fr.html" class="external-link">igraph::layout_with_fr</a></code>).</li>
+<li>
+<code><a href="../reference/layout_tree.html">layout_tree()</a></code> now uses an in-house leaf-ordering walk shared with <code><a href="../reference/layout_dendrogram.html">layout_dendrogram()</a></code> (<code>._hierarchy_leaf_x</code>). Leaf x positions are sequential left-to-right; internal nodes sit at mean child position. Orientation semantics per <code>direction</code> are unchanged.</li>
+<li>
+<code><a href="../reference/as_graph.html">as_graph()</a></code> tbl_graph input detects directedness via igraph when available and degrades to undirected otherwise.</li>
+</ul></li>
+<li>
+<code>treemapify</code> removed from Suggests; <code><a href="../reference/mark_treemap.html">mark_treemap()</a></code> rewritten as sugar over the self-contained <code><a href="../reference/layout_treemap.html">layout_treemap()</a></code> squarify engine. It now takes a hierarchy table (<code>id</code>/<code>parent</code>/leaf <code>value</code>) instead of treemapify’s <code>area</code>/<code>subgroup</code> aesthetics, renders through <code>mark_rect(data = ~leaves)</code> with white hairline separators, draws centred leaf labels, blanks the coordinate axes, and stores nodes/edges/leaves on <code>@graph</code>.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="default-style-consistency--beauty-relational-family-development-version">Default style consistency / beauty (relational family)<a class="anchor" aria-label="anchor" href="#default-style-consistency--beauty-relational-family-development-version"></a></h4>
+<ul><li>
+<code><a href="../reference/mark_network.html">mark_network()</a></code>: edges render <strong>beneath</strong> node points (previously lines crossed over markers), labels float above points instead of overlapping, the panel gains <code>coord_fixed()</code> so layouts are not stretched, and axis blanking moves to the shared helper.</li>
+<li>
+<code><a href="../reference/mark_chord.html">mark_chord()</a></code>: sector ids are labelled outside the ring on the layout’s anchors, and the panel gets <code>coord_fixed(clip = "off")</code> so sectors stay circular without cropping.</li>
+<li>
+<code><a href="../reference/mark_sankey.html">mark_sankey()</a></code>: node labels switch to contrast-aware colours (white over the default ink fill, near-black over mapped fills); axes blanked.</li>
+<li>New shared helper <code>._theme_blank_axes()</code> unifies the coordinate-free look across network/sankey/chord/treemap.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="types-development-version">Types<a class="anchor" aria-label="anchor" href="#types-development-version"></a></h4>
+<ul><li>Relational type coverage audited against ECharts/G6-G2/D3/Plotly/ Highcharts (see AGENTS.md §3.2c). Core relational domain fully covered; sunburst/icicle/radial-tree documented as composition recipes (radial-tree recipe added to §3.2b); bubble packing (<code>layout_pack</code>) remains explicitly deferred.</li>
+</ul></div>
+</div>
+<div class="section level3">
 <h3 id="refactoring-pass-completeness-consistency-defaults-development-version">Refactoring pass: completeness, consistency, defaults<a class="anchor" aria-label="anchor" href="#refactoring-pass-completeness-consistency-defaults-development-version"></a></h3>
 <div class="section level4">
 <h4 id="bug-fixes-development-version">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h4>

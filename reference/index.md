@@ -62,7 +62,7 @@ Add visual marks to your plot.
 - [`mark_text()`](https://zorrooz.github.io/plotit/reference/mark_text.md)
   : Text layer
 - [`mark_treemap()`](https://zorrooz.github.io/plotit/reference/mark_treemap.md)
-  : Treemap layer
+  : Treemap layer (sugar)
 - [`mark_violin()`](https://zorrooz.github.io/plotit/reference/mark_violin.md)
   : Violin layer
 

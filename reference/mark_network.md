@@ -85,9 +85,10 @@ Modified plotit object; `@graph` holds the laid-out tables.
 
 ## Details
 
-Requires igraph, except `layout = "manual"` which consumes pre-computed
-numeric `x`/`y` columns on the nodes table. Edges render as straight
-segments; curved edges are a known limitation of the sugar form.
+Fully self-contained: the force/circle layouts run on plotit's own
+deterministic engines and rendering is plain ggplot2 layers. Edges
+render as straight segments; curved edges are a known limitation of the
+sugar form.
 
 ## References
 
