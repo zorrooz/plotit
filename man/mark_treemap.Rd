@@ -53,7 +53,8 @@ tiling.  Equivalent to the pipeline \code{as_graph(hierarchy) |> layout_treemap(
 Fully self-contained: no \pkg{treemapify} dependency, deterministic
 Bruls squarify layout.  Tiles receive the unified white hairline
 separators and coordinate axes are blanked (the diagram is
-coordinate-free).
+coordinate-free).  A mapped \code{fill} column ships with the curated
+viridis default (chain \code{scale_fill()} to replace it).
 }
 \examples{
 h <- data.frame(
@@ -61,7 +62,9 @@ h <- data.frame(
   parent = c(NA, "root", "root", "A", "A", "B"),
   value  = c(NA, NA, NA, 30, 20, 50)
 )
-h |> plotit(encode(fill = id)) |> mark_treemap()
+h |>
+  plotit(encode(fill = id)) |>
+  mark_treemap()
 }
 \references{
 AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/treemap}{Treemap} (graphlib)

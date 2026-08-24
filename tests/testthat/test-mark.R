@@ -1052,3 +1052,69 @@ test_that("mark_corr is sugar over transform_corr + tile layer", {
   expect_length(built$plot$layers, 1)
   expect_equal(nrow(built$data[[1]]), ncol(mtcars)^2)
 })
+
+# ---- curated default palettes on relational sugars (last call wins) ----
+
+test_that("[BDD] sankey fills ship curated viridis and honour overrides", {
+  df <- data.frame(
+    source = c("A", "A", "B"), target = c("B", "C", "C"),
+    value = c(5, 3, 4)
+  )
+  p_def <- df |>
+    plotit(encode(
+      source = source, target = target,
+      value = value, fill = source
+    )) |>
+    mark_sankey()
+  p_ovr <- p_def |> scale_fill(range = "grey")
+  f_def <- unique(ggplot2::ggplot_build(p_def@gg)$data[[1]]$fill)
+  f_ovr <- unique(ggplot2::ggplot_build(p_ovr@gg)$data[[1]]$fill)
+  expect_false(setequal(f_def, f_ovr)) # override took effect (last wins)
+  expect_false(setequal(f_def, c("#F8766D", "#00BA38", "#619CFF"))) # not raw hue
+})
+
+test_that("[BDD] chord mapped fill defaults to viridis; unmapped stays neutral", {
+  df <- .chord_df()
+  p_map <- df |>
+    plotit(encode(
+      source = source, target = target,
+      value = value, fill = source
+    )) |>
+    mark_chord()
+  p_neutral <- df |>
+    plotit(encode(source = source, target = target, value = value)) |>
+    mark_chord()
+  f_map <- unique(ggplot2::ggplot_build(p_map@gg)$data[[2]]$fill)
+  f_neu <- unique(ggplot2::ggplot_build(p_neutral@gg)$data[[2]]$fill)
+  expect_gte(length(f_map), 3) # identity palette across sectors
+  expect_setequal(f_neu, "grey85") # token fallback untouched
+})
+
+test_that("[BDD] treemap mapped fill ships viridis and honours overrides", {
+  hier <- data.frame(
+    id = c("root", "A", "B", "a1", "a2", "b1"),
+    parent = c(NA, "root", "root", "A", "A", "B"),
+    value = c(NA, NA, NA, 30, 20, 50)
+  )
+  p_def <- plotit(hier, encode(fill = id)) |> mark_treemap(show_labels = FALSE)
+  p_ovr <- p_def |> scale_fill(range = "grey")
+  f_def <- unique(ggplot2::ggplot_build(p_def@gg)$data[[1]]$fill)
+  f_ovr <- unique(ggplot2::ggplot_build(p_ovr@gg)$data[[1]]$fill)
+  expect_false(setequal(f_def, f_ovr))
+})
+
+test_that("[BDD] network mapped node colour ships curated palette", {
+  nodes <- data.frame(name = c("A", "B", "C"), grp = c("X", "Y", "X"))
+  edges <- data.frame(from = c("A", "B"), to = c("B", "C"))
+  p_def <- nodes |>
+    plotit(encode(colour = grp)) |>
+    mark_network(
+      edges = edges,
+      encode_edges = encode(source = from, target = to)
+    )
+  p_ovr <- p_def |> scale_color(range = "grey")
+  c_def <- ggplot2::ggplot_build(p_def@gg)$data[[2]]$colour # node layer on top
+  c_ovr <- ggplot2::ggplot_build(p_ovr@gg)$data[[2]]$colour
+  expect_true(length(unique(c_def)) >= 2)
+  expect_false(setequal(unique(c_def), unique(c_ovr)))
+})

@@ -442,7 +442,7 @@ style_dark <- make_theme("style_dark",
 - **特例**：
   - `mark_boxplot` 在 default_color 注入存活且用户未指定 colour 时自动改用 `ink` 描边（避免蓝底蓝线中位线不可读），见 `._user_owned_aes()` 对 AsIs 注入常量的豁免逻辑；
   - `mark_rule` 标量路径与 annotate 段路径同样只对「用户自有」美学让位（注入常量不渲染在参数型 geom 上，不应阻塞默认值）。
-- **封闭统计 Mark 自动 viridis**：`mark_corr` / `mark_hex` / `mark_density_2d(filled=TRUE)` 的内部 fill 通道（value/count/level）由 mark 自有，自动附加 viridis fill scale（连续 `_c`、离散 `_d`）；同时清除注入的 default_color 常量（否则覆盖统计 fill）。用户之后链式 `scale_*()` 即替换（后执行者胜；ggplot2 会输出替换提示消息）。
+- **Mark 自有/派生通道自动 viridis**：封闭统计 Mark（`mark_corr` / `mark_hex` / `mark_density_2d(filled=TRUE)`）的内部 fill 通道（value/count/level），以及关系类语法糖的派生通道——sankey 流带/节点（恒定）、chord 与 treemap 的映射 `fill`、network 的映射节点 `colour`——均自动附加 viridis scale（连续 `_c`、离散 `_d`，按列类型判定）；同时清除注入的 default_color 常量。用户之后链式 `scale_*()` 即替换（后执行者胜）。chord/treemap/network 未映射时保持 token 中性色/品牌蓝静态，不挂多余 scale。
 - **make_mark 自定义 mark**：不在 `._MARK_DEFAULTS` 中时零行为差异。
 
 #### 3.3.4 `scale_*` — 比例尺

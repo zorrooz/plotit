@@ -67,7 +67,8 @@ call are preserved (additive composition).
 Fully self-contained: the force/circle layouts run on plotit's own
 deterministic engines and rendering is plain ggplot2 layers.  Edges
 render as straight segments; curved edges are a known limitation of the
-sugar form.
+sugar form.  A mapped node \code{colour} ships with the curated viridis
+default (chain \code{scale_color()} to replace it).
 }
 \examples{
 nodes <- data.frame(
@@ -80,7 +81,8 @@ edges <- data.frame(
   to     = c("B", "C", "C", "D"),
   weight = c(1, 2, 3, 4)
 )
-nodes |> plotit(encode(color = group, size = value, label = name)) |>
+nodes |>
+  plotit(encode(color = group, size = value, label = name)) |>
   mark_network(
     edges = edges,
     encode_edges = encode(source = from, target = to, value = weight),
