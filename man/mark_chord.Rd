@@ -42,7 +42,10 @@ Creates a chord diagram showing pairwise relationships between groups.
 Equivalent to the pipeline \code{as_graph() |> layout_chord() |> mark_polygon(data = ~ribbons) |> mark_polygon(data = ~arcs)} -- see
 §3.3.4a.  Accepts an \strong{edges table} with \code{source}, \code{target}, and
 optionally \code{value} columns; sector arcs and bezier bands come from the
-built-in circular layout (deterministic, dependency-free).
+built-in circular layout (deterministic, dependency-free).  A mapped
+\code{fill} channel ships with the curated viridis default (chain
+\code{scale_fill()} to replace it); unmapped diagrams stay on the neutral
+band/arc greys.
 }
 \details{
 The laid-out graph (\code{nodes} / \code{edges} / \code{arcs} / \code{ribbons} tables) is
