@@ -43,11 +43,10 @@ scale_color(
 
 - range:
 
-  Output range. `NULL` = auto (discrete\<U+2192\>hue,
-  continuous\<U+2192\>viridis). A colour vector (`c("blue","red")`) for
-  manual colours, or a scheme name: `"viridis"`, `"brewer"`, `"grey"`,
-  `"hue"`. For binned: only `"viridis"`, `"brewer"`. For continuous:
-  only `"viridis"`, `"brewer"`.
+  Output range. `NULL` = auto (discrete-\>hue, continuous-\>viridis). A
+  colour vector (`c("blue","red")`) for manual colours, or a scheme
+  name: `"viridis"`, `"brewer"`, `"grey"`, `"hue"`. For binned: only
+  `"viridis"`, `"brewer"`. For continuous: only `"viridis"`, `"brewer"`.
 
 - breaks:
 

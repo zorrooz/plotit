@@ -24,7 +24,7 @@ label_axis(plot, text = NULL, aes = NULL, hide = FALSE, reset = FALSE, ...)
 
 - hide:
 
-  If TRUE, hide the axis title entirely (�lement_blank()).
+  If TRUE, hide the axis title entirely (`element_blank()`).
 
 - reset:
 

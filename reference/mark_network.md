@@ -67,12 +67,13 @@ mark_network(
 
 - node_colour:
 
-  Default fill colour for nodes (default `._MARK_STYLE$primary` =
+  Default node colour, applied to the `colour` and `fill` channels only
+  where they are not mapped (default `._MARK_STYLE$primary` =
   `"#4E79A7"`).
 
 - node_size:
 
-  Default size for nodes (default 5).
+  Default node size when `size` is not mapped (default 5).
 
 - ...:
 

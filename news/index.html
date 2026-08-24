@@ -44,8 +44,35 @@
 <h2 class="pkg-version" data-toc-text="development version" id="plotit-development-version">plotit (development version)<a class="anchor" aria-label="anchor" href="#plotit-development-version"></a></h2>
 <ul><li>Active development stage — frequent breaking changes expected.</li>
 <li>See <a href="https://github.com/zorrooz/plotit/releases" class="external-link">GitHub releases</a> for version history.</li>
+</ul><div class="section level3">
+<h3 id="refactoring-pass-completeness-consistency-defaults-development-version">Refactoring pass: completeness, consistency, defaults<a class="anchor" aria-label="anchor" href="#refactoring-pass-completeness-consistency-defaults-development-version"></a></h3>
+<div class="section level4">
+<h4 id="bug-fixes-development-version">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h4>
+<ul><li>
+<code><a href="../reference/mark_network.html">mark_network()</a></code> node defaults now respect mapped aesthetics: <code>node_colour</code> is applied to the <code>colour</code> channel (previously only <code>fill</code>, which default shape 19 ignores, so nodes rendered black) and <code>node_size</code> no longer overrides a user-mapped <code>size</code> variable. Each static is injected per channel, only when that channel is unmapped.</li>
+<li>
+<code><a href="../reference/mark_corr.html">mark_corr()</a></code> and <code><a href="../reference/mark_treemap.html">mark_treemap()</a></code> now route through the shared mark path, gaining white hairline separators consistent with <code><a href="../reference/mark_rect.html">mark_rect()</a></code>.</li>
+<li>
+<code>layout_force(seed = ...)</code> no longer perturbs the caller’s global RNG stream (<code>.Random.seed</code> is saved/restored around the simulation).</li>
+<li>Removed 26 literal <code>&lt;U+XXXX&gt;</code> mojibake sequences from comments/roxygen (one of which leaked into <code><a href="../reference/scale_color.html">scale_color()</a></code> docs), a stray ESC control character in <code><a href="../reference/label_axis.html">label_axis()</a></code> docs, and a typo (<code>lement_blank</code>).</li>
 </ul></div>
-  </main></div>
+<div class="section level4">
+<h4 id="api-development-version">API<a class="anchor" aria-label="anchor" href="#api-development-version"></a></h4>
+<ul><li>
+<strong>Breaking (extension contract):</strong> <code><a href="../reference/project_parallel.html">project_parallel()</a></code> drops its dead <code>clip</code> parameter; it was documented as unused.</li>
+<li>
+<code>tidygraph</code> is now declared in <code>Suggests</code>: <code><a href="../reference/as_graph.html">as_graph()</a></code> accepts <code>tbl_graph</code> input but the dependency was previously undeclared.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="internal-development-version">Internal<a class="anchor" aria-label="anchor" href="#internal-development-version"></a></h4>
+<ul><li>Standard marks declare their S7 generic through a <code>._make_mark_generic()</code> factory; layouts register both pipeline and bare-graph methods through <code>._register_layout_methods()</code>.</li>
+<li>Shared helpers extracted: render preparation (<code>._prepare_render()</code>), grob measurement/device sizing (<code>._measure_inches()</code> / <code>._open_sized_device()</code>), composite annotation setter, sankey/chord first-occurrence fill, and <code><a href="../reference/label_axis.html">label_axis()</a></code> reuses <code>._set_text_label()</code>.</li>
+<li>Internal helper naming normalized to the <code>._</code> prefix (e.g. <code>.theme_default()</code> → <code>._theme_default()</code>); zero lint findings restored.</li>
+</ul></div>
+</div>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">

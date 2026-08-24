@@ -15,7 +15,6 @@ project_parallel(
   scale = c("std", "global", "none"),
   alpha = 0.5,
   size = 1,
-  clip = "on",
   ...
 )
 ```
@@ -44,11 +43,6 @@ project_parallel(
 - alpha, size:
 
   Passed to `geom_line()` / `geom_point()`.
-
-- clip:
-
-  Currently unused (parallel coordinates do not apply a coordinate
-  system). Accepted for signature consistency.
 
 - ...:
 
