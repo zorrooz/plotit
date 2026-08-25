@@ -28,6 +28,23 @@ NULL
   if (!is.null(mapping) && (!is.null(mapping$colour) || !is.null(mapping$fill))) {
     plot <- ._clear_default_color(plot, mapping)
   }
+  # Token default palette for layer-level channels that no managed scale
+  # covers yet (construction attached globals; explicit relational pipelines
+  # start unmanaged).  Keeps every path on the same curated palettes without
+  # ever clobbering a user scale_*().
+  if (!is.null(mapping)) {
+    unmanaged <- setdiff(
+      intersect(c("colour", "fill"), names(mapping)),
+      ._colour_managed_get(plot)
+    )
+    for (aes_name in unmanaged) {
+      sc <- ._default_colour_scale(aes_name, data %||% plot@gg$data, mapping[[aes_name]])
+      if (!is.null(sc)) {
+        plot@gg <- plot@gg + sc
+        plot <- ._colour_managed_add(plot, aes_name)
+      }
+    }
+  }
   # Unified mark style defaults (see R/mark_style.R).  Runs after the
   # default_color clear so gating sees the final mapping state.
   dots <- ._apply_mark_defaults(plot, mapping, dots, mark_name)
@@ -40,10 +57,17 @@ NULL
   } else {
     do.call(geom_fun, c(list(mapping = mapping, data = data, position = pos), dots))
   }
-  .add_geom(plot, geom,
+  plot <- .add_geom(plot, geom,
     rasterize = rasterize, rasterize_dpi = rasterize_dpi,
     rasterize_dev = rasterize_dev
   )
+  # Closed-cell heatmap chrome: tiles span the full data range, so axis
+  # lines/ticks double the grid the cells already draw and expansion padding
+  # would detach cells from the panel edge (AGENTS.md 6, cell-chrome rule).
+  if (!is.null(mark_name) && mark_name %in% c("mark_rect", "mark_corr")) {
+    plot@gg <- ._gg_tile_chrome(plot@gg)
+  }
+  plot
 }
 
 # ---- Rasterization helper ----
@@ -746,9 +770,10 @@ S7::method(mark_hex, plotit_class) <- function(
     )
   }, params)
   # Default continuous fill (AGENTS.md §6): viridis unless the user mapped
-  # their own fill.  A later scale_fill() call replaces it (last wins).
+  # their own fill.  A later scale_fill() call replaces it (last wins);
+  # replacement of a construction-attached scale is intended -> suppressed.
   if (!user_fill) {
-    plot <- scale_fill(plot, trans = "identity", range = "viridis")
+    plot <- suppressMessages(scale_fill(plot, trans = "identity", range = "viridis"))
   }
   plot
 }
@@ -810,7 +835,7 @@ S7::method(mark_density_2d, plotit_class) <- function(
     )
   }, dots)
   if (filled) {
-    plot <- scale_fill(plot, trans = "discrete", range = "viridis")
+    plot <- suppressMessages(scale_fill(plot, trans = "discrete", range = "viridis"))
   }
   plot
 }
@@ -924,6 +949,10 @@ S7::method(mark_corr, plotit_class) <- function(
   # (white hairline separators between tiles, matching mark_rect).
   df <- transform_corr(raw_data, method = method, reorder = reorder)
   mapping <- encode(x = Var1, y = Var2, fill = value)
+  # The correlation value channel is mark-owned (magnitude -> sequential
+  # viridis, AGENTS.md §6); pre-register it as managed so the layer-level
+  # auto-attach does not double-fire.
+  plot <- ._colour_managed_add(plot, "fill")
   plot <- do.call(function(...) {
     ._mark_impl(
       plot, mapping, df,
@@ -932,10 +961,14 @@ S7::method(mark_corr, plotit_class) <- function(
       auto_dodge = FALSE, bind_aes = NULL, mark_name = "mark_corr", ...
     )
   }, rlang::list2(...))
-  # The correlation value fill is owned by this closed statistical mark;
-  # default it to the colour-blind-safe continuous scheme (AGENTS.md §6).
-  # A later scale_fill() call replaces it (last wins).
-  plot <- scale_fill(plot, trans = "identity", range = "viridis")
+  # Default the value fill to the colour-blind-safe continuous scheme; a
+  # later scale_fill() call replaces it (last wins).  Suppressed: replacing
+  # a construction-attached scale is the documented intent here.
+  plot <- suppressMessages(scale_fill(plot, trans = "identity", range = "viridis"))
+  # Synthetic Var1/Var2 titles carry no meaning; the variable names on the
+  # axes do.  (Axis lines/ticks and expansion are handled by the shared
+  # closed-cell chrome inside ._mark_impl.)
+  plot@gg <- plot@gg + ggplot2::theme(axis.title = ggplot2::element_blank())
   plot
 }
 
@@ -1367,9 +1400,10 @@ S7::method(mark_beeswarm, plotit_class) <- function(
 #' mark_rect(data = ~nodes)` -- see §3.3.4a.  Accepts an **edges table**
 #' with `source`, `target`, and optionally `value` columns; node and ribbon
 #' geometry come from the built-in layered layout (deterministic,
-#' dependency-free).  The derived flow/node fill channel ships with plotit's
-#' curated viridis default; chain `scale_fill()` to replace it (last call
-#' wins).
+#' dependency-free).  The derived flow/node fill channel defaults to source
+#' identity and ships with the curated token palette -- friendly qualitative
+#' for categories, viridis sequential for continuous values; chain
+#' `scale_fill()` to replace it (last call wins).
 #'
 #' The laid-out graph (`nodes` / `edges` / `ribbons` tables) is stored on
 #' `@graph`, so subsequent marks can reference any table directly for
@@ -1464,12 +1498,10 @@ S7::method(mark_sankey, plotit_class) <- function(
     fill_nm <- tryCatch(._quo_name_arg(mapping$fill), error = function(e) NULL)
     # Keep numeric fill values numeric so continuous scales keep their
     # semantics; only coerce categorical values (#5).
-    fill_continuous <- is.numeric(fill_vals)
-    if (!fill_continuous) fill_vals <- as.character(fill_vals)
+    if (!is.numeric(fill_vals)) fill_vals <- as.character(fill_vals)
   } else {
     fill_vals <- src # source identity default for ribbons
     fill_nm <- NULL
-    fill_continuous <- FALSE # character ids -> discrete channel
   }
 
   canon <- data.frame(source = src, target = tgt)
@@ -1523,13 +1555,10 @@ S7::method(mark_sankey, plotit_class) <- function(
   txt_args$colour <- if (!has_fill) "white" else "grey20"
   plot <- do.call(mark_text, txt_args)
 
-  # The derived fill channel is mark-owned: attach plotit's curated
-  # default palette (viridis) so flows never fall back to raw ggplot2
-  # hues; a later scale_fill() replaces it (last call wins).
-  plot <- scale_fill(plot,
-    trans = if (fill_continuous) "identity" else "discrete",
-    range = "viridis"
-  )
+  # The derived fill channel is mark-owned: the layer-level auto-attach in
+  # ._mark_impl() curates it from the token palettes (identity/group channels
+  # -> friendly qualitative, continuous values -> viridis sequential), and a
+  # later scale_fill() replaces it (last call wins).
 
   # Coordinate-free diagram: no axes around the layout canvas.
   plot <- ._theme_blank_axes(plot)
@@ -1547,8 +1576,9 @@ S7::method(mark_sankey, plotit_class) <- function(
 #' Fully self-contained: no \pkg{treemapify} dependency, deterministic
 #' Bruls squarify layout.  Tiles receive the unified white hairline
 #' separators and coordinate axes are blanked (the diagram is
-#' coordinate-free).  A mapped `fill` column ships with the curated
-#' viridis default (chain `scale_fill()` to replace it).
+#' coordinate-free).  A mapped `fill` column ships with the curated token
+#' palette -- friendly qualitative for categories, viridis sequential for
+#' continuous values (chain `scale_fill()` to replace it).
 #'
 #' @param plot A plotit object whose data is a hierarchy table with `id`,
 #'   `parent`, and leaf-level `value` columns (build via
@@ -1628,17 +1658,9 @@ S7::method(mark_treemap, plotit_class) <- function(
   rect_mapping <- ggplot2::aes()
   if (has_fill) {
     rect_mapping$fill <- global_fill
-    # Mapped tile fill is curated by default (viridis, continuous or
-    # discrete by the mapped column's type); a later scale_fill()
-    # replaces it (last call wins).
-    fill_probe <- tryCatch(
-      rlang::eval_tidy(global_fill, g$leaves),
-      error = function(e) NULL
-    )
-    plot <- scale_fill(plot,
-      trans = if (is.numeric(fill_probe)) "identity" else "discrete",
-      range = "viridis"
-    )
+    # Mapped tile fill is curated by the layer-level auto-attach (identity
+    # channels -> friendly, continuous values -> viridis); a later
+    # scale_fill() replaces it (last call wins).
   }
   rect_args <- list(
     plot = plot, data = ~leaves, mapping = rect_mapping,
@@ -1682,8 +1704,9 @@ S7::method(mark_treemap, plotit_class) <- function(
 #' Fully self-contained: the force/circle layouts run on plotit's own
 #' deterministic engines and rendering is plain ggplot2 layers.  Edges
 #' render as straight segments; curved edges are a known limitation of the
-#' sugar form.  A mapped node `colour` ships with the curated viridis
-#' default (chain `scale_color()` to replace it).
+#' sugar form.  Mapped node colour/fill channels ship with the curated
+#' token palette (friendly qualitative / viridis sequential, chain
+#' [scale_color()] to replace).
 #'
 #' @param plot A plotit object. The data should be a data.frame of **nodes**
 #'   whose first column is a unique id.
@@ -1960,18 +1983,9 @@ S7::method(mark_network, plotit_class) <- function(
     )
   }
 
-  # Mapped node colour is curated by default (viridis by the column's
-  # type); a later scale_color() replaces it (last call wins).
-  if (!is.null(node_mapping$colour)) {
-    colour_probe <- tryCatch(
-      rlang::eval_tidy(node_mapping$colour, g$nodes),
-      error = function(e) NULL
-    )
-    plot <- scale_color(plot,
-      trans = if (is.numeric(colour_probe)) "identity" else "discrete",
-      range = "viridis"
-    )
-  }
+  # Mapped node colour/fill channels are curated by the layer-level
+  # auto-attach in ._mark_impl() (identity -> friendly, continuous ->
+  # viridis); a later scale_color() replaces them (last call wins).
 
   # Coordinate-free canvas with a true aspect ratio so the layout geometry
   # is not stretched by the panel shape.
@@ -2016,10 +2030,11 @@ S7::method(mark_network, plotit_class) <- function(
 #' mark_polygon(data = ~ribbons) |> mark_polygon(data = ~arcs)` -- see
 #' §3.3.4a.  Accepts an **edges table** with `source`, `target`, and
 #' optionally `value` columns; sector arcs and bezier bands come from the
-#' built-in circular layout (deterministic, dependency-free).  A mapped
-#' `fill` channel ships with the curated viridis default (chain
-#' `scale_fill()` to replace it); unmapped diagrams stay on the neutral
-#' band/arc greys.
+#' built-in circular layout (deterministic, dependency-free).  The fill
+#' channel defaults to source identity (the same derived-channel rule as
+#' [mark_sankey()]) and ships with the curated token palette -- friendly
+#' qualitative for categories, viridis sequential for continuous values
+#' (chain [scale_fill()] to replace it).
 #'
 #' The laid-out graph (`nodes` / `edges` / `arcs` / `ribbons` tables) is
 #' stored on `@graph`, so subsequent marks can reference any table directly
@@ -2142,14 +2157,18 @@ S7::method(mark_chord, plotit_class) <- function(
   }
 
   # Sector/band fill: edge-level group; nodes take first-occurrence identity
-  # so pair aggregation stays consistent (#11).
-  has_fill <- !is.null(mapping$fill) && !inherits(mapping$fill, "AsIs")
-  if (has_fill) {
+  # so pair aggregation stays consistent (#11).  When the user maps no fill,
+  # bands default to source identity -- the same derived-channel rule as
+  # mark_sankey, so relational diagrams share one visual language.
+  if (!is.null(mapping$fill) && !inherits(mapping$fill, "AsIs")) {
     fill_vals <- rlang::eval_tidy(mapping$fill, edges_df)
-    fill_continuous <- is.numeric(fill_vals)
-    if (!fill_continuous) fill_vals <- as.character(fill_vals)
+    fill_nm <- tryCatch(._quo_name_arg(mapping$fill), error = function(e) NULL)
+    # Keep numeric fill values numeric so continuous scales keep their
+    # semantics; only coerce categorical values.
+    if (!is.numeric(fill_vals)) fill_vals <- as.character(fill_vals)
   } else {
     fill_vals <- src
+    fill_nm <- NULL
   }
 
   canon <- data.frame(source = src, target = tgt)
@@ -2177,24 +2196,16 @@ S7::method(mark_chord, plotit_class) <- function(
 
   band_mapping <- ggplot2::aes()
   band_mapping$group <- rlang::sym(".ribbon_id")
-  if (has_fill) band_mapping$fill <- rlang::sym("fill_grp")
-  # Never pass fill = NULL through ... : ggplot2 reports it as an empty
-  # aesthetic.  Build the call conditionally instead.
-  band_args <- list(
-    plot = plot, data = ~ribbons,
-    mapping = band_mapping, alpha = link_alpha
+  band_mapping$fill <- rlang::sym("fill_grp")
+  plot <- mark_polygon(plot,
+    mapping = band_mapping, data = ~ribbons,
+    alpha = link_alpha
   )
-  if (!has_fill) band_args$fill <- ._MARK_STYLE$band
-  plot <- do.call(mark_polygon, band_args)
 
   arc_mapping <- ggplot2::aes()
   arc_mapping$group <- rlang::sym(".arc_id")
-  if (has_fill) {
-    arc_mapping$fill <- rlang::sym("fill_grp")
-    plot <- mark_polygon(plot, mapping = arc_mapping, data = ~arcs)
-  } else {
-    plot <- mark_polygon(plot, data = ~arcs, fill = ._MARK_STYLE$arc)
-  }
+  arc_mapping$fill <- rlang::sym("fill_grp")
+  plot <- mark_polygon(plot, mapping = arc_mapping, data = ~arcs)
 
   # Sector labels float outside the ring on the layout's xc/yc anchors.
   lbl_mapping <- ggplot2::aes()
@@ -2206,16 +2217,10 @@ S7::method(mark_chord, plotit_class) <- function(
     size = ._MARK_STYLE$txt_note, colour = ._MARK_STYLE$ink
   )
 
-  # Mapped fills are mark-owned here too: default to the curated viridis
-  # scheme (replaceable by a later scale_fill(), last call wins).  The
-  # unmapped form stays on its neutral band/arc tokens -- nothing mapped,
-  # nothing to curate.
-  if (has_fill) {
-    plot <- scale_fill(plot,
-      trans = if (fill_continuous) "identity" else "discrete",
-      range = "viridis"
-    )
-  }
+  # The derived fill channel is mark-owned: the layer-level auto-attach in
+  # ._mark_impl() curates it from the token palettes (identity channels ->
+  # friendly qualitative, continuous values -> viridis sequential), and a
+  # later scale_fill() replaces it (last call wins).
 
   # True circles need a fixed aspect ratio; clip off so the outer labels
   # at radius > 1 are not cropped.  No axes around the canvas.

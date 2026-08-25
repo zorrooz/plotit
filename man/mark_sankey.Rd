@@ -44,9 +44,10 @@ Equivalent to the pipeline
 \code{as_graph() |> layout_sankey() |> mark_polygon(data = ~ribbons) |> mark_rect(data = ~nodes)} -- see §3.3.4a.  Accepts an \strong{edges table}
 with \code{source}, \code{target}, and optionally \code{value} columns; node and ribbon
 geometry come from the built-in layered layout (deterministic,
-dependency-free).  The derived flow/node fill channel ships with plotit's
-curated viridis default; chain \code{scale_fill()} to replace it (last call
-wins).
+dependency-free).  The derived flow/node fill channel defaults to source
+identity and ships with the curated token palette -- friendly qualitative
+for categories, viridis sequential for continuous values; chain
+\code{scale_fill()} to replace it (last call wins).
 }
 \details{
 The laid-out graph (\code{nodes} / \code{edges} / \code{ribbons} tables) is stored on

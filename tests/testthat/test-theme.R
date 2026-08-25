@@ -145,3 +145,23 @@ testthat::test_that("[BDD] boxplots render slim boxes with hairline strokes", {
   testthat::expect_true(all(d$staplewidth == 0.4))
   testthat::expect_true(all(d$outlier.size == 0.6))
 })
+
+testthat::test_that("[BDD] identity channels share one palette across mark families", {
+  # Global mapping path (bar) vs mark-owned derived channel (treemap) vs
+  # layer-mapping path (explicit relational pipeline) must all draw from the
+  # same token anchors; magnitude channels keep the sequential scheme.
+  p_bar <- plotit(mtcars, encode(x = factor(cyl), fill = factor(cyl))) |>
+    mark_bar()
+  hier <- data.frame(
+    id = c("root", "a1", "a2", "b1"),
+    parent = c(NA, "root", "root", "root"),
+    value = c(NA, 30, 20, 50)
+  )
+  suppressMessages(
+    p_tree <- plotit(hier, encode(fill = id)) |> mark_treemap(show_labels = FALSE)
+  )
+  f_bar <- unique(ggplot2::ggplot_build(p_bar@gg)$data[[1]]$fill)
+  f_tree <- unique(ggplot2::ggplot_build(p_tree@gg)$data[[1]]$fill)
+  testthat::expect_true("#0072B2" %in% f_bar) # friendly anchor
+  testthat::expect_true("#0072B2" %in% f_tree) # same anchor on derived channel
+})

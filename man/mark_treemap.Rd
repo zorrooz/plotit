@@ -53,8 +53,9 @@ tiling.  Equivalent to the pipeline \code{as_graph(hierarchy) |> layout_treemap(
 Fully self-contained: no \pkg{treemapify} dependency, deterministic
 Bruls squarify layout.  Tiles receive the unified white hairline
 separators and coordinate axes are blanked (the diagram is
-coordinate-free).  A mapped \code{fill} column ships with the curated
-viridis default (chain \code{scale_fill()} to replace it).
+coordinate-free).  A mapped \code{fill} column ships with the curated token
+palette -- friendly qualitative for categories, viridis sequential for
+continuous values (chain \code{scale_fill()} to replace it).
 }
 \examples{
 h <- data.frame(
