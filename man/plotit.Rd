@@ -8,8 +8,8 @@ plotit(
   data,
   mapping = encode(),
   autofit = FALSE,
-  width = 7,
-  height = 5,
+  width = 5,
+  height = 3.5,
   size_unit = "in",
   dodge = NULL,
   default_color = "#4E79A7"
@@ -22,7 +22,10 @@ plotit(
 
 \item{autofit}{Logical; if \code{TRUE}, plot dimensions are determined automatically.}
 
-\item{width, height}{Numeric; default width and height (ignored if \code{autofit = TRUE}).}
+\item{width, height}{Numeric; default width and height (ignored if \code{autofit = TRUE}).
+Defaults give a compact academic canvas (5 x 3.5 in panel) whose total
+footprint -- panel plus axes/legend -- fits standard 7-inch devices
+without clipping, keeping WYSIWYG previews and exports aligned.}
 
 \item{size_unit}{Unit for width/height: \code{"in"}, \code{"cm"}, \code{"mm"}.}
 

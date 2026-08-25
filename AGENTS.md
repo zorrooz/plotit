@@ -304,10 +304,11 @@ as_graph(h) |> plotit() |>
 
 ```
 plotit(data, mapping = encode(), autofit = FALSE,
-       width = 7, height = 5, size_unit = "in",
+       width = 5, height = 3.5, size_unit = "in",
        dodge = NULL, default_color = "#4E79A7")
 ```
 
+- `width`/`height`：紧凑学术画布（面板 5×3.5in）。烘焙 WYSIWYG 后含轴/图例的总足迹 ≈6.6in，装进 pkgdown/knitr/RStudio 全部标准设备不截断
 - `size_unit`：`"in"`/`"cm"`/`"mm"`，始终验证合法性，不受 `autofit` 影响
 - `dodge`：NULL 时离散 X/Y 自动设为 0.8（有离散映射才设，否则 0）
 - `default_color`：无 `colour`/`fill` 映射时同时注入两侧 + `guides(colour="none", fill="none")`。添加任何 colour/fill scale 后自动失效。清除逻辑统一为 `._clear_default_color()`（`utils.R`），调用点：统一 mark 路径（`._mark_impl`）、手写 mark（`mark_map`/`mark_corr`/`mark_treemap`/`mark_sankey`）、`scale_color`/`scale_fill`、`project_parallel`（见 §3.3.4）。
@@ -437,7 +438,7 @@ style_dark <- make_theme("style_dark",
 所有 mark 的样式字面量集中于 `R/mark_style.R`，单一事实来源：
 
 - **`._MARK_STYLE`（token 表）**：`primary="#4E79A7"`、`secondary="#E15759"`；中性灰阶 `ink`(grey30，强注释：显著性括号/sankey 节点)、`soft`(grey50，中连接线：棒棒糖茎/哑铃连线/参考线)、`faint`(grey70，弱结构：network 边)、`band`(grey80)/`arc`(grey85)（chord 回退填充）；线宽阶梯 `lw_data`(0.9，折线/路径/平滑) > `lw_thin`(0.5，细描边/括号/误差棒) > `lw_border`(0.25，柱/tile 白色发丝边框)；注释字号 `txt_note`(3.2)；半透明填充 `alpha_fill`(0.6，density/violin)、连接带 `alpha_link`(0.5，sankey/chord)；复合点径 `point_head`(3)。token 属 §1.4 可迭代层。
-- **`._MARK_DEFAULTS`（按 mark 注入的静态默认）**：line/path（linewidth 0.9 + round 端点）、smooth（linewidth 0.9）、bar/histogram/rect（白色发丝边框）、area/polygon（linewidth 0 去描边）、density/violin（alpha 0.6）、rule（colour soft + linewidth thin）、errorbar（linewidth 0.5）、corr/treemap（白色发丝分隔；treemap 经旧式 `size` 通道，geom_treemap 不接受 linewidth）。经 `._mark_impl()` 统一注入，标准 mark 由工厂自动携带 mark 名，手写 mark 显式传 `mark_name=`。
+- **`._MARK_DEFAULTS`（按 mark 注入的静态默认）**：line/path（linewidth 0.9 + round 端点）、smooth（linewidth 0.9）、bar/histogram/rect（白色发丝边框）、area/polygon（linewidth 0 去描边）、density/violin（alpha 0.6）、rule（colour soft + linewidth thin）、errorbar（linewidth 0.5）、boxplot（瘦箱 width 0.5 + 发丝描边 lw_border + staplewidth 0.4 横须盖 + outlier.size 0.6，tidyplots 校准——槽位 dodge 0.8 下留 ~0.38 组间空隙）、corr/treemap（白色发丝分隔；treemap 经旧式 `size` 通道，geom_treemap 不接受 linewidth）。经 `._mark_impl()` 统一注入，标准 mark 由工厂自动携带 mark 名，手写 mark 显式传 `mark_name=`。
 - **合并规则**（`._apply_mark_defaults()`）：**用户显式参数 > 已映射美学（层或全局，含注入的 AsIs 常量）> mark 默认**。因此分组柱状图自动获得白色分隔边框、单色注入柱保持无边框、映射了 alpha 的图层不被默认覆盖。
 - **特例**：
   - `mark_boxplot` 在 default_color 注入存活且用户未指定 colour 时自动改用 `ink` 描边（避免蓝底蓝线中位线不可读），见 `._user_owned_aes()` 对 AsIs 注入常量的豁免逻辑；
@@ -592,7 +593,7 @@ data |> as_graph() |> plotit() |>
 
 #### 3.3.8 `style()` — 主题
 
-`style(plot, ..., base_size=NULL, base_family=NULL, base_theme=NULL)`：先应用基础主题（空时内部 `%||%` 分发到 `.theme_default(base_size=11, base_family="")`），再叠加 `theme(...)` 覆盖。`style_default()` 为便捷别名。
+`style(plot, ..., base_size=NULL, base_family=NULL, base_theme=NULL)`：先应用基础主题（空时内部 `%||%` 分发到 `._theme_default(base_size=10, base_family="")`，token 驱动），再叠加 `theme(...)` 覆盖。`style_default()` 为便捷别名。
 
 #### 3.3.9 `export()` — 导出
 
@@ -601,7 +602,7 @@ data |> as_graph() |> plotit() |>
 尺寸优先级链：显式传参 > meta 存储值 > autofit 自适应。
 
 - `autofit=FALSE` + 未传尺寸：通过 gtable 测量获得总尺寸（面板尺寸来自 meta，通过 `._build_fixed_gtable()` 固定；轴/标签/图例由当前主题决定）
-- `autofit=TRUE` + 未传尺寸：回退 `getOption("plotit.default_width", 7)` / `getOption("plotit.default_height", 5)`（英寸）
+- `autofit=TRUE` + 未传尺寸：回退 `getOption("plotit.default_width", 5)` / `getOption("plotit.default_height", 3.5)`（英寸）
 - 显式传入的 `width`/`height` 遵循 `plotit()` 时设定的 `size_unit` 换算。单位统一为英寸后传给 `ggsave()`
 - `device` 从文件名扩展名推断（`.pdf` / `.png` / `.svg` 等）
 
@@ -752,7 +753,7 @@ export(p, "output.pdf", dpi = 300)
 - **Mark 统一默认样式**：全部 mark 的样式字面量集中于 `R/mark_style.R`（详见 §3.3.3c）——品牌色 primary `#4E79A7` / secondary `#E15759`；中性灰阶 ink(grey30)/soft(grey50)/faint(grey70)；线宽阶梯 lw_data(0.9) > lw_thin(0.5) > lw_border(0.25)；注释字号 txt_note(3.2)；半透明填充 alpha_fill(0.6)、连接带 alpha_link(0.5)。用户显式参数与已映射美学始终优先于默认。
 - **封闭统计 Mark 自动 viridis**：`mark_corr` / `mark_hex` / `mark_density_2d(filled=TRUE)` 的内部 fill 通道自动附加 viridis scale（连续用 `_c`、离散用 `_d`）；关系类语法糖派生通道同理（sankey 恒定、chord/treemap 映射时、network 映射节点 colour 时）。用户之后链式调用 `scale_*()` 即替换（后执行者胜，ggplot2 会给出替换提示）。
 - **图例**：右侧，无边框透明背景，紧凑 key 尺寸。
-- **尺寸**：自适应关闭时默认约 7×5 英寸面板，导出 300 dpi。
+- **尺寸**：自适应关闭时默认紧凑学术面板 5×3.5 英寸（总足迹 ≈6.6in 装进标准设备），导出 300 dpi。
 
 ---
 

@@ -58,6 +58,16 @@ NULL
   mark_violin = list(alpha = ._MARK_STYLE$alpha_fill),
   mark_rule = list(colour = ._MARK_STYLE$soft, linewidth = ._MARK_STYLE$lw_thin),
   mark_errorbar = list(linewidth = ._MARK_STYLE$lw_thin),
+  # Boxplots: slim boxes with generous slot spacing and hairline strokes,
+  # calibrated against tidyplots' add_boxplot (box_width 0.6 / lw 0.25 /
+  # tiny outliers).  Slot width is the global dodge (0.8), so a 0.5-wide
+  # box leaves ~0.3 slot of air between neighbouring groups.
+  mark_boxplot = list(
+    width = 0.5,
+    linewidth = ._MARK_STYLE$lw_border,
+    staplewidth = 0.4,
+    outlier.size = 0.6
+  ),
   # Closed statistical / relational marks rendered through tile-like geoms:
   # white hairline separators keep adjacent cells readable (same token as
   # bar/histogram/rect).

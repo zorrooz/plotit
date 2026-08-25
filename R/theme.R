@@ -41,6 +41,8 @@ NULL
   grey_legend_text = ._ink_mix(0.30),
   # Line weights (academic hairlines, tidyplots-calibrated)
   lw_axis = 0.25,
+  # Compact academic canvas (5 x 3.5 in panel) -> slightly denser base type
+  base_size = 10,
   # Type hierarchy relative to base_size
   rel_title = 1.15,
   rel_subtitle = 0.95,
@@ -81,7 +83,7 @@ NULL
 ._theme_default <- function(base_size = NULL, base_family = NULL) {
   tok <- ._STYLE_TOKENS
   ggplot2::theme_minimal(
-    base_size = base_size %||% 11,
+    base_size = base_size %||% tok$base_size,
     base_family = base_family %||% ""
   ) + ggplot2::theme(
     # Clean paper panel, no grid

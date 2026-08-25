@@ -6,6 +6,17 @@ template:
       <style>.r-plt { display: block; margin: 1rem 0; }
       .r-plt img { display: block; max-width: 100%; height: auto; margin: 0 auto; background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }</style>
 
+# Reference-example figure canvas.  WYSIWYG plots bake an absolute panel
+# size into the ggplot, so the device must exceed panel + axis/legend
+# chrome or the edges clip.  Defaults fit the 5x3.5 in panel with room for
+# wide legends and compose_* examples.
+figures:
+  dev: ragg::agg_png
+  dpi: 96
+  fig.retina: 2
+  fig.width: 8.5
+  fig.height: 5.5
+
 title: plotit
 subtitle: Declarative Plotting with ggplot2
 
