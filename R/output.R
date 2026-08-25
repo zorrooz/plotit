@@ -100,6 +100,12 @@ pkgdown_print.plotit_composite <- function(x, visible = TRUE) {
     x@gg <- x@gg + ._theme_default()
     attr(x@meta, "plotit_theme_managed") <- TRUE
   }
+  # Aspect-true rendering outranks fixed panel sizing: baked absolute panel
+  # dimensions would stretch fixed-aspect coordinates (chord / network /
+  # project_cartesian(fixed = ...)).
+  if (._gg_aspect_conflict(x@gg)) {
+    x@gg <- ._strip_panel_size(x@gg)
+  }
   # Apply lazy labels on every print (not just the first)
   ._sync_labels(x)
 }

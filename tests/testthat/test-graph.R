@@ -155,3 +155,32 @@ test_that("[BDD] as_graph: hclust edges carry merge sides for leaf order", {
   tab <- table(g$edges$source, g$edges$.side)
   expect_true(all(tab[, "1"] == 1 & tab[, "2"] == 1))
 })
+
+# ---- coordinate-free canvas for graph data (domain-level rule) ----
+
+test_that("[BDD] explicit relational pipeline renders coordinate-free", {
+  edges <- data.frame(source = c("A", "B"), target = c("B", "C"))
+  p <- edges |>
+    as_graph() |>
+    plotit() |>
+    layout_circle() |>
+    mark_point(data = ~nodes) |>
+    mark_rule(data = ~edges)
+  thm <- ggplot2::ggplot_build(p@gg)$plot$theme
+  expect_s3_class(thm$axis.line, "element_blank")
+  expect_s3_class(thm$axis.ticks, "element_blank")
+  expect_s3_class(thm$axis.text, "element_blank")
+  expect_s3_class(thm$axis.title, "element_blank")
+})
+
+test_that("[BDD] pipeline layer mappings get the token palette", {
+  g <- as_graph(data.frame(source = c("A", "B"), target = c("B", "C")))
+  g$nodes$grp <- c("x", "y", "x")
+  suppressMessages(
+    p <- g |> plotit() |> layout_circle() |>
+      mark_point(data = ~nodes, mapping = encode(colour = grp))
+  )
+  cols <- unique(ggplot2::ggplot_build(p@gg)$data[[1]]$colour)
+  expect_false(setequal(cols, c("#F8766D", "#00BA38"))) # not raw hue
+  expect_true("#0072B2" %in% cols) # friendly anchor present
+})

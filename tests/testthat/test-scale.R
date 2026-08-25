@@ -643,3 +643,24 @@ test_that("[BDD] scale_y limits crop rendered y data", {
   y_vals <- built$data[[1]]$y
   expect_true(all(y_vals >= 15 & y_vals <= 25, na.rm = TRUE))
 })
+
+# ---- managed colour-scale registry (token palette parity) ----
+
+test_that("[BDD] user colour scale survives later layer mappings", {
+  suppressMessages(
+    p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+      mark_point() |>
+      scale_color(range = "grey") |>
+      mark_point(mapping = encode(shape = Species))
+  )
+  cols <- unique(ggplot2::ggplot_build(p@gg)$data[[1]]$colour)
+  expect_true(all(cols %in% c("#333333", "#989898", "#CCCCCC")))
+})
+
+test_that("[BDD] cleared default_color re-attaches the token palette for layers", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
+    mark_point(mapping = encode(colour = factor(cyl)))
+  cols <- unique(ggplot2::ggplot_build(p@gg)$data[[1]]$colour)
+  expect_false(setequal(cols, c("#F8766D", "#00BA38", "#619CFF"))) # not raw hue
+  expect_true("#0072B2" %in% cols) # friendly anchor
+})

@@ -154,3 +154,42 @@ test_that("[BDD] custom marks registered via make_mark are unaffected", {
     mark_spoke_style_probe()
   expect_s3_class(ggplot2::ggplot_build(p@gg), "ggplot_built")
 })
+
+# ---- bar slot width (AGENTS.md 6: slim bars with air) ----
+
+test_that("[BDD] bars default to 0.7 of the slot", {
+  p <- plotit(ggplot2::mpg, encode(x = class, y = hwy)) |> mark_bar()
+  d <- .built(p)[[1]]
+  expect_true(all(abs((d$xmax - d$xmin) - 0.7) < 1e-6))
+})
+
+test_that("[BDD] explicit width overrides the bar default", {
+  p <- plotit(ggplot2::mpg, encode(x = class, y = hwy)) |>
+    mark_bar(width = 0.4)
+  d <- .built(p)[[1]]
+  expect_true(all(abs((d$xmax - d$xmin) - 0.4) < 1e-6))
+})
+
+# ---- closed-cell heatmap chrome (tile / corr) ----
+
+test_that("[BDD] closed-cell marks drop axis furniture and expansion", {
+  df <- data.frame(
+    x = rep(LETTERS[1:3], 3), y = rep(1:3, each = 3), z = 1:9
+  )
+  p <- df |>
+    plotit(encode(x = x, y = y, fill = z)) |>
+    mark_rect()
+  thm <- ggplot2::ggplot_build(p@gg)$plot$theme
+  expect_s3_class(thm$axis.line, "element_blank")
+  expect_s3_class(thm$axis.ticks, "element_blank")
+  expect_false(inherits(thm$axis.text, "element_blank")) # labels stay
+  expect_false(isTRUE(p@gg$coordinates$expand)) # cells touch panel edges
+})
+
+test_that("[BDD] correlation heatmap blanks synthetic axis titles", {
+  p <- plotit(mtcars[, c("mpg", "hp", "wt")], encode()) |> mark_corr()
+  thm <- ggplot2::ggplot_build(p@gg)$plot$theme
+  expect_s3_class(thm$axis.title, "element_blank") # Var1/Var2 carry no meaning
+  expect_s3_class(thm$axis.line, "element_blank")
+  expect_false(inherits(thm$axis.text, "element_blank")) # variable names stay
+})

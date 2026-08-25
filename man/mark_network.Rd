@@ -67,8 +67,9 @@ call are preserved (additive composition).
 Fully self-contained: the force/circle layouts run on plotit's own
 deterministic engines and rendering is plain ggplot2 layers.  Edges
 render as straight segments; curved edges are a known limitation of the
-sugar form.  A mapped node \code{colour} ships with the curated viridis
-default (chain \code{scale_color()} to replace it).
+sugar form.  Mapped node colour/fill channels ship with the curated
+token palette (friendly qualitative / viridis sequential, chain
+\code{\link[=scale_color]{scale_color()}} to replace).
 }
 \examples{
 nodes <- data.frame(

@@ -76,7 +76,12 @@ NULL
   tgt <- as.character(tgt)
 
   # Magnitude: explicit column > existing "value" column > unit weights.
+  # A named column absent from the table falls back to unit weights instead
+  # of crashing (e.g. mark_chord/mark_sankey on pure source/target tables).
   val_col <- value_col %||% if ("value" %in% names(edges)) "value" else NULL
+  if (!is.null(val_col) && !val_col %in% names(edges)) {
+    val_col <- NULL
+  }
   val <- if (is.null(val_col)) {
     rep(1, nrow(edges))
   } else {

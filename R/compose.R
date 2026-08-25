@@ -54,6 +54,67 @@ NULL
   }
 }
 
+# Default composite canvas size.
+#
+# patchworkGrob() contains `1null` panel units that only resolve inside a
+# device viewport, so measuring it standalone yields garbage (a 2-plot grid
+# measures ~0.7 x 1.2 in).  Instead, compute the canvas from the sub-plot
+# panel sizes (meta) plus a fixed chrome allowance -- the same numbers the
+# single-plot WYSIWYG path uses.
+#' Default width/height (inches) for a composite without explicit size.
+#' @noRd
+#' @keywords internal
+._composite_default_size <- function(c) {
+  panel_size <- function(p) {
+    is_sized_plot <- S7::S7_inherits(p, plotit_class) &&
+      !S7::S7_inherits(p, plotit_composite) &&
+      !is.null(p@meta@width) && !is.null(p@meta@height)
+    if (is_sized_plot) {
+      list(
+        w = ._unit_to_inches(p@meta@width, p@meta@unit),
+        h = ._unit_to_inches(p@meta@height, p@meta@unit)
+      )
+    } else {
+      list(
+        w = getOption("plotit.default_width", 5),
+        h = getOption("plotit.default_height", 3.5)
+      )
+    }
+  }
+  # Chrome allowance: axes / labels / legend / annotation around one panel
+  # (mirrors the single-plot 5 x 3.5 panel -> ~6.6 in footprint budget).
+  allowance_w <- 1.6
+  allowance_h <- 1.6
+  sizes <- lapply(c@plots, panel_size)
+  n <- length(sizes)
+  lt <- c@layout$type %||% "grid"
+  if (lt == "marginal") {
+    widths <- c@layout$widths %||% c(4, 1)
+    heights <- c@layout$heights %||% c(1, 4)
+    main <- sizes[[1]]
+    list(
+      width  = main$w * sum(widths) / widths[1] + allowance_w,
+      height = main$h * sum(heights) / heights[2] + allowance_h
+    )
+  } else if (lt == "inset") {
+    base <- sizes[[1]]
+    list(width = base$w + allowance_w, height = base$h + allowance_h)
+  } else {
+    ncol <- c@layout$ncol %||% if (!is.null(c@layout$nrow)) {
+      ceiling(n / c@layout$nrow)
+    } else {
+      1
+    }
+    nrow <- c@layout$nrow %||% ceiling(n / ncol)
+    cell_w <- max(vapply(sizes, function(s) s$w, numeric(1)))
+    cell_h <- max(vapply(sizes, function(s) s$h, numeric(1)))
+    list(
+      width  = ncol * cell_w + allowance_w,
+      height = nrow * cell_h + allowance_h
+    )
+  }
+}
+
 # Assemble a list of plots into a patchwork via wrap_plots()
 #' Assemble a list of plots into a patchwork via wrap_plots().
 #' @noRd
@@ -84,6 +145,8 @@ NULL
 # Lazily apply stored annotations to the raw assembled gg.
 # Called at print() / export() time so that label_* methods can be
 # called in any order without worrying about plot_annotation overwrites.
+# The annotation theme comes from the shared style tokens so composite
+# titles/subtitles/captions match the single-plot type hierarchy.
 #' Lazily apply stored annotations (title, subtitle, caption, tags) to composite gg.
 #' @noRd
 #' @keywords internal
@@ -99,7 +162,8 @@ NULL
     title      = ann$title,
     subtitle   = ann$subtitle,
     caption    = ann$caption,
-    tag_levels = ann$tag_levels
+    tag_levels = ann$tag_levels,
+    theme      = ._theme_default()
   )
 }
 
@@ -121,8 +185,8 @@ NULL
 #' @param byrow Fill direction: `TRUE` (default) = row-major.
 #' @param widths Relative column widths, e.g. `c(1, 2)`.
 #' @param heights Relative row heights.
-#' @param guides `"collect"` to merge legends, `"keep"` to separate,
-#'   `NULL` (default) for patchwork auto-detect.
+#' @param guides `"collect"` (default) to merge identical legends into one,
+#'   `"keep"` to keep per-panel legends, `NULL` for patchwork auto-detect.
 #' @param axes `"collect"` to share all axes, `"collect_x"` or `"collect_y"`
 #'   for a single direction, `"keep"` (default) to keep axes independent.
 #' @param tag_levels Sub-figure tag scheme: `"A"` for uppercase letters,
@@ -143,7 +207,7 @@ compose_grid <- function(
   byrow = TRUE,
   widths = NULL,
   heights = NULL,
-  guides = NULL,
+  guides = "collect",
   axes = "keep",
   tag_levels = NULL
 ) {
@@ -355,10 +419,12 @@ compose_marginal <- function(
 S7::method(print, plotit_composite) <- function(x, ...) {
   gg <- ._apply_annotations(x)
 
-  # Device management (consistent with plotit_class print)
+  # Device management (consistent with plotit_class print).  Default size
+  # comes from the sub-plot panel metas -- patchworkGrob measurement is
+  # unreliable outside a viewport (null units do not resolve).
   dev_opt <- getOption("plotit.device", "default")
   if (interactive() && !is.null(dev_opt)) {
-    size_in <- ._measure_inches(patchwork::patchworkGrob(gg))
+    size_in <- ._composite_default_size(x)
     ._open_sized_device(size_in, dev_opt)
   }
   print(gg)
@@ -397,7 +463,9 @@ S7::method(export, plotit_composite) <- function(
   if (!is.null(height)) height <- ._unit_to_inches(height, meta_unit)
 
   if (is.null(width) || is.null(height)) {
-    size_in <- ._measure_inches(patchwork::patchworkGrob(gg))
+    # Default canvas from sub-plot panel metas; patchworkGrob measurement
+    # is unreliable outside a viewport (null units do not resolve).
+    size_in <- ._composite_default_size(plot)
     if (is.null(width)) width <- size_in$width
     if (is.null(height)) height <- size_in$height
   }
@@ -479,7 +547,13 @@ S7::method(style, plotit_composite) <- function(
   base_theme = NULL
 ) {
   thm <- base_theme %||% ._theme_default(base_size, base_family)
-  plot@gg <- plot@gg + thm + ggplot2::theme(...)
+  # patchwork: `+` adds to the last sub-plot only; `&` applies to every
+  # panel, matching the single-plot style() semantics.
+  if (inherits(plot@gg, "patchwork")) {
+    plot@gg <- plot@gg & thm & ggplot2::theme(...)
+  } else {
+    plot@gg <- plot@gg + thm + ggplot2::theme(...)
+  }
   plot
 }
 

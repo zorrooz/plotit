@@ -11,7 +11,7 @@ compose_grid(
   byrow = TRUE,
   widths = NULL,
   heights = NULL,
-  guides = NULL,
+  guides = "collect",
   axes = "keep",
   tag_levels = NULL
 )
@@ -31,8 +31,8 @@ the number of plots.}
 
 \item{heights}{Relative row heights.}
 
-\item{guides}{\code{"collect"} to merge legends, \code{"keep"} to separate,
-\code{NULL} (default) for patchwork auto-detect.}
+\item{guides}{\code{"collect"} (default) to merge identical legends into one,
+\code{"keep"} to keep per-panel legends, \code{NULL} for patchwork auto-detect.}
 
 \item{axes}{\code{"collect"} to share all axes, \code{"collect_x"} or \code{"collect_y"}
 for a single direction, \code{"keep"} (default) to keep axes independent.}

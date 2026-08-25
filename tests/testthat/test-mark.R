@@ -1073,7 +1073,7 @@ test_that("[BDD] sankey fills ship curated viridis and honour overrides", {
   expect_false(setequal(f_def, c("#F8766D", "#00BA38", "#619CFF"))) # not raw hue
 })
 
-test_that("[BDD] chord mapped fill defaults to viridis; unmapped stays neutral", {
+test_that("[BDD] chord fill defaults to source identity on the shared token palette", {
   df <- .chord_df()
   p_map <- df |>
     plotit(encode(
@@ -1084,10 +1084,18 @@ test_that("[BDD] chord mapped fill defaults to viridis; unmapped stays neutral",
   p_neutral <- df |>
     plotit(encode(source = source, target = target, value = value)) |>
     mark_chord()
+  p_ovr <- p_neutral |> scale_fill(range = "grey")
   f_map <- unique(ggplot2::ggplot_build(p_map@gg)$data[[2]]$fill)
   f_neu <- unique(ggplot2::ggplot_build(p_neutral@gg)$data[[2]]$fill)
-  expect_gte(length(f_map), 3) # identity palette across sectors
-  expect_setequal(f_neu, "grey85") # token fallback untouched
+  f_ovr <- unique(ggplot2::ggplot_build(p_ovr@gg)$data[[2]]$fill)
+  # Unmapped bands derive source identity on the shared friendly palette --
+  # the same derived-channel rule as mark_sankey -- never raw ggplot2 hue
+  # and never the old grey blob.
+  expect_gte(length(f_neu), 3)
+  expect_false(setequal(f_neu, c("#F8766D", "#00BA38", "#619CFF")))
+  expect_true("#0072B2" %in% f_neu) # friendly anchor present
+  # Explicit mapping and overrides still win (last call wins).
+  expect_false(setequal(f_neu, f_ovr))
 })
 
 test_that("[BDD] treemap mapped fill ships viridis and honours overrides", {

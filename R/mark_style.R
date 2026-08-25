@@ -49,7 +49,9 @@ NULL
     linejoin = "round"
   ),
   mark_smooth = list(linewidth = ._MARK_STYLE$lw_data),
-  mark_bar = list(colour = "white", linewidth = ._MARK_STYLE$lw_border),
+  # Bars: 0.7 of the slot (slot = global dodge 0.8) -- slimmer than ggplot2's
+  # 0.9 so single-series bars get air and grouped slots keep clear gaps.
+  mark_bar = list(colour = "white", linewidth = ._MARK_STYLE$lw_border, width = 0.7),
   mark_histogram = list(colour = "white", linewidth = ._MARK_STYLE$lw_border),
   mark_rect = list(colour = "white", linewidth = ._MARK_STYLE$lw_border),
   mark_area = list(linewidth = 0),
@@ -146,16 +148,46 @@ NULL
 # Relational diagrams (network / sankey / chord / treemap) are coordinate-
 # free canvases: blank every axis element so the shared theme's axis lines,
 # ticks and titles do not frame an unframed layout.  One helper keeps the
-# whole family visually uniform.
-#' Blank all axis elements for coordinate-free relational diagrams.
+# whole family visually uniform.  The gg-level variant is also applied at
+# construction for graph data, so the explicit pipeline form renders
+# identically to the sugar marks.
+#' Blank all axis elements on a ggplot object.
 #' @noRd
 #' @keywords internal
-._theme_blank_axes <- function(plot) {
-  plot@gg <- plot@gg + ggplot2::theme(
+._gg_blank_axes <- function(gg) {
+  gg + ggplot2::theme(
     axis.line = ggplot2::element_blank(),
     axis.ticks = ggplot2::element_blank(),
     axis.text = ggplot2::element_blank(),
     axis.title = ggplot2::element_blank()
   )
+}
+
+#' Blank all axis elements for coordinate-free relational diagrams.
+#' @noRd
+#' @keywords internal
+._theme_blank_axes <- function(plot) {
+  plot@gg <- ._gg_blank_axes(plot@gg)
   plot
+}
+
+# Closed-cell marks (tile heatmaps: mark_rect / mark_corr) span the full
+# data range with no meaningful axis furniture: cells should touch the panel
+# edges (zero expansion) and axis lines/ticks would double the grid the tiles
+# already draw.  Category text stays visible.  Only applies when the plot
+# still uses the default cartesian coordinate system -- an explicit
+# project_*() call by the user always wins.
+#' Apply closed-cell heatmap chrome to a ggplot object.
+#' @noRd
+#' @keywords internal
+._gg_tile_chrome <- function(gg) {
+  gg <- gg + ggplot2::theme(
+    axis.line = ggplot2::element_blank(),
+    axis.ticks = ggplot2::element_blank()
+  )
+  coords <- gg$coordinates
+  if (is.null(coords) || identical(class(coords)[1], "CoordCartesian")) {
+    gg <- gg + ggplot2::coord_cartesian(expand = FALSE)
+  }
+  gg
 }

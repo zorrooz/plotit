@@ -107,3 +107,36 @@ test_that("plotit() initializes with default theme applied", {
   # Default theme should produce a panel with white background (not grey)
   expect_true(inherits(built$plot$theme$panel.background, "element_rect"))
 })
+
+# ---- default axis title cleanup (factor wrappers) ----
+
+test_that("[BDD] factor-wrapped mappings get clean default axis titles", {
+  p <- plotit(mtcars, encode(x = factor(cyl), y = mpg)) |> mark_point()
+  expect_equal(p@gg$labels$x, "cyl")
+})
+
+test_that("[BDD] non-wrapped expressions keep deparsed axis titles", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg)) |> mark_point()
+  expect_equal(p@gg$labels$x, "wt")
+  p2 <- plotit(mtcars, encode(x = wt / 1000, y = mpg)) |> mark_point()
+  expect_match(p2@gg$labels$x, "wt")
+})
+
+# ---- aspect-true fixed gtable (letterbox) ----
+
+test_that("[BDD] fixed-aspect panels stay aspect-true in the export gtable", {
+  edges <- data.frame(source = c("A", "B"), target = c("B", "C"))
+  suppressMessages(
+    p <- edges |>
+      plotit(encode(source = source, target = target)) |> mark_chord()
+  )
+  build <- ggplot2::ggplot_build(p@gg)
+  expected <- p@gg$coordinates$aspect(build$layout$panel_params[[1]])
+  gt <- ._build_fixed_gtable(p@gg, 5, 3.5, "in")
+  panel_idx <- which(gt$layout$name == "panel")[1]
+  w_in <- grid::convertWidth(gt$widths[[gt$layout$l[panel_idx]]], "in", valueOnly = TRUE)
+  h_in <- grid::convertHeight(gt$heights[[gt$layout$t[panel_idx]]], "in", valueOnly = TRUE)
+  # The panel honours the coordinate system's required height/width ratio
+  # (letterboxed inside the declared box instead of stretched).
+  expect_equal(h_in / w_in, expected, tolerance = 0.01)
+})

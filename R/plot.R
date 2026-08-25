@@ -113,12 +113,39 @@ plotit <- function(
 
   p <- p + ._theme_default()
 
+  # Coordinate-free canvas for graph data (domain-level rule, AGENTS.md
+  # 3.3.4a): relational layouts carry their own geometry, so axis lines,
+  # ticks, text and titles are blanked at construction.  This makes the
+  # explicit pipeline form (as_graph() |> plotit() |> layout_*() |> mark_*)
+  # render identically to the sugar marks, which blank idempotently.
+  if (graph_input) {
+    p <- ._gg_blank_axes(p)
+  }
+
+  # Clean default axis titles: strip discrete-cast wrappers so
+  # encode(x = factor(cyl)) labels the axis "cyl", not "factor(cyl)".
+  clean_labels <- list(
+    x = ._clean_axis_label(mapping$x),
+    y = ._clean_axis_label(mapping$y)
+  )
+  clean_labels <- Filter(Negate(is.null), clean_labels)
+  if (length(clean_labels) > 0) {
+    p <- p + do.call(ggplot2::labs, clean_labels)
+  }
+
   # Curated default colour scales for mapped colour/fill aesthetics
   # (friendly discrete / viridis continuous).  Skipped for the injected
   # single-colour path, which owns its static brand blue.
+  managed <- character(0)
   if (!graph_input && !use_default) {
     p <- ._attach_default_colour_scale(p, data, mapping)
+    managed <- intersect(c("colour", "fill"), names(mapping))
   }
+  if (use_default) {
+    # The injected constants own both channels until cleared.
+    managed <- c("colour", "fill")
+  }
+  attr(meta, "plotit_colour_managed") <- managed
 
   # Bake absolute panel dimensions into the ggplot object so every render
   # context (IDE, knitr, pkgdown, export) shares identical content

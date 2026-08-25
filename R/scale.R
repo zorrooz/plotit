@@ -369,7 +369,9 @@ S7::method(scale_color, plotit_class) <- function(plot, name = ggplot2::waiver()
       name = name, limits = limits, breaks = breaks, labels = labels,
       force_reverse = rd$force_reverse, ...
     )
-  plot
+  # The user now owns the colour channel: later layer-level mappings must
+  # not attach the token default on top of it.
+  ._colour_managed_add(plot, "colour")
 }
 
 # ---- scale_fill ----
@@ -417,7 +419,9 @@ S7::method(scale_fill, plotit_class) <- function(plot, name = ggplot2::waiver(),
       name = name, limits = limits, breaks = breaks, labels = labels,
       force_reverse = rd$force_reverse, ...
     )
-  plot
+  # The user now owns the fill channel: later layer-level mappings must
+  # not attach the token default on top of it.
+  ._colour_managed_add(plot, "fill")
 }
 
 # ---- scale_size ----

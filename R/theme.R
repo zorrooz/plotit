@@ -150,36 +150,50 @@ NULL
 # scale_*() replaces these (last-wins), preserving full override semantics.
 # AsIs constants (encode(colour = I("red"))) resolve through ggplot2's
 # identity scaling and are left untouched.
+#
+# ._default_colour_scale() is the SINGLE decision point for every default
+# colour scale in the package: construction-time global mappings, layer-level
+# mappings (via ._mark_impl) and mark-owned derived channels all route through
+# it, so a categorical column always renders in the friendly token palette and
+# a continuous column always in the token sequential scheme -- no matter which
+# mark family produced it.
+#' Resolve the default colour scale for one aesthetic/column pair.
+#'
+#' Returns `NULL` when the column cannot be resolved or is an AsIs constant
+#' (identity scaling owns those).
+#' @noRd
+#' @keywords internal
+._default_colour_scale <- function(aes_name, data_tbl, var) {
+  col <- tryCatch(rlang::eval_tidy(var, data_tbl), error = function(e) NULL)
+  if (is.null(col) || inherits(col, "AsIs")) {
+    return(NULL)
+  }
+  if (is.factor(col) || is.character(col) || is.logical(col)) {
+    # discrete_scale(palette=) instead of scale_*_discrete(type=): the
+    # latter is re-executed by ggplot2 >= 4.0's backward-compatibility
+    # layer, which misinterprets plain palette functions.
+    ggplot2::discrete_scale(
+      aesthetics = aes_name,
+      palette = function(n) ._palette_discrete(n)
+    )
+  } else {
+    ._cf(
+      aes_name,
+      ggplot2::scale_colour_viridis_c,
+      ggplot2::scale_fill_viridis_c
+    )(option = ._STYLE_TOKENS$palette_continuous)
+  }
+}
+
 #' Attach default colour scales for mapped colour/fill aesthetics.
 #' @noRd
 #' @keywords internal
 ._attach_default_colour_scale <- function(p, data, mapping) {
-  attach_one <- function(aes_name, data_tbl, var) {
-    col <- tryCatch(rlang::eval_tidy(var, data_tbl), error = function(e) NULL)
-    if (is.null(col) || inherits(col, "AsIs")) {
-      return(p)
+  for (aes_name in intersect(c("colour", "fill"), names(mapping))) {
+    sc <- ._default_colour_scale(aes_name, data, mapping[[aes_name]])
+    if (!is.null(sc)) {
+      p <- p + sc
     }
-    if (is.factor(col) || is.character(col) || is.logical(col)) {
-      # discrete_scale(palette=) instead of scale_*_discrete(type=): the
-      # latter is re-executed by ggplot2 >= 4.0's backward-compatibility
-      # layer, which misinterprets plain palette functions.
-      ggplot2::discrete_scale(
-        aesthetics = aes_name,
-        palette = function(n) ._palette_discrete(n)
-      )
-    } else {
-      ._cf(
-        aes_name,
-        ggplot2::scale_colour_viridis_c,
-        ggplot2::scale_fill_viridis_c
-      )(option = ._STYLE_TOKENS$palette_continuous)
-    }
-  }
-  if (!is.null(mapping$colour)) {
-    p <- p + attach_one("colour", data, mapping$colour)
-  }
-  if (!is.null(mapping$fill)) {
-    p <- p + attach_one("fill", data, mapping$fill)
   }
   p
 }
@@ -227,4 +241,15 @@ NULL
     return(gg)
   }
   gg + ggplot2::theme(panel.widths = NULL, panel.heights = NULL)
+}
+
+# Aspect-true rendering outranks fixed panel sizing: absolute baked panel
+# dimensions would override a fixed-aspect coordinate system (coord_fixed)
+# and stretch circles into ellipses.  Circular diagrams (chord / network)
+# and user project_cartesian(fixed = ...) hit this.
+#' Whether baked panel sizing would conflict with a fixed-aspect coord.
+#' @noRd
+#' @keywords internal
+._gg_aspect_conflict <- function(gg) {
+  !is.null(gg$coordinates) && inherits(gg$coordinates, "CoordFixed")
 }
