@@ -11,7 +11,7 @@ style(plot, ..., base_size = NULL, base_family = NULL, base_theme = NULL)
 
 \item{...}{Theme element overrides, passed to \code{ggplot2::theme()}.}
 
-\item{base_size}{Base font size in pts (default 11).}
+\item{base_size}{Base font size in pts (default 10).}
 
 \item{base_family}{Base font family (default \code{""} = system sans-serif).}
 

@@ -51,6 +51,21 @@ testthat::test_that("[BDD] autofit plots carry no absolute panel constraint", {
   testthat::expect_null(p@gg$theme$panel.widths)
 })
 
+testthat::test_that("[BDD] default canvas is the compact academic size", {
+  p <- plotit(mtcars, encode(x = wt, y = mpg)) |> mark_point()
+  testthat::expect_equal(p@meta@width, 5)
+  testthat::expect_equal(p@meta@height, 3.5)
+  testthat::expect_equal(p@meta@unit, "in")
+  # Baked values match the meta canvas exactly
+  testthat::expect_equal(as.numeric(p@gg$theme$panel.widths), c(5, 5))
+  testthat::expect_equal(as.numeric(p@gg$theme$panel.heights), c(3.5, 3.5))
+})
+
+testthat::test_that("[BDD] default theme uses the compact base font", {
+  thm <- plotit:::._theme_default()
+  testthat::expect_equal(thm$text$size, 10)
+})
+
 testthat::test_that("[BDD] strip removes baked panel size via public reset", {
   p <- plotit(mtcars,
     encode(x = wt, y = mpg),
@@ -115,4 +130,18 @@ testthat::test_that("[BDD] explicit friendly scheme supports reverse", {
   cr <- built_colours(rev)
   testthat::expect_length(cf, 3)
   testthat::expect_setequal(cf, cr)
+})
+
+testthat::test_that("[BDD] boxplots render slim boxes with hairline strokes", {
+  p <- plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot()
+  bd <- ggplot2::ggplot_build(p@gg)
+  d <- bd$data[[1]]
+  # Box occupies width 0.5 of each discrete slot (native resolution 1),
+  # leaving visible air between neighbouring groups.
+  box_w <- unique(round(d$xmax - d$xmin, 6))
+  testthat::expect_equal(box_w, 0.5)
+  # Hairline stroke and slim staple caps carry the tidyplots-calibrated look
+  testthat::expect_true(all(d$linewidth == 0.25))
+  testthat::expect_true(all(d$staplewidth == 0.4))
+  testthat::expect_true(all(d$outlier.size == 0.6))
 })

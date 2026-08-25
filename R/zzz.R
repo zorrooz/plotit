@@ -5,8 +5,8 @@ NULL
 # Default values registered in .onLoad so they appear in options().
 .plotit_options <- list(
   plotit.device = "default",
-  plotit.default_width = 7,
-  plotit.default_height = 5,
+  plotit.default_width = 5,
+  plotit.default_height = 3.5,
   plotit.default_unit = "in"
 )
 

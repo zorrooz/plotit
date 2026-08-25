@@ -16,7 +16,7 @@ NULL
 #'
 #' @param plot A plotit object.
 #' @param ... Theme element overrides, passed to `ggplot2::theme()`.
-#' @param base_size Base font size in pts (default 11).
+#' @param base_size Base font size in pts (default 10).
 #' @param base_family Base font family (default `""` = system sans-serif).
 #' @param base_theme A complete ggplot2 theme object to use instead of the
 #'   default (e.g., `ggplot2::theme_bw()`). `NULL` = use plotit default.
@@ -54,7 +54,7 @@ S7::method(style, plotit_class) <- function(
 #'
 #' @param plot A plotit object.
 #' @param ... Ignored.
-#' @param base_size Base font size in pts (default 11).
+#' @param base_size Base font size in pts (default 10).
 #' @param base_family Base font family (default `""` = system sans-serif).
 #' @return Modified plotit object.
 #' @examples
