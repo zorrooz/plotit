@@ -20,7 +20,7 @@ style_default(plot, ..., base_size = NULL, base_family = NULL)
 
 - base_size:
 
-  Base font size in pts (default 11).
+  Base font size in pts (default 10).
 
 - base_family:
 

@@ -8,6 +8,29 @@
 
 ### Default visual system overhaul (tidyplots-inspired)
 
+#### Fix: reference-example clipping on the docs site
+
+- Baked WYSIWYG panels previously used a 7x5 in canvas whose total
+  footprint (~8.6 in wide with legend) exceeded pkgdown’s default figure
+  device (~7.29 in), cropping plot edges on the documentation site.
+- [`plotit()`](https://zorrooz.github.io/plotit/reference/plotit.md) now
+  defaults to a compact academic panel of **5 x 3.5 in** (total
+  footprint ~6.6 x 4.1 in), which fits every standard render path
+  (pkgdown, knitr, RStudio preview, ggsave) without clipping.
+  `_pkgdown.yml` additionally pins an 8.5 x 5.5 in example canvas for
+  wide legends and compose examples.
+- Base font drops from 11 to 10 pt to keep type density harmonious with
+  the smaller canvas (`_STYLE_TOKENS$base_size`).
+
+#### Visual coordination: slim boxplots
+
+- [`mark_boxplot()`](https://zorrooz.github.io/plotit/reference/mark_boxplot.md)
+  gains curated defaults calibrated against tidyplots’ `add_boxplot()`:
+  box width 0.5 of each slot (was ~0.9, boxes nearly touching), hairline
+  stroke 0.25, staple caps 0.4, outlier dots shrunk to size 0.6.
+  Inter-box breathing room goes from ~0.1 to ~0.38 slot widths. All
+  values remain overridable through `...`.
+
 #### New: centralised style module
 
 - New `R/theme.R` — single source of truth for every global default

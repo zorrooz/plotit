@@ -47,6 +47,18 @@
 </ul><div class="section level3">
 <h3 id="default-visual-system-overhaul-tidyplots-inspired-development-version">Default visual system overhaul (tidyplots-inspired)<a class="anchor" aria-label="anchor" href="#default-visual-system-overhaul-tidyplots-inspired-development-version"></a></h3>
 <div class="section level4">
+<h4 id="fix-reference-example-clipping-on-the-docs-site-development-version">Fix: reference-example clipping on the docs site<a class="anchor" aria-label="anchor" href="#fix-reference-example-clipping-on-the-docs-site-development-version"></a></h4>
+<ul><li>Baked WYSIWYG panels previously used a 7x5 in canvas whose total footprint (~8.6 in wide with legend) exceeded pkgdown’s default figure device (~7.29 in), cropping plot edges on the documentation site.</li>
+<li>
+<code><a href="../reference/plotit.html">plotit()</a></code> now defaults to a compact academic panel of <strong>5 x 3.5 in</strong> (total footprint ~6.6 x 4.1 in), which fits every standard render path (pkgdown, knitr, RStudio preview, ggsave) without clipping. <code>_pkgdown.yml</code> additionally pins an 8.5 x 5.5 in example canvas for wide legends and compose examples.</li>
+<li>Base font drops from 11 to 10 pt to keep type density harmonious with the smaller canvas (<code>_STYLE_TOKENS$base_size</code>).</li>
+</ul></div>
+<div class="section level4">
+<h4 id="visual-coordination-slim-boxplots-development-version">Visual coordination: slim boxplots<a class="anchor" aria-label="anchor" href="#visual-coordination-slim-boxplots-development-version"></a></h4>
+<ul><li>
+<code><a href="../reference/mark_boxplot.html">mark_boxplot()</a></code> gains curated defaults calibrated against tidyplots’ <code>add_boxplot()</code>: box width 0.5 of each slot (was ~0.9, boxes nearly touching), hairline stroke 0.25, staple caps 0.4, outlier dots shrunk to size 0.6. Inter-box breathing room goes from ~0.1 to ~0.38 slot widths. All values remain overridable through <code>...</code>.</li>
+</ul></div>
+<div class="section level4">
 <h4 id="new-centralised-style-module-development-version">New: centralised style module<a class="anchor" aria-label="anchor" href="#new-centralised-style-module-development-version"></a></h4>
 <ul><li>New <code>R/theme.R</code> — single source of truth for every global default visual decision (<code>._STYLE_TOKENS</code> tokens, ink/paper anchors, palette sampling, theme builder, WYSIWYG panel sizing). Changing the package look now requires editing one file. <code>style.R</code> keeps only the user-facing <code><a href="../reference/style.html">style()</a></code> / <code><a href="../reference/style_default.html">style_default()</a></code> generics.</li>
 </ul></div>
