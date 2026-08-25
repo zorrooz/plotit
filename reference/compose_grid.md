@@ -20,7 +20,7 @@ compose_grid(
   byrow = TRUE,
   widths = NULL,
   heights = NULL,
-  guides = NULL,
+  guides = "collect",
   axes = "keep",
   tag_levels = NULL
 )
@@ -56,8 +56,8 @@ compose_grid(
 
 - guides:
 
-  `"collect"` to merge legends, `"keep"` to separate, `NULL` (default)
-  for patchwork auto-detect.
+  `"collect"` (default) to merge identical legends into one, `"keep"` to
+  keep per-panel legends, `NULL` for patchwork auto-detect.
 
 - axes:
 

@@ -227,8 +227,6 @@ flows |>
     value = value, fill = source
   )) |>
   mark_sankey()
-#> Scale for fill is already present.
-#> Adding another scale for fill, which will replace the existing scale.
 ```
 
 ![](plotit_files/figure-html/unnamed-chunk-14-1.png)

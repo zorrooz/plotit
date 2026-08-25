@@ -5,10 +5,13 @@ Equivalent to the pipeline
 `as_graph() |> layout_chord() |> mark_polygon(data = ~ribbons) |> mark_polygon(data = ~arcs)`
 – see §3.3.4a. Accepts an **edges table** with `source`, `target`, and
 optionally `value` columns; sector arcs and bezier bands come from the
-built-in circular layout (deterministic, dependency-free). A mapped
-`fill` channel ships with the curated viridis default (chain
+built-in circular layout (deterministic, dependency-free). The fill
+channel defaults to source identity (the same derived-channel rule as
+[`mark_sankey()`](https://zorrooz.github.io/plotit/reference/mark_sankey.md))
+and ships with the curated token palette – friendly qualitative for
+categories, viridis sequential for continuous values (chain
 [`scale_fill()`](https://zorrooz.github.io/plotit/reference/scale_fill.md)
-to replace it); unmapped diagrams stay on the neutral band/arc greys.
+to replace it).
 
 ## Usage
 
@@ -88,6 +91,4 @@ df |>
     value = value, fill = source
   )) |>
   mark_chord()
-#> Scale for fill is already present.
-#> Adding another scale for fill, which will replace the existing scale.
 ```

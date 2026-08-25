@@ -88,10 +88,10 @@ Modified plotit object; `@graph` holds the laid-out tables.
 Fully self-contained: the force/circle layouts run on plotit's own
 deterministic engines and rendering is plain ggplot2 layers. Edges
 render as straight segments; curved edges are a known limitation of the
-sugar form. A mapped node `colour` ships with the curated viridis
-default (chain
+sugar form. Mapped node colour/fill channels ship with the curated token
+palette (friendly qualitative / viridis sequential, chain
 [`scale_color()`](https://zorrooz.github.io/plotit/reference/scale_color.md)
-to replace it).
+to replace).
 
 ## References
 
@@ -120,8 +120,6 @@ nodes |>
   ) |>
   scale_color(range = "viridis") |>
   scale_size(range = c(5, 20))
-#> Scale for colour is already present.
-#> Adding another scale for colour, which will replace the existing scale.
 #> Scale for colour is already present.
 #> Adding another scale for colour, which will replace the existing scale.
 ```

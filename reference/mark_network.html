@@ -145,8 +145,9 @@ mapped (default <code>._MARK_STYLE$lw_thin</code> = 0.5).</p></dd>
     <p>Fully self-contained: the force/circle layouts run on plotit's own
 deterministic engines and rendering is plain ggplot2 layers.  Edges
 render as straight segments; curved edges are a known limitation of the
-sugar form.  A mapped node <code>colour</code> ships with the curated viridis
-default (chain <code><a href="scale_color.html">scale_color()</a></code> to replace it).</p>
+sugar form.  Mapped node colour/fill channels ship with the curated
+token palette (friendly qualitative / viridis sequential, chain
+<code><a href="scale_color.html">scale_color()</a></code> to replace).</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -174,8 +175,6 @@ default (chain <code><a href="scale_color.html">scale_color()</a></code> to repl
 <span class="r-in"><span>  <span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="scale_color.html">scale_color</a></span><span class="op">(</span>range <span class="op">=</span> <span class="st">"viridis"</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="scale_size.html">scale_size</a></span><span class="op">(</span>range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">20</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Scale for <span style="color: #00BB00;">colour</span> is already present.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Adding another scale for <span style="color: #00BB00;">colour</span>, which will replace the existing scale.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Scale for <span style="color: #00BB00;">colour</span> is already present.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Adding another scale for <span style="color: #00BB00;">colour</span>, which will replace the existing scale.</span>
 <span class="r-plt img"><img src="mark_network-1.png" alt="" width="816" height="528"></span>

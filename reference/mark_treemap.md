@@ -76,7 +76,9 @@ Modified plotit object; `@graph` holds nodes/edges/leaves.
 Fully self-contained: no treemapify dependency, deterministic Bruls
 squarify layout. Tiles receive the unified white hairline separators and
 coordinate axes are blanked (the diagram is coordinate-free). A mapped
-`fill` column ships with the curated viridis default (chain
+`fill` column ships with the curated token palette – friendly
+qualitative for categories, viridis sequential for continuous values
+(chain
 [`scale_fill()`](https://zorrooz.github.io/plotit/reference/scale_fill.md)
 to replace it).
 
@@ -96,6 +98,4 @@ h <- data.frame(
 h |>
   plotit(encode(fill = id)) |>
   mark_treemap()
-#> Scale for fill is already present.
-#> Adding another scale for fill, which will replace the existing scale.
 ```

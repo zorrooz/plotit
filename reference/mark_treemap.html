@@ -121,8 +121,9 @@ explicit pipeline form.</p></dd>
     <p>Fully self-contained: no <span class="pkg">treemapify</span> dependency, deterministic
 Bruls squarify layout.  Tiles receive the unified white hairline
 separators and coordinate axes are blanked (the diagram is
-coordinate-free).  A mapped <code>fill</code> column ships with the curated
-viridis default (chain <code><a href="scale_fill.html">scale_fill()</a></code> to replace it).</p>
+coordinate-free).  A mapped <code>fill</code> column ships with the curated token
+palette – friendly qualitative for categories, viridis sequential for
+continuous values (chain <code><a href="scale_fill.html">scale_fill()</a></code> to replace it).</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -139,8 +140,6 @@ viridis default (chain <code><a href="scale_fill.html">scale_fill()</a></code> t
 <span class="r-in"><span><span class="va">h</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="encode.html">encode</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">id</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu">mark_treemap</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Scale for <span style="color: #00BB00;">fill</span> is already present.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span>
 <span class="r-plt img"><img src="mark_treemap-1.png" alt="" width="816" height="528"></span>
 </code></pre></div>
     </div>

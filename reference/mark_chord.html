@@ -3,17 +3,19 @@
 Equivalent to the pipeline as_graph() |&amp;gt; layout_chord() |&amp;gt; mark_polygon(data = ~ribbons) |&amp;gt; mark_polygon(data = ~arcs) – see
 §3.3.4a.  Accepts an edges table with source, target, and
 optionally value columns; sector arcs and bezier bands come from the
-built-in circular layout (deterministic, dependency-free).  A mapped
-fill channel ships with the curated viridis default (chain
-scale_fill() to replace it); unmapped diagrams stay on the neutral
-band/arc greys."><meta property="og:description" content="Creates a chord diagram showing pairwise relationships between groups.
+built-in circular layout (deterministic, dependency-free).  The fill
+channel defaults to source identity (the same derived-channel rule as
+mark_sankey()) and ships with the curated token palette – friendly
+qualitative for categories, viridis sequential for continuous values
+(chain scale_fill() to replace it)."><meta property="og:description" content="Creates a chord diagram showing pairwise relationships between groups.
 Equivalent to the pipeline as_graph() |&amp;gt; layout_chord() |&amp;gt; mark_polygon(data = ~ribbons) |&amp;gt; mark_polygon(data = ~arcs) – see
 §3.3.4a.  Accepts an edges table with source, target, and
 optionally value columns; sector arcs and bezier bands come from the
-built-in circular layout (deterministic, dependency-free).  A mapped
-fill channel ships with the curated viridis default (chain
-scale_fill() to replace it); unmapped diagrams stay on the neutral
-band/arc greys."><style>.r-plt { display: block; margin: 1rem 0; }
+built-in circular layout (deterministic, dependency-free).  The fill
+channel defaults to source identity (the same derived-channel rule as
+mark_sankey()) and ships with the curated token palette – friendly
+qualitative for categories, viridis sequential for continuous values
+(chain scale_fill() to replace it)."><style>.r-plt { display: block; margin: 1rem 0; }
 .r-plt img { display: block; max-width: 100%; height: auto; margin: 0 auto; background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }</style></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
@@ -60,10 +62,11 @@ band/arc greys."><style>.r-plt { display: block; margin: 1rem 0; }
 Equivalent to the pipeline <code>as_graph() |&gt; layout_chord() |&gt; mark_polygon(data = ~ribbons) |&gt; mark_polygon(data = ~arcs)</code> – see
 §3.3.4a.  Accepts an <strong>edges table</strong> with <code>source</code>, <code>target</code>, and
 optionally <code>value</code> columns; sector arcs and bezier bands come from the
-built-in circular layout (deterministic, dependency-free).  A mapped
-<code>fill</code> channel ships with the curated viridis default (chain
-<code><a href="scale_fill.html">scale_fill()</a></code> to replace it); unmapped diagrams stay on the neutral
-band/arc greys.</p>
+built-in circular layout (deterministic, dependency-free).  The fill
+channel defaults to source identity (the same derived-channel rule as
+<code><a href="mark_sankey.html">mark_sankey()</a></code>) and ships with the curated token palette – friendly
+qualitative for categories, viridis sequential for continuous values
+(chain <code><a href="scale_fill.html">scale_fill()</a></code> to replace it).</p>
     </div>
 
     <div class="section level2">
@@ -144,8 +147,6 @@ stay circular.</p>
 <span class="r-in"><span>    value <span class="op">=</span> <span class="va">value</span>, fill <span class="op">=</span> <span class="va">source</span></span></span>
 <span class="r-in"><span>  <span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu">mark_chord</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Scale for <span style="color: #00BB00;">fill</span> is already present.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span>
 <span class="r-plt img"><img src="mark_chord-1.png" alt="" width="816" height="528"></span>
 </code></pre></div>
     </div>
