@@ -43,6 +43,7 @@ Collate:
     'mark.R'
     'factory.R'
     'layout.R'
+    'mark_relational.R'
     'plot.R'
     'project.R'
     'scale.R'

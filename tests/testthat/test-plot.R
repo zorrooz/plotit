@@ -128,7 +128,8 @@ test_that("[BDD] fixed-aspect panels stay aspect-true in the export gtable", {
   edges <- data.frame(source = c("A", "B"), target = c("B", "C"))
   suppressMessages(
     p <- edges |>
-      plotit(encode(source = source, target = target)) |> mark_chord()
+      plotit(encode(source = source, target = target)) |>
+      mark_chord()
   )
   build <- ggplot2::ggplot_build(p@gg)
   expected <- p@gg$coordinates$aspect(build$layout$panel_params[[1]])

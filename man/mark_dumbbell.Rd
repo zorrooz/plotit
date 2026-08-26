@@ -8,9 +8,9 @@ mark_dumbbell(
   plot,
   mapping = NULL,
   data = NULL,
-  colour_start = ._MARK_STYLE$primary,
-  colour_end = ._MARK_STYLE$secondary,
-  line_colour = ._MARK_STYLE$soft,
+  color_start = ._MARK_STYLE$primary,
+  color_end = ._MARK_STYLE$secondary,
+  line_color = ._MARK_STYLE$soft,
   point_size = ._MARK_STYLE$point_head,
   line_width = ._MARK_STYLE$lw_data,
   ...
@@ -23,13 +23,13 @@ mark_dumbbell(
 
 \item{data}{Optional data for this layer}
 
-\item{colour_start}{Colour for the start point
+\item{color_start}{Colour for the start point
 (default \code{._MARK_STYLE$primary} = \code{"#4E79A7"}).}
 
-\item{colour_end}{Colour for the end point
+\item{color_end}{Colour for the end point
 (default \code{._MARK_STYLE$secondary} = \code{"#E15759"}).}
 
-\item{line_colour}{Colour for the connecting line
+\item{line_color}{Colour for the connecting line
 (default \code{._MARK_STYLE$soft} = \code{"grey50"}).}
 
 \item{point_size}{Size for both dumbbell points (default 3).}
@@ -50,8 +50,8 @@ combining two \code{mark_point} calls and a \code{geom_segment}.
 Equivalent expansion:
 \preformatted{
   p |> mark_rule(x = x, xend = x, y = y_start, yend = y_end) |>
-       mark_point(x = x, y = y_start, colour = colour_start) |>
-       mark_point(x = x, y = y_end, colour = colour_end)
+       mark_point(x = x, y = y_start, colour = color_start) |>
+       mark_point(x = x, y = y_end, colour = color_end)
 }
 }
 \examples{

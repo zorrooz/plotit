@@ -8,14 +8,12 @@ NULL
 
 # ---- Internal helpers -----------------------------------------------------
 
-# Pull the raw ggplot out of any plotit-family object
+# Pull the raw ggplot out of any plotit-family object.  plotit_composite
+# inherits from plotit, so one S7 check covers both.
 #' Extract the raw ggplot from a plotit or plotit_composite object.
 #' @noRd
 #' @keywords internal
 ._extract_gg <- function(x) {
-  if (S7::S7_inherits(x, plotit_composite)) {
-    return(x@gg)
-  }
   if (S7::S7_inherits(x, plotit_class)) {
     return(x@gg)
   }
@@ -65,6 +63,7 @@ NULL
 #' @noRd
 #' @keywords internal
 ._composite_default_size <- function(c) {
+  def_size <- ._default_panel_size()
   panel_size <- function(p) {
     is_sized_plot <- S7::S7_inherits(p, plotit_class) &&
       !S7::S7_inherits(p, plotit_composite) &&
@@ -75,10 +74,7 @@ NULL
         h = ._unit_to_inches(p@meta@height, p@meta@unit)
       )
     } else {
-      list(
-        w = getOption("plotit.default_width", 5),
-        h = getOption("plotit.default_height", 3.5)
-      )
+      list(w = def_size$width, h = def_size$height)
     }
   }
   # Chrome allowance: axes / labels / legend / annotation around one panel

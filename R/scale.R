@@ -27,8 +27,7 @@ NULL
 }
 
 # Per-aesthetic trans validation sets
-._TRANS_CF <- c("identity", "discrete", "reverse", "binned") # colour/fill (visual_cont)
-._TRANS_N <- c("identity", "discrete", "reverse", "binned") # size/alpha (visual_cont)
+._TRANS_CONT <- c("identity", "discrete", "reverse", "binned") # colour/fill/size/alpha (visual_cont)
 ._TRANS_SL <- c("discrete", "reverse") # shape/linetype (visual_disc)
 ._TRANS_XY <- c("identity", "discrete", "log", "log10", "log2", "sqrt", "reverse", "binned") # positional
 
@@ -321,6 +320,63 @@ NULL
   plot
 }
 
+# ---- shared scale implementations -------------------------------------------
+# The eight scale_* functions come in four symmetric pairs (colour/fill,
+# size/alpha, shape/linetype, x/y).  Each pair shares one implementation
+# parameterised by the aesthetic name, so per-aesthetic behaviour lives in
+# exactly one place.
+
+# colour/fill pair: clears the injected default_color (these are the two
+# channels it owns), resolves trans, installs the scale, and hands the
+# channel to the user in the managed registry.
+#' Shared implementation for the colour/fill scale pair.
+#' @noRd
+#' @keywords internal
+._scale_cf_impl <- function(plot, aes, name, trans, limits, range, breaks,
+                            labels, ...) {
+  plot <- ._clear_default_color(plot)
+  trans <- ._resolve_trans(plot, aes, trans, ._TRANS_CONT)
+  rd <- ._resolve_reverse_discrete(plot, aes, trans)
+  plot@gg <- plot@gg +
+    ._scale_colour_fun(aes, rd$trans, range,
+      name = name, limits = limits, breaks = breaks, labels = labels,
+      force_reverse = rd$force_reverse, ...
+    )
+  # The user now owns the channel: later layer-level mappings must not
+  # attach the token default on top of it.
+  ._colour_managed_add(plot, aes)
+}
+
+# size/alpha pair: same resolution pipeline without default_color handling.
+#' Shared implementation for the size/alpha scale pair.
+#' @noRd
+#' @keywords internal
+._scale_visual_impl <- function(plot, aes, name, trans, limits, range, breaks,
+                                labels, ...) {
+  trans <- ._resolve_trans(plot, aes, trans, ._TRANS_CONT)
+  rd <- ._resolve_reverse_discrete(plot, aes, trans)
+  plot@gg <- plot@gg +
+    ._scale_numeric_fun(aes, rd$trans, range,
+      name = name, limits = limits, breaks = breaks, labels = labels,
+      force_reverse = rd$force_reverse, ...
+    )
+  plot
+}
+
+# shape/linetype pair: discrete-only channels.
+#' Shared implementation for the shape/linetype scale pair.
+#' @noRd
+#' @keywords internal
+._scale_disc_visual_impl <- function(plot, aes, name, trans, limits, range,
+                                     breaks, labels, ...) {
+  trans <- ._resolve_trans(plot, aes, trans, ._TRANS_SL)
+  plot@gg <- plot@gg +
+    ._scale_discrete_fun(aes, trans, range,
+      name = name, limits = limits, breaks = breaks, labels = labels, ...
+    )
+  plot
+}
+
 # ---- scale_color ----
 #' Color scale
 #'
@@ -360,18 +416,7 @@ S7::method(scale_color, plotit_class) <- function(plot, name = ggplot2::waiver()
                                                   trans = NULL, limits = NULL,
                                                   range = NULL, breaks = NULL,
                                                   labels = NULL, ...) {
-  plot <- ._clear_default_color(plot)
-  trans <- ._resolve_trans(plot, "colour", trans, ._TRANS_CF)
-  rd <- ._resolve_reverse_discrete(plot, "colour", trans)
-  trans <- rd$trans
-  plot@gg <- plot@gg +
-    ._scale_colour_fun("colour", trans, range,
-      name = name, limits = limits, breaks = breaks, labels = labels,
-      force_reverse = rd$force_reverse, ...
-    )
-  # The user now owns the colour channel: later layer-level mappings must
-  # not attach the token default on top of it.
-  ._colour_managed_add(plot, "colour")
+  ._scale_cf_impl(plot, "colour", name, trans, limits, range, breaks, labels, ...)
 }
 
 # ---- scale_fill ----
@@ -410,18 +455,7 @@ S7::method(scale_fill, plotit_class) <- function(plot, name = ggplot2::waiver(),
                                                  trans = NULL, limits = NULL,
                                                  range = NULL, breaks = NULL,
                                                  labels = NULL, ...) {
-  plot <- ._clear_default_color(plot)
-  trans <- ._resolve_trans(plot, "fill", trans, ._TRANS_CF)
-  rd <- ._resolve_reverse_discrete(plot, "fill", trans)
-  trans <- rd$trans
-  plot@gg <- plot@gg +
-    ._scale_colour_fun("fill", trans, range,
-      name = name, limits = limits, breaks = breaks, labels = labels,
-      force_reverse = rd$force_reverse, ...
-    )
-  # The user now owns the fill channel: later layer-level mappings must
-  # not attach the token default on top of it.
-  ._colour_managed_add(plot, "fill")
+  ._scale_cf_impl(plot, "fill", name, trans, limits, range, breaks, labels, ...)
 }
 
 # ---- scale_size ----
@@ -459,15 +493,7 @@ S7::method(scale_size, plotit_class) <- function(plot, name = ggplot2::waiver(),
                                                  trans = NULL, limits = NULL,
                                                  range = NULL, breaks = NULL,
                                                  labels = NULL, ...) {
-  trans <- ._resolve_trans(plot, "size", trans, ._TRANS_N)
-  rd <- ._resolve_reverse_discrete(plot, "size", trans)
-  trans <- rd$trans
-  plot@gg <- plot@gg +
-    ._scale_numeric_fun("size", trans, range,
-      name = name, limits = limits, breaks = breaks, labels = labels,
-      force_reverse = rd$force_reverse, ...
-    )
-  plot
+  ._scale_visual_impl(plot, "size", name, trans, limits, range, breaks, labels, ...)
 }
 
 # ---- scale_alpha ----
@@ -505,15 +531,7 @@ S7::method(scale_alpha, plotit_class) <- function(plot, name = ggplot2::waiver()
                                                   trans = NULL, limits = NULL,
                                                   range = NULL, breaks = NULL,
                                                   labels = NULL, ...) {
-  trans <- ._resolve_trans(plot, "alpha", trans, ._TRANS_N)
-  rd <- ._resolve_reverse_discrete(plot, "alpha", trans)
-  trans <- rd$trans
-  plot@gg <- plot@gg +
-    ._scale_numeric_fun("alpha", trans, range,
-      name = name, limits = limits, breaks = breaks, labels = labels,
-      force_reverse = rd$force_reverse, ...
-    )
-  plot
+  ._scale_visual_impl(plot, "alpha", name, trans, limits, range, breaks, labels, ...)
 }
 
 # ---- scale_shape ----
@@ -551,12 +569,7 @@ S7::method(scale_shape, plotit_class) <- function(plot, name = ggplot2::waiver()
                                                   trans = "discrete", limits = NULL,
                                                   range = NULL, breaks = NULL,
                                                   labels = NULL, ...) {
-  trans <- ._resolve_trans(plot, "shape", trans, ._TRANS_SL)
-  plot@gg <- plot@gg +
-    ._scale_discrete_fun("shape", trans, range,
-      name = name, limits = limits, breaks = breaks, labels = labels, ...
-    )
-  plot
+  ._scale_disc_visual_impl(plot, "shape", name, trans, limits, range, breaks, labels, ...)
 }
 
 # ---- scale_linetype ----
@@ -594,12 +607,7 @@ S7::method(scale_linetype, plotit_class) <- function(plot, name = ggplot2::waive
                                                      trans = "discrete", limits = NULL,
                                                      range = NULL, breaks = NULL,
                                                      labels = NULL, ...) {
-  trans <- ._resolve_trans(plot, "linetype", trans, ._TRANS_SL)
-  plot@gg <- plot@gg +
-    ._scale_discrete_fun("linetype", trans, range,
-      name = name, limits = limits, breaks = breaks, labels = labels, ...
-    )
-  plot
+  ._scale_disc_visual_impl(plot, "linetype", name, trans, limits, range, breaks, labels, ...)
 }
 
 # ---- scale_x ----

@@ -67,12 +67,15 @@ NULL
     }
     if (!is.null(mapping$colour)) {
       plot@gg$mapping$colour <- NULL
-      plot@gg <- plot@gg + ggplot2::guides(colour = ggplot2::waiver())
+      # `guides(colour = NULL)` removes the injected "none" entry (public
+      # API).  `waiver()` does NOT reset a stored guide under ggplot2 >= 3.5
+      # S7 guides -- legends would stay suppressed.
+      plot@gg <- plot@gg + ggplot2::guides(colour = NULL)
       plot <- ._colour_managed_remove(plot, "colour")
     }
     if (!is.null(mapping$fill)) {
       plot@gg$mapping$fill <- NULL
-      plot@gg <- plot@gg + ggplot2::guides(fill = ggplot2::waiver())
+      plot@gg <- plot@gg + ggplot2::guides(fill = NULL)
       plot <- ._colour_managed_remove(plot, "fill")
     }
     # Only clear the meta marker when *both* colour and fill defaults
@@ -89,12 +92,40 @@ NULL
   plot@gg$mapping$colour <- NULL
   plot@gg$mapping$fill <- NULL
   plot@gg <- plot@gg +
-    ggplot2::guides(colour = ggplot2::waiver(), fill = ggplot2::waiver())
+    ggplot2::guides(colour = NULL, fill = NULL)
   S7::prop(plot@meta, "default_color") <- NULL
   # The injected constants owned both channels; they are gone now, so both
   # channels are free again (scale_*() re-registers its own aes right after;
   # mark-owned derived channels re-attach via the layer-level auto-attach).
   ._colour_managed_remove(plot, c("colour", "fill"))
+}
+
+# ---- size units & default canvas ----
+
+# Convert user-specified size unit to inches.
+#' Convert a measurement to inches.
+#' @noRd
+#' @keywords internal
+._unit_to_inches <- function(x, unit) {
+  x / switch(unit,
+    "in" = 1,
+    "cm" = 2.54,
+    "mm" = 25.4
+  )
+}
+
+# Package-default panel size in inches (registered by zzz.R, overridable
+# via options()).  Single source for the autofit fallback in export() and
+# the composite chrome budget in compose.R -- both must agree with the
+# plotit() canvas defaults (5 x 3.5 in panel).
+#' Package-default panel size in inches.
+#' @noRd
+#' @keywords internal
+._default_panel_size <- function() {
+  list(
+    width = getOption("plotit.default_width", 5),
+    height = getOption("plotit.default_height", 3.5)
+  )
 }
 
 # ---- axis label cleanup ----
@@ -103,11 +134,14 @@ NULL
 # discrete-cast wrappers (factor/as.factor/ordered/as.ordered/as.character)
 # so `encode(x = factor(cyl))` labels the axis "cyl" instead of the raw
 # expression.  Non-wrapped expressions keep ggplot2's deparse behaviour.
+# Constant mappings (e.g. the G2-style pie trick `encode(x = 1, ...)`)
+# arrive as bare values rather than quosures and get no custom label --
+# ggplot2's own default applies.
 #' Clean a mapping expression into a default axis label.
 #' @noRd
 #' @keywords internal
 ._clean_axis_label <- function(var) {
-  if (is.null(var)) {
+  if (is.null(var) || !rlang::is_quosure(var)) {
     return(NULL)
   }
   expr <- rlang::quo_get_expr(var)
@@ -133,20 +167,8 @@ NULL
   gt <- ggplot2::ggplot_gtable(build)
   panel_cols <- unique(gt$layout$l[gt$layout$name == "panel"])
   panel_rows <- unique(gt$layout$t[gt$layout$name == "panel"])
-  w_in <- width
-  h_in <- height
-  if (unit != "in") {
-    w_in <- width / switch(unit,
-      "cm" = 2.54,
-      "mm" = 25.4,
-      1
-    )
-    h_in <- height / switch(unit,
-      "cm" = 2.54,
-      "mm" = 25.4,
-      1
-    )
-  }
+  w_in <- ._unit_to_inches(width, unit)
+  h_in <- ._unit_to_inches(height, unit)
   # Honour coordinate aspect ratios (e.g. coord_fixed): aspect is the
   # required physical height/width ratio per panel.  Multi-panel layouts
   # use the first panel's ranges (documented approximation for free scales).

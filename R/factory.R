@@ -85,7 +85,7 @@ make_theme <- function(name, ..., base_theme = ggplot2::theme_minimal) {
 
   fun <- function(plot, base_size = NULL, base_family = NULL) {
     thm <- base_theme(
-      base_size = base_size %||% 11,
+      base_size = base_size %||% ._STYLE_TOKENS$base_size,
       base_family = base_family %||% ""
     ) + do.call(ggplot2::theme, dots)
     plot@gg <- plot@gg + thm

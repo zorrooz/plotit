@@ -153,17 +153,12 @@ S7::method(project_polar, plotit_class) <- function(
         direction = direction, clip = clip, ...
       )
   }
-  # Blank axes only in polar mode.  Radial mode (inner_radius > 0 or
-  # r_axis_inside = TRUE) needs its radial axis visible.
+  # Blank axes only in polar mode (shared helper, R/mark_style.R).
+  # Radial mode (inner_radius > 0 or r_axis_inside = TRUE) needs its radial
+  # axis visible; polar mode also zeroes residual tick space so the panel
+  # stays centred.
   if (!(inner_radius > 0 || isTRUE(r_axis_inside))) {
-    plot@gg <- plot@gg +
-      ggplot2::theme(
-        axis.line = ggplot2::element_blank(),
-        axis.ticks = ggplot2::element_blank(),
-        axis.ticks.length = ggplot2::unit(0, "pt"),
-        axis.text = ggplot2::element_blank(),
-        axis.title = ggplot2::element_blank()
-      )
+    plot@gg <- ._gg_blank_axes(plot@gg, ticks_length = TRUE)
   }
   plot
 }
@@ -247,14 +242,17 @@ project_parallel <- S7::new_generic(
   tick_len <- 0.02
   label_gap <- tick_len * 0.4
 
+  # Fallback furniture colours come from the global style tokens
+  # (R/theme.R) so the per-column axes match the shared ink hierarchy.
+  tok <- ._STYLE_TOKENS
   list(
-    axis_line_col = g_lc("axis.line.y", g_lc("axis.line", "grey50")),
-    axis_line_lwd = g_ll("axis.line.y", g_ll("axis.line", 0.3)),
-    tick_col      = g_lc("axis.ticks.y", g_lc("axis.ticks", "grey50")),
-    tick_lwd      = g_ll("axis.ticks.y", g_ll("axis.ticks", 0.3)),
+    axis_line_col = g_lc("axis.line.y", g_lc("axis.line", tok$ink)),
+    axis_line_lwd = g_ll("axis.line.y", g_ll("axis.line", tok$lw_axis)),
+    tick_col      = g_lc("axis.ticks.y", g_lc("axis.ticks", tok$ink)),
+    tick_lwd      = g_ll("axis.ticks.y", g_ll("axis.ticks", tok$lw_axis)),
     tick_len      = tick_len,
     label_gap     = label_gap,
-    text_col      = g_tc("axis.text.y", g_tc("axis.text", "grey30")),
+    text_col      = g_tc("axis.text.y", g_tc("axis.text", tok$grey_text_axis)),
     text_sz_mm    = g_ts("axis.text.y", 9),
     text_face     = g_tf("axis.text.y", g_tf("axis.text", "plain")),
     text_family   = g_tfm("axis.text.y", g_tfm("axis.text", ""))
@@ -454,6 +452,14 @@ S7::method(project_parallel, plotit_class) <- function(
   # Clear default_color if group introduces a colour mapping
   if (!is.null(group)) {
     plot <- ._clear_default_color(plot)
+    # Route the group channel through the shared palette decision point
+    # (friendly qualitative / viridis sequential) so parallel coordinates
+    # match every other grouped mark; a later scale_color() replaces it.
+    sc <- ._default_colour_scale("colour", data, rlang::quo(!!rlang::sym(group)))
+    if (!is.null(sc)) {
+      plot@gg <- plot@gg + sc
+      plot <- ._colour_managed_add(plot, "colour")
+    }
   }
 
   # ---- Axis rendering: three mutually exclusive modes ----
@@ -483,7 +489,6 @@ S7::method(project_parallel, plotit_class) <- function(
 
   # ---- Resolve theme properties once (extracted helper) ----
   tp <- ._parallel_theme_props(plot@gg$theme)
-
 
   # ---- Build per-column info (incl. raw values for break computation) ----
   col_info <- lapply(seq_along(columns), function(i) {
@@ -528,11 +533,10 @@ S7::method(project_parallel, plotit_class) <- function(
       axis.title   = ggplot2::element_blank()
     )
 
-  # ---- Shared-scale mode (std / global) -- native y-axis provides ticks ----
-  if (shared_scale) {
-    # no additional per-column elements needed
-  } else {
-    # ---- Per-column mode (none) -- manual per-column axes ----
+  # ---- Per-column mode (scale = "none") draws manual per-column axes;
+  # ---- shared-scale modes (std / global) need nothing extra: the native
+  # ---- y-axis guide already provides ticks and labels.
+  if (!shared_scale) {
     plot <- ._pp_draw_axes(plot, col_info, tp)
   }
 

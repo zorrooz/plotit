@@ -351,3 +351,16 @@ test_that("[BDD] project_map produces CoordSf coordinate system", {
   built <- ggplot2::ggplot_build(p@gg)
   expect_true(inherits(built$plot$coordinates, "CoordSf"))
 })
+
+# ---- regression: project_parallel routes the group channel through the
+# shared palette decision point (friendly/viridis), not ggplot2 hue ----
+test_that("[BDD] parallel coordinates group colours use the token palette", {
+  p <- plotit(iris, encode()) |>
+    project_parallel(
+      columns = c("Sepal.Width", "Sepal.Length"),
+      group = "Species"
+    )
+  cols <- unique(ggplot2::ggplot_build(p@gg)$data[[1]]$colour)
+  expect_true("#0072B2" %in% cols) # friendly anchor
+  expect_false(setequal(cols, c("#F8766D", "#00BA38", "#619CFF"))) # not raw hue
+})

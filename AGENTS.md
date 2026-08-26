@@ -213,18 +213,19 @@ G2 的每个复合 Mark 内部展开为 2-5 个基础 Mark 的组合，这与 pl
 #### 饼图 / 环形图 / 玫瑰图（替代 `mark_arc`）
 
 ```r
-# 饼图 — mark_bar + project_polar
-data |> plotit(encode(theta = count, colour = category)) |>
+# 饼图 — mark_bar + project_polar（单常量 x 列，G2 同款 position '1' 技法；
+# 注意 ggplot2 无 theta 美学，角度通道由 project_polar(theta = "y") 提供）
+data |> plotit(encode(x = 1, y = count, fill = category)) |>
   mark_bar(position = "stack", width = 1) |>
   project_polar(theta = "y")
 
 # 环形图 — 加 inner_radius
-data |> plotit(encode(theta = count, colour = category)) |>
+data |> plotit(encode(x = 1, y = count, fill = category)) |>
   mark_bar(position = "stack", width = 1) |>
   project_polar(theta = "y", inner_radius = 0.4)
 
 # 玫瑰图 / 南丁格尔玫瑰图 — 无堆叠 + project_polar
-data |> plotit(encode(x = category, y = value)) |>
+data |> plotit(encode(x = category, y = value, fill = category)) |>
   mark_bar(width = 1) |>
   project_polar()
 ```
@@ -259,7 +260,7 @@ data |> plotit(encode(x = variable, y = value, colour = group)) |>
 # 注：需要上游数据预处理将层次树展平为矩形数据
 
 # 旭日图 — mark_bar + project_polar（等价于环形图的分层版）
-# prepared_data |> plotit(encode(theta = size, fill = category)) |>
+# prepared_data |> plotit(encode(x = 1, y = size, fill = category)) |>
 #   mark_bar(position = "stack") |>
 #   project_polar(theta = "y") |>
 #   split_wrap(top_level_var)
@@ -401,8 +402,8 @@ style_dark <- make_theme("style_dark",
 |---|---|---|---|
 | `mark_significance` | `mark_rule(x=x, xend=x2, y=y, yend=y)` + `mark_text(x=mid(x,x2), y=y+offset, label=sig)` | Vega-Lite: layer(bar+rule+text) 社区惯用模式 | `comparisons`(data.frame，含 `group1`/`group2`/`label` 列), `y_position`, `y_offset` |
 | `mark_errorbar` | `geom_errorbar`/`geom_errorbarh` 包装 | Vega-Lite `errorbar`（3大复合Mark 之一） | `width`, `orientation` |
-| `mark_lollipop` | `mark_rule(x=x, xend=x, y=ref, yend=y)` + `mark_point(x=x, y=y)`（`ref` 默认 0） | 无直接对标 | `stem_colour`, `stem_width`, `point_size`, `ref` |
-| `mark_dumbbell` | `mark_rule(x=x, xend=x, y=y_start, yend=y_end)` + `mark_point(x=x, y=y_start)` + `mark_point(x=x, y=y_end)` | G2 `mark.link` | `colour_start`, `colour_end`, `line_colour` |
+| `mark_lollipop` | `mark_rule(x=x, xend=x, y=ref, yend=y)` + `mark_point(x=x, y=y)`（`ref` 默认 0） | 无直接对标 | `stem_color`, `stem_width`, `point_size`, `ref` |
+| `mark_dumbbell` | `mark_rule(x=x, xend=x, y=y_start, yend=y_end)` + `mark_point(x=x, y=y_start)` + `mark_point(x=x, y=y_end)` | G2 `mark.link` | `color_start`, `color_end`, `line_color` |
 
 **复合 Mark 实现原则**：
 1. 必须在文档中注明等价展开（"该函数等价于 `mark_rule + mark_text` 的组合"）
@@ -419,8 +420,10 @@ style_dark <- make_theme("style_dark",
 | `mark_beeswarm` | `ggbeeswarm` geom | 标准 ggplot2 层；跳过全局自动 dodge（碰撞检测自排布） |
 | `mark_sankey` | `layout_sankey()` + `mark_polygon(~ribbons)`/`mark_rect(~nodes)` 语法糖 | 纯 ggplot2 层增量构建；`@graph` 存 nodes/edges/ribbons 三表；确定性分层布局（无外部依赖）；节点填充取首次出现身份，数值 fill 保持 double（#5） |
 | `mark_treemap` | `layout_treemap()` 自研 squarify + `mark_rect(~leaves)`/`mark_text(~leaves)` 语法糖 | 纯 ggplot2 层增量构建；`@graph` 存 nodes/edges/leaves 三表；白色发丝分隔 + 无轴画布 + 叶标签；输入层次表（id/parent/value）；treemapify 已退役 |
-| `mark_network` | `layout_force/circle()` + point/rule/text 语法糖 | 普通 ggplot2 层**加法式**组合（先前层/scale 全保留）；`@graph` 可供后续 `~nodes/~edges` 引用；直边渲染为已知局限；`linear/bipartite` 弃用回退 force；`weight=` 弃用改 `value=`；`manual` 需节点表自带数值 x/y；边绘制于节点下层，标签悬浮于点上方，`coord_fixed` 保持真实比例 |
-| `mark_chord` | `layout_chord()` + `mark_polygon(~ribbons)`/`mark_polygon(~arcs)` 语法糖 | 纯 ggplot2 层增量构建；`@graph` 存 nodes/edges/arcs/ribbons 四表；确定性环形布局（无外部依赖）；重复 (source,target) 对聚合为单带；自环占两个子弧段；`gap_width`(度) 映射布局角距 |
+| `mark_network` | `layout_force/circle()` + point/rule/text 语法糖 | 普通 ggplot2 层**加法式**组合（先前层/scale 全保留）；`@graph` 可供后续 `~nodes/~edges` 引用；直边渲染为已知局限；布局仅 `auto`/`circle`/`manual`（`linear/bipartite` 与 `weight=`/`width=` 别名已移除）；`manual` 需节点表自带数值 x/y；边绘制于节点下层，标签悬浮于点上方，`coord_fixed` 保持真实比例 |
+| `mark_chord` | `layout_chord()` + `mark_polygon(~ribbons)`/`mark_polygon(~arcs)` 语法糖 | 纯 ggplot2 层增量构建；`@graph` 存 nodes/edges/arcs/ribbons 四表；确定性环形布局（无外部依赖）；重复 (source,target) 对聚合为单带；自环占两个子弧段；`gap_width`(度) 映射布局角距；遗留格式自动探测（from/to、Var1/Freq、matrix）已移除——统一走结构映射或字面 source/target 列，其余格式经 `as_graph()` 收编 |
+
+**关系 sugar 统一词汇**：四个关系类 mark 的静态通道参数一律美式且跨 mark 同名——节点侧 `node_color`，边侧 `edge_color`/`edge_width`/`edge_alpha`（sankey 原名 `flow_alpha`、chord 原名 `link_alpha` 已统一为 `edge_alpha`）。edges 表规范化共享单一实现 `._rel_canon_edges()`（R/mark_relational.R）：结构映射 > 字面 source/target(/value) 列，其余格式报错引导至 `as_graph()`。
 
 **新增 Mark 判断流程**（更新）：
 
@@ -437,7 +440,7 @@ style_dark <- make_theme("style_dark",
 
 所有 mark 的样式字面量集中于 `R/mark_style.R`，单一事实来源：
 
-- **`._MARK_STYLE`（token 表）**：`primary="#4E79A7"`、`secondary="#E15759"`；中性灰阶 `ink`(grey30，强注释：显著性括号/sankey 节点)、`soft`(grey50，中连接线：棒棒糖茎/哑铃连线/参考线)、`faint`(grey70，弱结构：network 边)、`band`(grey80)/`arc`(grey85)（保留 token，chord 已改走 source identity 派生通道不再使用）；线宽阶梯 `lw_data`(0.9，折线/路径/平滑) > `lw_thin`(0.5，细描边/括号/误差棒) > `lw_border`(0.25，柱/tile 白色发丝边框)；注释字号 `txt_note`(3.2)；半透明填充 `alpha_fill`(0.6，density/violin)、连接带 `alpha_link`(0.5，sankey/chord)；复合点径 `point_head`(3)。token 属 §1.4 可迭代层。
+- **`._MARK_STYLE`（token 表）**：`primary="#4E79A7"`、`secondary="#E15759"`；中性灰阶 `ink`(grey30，强注释：显著性括号/sankey 节点)、`soft`(grey50，中连接线：棒棒糖茎/哑铃连线/参考线)、`faint`(grey70，弱结构：network 边)；线宽阶梯 `lw_data`(0.9，折线/路径/平滑) > `lw_thin`(0.5，细描边/括号/误差棒) > `lw_border`(0.25，柱/tile 白色发丝边框)；注释字号 `txt_note`(3.2)；半透明填充 `alpha_fill`(0.6，density/violin)、连接带 `alpha_link`(0.5，sankey/chord)；复合点径 `point_head`(3)。token 属 §1.4 可迭代层。
 - **`._MARK_DEFAULTS`（按 mark 注入的静态默认）**：line/path（linewidth 0.9 + round 端点）、smooth（linewidth 0.9）、bar（白色发丝边框 + width 0.7——槽位 dodge 0.8 下留组间空气，替代 ggplot2 默认 0.9 的拥挤观感）/histogram/rect（白色发丝边框；histogram 相邻 bin 必须贴合故不设 width）、area/polygon（linewidth 0 去描边）、density/violin（alpha 0.6）、rule（colour soft + linewidth thin）、errorbar（linewidth 0.5）、boxplot（瘦箱 width 0.5 + 发丝描边 lw_border + staplewidth 0.4 横须盖 + outlier.size 0.6，tidyplots 校准——槽位 dodge 0.8 下留 ~0.38 组间空隙）、corr/treemap（白色发丝分隔；treemap 经旧式 `size` 通道，geom_treemap 不接受 linewidth）。经 `._mark_impl()` 统一注入，标准 mark 由工厂自动携带 mark 名，手写 mark 显式传 `mark_name=`。
 - **合并规则**（`._apply_mark_defaults()`）：**用户显式参数 > 已映射美学（层或全局，含注入的 AsIs 常量）> mark 默认**。因此分组柱状图自动获得白色分隔边框、单色注入柱保持无边框、映射了 alpha 的图层不被默认覆盖。
 - **特例**：
@@ -679,9 +682,11 @@ data |> as_graph() |> plotit() |>
 ### 4.1 文件结构
 
 ```
-R/：class.R encode.R utils.R plot.R mark.R scale.R project.R split.R label.R style.R output.R compose.R factory.R zzz.R
+R/：class.R encode.R utils.R plot.R mark.R mark_relational.R scale.R project.R split.R label.R style.R output.R compose.R factory.R zzz.R
 tests/testthat/：test-<func>.R 按函数族分文件
 ```
+
+> `mark_relational.R` 收编四个关系类语法糖（sankey/treemap/network/chord）及其共享规范化模块（`._rel_canon_edges()` 等），与 `mark.R` 的统一 mark 路径分离。
 
 playground.R 用于临时手动测试，不纳入版本管理。
 

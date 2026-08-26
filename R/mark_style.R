@@ -22,8 +22,6 @@ NULL
   ink = "grey30", # strong annotation strokes (significance brackets, sankey nodes)
   soft = "grey50", # mid connectors (lollipop stems, dumbbell links, reference rules)
   faint = "grey70", # background structure (network edges)
-  band = "grey80", # chord fallback ribbons
-  arc = "grey85", # chord fallback sector arcs
   # Stroke ladder (mm): data lines > thin strokes > hairline borders
   lw_data = 0.9, # lines / paths / smooth trends
   lw_thin = 0.5, # stems, edges, connectors, brackets, error bars
@@ -150,17 +148,23 @@ NULL
 # ticks and titles do not frame an unframed layout.  One helper keeps the
 # whole family visually uniform.  The gg-level variant is also applied at
 # construction for graph data, so the explicit pipeline form renders
-# identically to the sugar marks.
+# identically to the sugar marks.  `ticks_length = TRUE` additionally
+# zeroes axis.ticks.length (used by project_polar, where residual tick
+# space would offset the polar panel even with ticks blanked).
 #' Blank all axis elements on a ggplot object.
 #' @noRd
 #' @keywords internal
-._gg_blank_axes <- function(gg) {
-  gg + ggplot2::theme(
+._gg_blank_axes <- function(gg, ticks_length = FALSE) {
+  args <- list(
     axis.line = ggplot2::element_blank(),
     axis.ticks = ggplot2::element_blank(),
     axis.text = ggplot2::element_blank(),
     axis.title = ggplot2::element_blank()
   )
+  if (ticks_length) {
+    args$axis.ticks.length <- ggplot2::unit(0, "pt")
+  }
+  gg + do.call(ggplot2::theme, args)
 }
 
 #' Blank all axis elements for coordinate-free relational diagrams.

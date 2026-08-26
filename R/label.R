@@ -30,8 +30,7 @@ NULL
 #' Store a text/hide/reset intent for title/subtitle/caption in meta@labels.
 #' @noRd
 #' @keywords internal
-._set_text_label <- function(plot, slot_name, theme_el_name,
-                             text, hide, reset, fun_name) {
+._set_text_label <- function(plot, slot_name, text, hide, reset, fun_name) {
   ._check_text_reset(text, reset, fun_name)
   if (hide) {
     S7::prop(plot@meta@labels, slot_name) <- FALSE
@@ -124,7 +123,16 @@ NULL
     plot@gg$labels[[labs_name]] <- NULL
   } else if (is.character(val)) {
     plot@gg <- plot@gg + ._labs_el(labs_name, val)
-    plot@gg <- plot@gg + ._theme_el(theme_el_name, NULL)
+    # Undo a previous hide without deleting the styled default element:
+    # `theme(el = NULL)` removes the key entirely (modifyList semantics),
+    # which would wipe the shared theme's typography (alignment, size
+    # hierarchy) for that element.
+    cur <- plot@gg$theme[[theme_el_name]]
+    if (inherits(cur, "element_blank")) {
+      plot@gg <- plot@gg + ._theme_el(
+        theme_el_name, ggplot2::calc_element(theme_el_name, ._theme_default())
+      )
+    }
   }
   plot
 }
@@ -167,18 +175,6 @@ NULL
       } else if (is.null(val)) {
         plot@gg <- ._label_set_aes(plot@gg, a, NULL, hide = FALSE)
       } else {
-        # Direct sub-plot label setting for patchwork (legacy layout
-        # object).  patchwork 4.x exposes no public $plots -- the
-        # composite-level labels set below still apply in that case.
-        if (inherits(plot@gg, "patchwork") && !is.null(plot@gg$plots)) {
-          for (.i in seq_along(plot@gg$plots)) {
-            if (isTRUE(val == FALSE) || is.null(val)) {
-              plot@gg$plots[[.i]]$labels[[a]] <- NULL
-            } else {
-              plot@gg$plots[[.i]]$labels[[a]] <- val
-            }
-          }
-        }
         plot@gg <- ._label_set_aes(plot@gg, a, val, hide = FALSE)
       }
     }
@@ -209,7 +205,7 @@ label_title <- S7::new_generic(
 #' @export
 S7::method(label_title, plotit_class) <- function(plot, text = NULL, hide = FALSE,
                                                   reset = FALSE, ...) {
-  ._set_text_label(plot, "title", "plot.title", text, hide, reset, "label_title")
+  ._set_text_label(plot, "title", text, hide, reset, "label_title")
 }
 
 # ---- label_subtitle ----
@@ -234,7 +230,7 @@ label_subtitle <- S7::new_generic(
 #' @export
 S7::method(label_subtitle, plotit_class) <- function(plot, text = NULL, hide = FALSE,
                                                      reset = FALSE, ...) {
-  ._set_text_label(plot, "subtitle", "plot.subtitle", text, hide, reset, "label_subtitle")
+  ._set_text_label(plot, "subtitle", text, hide, reset, "label_subtitle")
 }
 
 # ---- label_caption ----
@@ -259,7 +255,7 @@ label_caption <- S7::new_generic(
 #' @export
 S7::method(label_caption, plotit_class) <- function(plot, text = NULL, hide = FALSE,
                                                     reset = FALSE, ...) {
-  ._set_text_label(plot, "caption", "plot.caption", text, hide, reset, "label_caption")
+  ._set_text_label(plot, "caption", text, hide, reset, "label_caption")
 }
 
 # ---- label_axis ----
@@ -295,10 +291,7 @@ S7::method(label_axis, plotit_class) <- function(plot, text = NULL, aes = NULL,
   }
   # Same three-parameter protocol as title/subtitle/caption; the axis slot
   # names in meta@labels match the aes argument.
-  ._set_text_label(
-    plot, aes, paste0("axis.title.", aes),
-    text, hide, reset, "label_axis"
-  )
+  ._set_text_label(plot, aes, text, hide, reset, "label_axis")
 }
 
 # ---- label_legend ----

@@ -594,7 +594,7 @@ test_that("[BDD] mark_lollipop creates lollipop chart", {
 test_that("mark_lollipop supports custom stem colour", {
   df <- data.frame(cat = LETTERS[1:5], val = c(3, 7, 2, 9, 5))
   p <- plotit(df, encode(x = cat, y = val)) |>
-    mark_lollipop(stem_colour = "steelblue", point_size = 4)
+    mark_lollipop(stem_color = "steelblue", point_size = 4)
   expect_s3_class(p, "plotit::plotit")
 })
 
@@ -620,7 +620,7 @@ test_that("[BDD] mark_dumbbell creates dumbbell chart", {
 test_that("mark_dumbbell supports custom colours", {
   df <- data.frame(cat = LETTERS[1:3], before = c(3, 5, 2), after = c(7, 6, 5))
   p <- plotit(df, encode(x = cat, y = before, yend = after)) |>
-    mark_dumbbell(colour_start = "orange", colour_end = "purple")
+    mark_dumbbell(color_start = "orange", color_end = "purple")
   expect_s3_class(p, "plotit::plotit")
 })
 
@@ -690,10 +690,10 @@ test_that("mark_sankey errors without source/target mapping", {
   expect_error(mark_sankey(p), "source")
 })
 
-test_that("mark_sankey supports flow_alpha", {
+test_that("mark_sankey supports edge_alpha", {
   s2 <- .sankey_df() |>
     plotit(encode(source = source, target = target, value = value)) |>
-    mark_sankey(flow_alpha = 0.8)
+    mark_sankey(edge_alpha = 0.8)
   alphas <- vapply(
     s2@gg$layers,
     function(l) l$aes_params$alpha %||% NA_real_, numeric(1)
@@ -718,7 +718,7 @@ test_that("mark_sankey keeps numeric fill values numeric (#5)", {
 test_that("mark_sankey: node fill uses first-occurrence identity by default", {
   s3 <- .sankey_df() |>
     plotit(encode(source = source, target = target, value = value)) |>
-    mark_sankey(node_colour = "grey30")
+    mark_sankey(node_color = "grey30")
   # D first appears as target of edge B->D, so it inherits B's identity
   expect_identical(
     unname(s3@graph$nodes$fill_grp),
@@ -768,7 +768,7 @@ test_that("mark_treemap maps fill through the global encoding", {
 })
 
 test_that("mark_treemap static fill and label colour without mapping", {
-  p <- plotit(.hier, encode()) |> mark_treemap(node_colour = "#123456")
+  p <- plotit(.hier, encode()) |> mark_treemap(node_color = "#123456")
   b <- ggplot2::ggplot_build(p@gg)
   expect_identical(unique(b$data[[1]]$fill), "#123456")
   expect_identical(unique(b$data[[2]]$colour), "white") # contrast on blue
@@ -822,20 +822,20 @@ test_that("[BDD] mark_network builds network (nodes + edges API)", {
   expect_setequal(names(p@graph), c("nodes", "edges"))
 })
 
-test_that("mark_network: encode_edges(weight=) is deprecated but works", {
+test_that("mark_network: unknown edge channels warn and are ignored", {
   nodes <- data.frame(name = c("A", "B"), group = c("X", "Y"))
-  edges <- data.frame(from = "A", to = "B", weight = 2)
+  edges <- data.frame(source = "A", target = "B", weight = 2)
   expect_warning(
     p <- nodes |>
       plotit() |>
       mark_network(
         edges = edges,
         encode_edges = encode(
-          source = from, target = to,
+          source = source, target = target,
           weight = weight
         )
       ),
-    "deprecated"
+    "Unsupported edge channels"
   )
   expect_s3_class(p, "plotit::plotit")
 })
@@ -888,20 +888,19 @@ test_that("mark_network manual layout uses node x/y columns", {
   expect_match(err, "numeric")
 })
 
-test_that("mark_network linear/bipartite layouts are deprecated with fallback", {
+test_that("mark_network rejects removed linear/bipartite layout values", {
   nodes <- data.frame(name = c("A", "B", "C"))
-  edges <- data.frame(from = c("A", "B"), to = c("B", "C"))
-  expect_warning(
-    p <- nodes |>
+  edges <- data.frame(source = c("A", "B"), target = c("B", "C"))
+  expect_error(
+    nodes |>
       plotit() |>
       mark_network(
         edges = edges,
-        encode_edges = encode(source = from, target = to),
+        encode_edges = encode(source = source, target = target),
         layout = "bipartite"
       ),
-    "deprecated"
+    "should be one of"
   )
-  expect_s3_class(p, "plotit::plotit")
 })
 
 test_that("[BDD] mark_network maps edge visual channels from edge columns", {
@@ -971,34 +970,42 @@ test_that("[BDD] mark_chord builds chord diagram (sugar over layout_chord)", {
   expect_no_warning(ggplot2::ggplot_build(p@gg))
 })
 
-test_that("mark_chord accepts legacy from/to and direct matrix data", {
-  mat <- matrix(c(0, 5, 3, 2, 0, 4, 1, 3, 0), nrow = 3)
-  rownames(mat) <- colnames(mat) <- c("A", "B", "C")
-
-  long <- as.data.frame(as.table(mat))
-  names(long) <- c("from", "to", "value")
-  long <- long[long$value > 0, ]
-
-  p1 <- plotit(long, encode()) |> mark_chord()
+test_that("mark_chord: mapped columns replace legacy formats; matrices route via as_graph", {
+  # from/to style tables map through structural aesthetics (same as network)
+  long <- data.frame(
+    from = c("A", "A", "B"), to = c("B", "C", "C"),
+    value = c(5, 3, 4)
+  )
+  p1 <- plotit(long, encode(source = from, target = to, value = value)) |>
+    mark_chord()
   expect_setequal(names(p1@graph), c("nodes", "edges", "arcs", "ribbons"))
 
-  # raw matrices must be passed via the data argument (plotit()'s main
-  # slot fortifies matrices before the mark can see them)
-  p2 <- plotit(data.frame(x = 1), encode()) |> mark_chord(data = mat)
+  # adjacency matrices convert upstream via as_graph(); its edges table
+  # feeds the mark through literal structural columns
+  mat <- matrix(c(0, 5, 3, 2, 0, 4, 1, 3, 0), nrow = 3)
+  rownames(mat) <- colnames(mat) <- c("A", "B", "C")
+  melted <- as_graph(mat)$edges
+  p2 <- plotit(melted, encode()) |> mark_chord()
   expect_setequal(names(p2@graph), c("nodes", "edges", "arcs", "ribbons"))
   for (p in list(p1, p2)) {
     expect_length(suppressWarnings(
       ggplot2::ggplot_build(p@gg)$plot$layers
     ), 3) # bands + sectors + ring labels
   }
+
+  # unmapped non-canonical formats now error with guidance
+  expect_error(
+    plotit(long, encode()) |> mark_chord(),
+    "structural aesthetics|source"
+  )
 })
 
-test_that("mark_chord: link_alpha applies to bands only; dots are rejected", {
+test_that("mark_chord: edge_alpha applies to bands only; dots are rejected", {
   msgs <- character(0)
   p <- withCallingHandlers(
     .chord_df() |>
       plotit(encode(source = source, target = target, value = value)) |>
-      mark_chord(link_alpha = 0.7, curvature = 0.9),
+      mark_chord(edge_alpha = 0.7, curvature = 0.9),
     warning = function(w) {
       msgs <<- c(msgs, conditionMessage(w))
       invokeRestart("muffleWarning")
@@ -1125,4 +1132,28 @@ test_that("[BDD] network mapped node colour ships curated palette", {
   c_ovr <- ggplot2::ggplot_build(p_ovr@gg)$data[[2]]$colour
   expect_true(length(unique(c_def)) >= 2)
   expect_false(setequal(unique(c_def), unique(c_ovr)))
+})
+
+# ---- regression: default_color guide reset ----
+# `guides(waiver())` does not clear a stored "none" guide under ggplot2
+# >= 3.5 S7 guides; the clear must remove the entry so legends render.
+test_that("[BDD] relational sugar legends are not suppressed by default_color", {
+  df <- data.frame(
+    source = c("A", "A", "B"), target = c("B", "C", "C"),
+    value = c(5, 3, 4)
+  )
+  p <- df |>
+    plotit(encode(source = source, target = target, value = value)) |>
+    mark_sankey()
+  expect_null(p@gg$guides$guides[["fill"]])
+  expect_null(p@gg$guides$guides[["colour"]])
+  # derived channel gets a semantic legend title, not the internal column
+  expect_equal(ggplot2::ggplot_build(p@gg)$plot$labels$fill, "source")
+})
+
+test_that("[BDD] chord derived fill legend title is semantic", {
+  p <- .chord_df() |>
+    plotit(encode(source = source, target = target, value = value)) |>
+    mark_chord()
+  expect_equal(ggplot2::ggplot_build(p@gg)$plot$labels$fill, "source")
 })

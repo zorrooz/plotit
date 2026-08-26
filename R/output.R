@@ -1,18 +1,6 @@
 #' @include class.R utils.R style.R
 NULL
 
-# Convert user-specified size unit to inches
-#' Convert user-specified size unit to inches.
-#' @noRd
-#' @keywords internal
-._unit_to_inches <- function(x, unit) {
-  x / switch(unit,
-    "in" = 1,
-    "cm" = 2.54,
-    "mm" = 25.4
-  )
-}
-
 # Measure a grob (fixed gtable or patchwork) in inches; the 1 mm slack
 # mirrors the device sizing used by print() so both paths agree.
 #' Measure a grob's width/height in inches.
@@ -121,11 +109,7 @@ S7::method(print, plotit_class) <- function(x, ...) {
 
   dev_opt <- getOption("plotit.device", "default")
   if (interactive() && !is.null(x@meta@width) && !is.null(x@meta@height) && !is.null(dev_opt)) {
-    gt <- if (inherits(x@gg, "patchwork")) {
-      patchwork::patchworkGrob(x@gg)
-    } else {
-      ._build_fixed_gtable(x@gg, x@meta@width, x@meta@height, x@meta@unit)
-    }
+    gt <- ._build_fixed_gtable(x@gg, x@meta@width, x@meta@height, x@meta@unit)
     ._open_sized_device(._measure_inches(gt), dev_opt)
     grid::grid.draw(gt)
     invisible(x)
@@ -145,11 +129,14 @@ print.plotit <- function(x, ...) {
 # S3 methods for knitr to capture plotit plots in vignettes / R Markdown.
 # Renders the underlying ggplot to knitr's active device.
 
-# Shared knit_print / pkgdown_print path: sync labels, render, suppress text.
+# Shared knit_print / pkgdown_print path.  Routes through the same render
+# preparation as print() (theme fallback + aspect-conflict panel strip +
+# lazy label sync) so knitr/pkgdown output is pixel-identical to the
+# interactive device.
 #' @noRd
 #' @keywords internal
 ._print_render <- function(x) {
-  x <- ._sync_labels(x)
+  x <- ._prepare_render(x)
   ._render_plotit(x)
 }
 
@@ -217,24 +204,21 @@ S7::method(export, plotit_class) <- function(
 
   if (isTRUE(plot@meta@autofit)) {
     final_plot <- plot@gg
+    def_size <- ._default_panel_size()
     final_width <- if (is.null(width)) {
-      getOption("plotit.default_width", 7)
+      def_size$width
     } else {
       ._unit_to_inches(width, meta_unit)
     }
     final_height <- if (is.null(height)) {
-      getOption("plotit.default_height", 5)
+      def_size$height
     } else {
       ._unit_to_inches(height, meta_unit)
     }
   } else {
-    gt <- if (inherits(plot@gg, "patchwork")) {
-      patchwork::patchworkGrob(plot@gg)
-    } else {
-      ._build_fixed_gtable(plot@gg, plot@meta@width, plot@meta@height, plot@meta@unit)
-    }
+    gt <- ._build_fixed_gtable(plot@gg, plot@meta@width, plot@meta@height, plot@meta@unit)
     measured <- ._measure_inches(gt)
-    final_plot <- if (inherits(plot@gg, "patchwork")) plot@gg else gt
+    final_plot <- gt
     final_width <- if (is.null(width)) measured$width else ._unit_to_inches(width, meta_unit)
     final_height <- if (is.null(height)) measured$height else ._unit_to_inches(height, meta_unit)
   }
