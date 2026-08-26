@@ -218,8 +218,7 @@ plotit 处于活跃的预发布开发中。每次更新都<strong>极有可能</
 <td align="left"><code>geom_density_2d()</code></td>
 <td align="left">2D 密度等高线</td>
 </tr><tr><td align="left"><code><a href="reference/mark_corr.html">mark_corr()</a></code></td>
-<td align="left">
-<code><a href="reference/transform_corr.html">transform_corr()</a></code> + <code>geom_tile()</code>
+<td align="left">内部相关性变换 + <code>geom_tile()</code>
 </td>
 <td align="left">相关性矩阵热力图</td>
 </tr><tr><td align="left"><code><a href="reference/mark_errorbar.html">mark_errorbar()</a></code></td>
@@ -244,7 +243,8 @@ plotit 处于活跃的预发布开发中。每次更新都<strong>极有可能</
 <code><a href="reference/layout_sankey.html">layout_sankey()</a></code> 语法糖</td>
 <td align="left">桑基流向图</td>
 </tr><tr><td align="left"><code><a href="reference/mark_treemap.html">mark_treemap()</a></code></td>
-<td align="left">treemapify</td>
+<td align="left">
+<code><a href="reference/layout_treemap.html">layout_treemap()</a></code> 语法糖</td>
 <td align="left">矩形树图</td>
 </tr><tr><td align="left"><code><a href="reference/mark_network.html">mark_network()</a></code></td>
 <td align="left">
@@ -277,9 +277,6 @@ plotit 处于活跃的预发布开发中。每次更新都<strong>极有可能</
 <td align="left">确定性分层桑基布局（nodes/edges/ribbons）</td>
 </tr><tr><td align="left"><code><a href="reference/layout_treemap.html">layout_treemap()</a></code></td>
 <td align="left">squarified 矩形树图布局</td>
-</tr><tr><td align="left"><code><a href="reference/transform_corr.html">transform_corr()</a></code></td>
-<td align="left">
-<code><a href="reference/mark_corr.html">mark_corr()</a></code> 的相关性矩阵预处理</td>
 </tr></tbody></table><div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">edges</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>source <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>,</span>
 <span>                    target <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"B"</span>, <span class="st">"C"</span>, <span class="st">"C"</span><span class="op">)</span>,</span>
@@ -371,9 +368,7 @@ plotit 处于活跃的预发布开发中。每次更新都<strong>极有可能</
 <table class="table"><thead><tr><th align="left">函数</th>
 <th align="left">说明</th>
 </tr></thead><tbody><tr><td align="left"><code><a href="reference/style.html">style()</a></code></td>
-<td align="left">应用 ggplot2 主题</td>
-</tr><tr><td align="left"><code><a href="reference/style_default.html">style_default()</a></code></td>
-<td align="left">恢复 plotit 内置主题</td>
+<td align="left">应用 ggplot2 主题（<code>style(p)</code> 恢复 plotit 内置默认）</td>
 </tr></tbody></table></div>
 <div class="section level3">
 <h3 id="导出">导出<a class="anchor" aria-label="anchor" href="#%E5%AF%BC%E5%87%BA"></a></h3>

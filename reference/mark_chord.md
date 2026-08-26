@@ -23,6 +23,7 @@ mark_chord(
   data = NULL,
   gap_width = 4,
   edge_alpha = ._MARK_STYLE$alpha_link,
+  show_labels = TRUE,
   ...
 )
 ```
@@ -55,6 +56,10 @@ mark_chord(
 
   Alpha transparency for link bands (default `._MARK_STYLE$alpha_link` =
   0.5).
+
+- show_labels:
+
+  If `TRUE` (default), draw sector ids outside the ring.
 
 - ...:
 

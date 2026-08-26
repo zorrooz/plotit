@@ -316,8 +316,7 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 </tr>
 <tr>
 <td align="left"><code><a href="reference/mark_corr.html">mark_corr()</a></code></td>
-<td align="left">
-<code><a href="reference/transform_corr.html">transform_corr()</a></code> + <code>geom_tile()</code>
+<td align="left">internal corr transform + <code>geom_tile()</code>
 </td>
 <td align="left">Correlation heatmap</td>
 </tr>
@@ -356,7 +355,8 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 </tr>
 <tr>
 <td align="left"><code><a href="reference/mark_treemap.html">mark_treemap()</a></code></td>
-<td align="left">treemapify</td>
+<td align="left">
+<code><a href="reference/layout_treemap.html">layout_treemap()</a></code> sugar</td>
 <td align="left">Treemaps</td>
 </tr>
 <tr>
@@ -421,11 +421,6 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <tr>
 <td align="left"><code><a href="reference/layout_treemap.html">layout_treemap()</a></code></td>
 <td align="left">Squarified treemap layout</td>
-</tr>
-<tr>
-<td align="left"><code><a href="reference/transform_corr.html">transform_corr()</a></code></td>
-<td align="left">Correlation-matrix preprocessing for <code><a href="reference/mark_corr.html">mark_corr()</a></code>
-</td>
 </tr>
 </tbody>
 </table>
@@ -598,20 +593,18 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <h3 id="theme">Theme<a class="anchor" aria-label="anchor" href="#theme"></a>
 </h3>
 <table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
 <thead><tr>
 <th align="left">Function</th>
 <th align="left">Description</th>
 </tr></thead>
-<tbody>
-<tr>
+<tbody><tr>
 <td align="left"><code><a href="reference/style.html">style()</a></code></td>
-<td align="left">Apply a ggplot2 theme</td>
-</tr>
-<tr>
-<td align="left"><code><a href="reference/style_default.html">style_default()</a></code></td>
-<td align="left">Restore plotit’s built-in theme</td>
-</tr>
-</tbody>
+<td align="left">Apply a ggplot2 theme (<code>style(p)</code> restores the plotit default)</td>
+</tr></tbody>
 </table>
 </div>
 <div class="section level3">

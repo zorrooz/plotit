@@ -104,12 +104,14 @@ In data units.</p></dd>
 
 
 <dt id="arg-tip-length">tip_length<a class="anchor" aria-label="anchor" href="#arg-tip-length"></a></dt>
-<dd><p>Length of bracket end-tick lines (default 0.02
-as fraction of x-axis range).</p></dd>
+<dd><p>Length of bracket end-tick lines (default 0.02).  Units
+follow the axis type: a fraction of the level count on discrete x axes,
+a fraction of the bracket's numeric span on continuous axes.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Additional arguments passed to <code><a href="mark_text.html">mark_text()</a></code></p></dd>
+<dd><p>Additional arguments passed to the label annotation
+(<code>ggplot2::annotate("text", ...)</code>).</p></dd>
 
 </dl></div>
     <div class="section level2">

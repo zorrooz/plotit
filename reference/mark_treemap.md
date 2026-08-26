@@ -15,10 +15,7 @@ mark_treemap(
   data = NULL,
   node_color = ._MARK_STYLE$primary,
   show_labels = TRUE,
-  ...,
-  rasterize = FALSE,
-  rasterize_dpi = 300,
-  rasterize_dev = "cairo"
+  ...
 )
 ```
 
@@ -53,19 +50,6 @@ mark_treemap(
   Unused; tiling fine-tuning lives on
   [`layout_treemap()`](https://zorrooz.github.io/plotit/reference/layout_treemap.md)
   in the explicit pipeline form.
-
-- rasterize:
-
-  If `TRUE`, rasterize via
-  [`ggrastr::rasterise()`](https://rdrr.io/pkg/ggrastr/man/rasterise.html).
-
-- rasterize_dpi:
-
-  DPI for rasterization (default 300).
-
-- rasterize_dev:
-
-  Graphics device for rasterization (default `"cairo"`).
 
 ## Value
 

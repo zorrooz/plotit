@@ -83,7 +83,7 @@ Control how data maps to visual properties.
 - [`scale_size()`](https://zorrooz.github.io/plotit/reference/scale_size.md)
   : Size scale
 - [`scale_x()`](https://zorrooz.github.io/plotit/reference/scale_x.md) :
-  X-axis position scale
+  Controls the x-axis scale: transformation, limits, breaks, and labels.
 - [`scale_y()`](https://zorrooz.github.io/plotit/reference/scale_y.md) :
   Y-axis position scale
 
@@ -108,8 +108,6 @@ transforms).
   : Tree layout
 - [`layout_treemap()`](https://zorrooz.github.io/plotit/reference/layout_treemap.md)
   : Treemap layout
-- [`transform_corr()`](https://zorrooz.github.io/plotit/reference/transform_corr.md)
-  : Correlation preprocessing transform
 
 ## Labels
 
@@ -165,8 +163,6 @@ Style your plots with built-in or custom themes.
 
 - [`style()`](https://zorrooz.github.io/plotit/reference/style.md) :
   Modify plot theme (aligns with ggplot2::theme)
-- [`style_default()`](https://zorrooz.github.io/plotit/reference/style_default.md)
-  : Apply the default plotit theme (convenience wrapper for style())
 
 ## Export
 

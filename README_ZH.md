@@ -137,14 +137,14 @@ flows |>
 | [`mark_smooth()`](https://zorrooz.github.io/plotit/reference/mark_smooth.md) | `geom_smooth()` | 回归拟合 + 置信带 |
 | [`mark_hex()`](https://zorrooz.github.io/plotit/reference/mark_hex.md) | `geom_hex()` | 2D 六边形分箱热力图 |
 | [`mark_density_2d()`](https://zorrooz.github.io/plotit/reference/mark_density_2d.md) | `geom_density_2d()` | 2D 密度等高线 |
-| [`mark_corr()`](https://zorrooz.github.io/plotit/reference/mark_corr.md) | [`transform_corr()`](https://zorrooz.github.io/plotit/reference/transform_corr.md) + `geom_tile()` | 相关性矩阵热力图 |
+| [`mark_corr()`](https://zorrooz.github.io/plotit/reference/mark_corr.md) | 内部相关性变换 + `geom_tile()` | 相关性矩阵热力图 |
 | [`mark_errorbar()`](https://zorrooz.github.io/plotit/reference/mark_errorbar.md) | `geom_errorbar()` / `-h` | 误差棒 |
 | [`mark_significance()`](https://zorrooz.github.io/plotit/reference/mark_significance.md) | 语法糖：rule + text | 显著性标记（括号+星号） |
 | [`mark_lollipop()`](https://zorrooz.github.io/plotit/reference/mark_lollipop.md) | 语法糖：point + 线段 | 棒棒糖图 |
 | [`mark_dumbbell()`](https://zorrooz.github.io/plotit/reference/mark_dumbbell.md) | 语法糖：双 point + 线段 | 哑铃对比图 |
 | [`mark_beeswarm()`](https://zorrooz.github.io/plotit/reference/mark_beeswarm.md) | ggbeeswarm | 蜂群散点（碰撞检测） |
 | [`mark_sankey()`](https://zorrooz.github.io/plotit/reference/mark_sankey.md) | [`layout_sankey()`](https://zorrooz.github.io/plotit/reference/layout_sankey.md) 语法糖 | 桑基流向图 |
-| [`mark_treemap()`](https://zorrooz.github.io/plotit/reference/mark_treemap.md) | treemapify | 矩形树图 |
+| [`mark_treemap()`](https://zorrooz.github.io/plotit/reference/mark_treemap.md) | [`layout_treemap()`](https://zorrooz.github.io/plotit/reference/layout_treemap.md) 语法糖 | 矩形树图 |
 | [`mark_network()`](https://zorrooz.github.io/plotit/reference/mark_network.md) | `layout_force()/circle()` 语法糖 | 力导向网络图 |
 | [`mark_chord()`](https://zorrooz.github.io/plotit/reference/mark_chord.md) | [`layout_chord()`](https://zorrooz.github.io/plotit/reference/layout_chord.md) 语法糖 | 弦图 |
 
@@ -163,7 +163,6 @@ flows |>
 | [`layout_chord()`](https://zorrooz.github.io/plotit/reference/layout_chord.md) | 弦图扇区布局（arcs + ribbons） |
 | [`layout_sankey()`](https://zorrooz.github.io/plotit/reference/layout_sankey.md) | 确定性分层桑基布局（nodes/edges/ribbons） |
 | [`layout_treemap()`](https://zorrooz.github.io/plotit/reference/layout_treemap.md) | squarified 矩形树图布局 |
-| [`transform_corr()`](https://zorrooz.github.io/plotit/reference/transform_corr.md) | [`mark_corr()`](https://zorrooz.github.io/plotit/reference/mark_corr.md) 的相关性矩阵预处理 |
 
 ``` r
 
@@ -232,8 +231,7 @@ edges |>
 
 | 函数 | 说明 |
 |:---|:---|
-| [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | 应用 ggplot2 主题 |
-| [`style_default()`](https://zorrooz.github.io/plotit/reference/style_default.md) | 恢复 plotit 内置主题 |
+| [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | 应用 ggplot2 主题（`style(p)` 恢复 plotit 内置默认） |
 
 ### 导出
 

@@ -61,10 +61,7 @@ tiling.  Equivalent to the pipeline <code>as_graph(hierarchy) |&gt; layout_treem
 <span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  node_color <span class="op">=</span> <span class="va">._MARK_STYLE</span><span class="op">$</span><span class="va">primary</span>,</span>
 <span>  show_labels <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  <span class="va">...</span>,</span>
-<span>  rasterize <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  rasterize_dpi <span class="op">=</span> <span class="fl">300</span>,</span>
-<span>  rasterize_dev <span class="op">=</span> <span class="st">"cairo"</span></span>
+<span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -98,18 +95,6 @@ mapped they fall back to near-black – chain
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Unused; tiling fine-tuning lives on <code><a href="layout_treemap.html">layout_treemap()</a></code> in the
 explicit pipeline form.</p></dd>
-
-
-<dt id="arg-rasterize">rasterize<a class="anchor" aria-label="anchor" href="#arg-rasterize"></a></dt>
-<dd><p>If <code>TRUE</code>, rasterize via <code><a href="https://rdrr.io/pkg/ggrastr/man/rasterise.html" class="external-link">ggrastr::rasterise()</a></code>.</p></dd>
-
-
-<dt id="arg-rasterize-dpi">rasterize_dpi<a class="anchor" aria-label="anchor" href="#arg-rasterize-dpi"></a></dt>
-<dd><p>DPI for rasterization (default 300).</p></dd>
-
-
-<dt id="arg-rasterize-dev">rasterize_dev<a class="anchor" aria-label="anchor" href="#arg-rasterize-dev"></a></dt>
-<dd><p>Graphics device for rasterization (default <code>"cairo"</code>).</p></dd>
 
 </dl></div>
     <div class="section level2">

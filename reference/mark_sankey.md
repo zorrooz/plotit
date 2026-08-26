@@ -20,10 +20,10 @@ mark_sankey(
   plot,
   mapping = NULL,
   data = NULL,
-  position = NULL,
   ...,
   node_color = ._MARK_STYLE$ink,
-  edge_alpha = ._MARK_STYLE$alpha_link
+  edge_alpha = ._MARK_STYLE$alpha_link,
+  show_labels = TRUE
 )
 ```
 
@@ -43,10 +43,6 @@ mark_sankey(
 
   Optional edges data.frame for this layer
 
-- position:
-
-  Position adjustment (ignored; the layout owns placement)
-
 - ...:
 
   Unused; fine-tuning (padding, curvature, node width) lives on
@@ -62,6 +58,10 @@ mark_sankey(
 
   Alpha transparency for flow ribbons (default `._MARK_STYLE$alpha_link`
   = 0.5).
+
+- show_labels:
+
+  If `TRUE` (default), draw node ids inside the strips.
 
 ## Value
 

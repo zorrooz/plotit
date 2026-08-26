@@ -137,14 +137,14 @@ syntax sugar over the primitives below
 | [`mark_smooth()`](https://zorrooz.github.io/plotit/reference/mark_smooth.md) | `geom_smooth()` | Regression fits with confidence bands |
 | [`mark_hex()`](https://zorrooz.github.io/plotit/reference/mark_hex.md) | `geom_hex()` | 2D hexagonal binning |
 | [`mark_density_2d()`](https://zorrooz.github.io/plotit/reference/mark_density_2d.md) | `geom_density_2d()` | 2D density contours |
-| [`mark_corr()`](https://zorrooz.github.io/plotit/reference/mark_corr.md) | [`transform_corr()`](https://zorrooz.github.io/plotit/reference/transform_corr.md) + `geom_tile()` | Correlation heatmap |
+| [`mark_corr()`](https://zorrooz.github.io/plotit/reference/mark_corr.md) | internal corr transform + `geom_tile()` | Correlation heatmap |
 | [`mark_errorbar()`](https://zorrooz.github.io/plotit/reference/mark_errorbar.md) | `geom_errorbar()` / `-h` | Error bars |
 | [`mark_significance()`](https://zorrooz.github.io/plotit/reference/mark_significance.md) | sugar: rule + text | Significance brackets |
 | [`mark_lollipop()`](https://zorrooz.github.io/plotit/reference/mark_lollipop.md) | sugar: point + stem | Lollipop charts |
 | [`mark_dumbbell()`](https://zorrooz.github.io/plotit/reference/mark_dumbbell.md) | sugar: two points + stem | Dumbbell comparison charts |
 | [`mark_beeswarm()`](https://zorrooz.github.io/plotit/reference/mark_beeswarm.md) | ggbeeswarm | Beeswarm scatter (collision detection) |
 | [`mark_sankey()`](https://zorrooz.github.io/plotit/reference/mark_sankey.md) | [`layout_sankey()`](https://zorrooz.github.io/plotit/reference/layout_sankey.md) sugar | Sankey flow diagrams |
-| [`mark_treemap()`](https://zorrooz.github.io/plotit/reference/mark_treemap.md) | treemapify | Treemaps |
+| [`mark_treemap()`](https://zorrooz.github.io/plotit/reference/mark_treemap.md) | [`layout_treemap()`](https://zorrooz.github.io/plotit/reference/layout_treemap.md) sugar | Treemaps |
 | [`mark_network()`](https://zorrooz.github.io/plotit/reference/mark_network.md) | `layout_force()/circle()` sugar | Force-directed network graphs |
 | [`mark_chord()`](https://zorrooz.github.io/plotit/reference/mark_chord.md) | [`layout_chord()`](https://zorrooz.github.io/plotit/reference/layout_chord.md) sugar | Chord diagrams |
 
@@ -164,7 +164,6 @@ sub-table via `data = ~table`.
 | [`layout_chord()`](https://zorrooz.github.io/plotit/reference/layout_chord.md) | Chord sector layout (arcs + ribbons) |
 | [`layout_sankey()`](https://zorrooz.github.io/plotit/reference/layout_sankey.md) | Deterministic layered sankey layout (nodes/edges/ribbons) |
 | [`layout_treemap()`](https://zorrooz.github.io/plotit/reference/layout_treemap.md) | Squarified treemap layout |
-| [`transform_corr()`](https://zorrooz.github.io/plotit/reference/transform_corr.md) | Correlation-matrix preprocessing for [`mark_corr()`](https://zorrooz.github.io/plotit/reference/mark_corr.md) |
 
 ``` r
 
@@ -234,8 +233,7 @@ like-named arguments).
 
 | Function | Description |
 |:---|:---|
-| [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | Apply a ggplot2 theme |
-| [`style_default()`](https://zorrooz.github.io/plotit/reference/style_default.md) | Restore plotit’s built-in theme |
+| [`style()`](https://zorrooz.github.io/plotit/reference/style.md) | Apply a ggplot2 theme (`style(p)` restores the plotit default) |
 
 ### Export
 
@@ -351,7 +349,7 @@ Control how data maps to visual properties.
 - [`scale_size()`](https://zorrooz.github.io/plotit/reference/scale_size.md)
   : Size scale
 - [`scale_x()`](https://zorrooz.github.io/plotit/reference/scale_x.md) :
-  X-axis position scale
+  Controls the x-axis scale: transformation, limits, breaks, and labels.
 - [`scale_y()`](https://zorrooz.github.io/plotit/reference/scale_y.md) :
   Y-axis position scale
 
@@ -376,8 +374,6 @@ transforms).
   : Tree layout
 - [`layout_treemap()`](https://zorrooz.github.io/plotit/reference/layout_treemap.md)
   : Treemap layout
-- [`transform_corr()`](https://zorrooz.github.io/plotit/reference/transform_corr.md)
-  : Correlation preprocessing transform
 
 ## Labels
 
@@ -433,8 +429,6 @@ Style your plots with built-in or custom themes.
 
 - [`style()`](https://zorrooz.github.io/plotit/reference/style.md) :
   Modify plot theme (aligns with ggplot2::theme)
-- [`style_default()`](https://zorrooz.github.io/plotit/reference/style_default.md)
-  : Apply the default plotit theme (convenience wrapper for style())
 
 ## Export
 

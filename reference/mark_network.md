@@ -19,8 +19,10 @@ mark_network(
   seed = NULL,
   edge_color = ._MARK_STYLE$faint,
   edge_width = ._MARK_STYLE$lw_thin,
+  edge_alpha = NULL,
   node_color = ._MARK_STYLE$primary,
   node_size = 5,
+  show_labels = TRUE,
   ...
 )
 ```
@@ -64,6 +66,14 @@ mark_network(
   Default edge width when no edge linewidth channel is mapped (default
   `._MARK_STYLE$lw_thin` = 0.5).
 
+- edge_alpha:
+
+  Optional alpha transparency for edge segments. `NULL` (default) leaves
+  the edges fully opaque – unlike the area bands of sankey/chord, thin
+  strokes do not need translucency; the parameter exists so the unified
+  edge vocabulary (`edge_color`/`edge_width`/`edge_alpha`) is available
+  on every relational sugar.
+
 - node_color:
 
   Default node colour, applied to the `colour` and `fill` channels only
@@ -73,6 +83,11 @@ mark_network(
 - node_size:
 
   Default node size when `size` is not mapped (default 5).
+
+- show_labels:
+
+  If `TRUE` (default), draw node labels when a global `label` aesthetic
+  is mapped.
 
 - ...:
 

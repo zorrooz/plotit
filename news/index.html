@@ -44,8 +44,65 @@
 <h2 class="pkg-version" data-toc-text="development version" id="plotit-development-version">plotit (development version)<a class="anchor" aria-label="anchor" href="#plotit-development-version"></a></h2>
 <ul><li>Active development stage — frequent breaking changes expected.</li>
 <li>See <a href="https://github.com/zorrooz/plotit/releases" class="external-link">GitHub releases</a> for version history.</li>
+</ul><div class="section level3">
+<h3 id="api-systematisation-round-development-version">API systematisation round (0.0.0.9001)<a class="anchor" aria-label="anchor" href="#api-systematisation-round-development-version"></a></h3>
+<p>Reference-driven API refactor following Vega / Vega-Lite, AntV G2 5.0, tidyplots and Observable Plot design pillars: one verb per concept, shared modules per function family, curated defaults everywhere.</p>
+<div class="section level4">
+<h4 id="removed-globally-inconsistent-apis-development-version">Removed (globally inconsistent APIs)<a class="anchor" aria-label="anchor" href="#removed-globally-inconsistent-apis-development-version"></a></h4>
+<ul><li>
+<code>style_default()</code> — pure alias of <code><a href="../reference/style.html">style()</a></code>; removed (one verb, one meaning).</li>
+<li>
+<code>transform_corr()</code> — orphan single-verb family; folded back into the package interior as <code>._transform_corr()</code>. <code><a href="../reference/mark_corr.html">mark_corr()</a></code> remains the public surface.</li>
+<li>
+<code>mark_sankey(position = )</code> — accepted but never used; removed from signature.</li>
+<li>
+<code>mark_treemap(rasterize = ...)</code> — violated the relational-sugar rule (no <code>rasterize</code>, AGENTS §3.3.3b principle 3); removed.</li>
+<li>
+<code>._MARK_DEFAULTS$mark_treemap</code> — dead entry (treemap renders through <code>mark_rect</code>); removed with the stale treemapify-era comment.</li>
 </ul></div>
-  </main></div>
+<div class="section level4">
+<h4 id="signature-vocabulary-normalised-development-version">Signature vocabulary normalised<a class="anchor" aria-label="anchor" href="#signature-vocabulary-normalised-development-version"></a></h4>
+<ul><li>
+<code><a href="../reference/mark_rule.html">mark_rule()</a></code> colour parameter renamed to American <code>color =</code> (the British spelling still works via <code>...</code> passthrough — geoms accept both).</li>
+<li>
+<code><a href="../reference/mark_network.html">mark_network()</a></code> gained <code>edge_alpha = NULL</code> and <code>show_labels = TRUE</code>; <code><a href="../reference/mark_sankey.html">mark_sankey()</a></code> / <code><a href="../reference/mark_chord.html">mark_chord()</a></code> gained <code>show_labels = TRUE</code> — the four relational sugars now share one static-channel vocabulary (<code>node_color</code>, <code>edge_color</code>/<code>edge_width</code>/<code>edge_alpha</code>, <code>show_labels</code>).</li>
+<li>
+<code>as_graph(directed = )</code> now warns when the input type decides its own directedness instead of silently swallowing the argument.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="componentisation-shared-modules-development-version">Componentisation (shared modules)<a class="anchor" aria-label="anchor" href="#componentisation-shared-modules-development-version"></a></h4>
+<ul><li>
+<code>._impl_with()</code> — one entry point for merged extra-args dispatch (smooth / hex / density_2d / corr / errorbar / beeswarm).</li>
+<li>
+<code>._derived_fill()</code> — single managed fill installer for closed statistical marks, replacing three inline <code>suppressMessages(scale_fill(...))</code> copies.</li>
+<li>
+<code>._require_pkg()</code> — one optional-dependency guard (7 call sites).</li>
+<li>Relational sugars share <code>._rel_reject_dots()</code>, <code>._rel_ribbon_layer()</code>, <code>._rel_label_layer()</code>, <code>._rel_legend_title()</code>, <code>._rel_canvas()</code>; the network sugar’s edge canonicalisation now routes through the same <code>._rel_canon_edges()</code> contract as sankey/chord (mechanically removes a ~50-line duplicate).</li>
+<li>
+<code>._cf()</code> moved to <code>theme.R</code> beside the palette decision point (it serves both theme and scale modules).</li>
+<li>Split family shares <code>._split_facet_dots()</code> and re-bakes WYSIWYG panel sizing after facets change the grid (<code>._split_rebake_size()</code>).</li>
+<li>Composite helpers: <code>._prep_subplot_gg()</code>, <code>._new_annotations()</code>, <code>._ggsave_inches()</code>, <code>._ensure_theme()</code>; <code><a href="../reference/export.html">export()</a></code> now applies the theme fallback before rendering (print/export parity).</li>
+<li>zzz.R composite stubs are built from per-family catalogs (<code>._CATALOG_MARKS</code> / <code>_LAYOUTS</code> / <code>_SCALES</code> / <code>_PROJECTS</code> / <code>_SPLITS</code>) and verify every catalogued generic exists at load time.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="bug-fixes-surfaced-by-rendered-image-qa-development-version">Bug fixes surfaced by rendered-image QA<a class="anchor" aria-label="anchor" href="#bug-fixes-surfaced-by-rendered-image-qa-development-version"></a></h4>
+<ul><li>
+<code><a href="../reference/mark_text.html">mark_text()</a></code> dropped <code>...</code> forwarding during refactor — every label colour/size parameter silently vanished; restored.</li>
+<li>Composite <code><a href="../reference/label_title.html">label_title()</a></code>/<code><a href="../reference/label_subtitle.html">label_subtitle()</a></code>/<code><a href="../reference/label_caption.html">label_caption()</a></code> wrote every annotation into the last field (title rendered bottom-right as a caption); reverted to three explicit thin methods over the shared setter.</li>
+<li>Composite rejection stubs had never registered (catalog lookup broke), and the stub environment had an empty parent chain (would crash on the first call) — single-plot verbs on composites now fail with the intended targeted message. Covered by new BDD tests.</li>
+<li>WYSIWYG panel sizing treated every facet cell as a full-size panel: <code>split_wrap(ncol = 3)</code> rendered ~15in wide inside a 7.5in canvas. Panel sizes now describe the whole panel area and are re-spread across the facet grid (baked theme + fixed-gtable paths).</li>
+<li>
+<code><a href="../reference/label_legend.html">label_legend()</a></code> no longer deletes untouched sibling legend titles when a single aesthetic gets an override.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="documentation-development-version">Documentation<a class="anchor" aria-label="anchor" href="#documentation-development-version"></a></h4>
+<ul><li>README / README_ZH / _pkgdown.yml / vignettes synced (removed API rows, corrected treemap engine row, <code>style_default</code> references).</li>
+<li>AGENTS.md updated: contract tiers, relational vocabulary, mark signature exceptions, panel-area sizing semantics, recipe notes (radar closure, donut axis chrome).</li>
+</ul></div>
+</div>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">

@@ -62,7 +62,7 @@ to the appropriate ggplot2 geom based on the parameters supplied:</p>
 <span>  xend <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  y <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  yend <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  colour <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  color <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  linetype <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  linewidth <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span>,</span>
@@ -122,9 +122,10 @@ Accepts a data.frame or a <code>~table</code> reference into graph data.</p></dd
 <dd><p>End y coordinate(s) for segment</p></dd>
 
 
-<dt id="arg-colour">colour<a class="anchor" aria-label="anchor" href="#arg-colour"></a></dt>
+<dt id="arg-color">color<a class="anchor" aria-label="anchor" href="#arg-color"></a></dt>
 <dd><p>Line colour (default <code>"grey50"</code>, the unified soft neutral;
-ggplot2's black is restored by passing <code>colour = "black"</code>).</p></dd>
+ggplot2's black is restored by passing <code>color = "black"</code>).  The British
+spelling <code>colour</code> is still accepted through <code>...</code>.</p></dd>
 
 
 <dt id="arg-linetype">linetype<a class="anchor" aria-label="anchor" href="#arg-linetype"></a></dt>
@@ -175,7 +176,7 @@ ggplot2's black is restored by passing <code>colour = "black"</code>).</p></dd>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="plotit.html">plotit</a></span><span class="op">(</span><span class="va">iris</span>, <span class="fu"><a href="encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Sepal.Width</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
-<span class="r-in"><span>  <span class="fu">mark_rule</span><span class="op">(</span>xintercept <span class="op">=</span> <span class="fl">3</span>, colour <span class="op">=</span> <span class="st">"red"</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu">mark_rule</span><span class="op">(</span>xintercept <span class="op">=</span> <span class="fl">3</span>, color <span class="op">=</span> <span class="st">"red"</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="mark_rule-1.png" alt="" width="816" height="528"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Data-driven segments: network edges from a layout_* transform</span></span></span>
@@ -184,7 +185,7 @@ ggplot2's black is restored by passing <code>colour = "black"</code>).</p></dd>
 <span class="r-in"><span>  <span class="fu"><a href="plotit.html">plotit</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="layout_force.html">layout_force</a></span><span class="op">(</span>seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="mark_point.html">mark_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="op">~</span><span class="va">nodes</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
-<span class="r-in"><span>  <span class="fu">mark_rule</span><span class="op">(</span>data <span class="op">=</span> <span class="op">~</span><span class="va">edges</span>, colour <span class="op">=</span> <span class="st">"grey70"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu">mark_rule</span><span class="op">(</span>data <span class="op">=</span> <span class="op">~</span><span class="va">edges</span>, color <span class="op">=</span> <span class="st">"grey70"</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="mark_rule-2.png" alt="" width="816" height="528"></span>
 </code></pre></div>
     </div>

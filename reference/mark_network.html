@@ -73,8 +73,10 @@ call are preserved (additive composition).</p>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  edge_color <span class="op">=</span> <span class="va">._MARK_STYLE</span><span class="op">$</span><span class="va">faint</span>,</span>
 <span>  edge_width <span class="op">=</span> <span class="va">._MARK_STYLE</span><span class="op">$</span><span class="va">lw_thin</span>,</span>
+<span>  edge_alpha <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  node_color <span class="op">=</span> <span class="va">._MARK_STYLE</span><span class="op">$</span><span class="va">primary</span>,</span>
 <span>  node_size <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  show_labels <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -121,6 +123,15 @@ mapped (default <code>._MARK_STYLE$faint</code> = <code>"grey70"</code>).</p></d
 mapped (default <code>._MARK_STYLE$lw_thin</code> = 0.5).</p></dd>
 
 
+<dt id="arg-edge-alpha">edge_alpha<a class="anchor" aria-label="anchor" href="#arg-edge-alpha"></a></dt>
+<dd><p>Optional alpha transparency for edge segments.
+<code>NULL</code> (default) leaves the edges fully opaque – unlike the area
+bands of sankey/chord, thin strokes do not need translucency; the
+parameter exists so the unified edge vocabulary
+(<code>edge_color</code>/<code>edge_width</code>/<code>edge_alpha</code>) is available on every
+relational sugar.</p></dd>
+
+
 <dt id="arg-node-color">node_color<a class="anchor" aria-label="anchor" href="#arg-node-color"></a></dt>
 <dd><p>Default node colour, applied to the <code>colour</code> and
 <code>fill</code> channels only where they are not mapped
@@ -129,6 +140,11 @@ mapped (default <code>._MARK_STYLE$lw_thin</code> = 0.5).</p></dd>
 
 <dt id="arg-node-size">node_size<a class="anchor" aria-label="anchor" href="#arg-node-size"></a></dt>
 <dd><p>Default node size when <code>size</code> is not mapped (default 5).</p></dd>
+
+
+<dt id="arg-show-labels">show_labels<a class="anchor" aria-label="anchor" href="#arg-show-labels"></a></dt>
+<dd><p>If <code>TRUE</code> (default), draw node labels when a global
+<code>label</code> aesthetic is mapped.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

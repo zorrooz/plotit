@@ -18,7 +18,7 @@ mark_rule(
   xend = NULL,
   y = NULL,
   yend = NULL,
-  colour = NULL,
+  color = NULL,
   linetype = NULL,
   linewidth = NULL,
   ...,
@@ -76,10 +76,11 @@ mark_rule(
 
   End y coordinate(s) for segment
 
-- colour:
+- color:
 
   Line colour (default `"grey50"`, the unified soft neutral; ggplot2's
-  black is restored by passing `colour = "black"`).
+  black is restored by passing `color = "black"`). The British spelling
+  `colour` is still accepted through `...`.
 
 - linetype:
 
@@ -138,7 +139,7 @@ AntV G2: [LineX](https://g2.antv.antgroup.com/en/api/mark/line-x) /
 
 ``` r
 plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
-  mark_rule(xintercept = 3, colour = "red", linetype = "dashed")
+  mark_rule(xintercept = 3, color = "red", linetype = "dashed")
 
 
 # Data-driven segments: network edges from a layout_* transform
@@ -147,5 +148,5 @@ as_graph(e) |>
   plotit() |>
   layout_force(seed = 1) |>
   mark_point(data = ~nodes) |>
-  mark_rule(data = ~edges, colour = "grey70")
+  mark_rule(data = ~edges, color = "grey70")
 ```

@@ -233,8 +233,8 @@ iris |>
 
 ![](customizing_files/figure-html/unnamed-chunk-15-1.png)
 
-[`style_default()`](https://zorrooz.github.io/plotit/reference/style_default.md)
-applies the built-in plotit default theme:
+[`style()`](https://zorrooz.github.io/plotit/reference/style.md) without
+a `base_theme` applies the built-in plotit default theme:
 
 ``` r
 
@@ -242,7 +242,7 @@ iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
   mark_point() |>
   scale_color(range = "viridis") |>
-  style_default(base_size = 12)
+  style(base_size = 12)
 #> Scale for colour is already present.
 #> Adding another scale for colour, which will replace the existing scale.
 ```

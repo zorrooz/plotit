@@ -1,4 +1,4 @@
-# X-axis position scale
+# Controls the x-axis scale: transformation, limits, breaks, and labels.
 
 Controls the x-axis scale: transformation, limits, breaks, and labels.
 

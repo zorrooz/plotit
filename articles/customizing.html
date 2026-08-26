@@ -304,14 +304,14 @@ axes and legends) or removes the text (for titles):</p>
 <span><span class="co">#&gt; Scale for <span style="color: #00BB00;">colour</span> is already present.</span></span>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">colour</span>, which will replace the existing scale.</span></span></code></pre></div>
 <p><img src="customizing_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="" width="672"></p>
-<p><code><a href="../reference/style_default.html">style_default()</a></code> applies the built-in plotit default
-theme:</p>
+<p><code><a href="../reference/style.html">style()</a></code> without a <code>base_theme</code> applies the
+built-in plotit default theme:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">iris</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Sepal.Width</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span>, colour <span class="op">=</span> <span class="va">Species</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/scale_color.html">scale_color</a></span><span class="op">(</span>range <span class="op">=</span> <span class="st">"viridis"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/style_default.html">style_default</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">12</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="../reference/style.html">style</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">12</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Scale for <span style="color: #00BB00;">colour</span> is already present.</span></span>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">colour</span>, which will replace the existing scale.</span></span></code></pre></div>
 <p><img src="customizing_files/figure-html/unnamed-chunk-16-1.png" class="r-plt" alt="" width="672"></p>

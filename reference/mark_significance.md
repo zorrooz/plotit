@@ -56,13 +56,14 @@ mark_significance(
 
 - tip_length:
 
-  Length of bracket end-tick lines (default 0.02 as fraction of x-axis
-  range).
+  Length of bracket end-tick lines (default 0.02). Units follow the axis
+  type: a fraction of the level count on discrete x axes, a fraction of
+  the bracket's numeric span on continuous axes.
 
 - ...:
 
-  Additional arguments passed to
-  [`mark_text()`](https://zorrooz.github.io/plotit/reference/mark_text.md)
+  Additional arguments passed to the label annotation
+  (`ggplot2::annotate("text", ...)`).
 
 ## Value
 

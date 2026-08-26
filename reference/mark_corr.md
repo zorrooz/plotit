@@ -2,10 +2,7 @@
 
 Computes a correlation matrix from numeric data columns, optionally
 reorders by hierarchical clustering, and renders it as a tile heatmap.
-Sugar over
-[`transform_corr()`](https://zorrooz.github.io/plotit/reference/transform_corr.md)
-plus a tile layer. The value fill scale defaults to viridis
-(colour-blind safe); chain
+The value fill scale defaults to viridis (colour-blind safe); chain
 [`scale_fill()`](https://zorrooz.github.io/plotit/reference/scale_fill.md)
 afterwards to replace it (last call wins).
 
