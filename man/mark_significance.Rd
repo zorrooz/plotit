@@ -9,7 +9,7 @@ mark_significance(
   comparisons,
   y_position = NULL,
   y_offset = NULL,
-  line_colour = ._MARK_STYLE$ink,
+  line_color = ._MARK_STYLE$ink,
   line_width = ._MARK_STYLE$lw_thin,
   text_size = ._MARK_STYLE$txt_note,
   tip_length = 0.02,
@@ -29,7 +29,7 @@ If omitted, auto-computed from data range.}
 \item{y_offset}{Text offset above the bracket line (default 0.5).
 In data units.}
 
-\item{line_colour}{Colour for the bracket lines
+\item{line_color}{Colour for the bracket lines
 (default \code{._MARK_STYLE$ink} = \code{"grey30"}).}
 
 \item{line_width}{Width of bracket lines (default 0.5).}

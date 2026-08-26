@@ -8,7 +8,7 @@ mark_lollipop(
   plot,
   mapping = NULL,
   data = NULL,
-  stem_colour = ._MARK_STYLE$soft,
+  stem_color = ._MARK_STYLE$soft,
   stem_width = ._MARK_STYLE$lw_thin,
   point_size = ._MARK_STYLE$point_head,
   ref = 0,
@@ -22,7 +22,7 @@ mark_lollipop(
 
 \item{data}{Optional data for this layer}
 
-\item{stem_colour}{Colour for the stem lines
+\item{stem_color}{Colour for the stem lines
 (default \code{._MARK_STYLE$soft} = \code{"grey50"}).}
 
 \item{stem_width}{Line width for stems (default 0.5).}
@@ -51,5 +51,5 @@ Equivalent expansion:
 \examples{
 df <- data.frame(cat = LETTERS[1:5], val = c(3, 7, 2, 9, 5))
 plotit(df, encode(x = cat, y = val)) |>
-  mark_lollipop(point_size = 4, stem_colour = "grey70")
+  mark_lollipop(point_size = 4, stem_color = "grey70")
 }

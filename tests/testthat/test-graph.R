@@ -177,10 +177,23 @@ test_that("[BDD] pipeline layer mappings get the token palette", {
   g <- as_graph(data.frame(source = c("A", "B"), target = c("B", "C")))
   g$nodes$grp <- c("x", "y", "x")
   suppressMessages(
-    p <- g |> plotit() |> layout_circle() |>
+    p <- g |>
+      plotit() |>
+      layout_circle() |>
       mark_point(data = ~nodes, mapping = encode(colour = grp))
   )
   cols <- unique(ggplot2::ggplot_build(p@gg)$data[[1]]$colour)
   expect_false(setequal(cols, c("#F8766D", "#00BA38"))) # not raw hue
   expect_true("#0072B2" %in% cols) # friendly anchor present
+})
+
+# ---- regression: hclust without labels (R >= 4.5 drops automatic
+# rownames from dist() Labels) must not crash the coercion ----
+test_that("[BDD] as_graph.hclust survives empty labels", {
+  m <- matrix(stats::runif(40), nrow = 10) # no dimnames
+  hc <- stats::hclust(stats::dist(m))
+  expect_length(hc$labels, 0)
+  g <- as_graph(hc)
+  expect_length(g$nodes$id, 19) # 2 * 10 - 1
+  expect_true(all(nzchar(g$nodes$id)))
 })

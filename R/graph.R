@@ -57,6 +57,15 @@ NULL
   cli::cli_abort("{.arg {arg}} must be a single column name.")
 }
 
+# Shared column-name extractor for encode() quosures in the relational
+# sugars (mark_sankey / mark_chord).  Thin wrapper over ._arg_name().
+#' Column name from an encode() quosure.
+#' @noRd
+#' @keywords internal
+._quo_name_arg <- function(q) {
+  ._arg_name(q, "aesthetic")
+}
+
 # ---- coercions -------------------------------------------------------------
 
 ._graph_from_edgelist <- function(edges, nodes, source_col, target_col, value_col,
@@ -163,11 +172,24 @@ NULL
 # node table so a dendrogram layout engine can consume them later.  The
 # merge side (1 = left, 2 = right) is kept on the edge table (.side) so
 # leaf order -- and thus label ordering -- survives the round trip.
+#
+# Leaf count derives from the merge matrix rather than hc$labels: recent R
+# versions drop automatic row names from dist() Labels, leaving
+# hc$labels empty; sequential ids are substituted in that case.
 ._graph_from_hclust <- function(hc, directed = TRUE) {
-  n_leaves <- length(hc$labels)
+  n_leaves <- if (length(hc$labels) > 0) {
+    length(hc$labels)
+  } else {
+    nrow(hc$merge) + 1
+  }
+  hc_labels <- if (length(hc$labels) > 0) {
+    as.character(hc$labels)
+  } else {
+    as.character(seq_len(n_leaves))
+  }
   n_nodes <- 2 * n_leaves - 1
   internal_ids <- paste0("hclust_", seq_len(n_leaves - 1))
-  ids <- c(as.character(hc$labels), internal_ids)
+  ids <- c(hc_labels, internal_ids)
 
   nodes <- data.frame(
     id = ids,
@@ -183,7 +205,7 @@ NULL
     for (j in seq_along(hc$merge[s, ])) {
       child <- hc$merge[s, j]
       src <- c(src, internal_ids[s])
-      tgt <- c(tgt, if (child < 0) as.character(hc$labels[-child]) else ids[n_leaves + child])
+      tgt <- c(tgt, if (child < 0) hc_labels[-child] else ids[n_leaves + child])
       side <- c(side, j)
     }
   }
@@ -231,15 +253,12 @@ NULL
   }
   nd <- as.data.frame(tidygraph::activate(g, nodes))
   ed <- as.data.frame(tidygraph::activate(g, edges))
-  # Directedness: read via igraph when available (tidygraph itself imports
-  # igraph, so this fallback branch is theoretical).
-  directed <- FALSE
-  if (requireNamespace("igraph", quietly = TRUE)) {
-    directed <- tryCatch(
-      igraph::is_directed(tidygraph::as.igraph(g)),
-      error = function(e) FALSE
-    )
-  }
+  # Directedness via tidygraph's public graph-access API (tidygraph imports
+  # igraph internally; plotit itself keeps zero hard/soft igraph usage).
+  directed <- tryCatch(
+    tidygraph::with_graph(g, tidygraph::graph_is_directed()),
+    error = function(e) FALSE
+  )
   key <- nd[[1]]
   ed$source <- key[ed$from]
   ed$target <- key[ed$to]

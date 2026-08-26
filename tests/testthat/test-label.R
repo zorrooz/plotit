@@ -315,3 +315,27 @@ test_that("[BDD] label_legend global reset restores default legend titles", {
   expect_equal(built$plot$labels$colour, "Species")
   expect_equal(built$plot$labels$fill, "Species")
 })
+
+# ---- regression: label sync must not wipe theme typography ----
+# `theme(el = NULL)` deletes the element key entirely (modifyList
+# semantics); setting a text label must only neutralize a previous
+# element_blank, preserving the shared theme's alignment/size hierarchy.
+test_that("[BDD] label_title keeps the default title typography", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    label_title("Styled Title")
+  p <- plotit:::._sync_labels(p)
+  el <- p@gg$theme$plot.title
+  expect_false(inherits(el, "element_blank"))
+  expect_false(is.null(el$hjust))
+  expect_equal(el$hjust, 0) # shared token: left-aligned title
+})
+
+test_that("[BDD] hide then set restores typography (no residual blank)", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    label_title("First") |>
+    label_title(hide = TRUE) |>
+    label_title("Second")
+  p <- plotit:::._sync_labels(p)
+  expect_false(inherits(p@gg$theme$plot.title, "element_blank"))
+  expect_equal(p@gg$labels$title, "Second")
+})
