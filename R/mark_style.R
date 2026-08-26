@@ -70,11 +70,9 @@ NULL
   ),
   # Closed statistical / relational marks rendered through tile-like geoms:
   # white hairline separators keep adjacent cells readable (same token as
-  # bar/histogram/rect).
-  mark_corr = list(colour = "white", linewidth = ._MARK_STYLE$lw_border),
-  # geom_treemap draws borders with the legacy `size` channel (it does not
-  # accept `linewidth`); reuse the hairline token value.
-  mark_treemap = list(colour = "white", size = ._MARK_STYLE$lw_border)
+  # bar/histogram/rect).  (The treemap sugar renders through mark_rect and
+  # inherits its hairline entry above; it needs no entry of its own.)
+  mark_corr = list(colour = "white", linewidth = ._MARK_STYLE$lw_border)
 )
 
 # Collect aesthetics mapped on the layer or globally.  Used to gate static
@@ -129,14 +127,11 @@ NULL
   # Special case mark_boxplot: while the plotit()-injected single default
   # colour is live, the box stroke/median/outliers would render in the same
   # blue as the fill; a dark neutral stroke restores contrast.  The override
-  # only fires when the user has not chosen their own colour.
+  # only fires when the user has not chosen their own colour (the AsIs
+  # injected constants do not count as user ownership).
   if (identical(mark_name, "mark_boxplot") && !"colour" %in% names(dots)) {
-    layer_colour <- mapping$colour
-    global_colour <- plot@gg$mapping$colour
-    user_colour <- (!is.null(layer_colour) && !inherits(layer_colour, "AsIs")) ||
-      (!is.null(global_colour) && !inherits(global_colour, "AsIs"))
     injection_live <- !is.null(plot@meta@default_color)
-    if (!user_colour && injection_live) {
+    if (!"colour" %in% ._user_owned_aes(plot, mapping) && injection_live) {
       dots$colour <- ._MARK_STYLE$ink
     }
   }

@@ -9,10 +9,7 @@ mark_treemap(
   data = NULL,
   node_color = ._MARK_STYLE$primary,
   show_labels = TRUE,
-  ...,
-  rasterize = FALSE,
-  rasterize_dpi = 300,
-  rasterize_dev = "cairo"
+  ...
 )
 }
 \arguments{
@@ -33,12 +30,6 @@ mapped they fall back to near-black -- chain
 
 \item{...}{Unused; tiling fine-tuning lives on \code{\link[=layout_treemap]{layout_treemap()}} in the
 explicit pipeline form.}
-
-\item{rasterize}{If \code{TRUE}, rasterize via \code{ggrastr::rasterise()}.}
-
-\item{rasterize_dpi}{DPI for rasterization (default 300).}
-
-\item{rasterize_dev}{Graphics device for rasterization (default \code{"cairo"}).}
 }
 \value{
 Modified plotit object; \verb{@graph} holds nodes/edges/leaves.

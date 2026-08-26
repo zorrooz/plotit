@@ -135,14 +135,14 @@ compose_*(p1, p2, ...) |> label_*() |> style() |> export()
 | `mark_smooth()` | `geom_smooth()` | 回归拟合 + 置信带 |
 | `mark_hex()` | `geom_hex()` | 2D 六边形分箱热力图 |
 | `mark_density_2d()` | `geom_density_2d()` | 2D 密度等高线 |
-| `mark_corr()` | `transform_corr()` + `geom_tile()` | 相关性矩阵热力图 |
+| `mark_corr()` | 内部相关性变换 + `geom_tile()` | 相关性矩阵热力图 |
 | `mark_errorbar()` | `geom_errorbar()` / `-h` | 误差棒 |
 | `mark_significance()` | 语法糖：rule + text | 显著性标记（括号+星号） |
 | `mark_lollipop()` | 语法糖：point + 线段 | 棒棒糖图 |
 | `mark_dumbbell()` | 语法糖：双 point + 线段 | 哑铃对比图 |
 | `mark_beeswarm()` | ggbeeswarm | 蜂群散点（碰撞检测） |
 | `mark_sankey()` | `layout_sankey()` 语法糖 | 桑基流向图 |
-| `mark_treemap()` | treemapify | 矩形树图 |
+| `mark_treemap()` | `layout_treemap()` 语法糖 | 矩形树图 |
 | `mark_network()` | `layout_force()/circle()` 语法糖 | 力导向网络图 |
 | `mark_chord()` | `layout_chord()` 语法糖 | 弦图 |
 
@@ -161,7 +161,6 @@ compose_*(p1, p2, ...) |> label_*() |> style() |> export()
 | `layout_chord()` | 弦图扇区布局（arcs + ribbons） |
 | `layout_sankey()` | 确定性分层桑基布局（nodes/edges/ribbons） |
 | `layout_treemap()` | squarified 矩形树图布局 |
-| `transform_corr()` | `mark_corr()` 的相关性矩阵预处理 |
 
 ```r
 edges <- data.frame(source = c("A", "A", "B"),
@@ -229,8 +228,7 @@ edges |>
 
 | 函数 | 说明 |
 |:---|:---|
-| `style()` | 应用 ggplot2 主题 |
-| `style_default()` | 恢复 plotit 内置主题 |
+| `style()` | 应用 ggplot2 主题（`style(p)` 恢复 plotit 内置默认） |
 
 ### 导出
 

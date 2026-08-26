@@ -16,7 +16,7 @@ mark_rule(
   xend = NULL,
   y = NULL,
   yend = NULL,
-  colour = NULL,
+  color = NULL,
   linetype = NULL,
   linewidth = NULL,
   ...,
@@ -50,8 +50,9 @@ Accepts a data.frame or a \code{~table} reference into graph data.}
 
 \item{yend}{End y coordinate(s) for segment}
 
-\item{colour}{Line colour (default \code{"grey50"}, the unified soft neutral;
-ggplot2's black is restored by passing \code{colour = "black"}).}
+\item{color}{Line colour (default \code{"grey50"}, the unified soft neutral;
+ggplot2's black is restored by passing \code{color = "black"}).  The British
+spelling \code{colour} is still accepted through \code{...}.}
 
 \item{linetype}{Line type}
 
@@ -84,7 +85,7 @@ Dispatch priority: vline/hline > abline > segment.
 }
 \examples{
 plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
-  mark_rule(xintercept = 3, colour = "red", linetype = "dashed")
+  mark_rule(xintercept = 3, color = "red", linetype = "dashed")
 
 # Data-driven segments: network edges from a layout_* transform
 e <- data.frame(source = c("a", "a", "b"), target = c("b", "c", "c"))
@@ -92,7 +93,7 @@ as_graph(e) |>
   plotit() |>
   layout_force(seed = 1) |>
   mark_point(data = ~nodes) |>
-  mark_rule(data = ~edges, colour = "grey70")
+  mark_rule(data = ~edges, color = "grey70")
 }
 \references{
 Vega-Lite: \href{https://vega.github.io/vega-lite/docs/rule.html}{Rule}

@@ -52,41 +52,59 @@ NULL
 # ---- Unsupported operations on composites ----
 # Registered here (loaded last) so all S7 generics exist.  The whole loop
 # runs inside local() so loop variables never leak into the namespace.
+#
+# The generic list is assembled from per-family catalogs (._CATALOG_* in
+# mark.R / layout.R / scale.R / project.R / split.R) plus the two bespoke
+# label generics, so adding a new mark/layout/scale only requires updating
+# its family catalog -- the composite guard follows automatically.  A name
+# without a live generic warns at load time instead of silently skipping.
 local({
-  # One factory call per generic: the stub closes over its own `name`
-  # binding instead of the mutating loop variable.
+  # Catalog vectors are defined by their family files, which the Collate
+  # order guarantees are sourced before this file.  Lookup follows the
+  # normal lexical chain into the namespace.
+  .catalog <- function(name) {
+    if (exists(name, inherits = TRUE)) get(name) else character(0)
+  }
+  .generics <- c(
+    .catalog("._CATALOG_MARKS"),
+    .catalog("._CATALOG_LAYOUTS"),
+    .catalog("._CATALOG_SCALES"),
+    .catalog("._CATALOG_PROJECTS"),
+    .catalog("._CATALOG_SPLITS"),
+    "label_axis", "label_legend"
+  )
+  .missing <- .generics[!vapply(
+    .generics, function(nm) exists(nm, mode = "function"), logical(1)
+  )]
+  if (length(.missing) > 0) {
+    cli::cli_warn(c(
+      "Catalogued generics not found at load time: {.val {.missing}}.",
+      "i" = "Composite rejection stubs were not registered for them."
+    ))
+  }
+
+  # One factory call per generic: the stub closes over its own `.name`
+  # binding via an explicit environment (S7 method capture during package
+  # load is unreliable for plain closures).  The environment's parent is
+  # this load-time frame, so {.}, cli:: and every namespace binding stay
+  # reachable from the stub body.
   .make_stub <- function(name, generic) {
     .fun <- function(plot, ...) {
       cli::cli_abort(c(
-        "{.fn {.name}} is not supported for {.cls plotit_composite} objects.",
+        "{.fn {stub_name}} is not supported for {.cls plotit_composite} objects.",
         "i" = "Apply it to individual sub-plots before composing."
       ))
     }
-    environment(.fun) <- as.environment(list(.name = name))
+    .stub_env <- new.env(parent = parent.frame())
+    .stub_env$stub_name <- name
+    environment(.fun) <- .stub_env
     # S7 requires method signatures to be compatible with the generic's;
     # a bare (plot, ...) signature triggers one warning per missing
     # argument at registration time.  Align the formals dynamically.
     formals(.fun) <- formals(generic)
     .fun
   }
-  for (.generic_name in c(
-    "mark_point", "mark_line", "mark_bar", "mark_boxplot",
-    "mark_histogram", "mark_density", "mark_area", "mark_text",
-    "mark_violin", "mark_map", "mark_rect", "mark_rule",
-    "mark_path", "mark_polygon", "mark_smooth", "mark_hex",
-    "mark_density_2d", "mark_corr",
-    "mark_errorbar", "mark_significance",
-    "mark_lollipop", "mark_dumbbell",
-    "mark_beeswarm", "mark_sankey", "mark_treemap",
-    "mark_network", "mark_chord",
-    "layout_force", "layout_circle", "layout_tree",
-    "scale_color", "scale_fill", "scale_size", "scale_alpha",
-    "scale_shape", "scale_linetype", "scale_x", "scale_y",
-    "project_cartesian", "project_polar", "project_parallel",
-    "project_map", "split_wrap", "split_grid",
-    "label_axis", "label_legend"
-  )) {
-    if (!exists(.generic_name, mode = "function")) next
+  for (.generic_name in setdiff(.generics, .missing)) {
     .generic <- get(.generic_name)
     S7::method(.generic, plotit_composite) <-
       .make_stub(.generic_name, .generic)

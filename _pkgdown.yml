@@ -69,7 +69,6 @@ reference:
   contents:
   - as_graph
   - starts_with("layout_")
-  - transform_corr
 - title: Labels
   desc: Set titles, axis labels, and legend text.
   contents:
@@ -90,7 +89,6 @@ reference:
   desc: Style your plots with built-in or custom themes.
   contents:
   - style
-  - style_default
 - title: Export
   desc: Render and save your plots to files.
   contents:

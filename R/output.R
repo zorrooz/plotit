@@ -39,10 +39,7 @@ S7::method(format, plotit_class) <- function(x, ...) ""
 S7::method(format, plotit_composite) <- function(x, ...) ""
 
 # ---- internal render routing ----
-# Route plot rendering based on context.
-# Always renders to the device so evaluate/pkgdown/R CMD check
-# can capture the plot output.  Both branches are identical;
-# kept separate in case one needs context-specific logic later.
+# Render to the active device so evaluate/pkgdown/R CMD check capture output.
 #' @noRd
 #' @keywords internal
 ._render_plotit <- function(x) {
@@ -77,17 +74,27 @@ pkgdown_print.plotit_composite <- function(x, visible = TRUE) {
 # ---- print ----
 # Shared render preparation: default-theme fallback + lazy label sync.
 # Used by every print/export/knit entry point (AGENTS.md 1.2).
-#' Apply theme fallback and sync lazy labels before rendering.
+#' Apply the managed-theme fallback to a plot built without one.
+#'
+#' Export() shares this step so a plot that is exported before it is ever
+#' printed carries the same academic theme as the on-screen render.
 #' @noRd
 #' @keywords internal
-._prepare_render <- function(x) {
-  # Fall back to the default theme when the plot was built without one.
+._ensure_theme <- function(x) {
   needs_theme <- is.null(attr(x@meta, "plotit_theme_managed", exact = TRUE)) ||
     length(x@gg$theme) == 0
   if (needs_theme) {
     x@gg <- x@gg + ._theme_default()
     attr(x@meta, "plotit_theme_managed") <- TRUE
   }
+  x
+}
+
+#' Apply theme fallback and sync lazy labels before rendering.
+#' @noRd
+#' @keywords internal
+._prepare_render <- function(x) {
+  x <- ._ensure_theme(x)
   # Aspect-true rendering outranks fixed panel sizing: baked absolute panel
   # dimensions would stretch fixed-aspect coordinates (chord / network /
   # project_cartesian(fixed = ...)).
@@ -193,13 +200,12 @@ S7::method(export, plotit_class) <- function(
   device = NULL,
   ...
 ) {
-  if (is.null(filename) || identical(filename, "")) {
-    cli::cli_abort("{.arg filename} must be a non-empty file path.")
-  }
-
   meta_unit <- plot@meta@unit %||% getOption("plotit.default_unit", "in")
 
-  # Apply lazy labels before measuring / exporting
+  # Theme fallback + lazy labels before measuring / exporting (same
+  # preparation as print, minus the aspect strip -- the fixed gtable
+  # letterboxes CoordFixed panels on its own).
+  plot <- ._ensure_theme(plot)
   plot <- ._sync_labels(plot)
 
   if (isTRUE(plot@meta@autofit)) {
@@ -223,17 +229,7 @@ S7::method(export, plotit_class) <- function(
     final_height <- if (is.null(height)) measured$height else ._unit_to_inches(height, meta_unit)
   }
 
-  ggplot2::ggsave(
-    filename = filename,
-    plot = final_plot,
-    width = final_width,
-    height = final_height,
-    dpi = dpi,
-    device = device,
-    units = "in",
-    bg = "white",
-    ...
-  )
+  ._ggsave_inches(filename, final_plot, final_width, final_height, dpi, device, ...)
 
   invisible(plot)
 }

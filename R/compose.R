@@ -52,6 +52,52 @@ NULL
   }
 }
 
+# Full subplot preparation: sync lazy labels, extract the raw ggplot, and
+# strip baked panel sizing.  One choke point for every compose_* entry.
+#' Prepare a sub-plot's raw ggplot for composite assembly.
+#' @noRd
+#' @keywords internal
+._prep_subplot_gg <- function(p) {
+  ._reset_sizing(._extract_gg(._sync_subplot(p)))
+}
+
+# Fresh annotation skeleton shared by all compose_* constructors.
+#' Create an empty composite annotation list.
+#' @noRd
+#' @keywords internal
+._new_annotations <- function(tag_levels = NULL) {
+  list(
+    title      = NULL,
+    subtitle   = NULL,
+    caption    = NULL,
+    tag_levels = tag_levels
+  )
+}
+
+# Shared export plumbing: one filename validation + one ggsave invocation
+# with the locked-argument policy (inches, white background) in a single
+# place.  `...` forwards to ggsave after the locked arguments, so users can
+# still pass device-specific options -- but `bg`/`units` are plotit policy.
+#' Validate an export filename and save via ggsave with package policy.
+#' @noRd
+#' @keywords internal
+._ggsave_inches <- function(filename, plot, width, height, dpi, device, ...) {
+  if (is.null(filename) || identical(filename, "")) {
+    cli::cli_abort("{.arg filename} must be a non-empty file path.")
+  }
+  ggplot2::ggsave(
+    filename = filename,
+    plot = plot,
+    width = width,
+    height = height,
+    dpi = dpi,
+    device = device,
+    units = "in",
+    bg = "white",
+    ...
+  )
+}
+
 # Default composite canvas size.
 #
 # patchworkGrob() contains `1null` panel units that only resolve inside a
@@ -62,7 +108,7 @@ NULL
 #' Default width/height (inches) for a composite without explicit size.
 #' @noRd
 #' @keywords internal
-._composite_default_size <- function(c) {
+._composite_default_size <- function(cmp) {
   def_size <- ._default_panel_size()
   panel_size <- function(p) {
     is_sized_plot <- S7::S7_inherits(p, plotit_class) &&
@@ -81,12 +127,12 @@ NULL
   # (mirrors the single-plot 5 x 3.5 panel -> ~6.6 in footprint budget).
   allowance_w <- 1.6
   allowance_h <- 1.6
-  sizes <- lapply(c@plots, panel_size)
+  sizes <- lapply(cmp@plots, panel_size)
   n <- length(sizes)
-  lt <- c@layout$type %||% "grid"
+  lt <- cmp@layout$type %||% "grid"
   if (lt == "marginal") {
-    widths <- c@layout$widths %||% c(4, 1)
-    heights <- c@layout$heights %||% c(1, 4)
+    widths <- cmp@layout$widths %||% c(4, 1)
+    heights <- cmp@layout$heights %||% c(1, 4)
     main <- sizes[[1]]
     list(
       width  = main$w * sum(widths) / widths[1] + allowance_w,
@@ -96,12 +142,12 @@ NULL
     base <- sizes[[1]]
     list(width = base$w + allowance_w, height = base$h + allowance_h)
   } else {
-    ncol <- c@layout$ncol %||% if (!is.null(c@layout$nrow)) {
-      ceiling(n / c@layout$nrow)
+    ncol <- cmp@layout$ncol %||% if (!is.null(cmp@layout$nrow)) {
+      ceiling(n / cmp@layout$nrow)
     } else {
       1
     }
-    nrow <- c@layout$nrow %||% ceiling(n / ncol)
+    nrow <- cmp@layout$nrow %||% ceiling(n / ncol)
     cell_w <- max(vapply(sizes, function(s) s$w, numeric(1)))
     cell_h <- max(vapply(sizes, function(s) s$h, numeric(1)))
     list(
@@ -146,9 +192,9 @@ NULL
 #' Lazily apply stored annotations (title, subtitle, caption, tags) to composite gg.
 #' @noRd
 #' @keywords internal
-._apply_annotations <- function(c) {
-  gg <- c@gg
-  ann <- c@annotations
+._apply_annotations <- function(cmp) {
+  gg <- cmp@gg
+  ann <- cmp@annotations
   has <- !is.null(ann$title) || !is.null(ann$subtitle) ||
     !is.null(ann$caption) || !is.null(ann$tag_levels)
   if (!has) {
@@ -229,12 +275,7 @@ compose_grid <- function(
     axes    = axes
   )
 
-  annotations <- list(
-    title      = NULL,
-    subtitle   = NULL,
-    caption    = NULL,
-    tag_levels = tag_levels
-  )
+  annotations <- ._new_annotations(tag_levels)
 
   gg <- ._assemble_plots(plots, layout)
 
@@ -284,8 +325,8 @@ compose_inset <- function(
     cli::cli_abort("{.arg base} must be a {.cls plotit} object.")
   }
 
-  base_gg <- ._reset_sizing(._extract_gg(._sync_subplot(base)))
-  inset_gg <- ._reset_sizing(._extract_gg(._sync_subplot(inset)))
+  base_gg <- ._prep_subplot_gg(base)
+  inset_gg <- ._prep_subplot_gg(inset)
   gg <- base_gg + patchwork::inset_element(
     inset_gg,
     left     = left,
@@ -311,12 +352,7 @@ compose_inset <- function(
     gg = gg,
     plots = list(base, inset),
     layout = layout,
-    annotations = list(
-      title      = NULL,
-      subtitle   = NULL,
-      caption    = NULL,
-      tag_levels = NULL
-    )
+    annotations = ._new_annotations()
   )
 }
 
@@ -364,9 +400,9 @@ compose_marginal <- function(
     cli::cli_abort("{.arg main} must be a {.cls plotit} object.")
   }
 
-  main_gg <- ._reset_sizing(._extract_gg(._sync_subplot(main)))
-  top_gg <- ._reset_sizing(._extract_gg(._sync_subplot(top)))
-  right_gg <- ._reset_sizing(._extract_gg(._sync_subplot(right)))
+  main_gg <- ._prep_subplot_gg(main)
+  top_gg <- ._prep_subplot_gg(top)
+  right_gg <- ._prep_subplot_gg(right)
 
   # Shared axes: hide redundant labels / ticks on marginal panels
   # BEFORE assembly (robust -- no patchwork-internals dependency)
@@ -400,12 +436,7 @@ compose_marginal <- function(
       widths  = widths,
       heights = heights
     ),
-    annotations = list(
-      title      = NULL,
-      subtitle   = NULL,
-      caption    = NULL,
-      tag_levels = NULL
-    )
+    annotations = ._new_annotations()
   )
 }
 
@@ -439,16 +470,15 @@ S7::method(export, plotit_composite) <- function(
   device = NULL,
   ...
 ) {
-  if (is.null(filename) || identical(filename, "")) {
-    cli::cli_abort("{.arg filename} must be a non-empty file path.")
-  }
-
   gg <- ._apply_annotations(plot)
 
-  # Resolve size_unit from first sub-plot's meta, or global option
+  # Resolve size_unit from first sub-plot's meta, or global option.
+  # Only plain sub-plots carry a meaningful meta; nested composites hold a
+  # synthetic one and are skipped.
   meta_unit <- NULL
   for (p in plot@plots) {
-    if (S7::S7_inherits(p, plotit_class)) {
+    if (S7::S7_inherits(p, plotit_class) &&
+          !S7::S7_inherits(p, plotit_composite)) {
       meta_unit <- p@meta@unit
       break
     }
@@ -466,18 +496,7 @@ S7::method(export, plotit_composite) <- function(
     if (is.null(height)) height <- size_in$height
   }
 
-  ggplot2::ggsave(
-    filename = filename,
-    plot     = gg,
-    width    = width,
-    height   = height,
-    dpi      = dpi,
-    device   = device,
-    units    = "in",
-    bg       = "white",
-    ...
-  )
-
+  ._ggsave_inches(filename, gg, width, height, dpi, device, ...)
   invisible(plot)
 }
 
@@ -499,6 +518,11 @@ S7::method(export, plotit_composite) <- function(
   plot
 }
 
+# Three explicit thin methods (shared protocol lives in the setter above).
+# A registration loop was tried here and reverted: under package load the
+# S7 method closures did not capture their per-iteration bindings reliably,
+# silently routing every annotation into the last field.
+#
 #' @export
 S7::method(label_title, plotit_composite) <- function(
   plot,
@@ -551,16 +575,4 @@ S7::method(style, plotit_composite) <- function(
     plot@gg <- plot@gg + thm + ggplot2::theme(...)
   }
   plot
-}
-
-# ---- style_default method (composite) -------------------------------------
-
-#' @export
-S7::method(style_default, plotit_composite) <- function(
-  plot,
-  base_size = NULL,
-  base_family = NULL,
-  ...
-) {
-  style(plot, ..., base_size = base_size, base_family = base_family)
 }

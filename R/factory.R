@@ -30,19 +30,23 @@ make_mark <- function(name, geom_fun) {
   if (!is.character(name) || length(name) != 1) {
     cli::cli_abort("{.arg name} must be a single string.")
   }
+  if (!is.function(geom_fun)) {
+    cli::cli_abort("{.arg geom_fun} must be a geom function.")
+  }
   if (!grepl("^mark_", name)) {
     cli::cli_warn(
       "{.arg name} should start with 'mark_', got {.val {name}}."
     )
   }
+  # Re-registering silently replaces the previous binding; say so.
+  if (exists(name, envir = parent.frame(), inherits = FALSE)) {
+    cli::cli_warn(
+      "{.val {name}} already exists in the calling environment and will be \\
+       replaced."
+    )
+  }
 
-  generic <- S7::new_generic(
-    name, "plot",
-    function(plot, mapping = NULL, data = NULL, position = NULL, ...,
-             rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
-      S7::S7_dispatch()
-    }
-  )
+  generic <- ._make_mark_generic(name)
   ._register_mark_method(generic, geom_fun)
   # Make the new mark callable from the calling environment (same pattern
   # as make_theme), so it works inside pipelines right away.
@@ -79,7 +83,6 @@ make_mark <- function(name, geom_fun) {
 #'   style_dark()
 #' @export
 make_theme <- function(name, ..., base_theme = ggplot2::theme_minimal) {
-  force(name)
   force(base_theme)
   dots <- rlang::list2(...)
 
@@ -89,6 +92,9 @@ make_theme <- function(name, ..., base_theme = ggplot2::theme_minimal) {
       base_family = base_family %||% ""
     ) + do.call(ggplot2::theme, dots)
     plot@gg <- plot@gg + thm
+    # Same contract as style(): the applied theme counts as managed so the
+    # render-time fallback never layers the default theme on top of it.
+    attr(plot@meta, "plotit_theme_managed") <- TRUE
     plot
   }
   assign(name, fun, envir = parent.frame())

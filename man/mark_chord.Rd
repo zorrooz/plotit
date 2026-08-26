@@ -10,6 +10,7 @@ mark_chord(
   data = NULL,
   gap_width = 4,
   edge_alpha = ._MARK_STYLE$alpha_link,
+  show_labels = TRUE,
   ...
 )
 }
@@ -30,6 +31,8 @@ to the layout's angular padding.}
 
 \item{edge_alpha}{Alpha transparency for link bands
 (default \code{._MARK_STYLE$alpha_link} = 0.5).}
+
+\item{show_labels}{If \code{TRUE} (default), draw sector ids outside the ring.}
 
 \item{...}{Unused; fine-tuning (inner radius, curvature, sector order)
 lives on \code{\link[=layout_chord]{layout_chord()}} in the explicit pipeline form.}

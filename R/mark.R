@@ -57,7 +57,7 @@ NULL
   } else {
     do.call(geom_fun, c(list(mapping = mapping, data = data, position = pos), dots))
   }
-  plot <- .add_geom(plot, geom,
+  plot <- ._add_geom(plot, geom,
     rasterize = rasterize, rasterize_dpi = rasterize_dpi,
     rasterize_dev = rasterize_dev
   )
@@ -72,16 +72,48 @@ NULL
 
 # ---- Rasterization helper ----
 # Wraps a geom call with ggrastr::rasterise() when rasterize = TRUE
-.add_geom <- function(plot, geom_call, rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+._add_geom <- function(plot, geom_call, rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
   if (rasterize) {
-    if (!requireNamespace("ggrastr", quietly = TRUE)) {
-      cli::cli_abort("Rasterization requires the {.pkg ggrastr} package.")
-    }
+    ._require_pkg("ggrastr", "Rasterization")
     plot@gg <- plot@gg + ggrastr::rasterise(geom_call, dpi = rasterize_dpi, dev = rasterize_dev)
   } else {
     plot@gg <- plot@gg + geom_call
   }
   plot
+}
+
+# Unified entry point for marks that must merge named extras (method-level
+# formals such as `bins`, `method`, `width`) into the dots before dispatching
+# through the shared mark path.  Uses do.call splicing rather than `!!!`:
+# dynamic dots are unreliable inside byte-compiled package methods.
+#' Dispatch to ._mark_impl with pre-merged extra arguments.
+#' @noRd
+#' @keywords internal
+._impl_with <- function(plot, mapping, data, position, geom_fun,
+                        rasterize, rasterize_dpi, rasterize_dev,
+                        bind_aes = NULL, mark_name = NULL,
+                        extra = list(), auto_dodge = TRUE) {
+  do.call(
+    function(...) {
+      ._mark_impl(
+        plot, mapping, data, position, geom_fun,
+        rasterize, rasterize_dpi, rasterize_dev,
+        auto_dodge = auto_dodge, bind_aes = bind_aes, mark_name = mark_name, ...
+      )
+    },
+    extra
+  )
+}
+
+# Attach the default fill scale for a mark-owned derived channel (corr
+# value / hex count / density level).  Internal installs replace the
+# construction-time scale by design, so ggplot2's replacement message is
+# suppressed here once instead of at every call site.
+#' Attach a managed default fill scale for a derived channel.
+#' @noRd
+#' @keywords internal
+._derived_fill <- function(plot, trans, range = "viridis") {
+  suppressMessages(scale_fill(plot, trans = trans, range = range))
 }
 
 # ---- mark method factory ----
@@ -286,17 +318,16 @@ S7::method(mark_text, plotit_class) <- function(
   rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
 ) {
   if (repel) {
-    if (!requireNamespace("ggrepel", quietly = TRUE)) {
-      cli::cli_abort("{.arg repel = TRUE} requires the {.pkg ggrepel} package.")
-    }
+    ._require_pkg("ggrepel", "{.arg repel = TRUE}")
     geom_fun <- ggrepel::geom_text_repel
   } else {
     geom_fun <- ggplot2::geom_text
   }
-  ._mark_impl(
+  ._impl_with(
     plot, mapping, data, position, geom_fun,
     rasterize, rasterize_dpi, rasterize_dev,
-    bind_aes = ._MARK_BIND_AES$mark_text, mark_name = "mark_text", ...
+    bind_aes = ._MARK_BIND_AES$mark_text, mark_name = "mark_text",
+    extra = rlang::list2(...)
   )
 }
 
@@ -352,9 +383,7 @@ S7::method(mark_map, plotit_class) <- function(
   plot, mapping = NULL, data = NULL, position = NULL, ...,
   rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
 ) {
-  if (!requireNamespace("sf", quietly = TRUE)) {
-    cli::cli_abort("{.fn mark_map} requires the {.pkg sf} package.")
-  }
+  ._require_pkg("sf", "{.fn mark_map}")
   layer_data <- data %||% plot@gg$data
   if (!inherits(layer_data, "sf")) {
     cli::cli_abort(c(
@@ -367,7 +396,7 @@ S7::method(mark_map, plotit_class) <- function(
     plot <- ._clear_default_color(plot, mapping)
   }
   geom <- ggplot2::geom_sf(mapping = mapping, data = data, ...)
-  .add_geom(plot, geom,
+  ._add_geom(plot, geom,
     rasterize = rasterize, rasterize_dpi = rasterize_dpi,
     rasterize_dev = rasterize_dev
   )
@@ -407,17 +436,24 @@ S7::method(mark_rect, plotit_class) <- function(
   # Corner aesthetics (e.g. auto-bound treemap/sankey geometry) route to
   # geom_rect; centered aesthetics keep the classic geom_tile behaviour.
   peeked <- ._resolve_layer_data(data, plot)
+  dots <- rlang::list2(...)
   if (peeked$from_graph) {
     mapping <- ._auto_bind_geometry(mapping, peeked$data,
       scope = ._MARK_BIND_AES$mark_rect
     )
+    # Hand the resolved table down so the unified path does not resolve
+    # the ~table reference a second time, and mirror its graph-layer
+    # contract (never merge the global mapping over a resolved table).
+    data <- peeked$data
+    dots$inherit.aes <- FALSE
   }
   corners <- !is.null(mapping) &&
     all(c("xmin", "xmax", "ymin", "ymax") %in% names(mapping))
   geom_fun <- if (corners) ggplot2::geom_rect else ggplot2::geom_tile
-  ._mark_impl(plot, mapping, data, position, geom_fun,
+  ._impl_with(plot, mapping, data, position, geom_fun,
     rasterize, rasterize_dpi, rasterize_dev,
-    bind_aes = ._MARK_BIND_AES$mark_rect, mark_name = "mark_rect", ...
+    bind_aes = ._MARK_BIND_AES$mark_rect, mark_name = "mark_rect",
+    extra = dots
   )
 }
 
@@ -443,8 +479,9 @@ S7::method(mark_rect, plotit_class) <- function(
 #' @param xend End x coordinate(s) for segment
 #' @param y Start y coordinate(s) for segment
 #' @param yend End y coordinate(s) for segment
-#' @param colour Line colour (default `"grey50"`, the unified soft neutral;
-#'   ggplot2's black is restored by passing `colour = "black"`).
+#' @param color Line colour (default `"grey50"`, the unified soft neutral;
+#'   ggplot2's black is restored by passing `color = "black"`).  The British
+#'   spelling `colour` is still accepted through `...`.
 #' @param linetype Line type
 #' @param linewidth Line width in mm (default 0.5).
 #' @param mapping Optional aesthetics for data-driven segments
@@ -464,7 +501,7 @@ S7::method(mark_rect, plotit_class) <- function(
 #' \href{https://g2.antv.antgroup.com/en/api/mark/range}{Range}
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
-#'   mark_rule(xintercept = 3, colour = "red", linetype = "dashed")
+#'   mark_rule(xintercept = 3, color = "red", linetype = "dashed")
 #'
 #' # Data-driven segments: network edges from a layout_* transform
 #' e <- data.frame(source = c("a", "a", "b"), target = c("b", "c", "c"))
@@ -472,7 +509,7 @@ S7::method(mark_rect, plotit_class) <- function(
 #'   plotit() |>
 #'   layout_force(seed = 1) |>
 #'   mark_point(data = ~nodes) |>
-#'   mark_rule(data = ~edges, colour = "grey70")
+#'   mark_rule(data = ~edges, color = "grey70")
 #' @export
 mark_rule <- S7::new_generic(
   "mark_rule", "plot",
@@ -480,7 +517,7 @@ mark_rule <- S7::new_generic(
            xintercept = NULL, yintercept = NULL,
            slope = NULL, intercept = NULL,
            x = NULL, xend = NULL, y = NULL, yend = NULL,
-           colour = NULL, linetype = NULL, linewidth = NULL,
+           color = NULL, linetype = NULL, linewidth = NULL,
            ...,
            rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
     S7::S7_dispatch()
@@ -493,7 +530,7 @@ S7::method(mark_rule, plotit_class) <- function(
   xintercept = NULL, yintercept = NULL,
   slope = NULL, intercept = NULL,
   x = NULL, xend = NULL, y = NULL, yend = NULL,
-  colour = NULL, linetype = NULL, linewidth = NULL,
+  color = NULL, linetype = NULL, linewidth = NULL,
   ...,
   rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
 ) {
@@ -528,7 +565,7 @@ S7::method(mark_rule, plotit_class) <- function(
       ))
     }
     static <- rlang::list2(...)
-    if (!is.null(colour)) static$colour <- colour
+    if (!is.null(color)) static$colour <- color
     if (!is.null(linetype)) static$linetype <- linetype
     if (!is.null(linewidth)) static$linewidth <- linewidth
     # Explicit segment mapping: never merge the global aes over it.
@@ -551,7 +588,7 @@ S7::method(mark_rule, plotit_class) <- function(
 
   # Build named list of non-NULL params for the geom call
   params <- rlang::list2(...)
-  if (!is.null(colour)) params$colour <- colour
+  if (!is.null(color)) params$colour <- color
   if (!is.null(linetype)) params$linetype <- linetype
   if (!is.null(linewidth)) params$linewidth <- linewidth
   # Unified reference-line default (R/mark_style.R): soft neutral stroke
@@ -581,7 +618,7 @@ S7::method(mark_rule, plotit_class) <- function(
     # constant aes() mappings trigger on multi-row data (R6).  NULL
     # parameters are omitted -- annotate() requires equal-length params.
     ann_args <- list(x = x, xend = xend, y = y, yend = yend)
-    if (!is.null(colour)) ann_args$colour <- colour
+    if (!is.null(color)) ann_args$colour <- color
     if (!is.null(linetype)) ann_args$linetype <- linetype
     if (!is.null(linewidth)) ann_args$linewidth <- linewidth
     if (is.null(ann_args$colour) && !"colour" %in% ._user_owned_aes(plot, mapping)) {
@@ -599,7 +636,7 @@ S7::method(mark_rule, plotit_class) <- function(
     ))
   }
 
-  .add_geom(plot, geom_call,
+  ._add_geom(plot, geom_call,
     rasterize = rasterize, rasterize_dpi = rasterize_dpi,
     rasterize_dev = rasterize_dev
   )
@@ -699,13 +736,11 @@ S7::method(mark_smooth, plotit_class) <- function(
   params$method <- method
   params$formula <- formula
   params$se <- se
-  do.call(function(...) {
-    ._mark_impl(
-      plot, mapping, data, position, ggplot2::geom_smooth,
-      rasterize, rasterize_dpi, rasterize_dev,
-      bind_aes = ._MARK_BIND_AES$mark_smooth, mark_name = "mark_smooth", ...
-    )
-  }, params)
+  ._impl_with(plot, mapping, data, position, ggplot2::geom_smooth,
+    rasterize, rasterize_dpi, rasterize_dev,
+    bind_aes = ._MARK_BIND_AES$mark_smooth, mark_name = "mark_smooth",
+    extra = params
+  )
 }
 
 # ---- mark_hex ----
@@ -750,30 +785,25 @@ S7::method(mark_hex, plotit_class) <- function(
   bins = NULL,
   rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
 ) {
-  if (!requireNamespace("hexbin", quietly = TRUE)) {
-    cli::cli_abort("{.fn mark_hex} requires the {.pkg hexbin} package.")
-  }
+  ._require_pkg("hexbin", "{.fn mark_hex}")
   # Track whether the user owns the fill channel before the injected
   # default_color constants are cleared below.
   user_fill <- !is.null(mapping$fill) ||
-    (!is.null(plot@gg$mapping$fill) && !inherits(plot@gg$mapping$fill, "AsIs"))
+    "fill" %in% ._user_owned_aes(plot, mapping)
   # The bin-count fill is owned by this closed statistical mark: drop the
   # injected single-colour constants so the count scale can render.
   plot <- ._clear_default_color(plot)
   params <- rlang::list2(...)
   params$bins <- bins
-  plot <- do.call(function(...) {
-    ._mark_impl(
-      plot, mapping, data, position, ggplot2::geom_hex,
-      rasterize, rasterize_dpi, rasterize_dev,
-      bind_aes = ._MARK_BIND_AES$mark_hex, mark_name = "mark_hex", ...
-    )
-  }, params)
+  plot <- ._impl_with(plot, mapping, data, position, ggplot2::geom_hex,
+    rasterize, rasterize_dpi, rasterize_dev,
+    bind_aes = ._MARK_BIND_AES$mark_hex, mark_name = "mark_hex",
+    extra = params
+  )
   # Default continuous fill (AGENTS.md §6): viridis unless the user mapped
-  # their own fill.  A later scale_fill() call replaces it (last wins);
-  # replacement of a construction-attached scale is intended -> suppressed.
+  # their own fill.  A later scale_fill() call replaces it (last wins).
   if (!user_fill) {
-    plot <- suppressMessages(scale_fill(plot, trans = "identity", range = "viridis"))
+    plot <- ._derived_fill(plot, trans = "identity")
   }
   plot
 }
@@ -827,42 +857,28 @@ S7::method(mark_density_2d, plotit_class) <- function(
   if (filled) {
     plot <- ._clear_default_color(plot)
   }
-  plot <- do.call(function(...) {
-    ._mark_impl(
-      plot, mapping, data, position, geom_fun,
-      rasterize, rasterize_dpi, rasterize_dev,
-      bind_aes = ._MARK_BIND_AES$mark_density, mark_name = "mark_density_2d", ...
-    )
-  }, dots)
+  plot <- ._impl_with(plot, mapping, data, position, geom_fun,
+    rasterize, rasterize_dpi, rasterize_dev,
+    bind_aes = ._MARK_BIND_AES$mark_density_2d, mark_name = "mark_density_2d",
+    extra = dots
+  )
   if (filled) {
-    plot <- suppressMessages(scale_fill(plot, trans = "discrete", range = "viridis"))
+    plot <- ._derived_fill(plot, trans = "discrete")
   }
   plot
 }
 
-# ---- transform_corr ----
-#' Correlation preprocessing transform
-#'
-#' Computes pairwise correlations over the numeric columns of `data` and
-#' melts the matrix into a long-form table (`Var1`, `Var2`, `value`),
-#' optionally reordering rows/columns by hierarchical clustering.
-#' [mark_corr()] is sugar over this transform plus a tile layer; call it
-#' directly when you need the table for custom rendering or inspection.
-#'
-#' @param data A data.frame with at least two numeric columns.
-#' @param method Correlation method: `"pearson"` (default), `"spearman"`,
-#'   or `"kendall"`.
-#' @param reorder If `TRUE` (default), reorder rows and columns by
-#'   hierarchical clustering.  Skipped with a warning when the matrix
-#'   contains NA (e.g. zero-variance columns).
-#' @return A data.frame with columns `Var1`, `Var2` (factors) and
-#'   `value` (numeric correlation).
-#' @examples
-#' head(transform_corr(mtcars[, c("mpg", "disp", "hp")]))
-#' @export
-transform_corr <- function(data,
-                           method = c("pearson", "spearman", "kendall"),
-                           reorder = TRUE) {
+# ---- correlation preprocessing (internal) ----
+# Vega-style discipline: data transforms live inside the spec, not on the
+# public surface.  [mark_corr()] is the public entry point; this helper
+# builds its long-form table (the formerly exported transform_corr() was an
+# orphan single-verb family and was folded back into the package interior).
+#' Compute a reordered, melted correlation table.
+#' @noRd
+#' @keywords internal
+._transform_corr <- function(data,
+                             method = c("pearson", "spearman", "kendall"),
+                             reorder = TRUE) {
   method <- match.arg(method)
   if (!is.data.frame(data)) {
     cli::cli_abort("{.arg data} must be a data.frame.")
@@ -870,7 +886,7 @@ transform_corr <- function(data,
   num_cols <- vapply(data, is.numeric, logical(1))
   if (sum(num_cols) < 2) {
     cli::cli_abort(
-      "{.fn transform_corr} requires at least 2 numeric columns."
+      "Correlation preprocessing requires at least 2 numeric columns."
     )
   }
   # Pairwise complete observations so a single NA column does not
@@ -903,9 +919,8 @@ transform_corr <- function(data,
 #'
 #' Computes a correlation matrix from numeric data columns, optionally
 #' reorders by hierarchical clustering, and renders it as a tile heatmap.
-#' Sugar over [transform_corr()] plus a tile layer.  The value fill scale
-#' defaults to viridis (colour-blind safe); chain [scale_fill()] afterwards
-#' to replace it (last call wins).
+#' The value fill scale defaults to viridis (colour-blind safe); chain
+#' [scale_fill()] afterwards to replace it (last call wins).
 #'
 #' @param plot A plotit object. Numeric columns are extracted from the
 #'   plot data for correlation computation.
@@ -944,27 +959,24 @@ S7::method(mark_corr, plotit_class) <- function(
   if (!is.data.frame(raw_data)) {
     cli::cli_abort("{.fn mark_corr} requires tabular plot data.")
   }
-  # Sugar over transform_corr() + tile layer (see §3.3.4a discipline).
-  # Routed through the shared mark path so the unified style defaults apply
-  # (white hairline separators between tiles, matching mark_rect).
-  df <- transform_corr(raw_data, method = method, reorder = reorder)
+  # Sugar over the internal corr transform + tile layer.  Routed through
+  # the shared mark path so the unified style defaults apply (white hairline
+  # separators between tiles, matching mark_rect).
+  df <- ._transform_corr(raw_data, method = method, reorder = reorder)
   mapping <- encode(x = Var1, y = Var2, fill = value)
   # The correlation value channel is mark-owned (magnitude -> sequential
   # viridis, AGENTS.md §6); pre-register it as managed so the layer-level
   # auto-attach does not double-fire.
   plot <- ._colour_managed_add(plot, "fill")
-  plot <- do.call(function(...) {
-    ._mark_impl(
-      plot, mapping, df,
-      position = NULL, ggplot2::geom_tile,
-      rasterize, rasterize_dpi, rasterize_dev,
-      auto_dodge = FALSE, bind_aes = NULL, mark_name = "mark_corr", ...
-    )
-  }, rlang::list2(...))
+  plot <- ._impl_with(plot, mapping, df,
+    position = NULL, ggplot2::geom_tile,
+    rasterize, rasterize_dpi, rasterize_dev,
+    auto_dodge = FALSE, bind_aes = NULL, mark_name = "mark_corr",
+    extra = rlang::list2(...)
+  )
   # Default the value fill to the colour-blind-safe continuous scheme; a
-  # later scale_fill() call replaces it (last wins).  Suppressed: replacing
-  # a construction-attached scale is the documented intent here.
-  plot <- suppressMessages(scale_fill(plot, trans = "identity", range = "viridis"))
+  # later scale_fill() call replaces it (last wins).
+  plot <- ._derived_fill(plot, trans = "identity")
   # Synthetic Var1/Var2 titles carry no meaning; the variable names on the
   # axes do.  (Axis lines/ticks and expansion are handled by the shared
   # closed-cell chrome inside ._mark_impl.)
@@ -1023,13 +1035,11 @@ S7::method(mark_errorbar, plotit_class) <- function(
   }
   params <- rlang::list2(...)
   params$width <- width
-  do.call(function(...) {
-    ._mark_impl(
-      plot, mapping, data, position, geom_fun,
-      rasterize, rasterize_dpi, rasterize_dev,
-      bind_aes = ._MARK_BIND_AES$mark_errorbar, mark_name = "mark_errorbar", ...
-    )
-  }, params)
+  ._impl_with(plot, mapping, data, position, geom_fun,
+    rasterize, rasterize_dpi, rasterize_dev,
+    bind_aes = ._MARK_BIND_AES$mark_errorbar, mark_name = "mark_errorbar",
+    extra = params
+  )
 }
 
 # ---- mark_significance ----
@@ -1059,9 +1069,11 @@ S7::method(mark_errorbar, plotit_class) <- function(
 #'   (default `._MARK_STYLE$ink` = `"grey30"`).
 #' @param line_width Width of bracket lines (default 0.5).
 #' @param text_size Size of significance label text (default 3.2).
-#' @param tip_length Length of bracket end-tick lines (default 0.02
-#'   as fraction of x-axis range).
-#' @param ... Additional arguments passed to `mark_text()`
+#' @param tip_length Length of bracket end-tick lines (default 0.02).  Units
+#'   follow the axis type: a fraction of the level count on discrete x axes,
+#'   a fraction of the bracket's numeric span on continuous axes.
+#' @param ... Additional arguments passed to the label annotation
+#'   (`ggplot2::annotate("text", ...)`).
 #' @return Modified plotit object
 #' @examples
 #' df <- data.frame(group = c("A", "B", "C"), value = c(5, 8, 4))
@@ -1238,7 +1250,7 @@ S7::method(mark_lollipop, plotit_class) <- function(
     mapping = stem_mapping,
     colour = stem_color, linewidth = stem_width
   )
-  plot <- .add_geom(plot, geome)
+  plot <- ._add_geom(plot, geome)
   # Point at the top: keep the visual channels (colour/fill/...) but drop
   # positional extras such as `yend`, which geom_point does not understand.
   keep <- setdiff(names(m), c("xend", "yend"))
@@ -1326,7 +1338,7 @@ S7::method(mark_dumbbell, plotit_class) <- function(
     mapping = segment_mapping,
     colour = line_color, linewidth = line_width
   )
-  plot <- .add_geom(plot, geome)
+  plot <- ._add_geom(plot, geome)
   # Start point
   start_mapping <- encode(x = !!x_col, y = !!y_col)
   plot <- plot |>
@@ -1384,21 +1396,17 @@ S7::method(mark_beeswarm, plotit_class) <- function(
   method = c("swarm", "compactswarm", "hex", "square", "center", "centre"),
   rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
 ) {
-  if (!requireNamespace("ggbeeswarm", quietly = TRUE)) {
-    cli::cli_abort("{.fn mark_beeswarm} requires the {.pkg ggbeeswarm} package.")
-  }
+  ._require_pkg("ggbeeswarm", "{.fn mark_beeswarm}")
   method <- match.arg(method)
   params <- rlang::list2(...)
   params$method <- method
   # geom_beeswarm implements its own collision placement; the global
   # auto-dodge position is not supported (B3).
-  do.call(function(...) {
-    ._mark_impl(plot, mapping, data, position, ggbeeswarm::geom_beeswarm,
-      rasterize, rasterize_dpi, rasterize_dev,
-      auto_dodge = FALSE, bind_aes = ._MARK_BIND_AES$mark_point,
-      mark_name = "mark_beeswarm", ...
-    )
-  }, params)
+  ._impl_with(plot, mapping, data, position, ggbeeswarm::geom_beeswarm,
+    rasterize, rasterize_dpi, rasterize_dev,
+    auto_dodge = FALSE, bind_aes = ._MARK_BIND_AES$mark_beeswarm,
+    mark_name = "mark_beeswarm", extra = params
+  )
 }
 
 # ---- mark_bar (hand-written: geom_col vs geom_bar dispatch) ----
@@ -1445,3 +1453,25 @@ S7::method(mark_bar, plotit_class) <- function(plot, mapping = NULL, data = NULL
     bind_aes = ._MARK_BIND_AES$mark_bar, mark_name = "mark_bar", ...
   )
 }
+
+# ---- mark catalog -----------------------------------------------------------
+# Single source of truth for every built-in mark generic.  zzz.R consumes
+# this to register the plotit_composite rejection stubs, so a newly added
+# mark only needs its name here (plus the generic/method above) to be fully
+# pipeline-integrated.  Existence is verified at load time in zzz.R.
+._CATALOG_MARKS <- c(
+  # Basic geometry
+  "mark_point", "mark_line", "mark_area", "mark_bar", "mark_rect",
+  "mark_polygon", "mark_text", "mark_rule", "mark_path",
+  # Distributions
+  "mark_histogram", "mark_density", "mark_boxplot", "mark_violin",
+  # Geographic
+  "mark_map",
+  # Statistical
+  "mark_smooth", "mark_hex", "mark_density_2d", "mark_corr",
+  # Composite / annotation
+  "mark_errorbar", "mark_significance", "mark_lollipop", "mark_dumbbell",
+  "mark_beeswarm",
+  # Relational sugars
+  "mark_sankey", "mark_treemap", "mark_network", "mark_chord"
+)

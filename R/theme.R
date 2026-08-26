@@ -144,6 +144,16 @@ NULL
   )
 }
 
+# Pick the colour or fill variant of a scale function (eliminates aes
+# branching).  Lives beside the palette decision point because both encode
+# "which channel of the colour pair am I serving".
+#' Pick colour or fill variant of a scale function.
+#' @noRd
+#' @keywords internal
+._cf <- function(aes, fun_c, fun_f) {
+  if (aes == "colour") fun_c else fun_f
+}
+
 # ---- Default colour scale attachment ----
 # Attach the token palettes as soon as a colour/fill mapping exists, so every
 # reference example looks curated without any scale_*() call.  A later user
@@ -212,19 +222,44 @@ NULL
 }
 
 #' Bake fixed panel dimensions into a ggplot object.
+#'
+#' `grid` gives the panel-grid dimensions (cols, rows) the declared size is
+#' spread across: meta sizes describe the whole panel *area*, so each cell
+#' in an n-column facet layout receives width / ncol (height / nrow).
 #' @noRd
 #' @keywords internal
-._apply_panel_size <- function(gg, width, height, unit = "in") {
+._apply_panel_size <- function(gg, width, height, unit = "in",
+                               grid = c(1, 1)) {
   if (!._panel_sizing_supported()) {
     return(gg)
   }
   if (is.null(width) || is.null(height)) {
     return(gg)
   }
+  ncol <- max(1, grid[1])
+  nrow <- max(1, grid[2])
   gg + ggplot2::theme(
-    panel.widths = grid::unit(c(width, width), unit),
-    panel.heights = grid::unit(c(height, height), unit)
+    panel.widths = grid::unit(rep(width / ncol, ncol), unit),
+    panel.heights = grid::unit(rep(height / nrow, nrow), unit)
   )
+}
+
+#' Panel-grid dimensions (cols, rows) of a built ggplot.
+#'
+#' Reads the panel layout from a ggplot_build result so facet layouts
+#' spread the declared panel area across their cells.
+#' @noRd
+#' @keywords internal
+._panel_grid_dims <- function(gg) {
+  built <- tryCatch(ggplot2::ggplot_build(gg), error = function(e) NULL)
+  if (is.null(built)) {
+    return(c(1, 1))
+  }
+  lay <- built$layout$layout
+  if (is.null(lay) || nrow(lay) == 0) {
+    return(c(1, 1))
+  }
+  c(max(lay$COL), max(lay$ROW))
 }
 
 #' Strip baked panel dimensions from a ggplot object.

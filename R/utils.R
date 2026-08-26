@@ -100,6 +100,21 @@ NULL
   ._colour_managed_remove(plot, c("colour", "fill"))
 }
 
+# ---- optional-dependency guards ----
+
+# Single choke point for the "requires package X" abort used by every
+# optional-enhancement code path (ggrastr, ggrepel, sf, hexbin, ggbeeswarm,
+# mapproj, tidygraph).  Keeps error wording identical across the package.
+#' Abort when an optional dependency is missing.
+#' @noRd
+#' @keywords internal
+._require_pkg <- function(pkg, reason) {
+  if (requireNamespace(pkg, quietly = TRUE)) {
+    return(invisible())
+  }
+  cli::cli_abort("{reason}; install {.pkg {pkg}} to enable it.")
+}
+
 # ---- size units & default canvas ----
 
 # Convert user-specified size unit to inches.
@@ -160,6 +175,12 @@ NULL
 # to the largest aspect-true rectangle inside the declared box (letterbox)
 # instead of being stretched.
 #' Build a gtable with fixed panel dimensions.
+#'
+#' The declared panel size describes the whole panel *area*: across an
+#' n-column x m-row facet grid each cell receives width / n and
+#' height / m.  When the plot uses a fixed-aspect coordinate system, the
+#' panel is shrunk to the largest aspect-true rectangle inside the
+#' declared box (letterbox) instead of being stretched.
 #' @noRd
 #' @keywords internal
 ._build_fixed_gtable <- function(gg, width, height, unit = "in") {
@@ -167,8 +188,13 @@ NULL
   gt <- ggplot2::ggplot_gtable(build)
   panel_cols <- unique(gt$layout$l[gt$layout$name == "panel"])
   panel_rows <- unique(gt$layout$t[gt$layout$name == "panel"])
-  w_in <- ._unit_to_inches(width, unit)
-  h_in <- ._unit_to_inches(height, unit)
+  # Spread the declared panel area across the facet grid (1x1 for single
+  # plots), so multi-panel exports keep the meta-declared total footprint.
+  lay <- build$layout$layout
+  n_col <- if (!is.null(lay)) max(1, max(lay$COL)) else 1
+  n_row <- if (!is.null(lay)) max(1, max(lay$ROW)) else 1
+  w_in <- ._unit_to_inches(width, unit) / n_col
+  h_in <- ._unit_to_inches(height, unit) / n_row
   # Honour coordinate aspect ratios (e.g. coord_fixed): aspect is the
   # required physical height/width ratio per panel.  Multi-panel layouts
   # use the first panel's ranges (documented approximation for free scales).

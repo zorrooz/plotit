@@ -36,10 +36,12 @@ In data units.}
 
 \item{text_size}{Size of significance label text (default 3.2).}
 
-\item{tip_length}{Length of bracket end-tick lines (default 0.02
-as fraction of x-axis range).}
+\item{tip_length}{Length of bracket end-tick lines (default 0.02).  Units
+follow the axis type: a fraction of the level count on discrete x axes,
+a fraction of the bracket's numeric span on continuous axes.}
 
-\item{...}{Additional arguments passed to \code{mark_text()}}
+\item{...}{Additional arguments passed to the label annotation
+(\code{ggplot2::annotate("text", ...)}).}
 }
 \value{
 Modified plotit object

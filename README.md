@@ -138,14 +138,14 @@ below (e.g. `mark_significance()` ≈ `mark_rule()` + `mark_text()`).
 | `mark_smooth()` | `geom_smooth()` | Regression fits with confidence bands |
 | `mark_hex()` | `geom_hex()` | 2D hexagonal binning |
 | `mark_density_2d()` | `geom_density_2d()` | 2D density contours |
-| `mark_corr()` | `transform_corr()` + `geom_tile()` | Correlation heatmap |
+| `mark_corr()` | internal corr transform + `geom_tile()` | Correlation heatmap |
 | `mark_errorbar()` | `geom_errorbar()` / `-h` | Error bars |
 | `mark_significance()` | sugar: rule + text | Significance brackets |
 | `mark_lollipop()` | sugar: point + stem | Lollipop charts |
 | `mark_dumbbell()` | sugar: two points + stem | Dumbbell comparison charts |
 | `mark_beeswarm()` | ggbeeswarm | Beeswarm scatter (collision detection) |
 | `mark_sankey()` | `layout_sankey()` sugar | Sankey flow diagrams |
-| `mark_treemap()` | treemapify | Treemaps |
+| `mark_treemap()` | `layout_treemap()` sugar | Treemaps |
 | `mark_network()` | `layout_force()/circle()` sugar | Force-directed network graphs |
 | `mark_chord()` | `layout_chord()` sugar | Chord diagrams |
 
@@ -165,7 +165,6 @@ a graph, bake layout coordinates into it, then render any sub-table via
 | `layout_chord()` | Chord sector layout (arcs + ribbons) |
 | `layout_sankey()` | Deterministic layered sankey layout (nodes/edges/ribbons) |
 | `layout_treemap()` | Squarified treemap layout |
-| `transform_corr()` | Correlation-matrix preprocessing for `mark_corr()` |
 
 ```r
 edges <- data.frame(source = c("A", "A", "B"),
@@ -233,8 +232,7 @@ edges |>
 
 | Function | Description |
 |:---|:---|
-| `style()` | Apply a ggplot2 theme |
-| `style_default()` | Restore plotit's built-in theme |
+| `style()` | Apply a ggplot2 theme (`style(p)` restores the plotit default) |
 
 ### Export
 
