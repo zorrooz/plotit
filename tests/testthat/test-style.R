@@ -4,38 +4,40 @@
 # ============================================================
 library(plotit)
 
-# ---- style_default ----
-test_that("[BDD] style_default() renders with white panel background", {
+# ---- style (default-theme path) ----
+# style_default() was removed as a pure alias; these BDD blocks now pin the
+# same behaviours through style().
+test_that("[BDD] style() renders with white panel background", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
-    style_default()
+    style()
   built <- ggplot2::ggplot_build(p@gg)
   # Default theme should have white panel (not grey)
   fill <- built$plot$theme$panel.background$fill
   expect_true(is.null(fill) || fill == "white" || identical(fill, "#FFFFFF"))
 })
 
-test_that("[BDD] style_default(base_size) changes text size", {
+test_that("[BDD] style(base_size) changes text size", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
-    style_default(base_size = 14)
+    style(base_size = 14)
   built <- ggplot2::ggplot_build(p@gg)
   expect_equal(built$plot$theme$text$size, 14)
 })
 
-test_that("[BDD] style_default(base_family) changes font", {
+test_that("[BDD] style(base_family) changes font", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
-    style_default(base_family = "serif")
+    style(base_family = "serif")
   built <- ggplot2::ggplot_build(p@gg)
   expect_equal(built$plot$theme$text$family, "serif")
 })
 
-test_that("[BDD] style_default multiple calls use last setting", {
+test_that("[BDD] style multiple calls use last setting", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
     mark_point() |>
-    style_default() |>
-    style_default(base_size = 16)
+    style() |>
+    style(base_size = 16)
   built <- ggplot2::ggplot_build(p@gg)
   expect_equal(built$plot$theme$text$size, 16)
 })

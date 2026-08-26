@@ -187,14 +187,14 @@ iris |>
   label_title("Iris Sepal Measurements")
 ```
 
-`style_default()` applies the built-in plotit default theme:
+`style()` without a `base_theme` applies the built-in plotit default theme:
 
 ```{r}
 iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
   mark_point() |>
   scale_color(range = "viridis") |>
-  style_default(base_size = 12)
+  style(base_size = 12)
 ```
 
 ## Coordinate Systems with `project_*()`

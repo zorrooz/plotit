@@ -2,7 +2,7 @@
 % Please edit documentation in R/scale.R
 \name{scale_x}
 \alias{scale_x}
-\title{X-axis position scale}
+\title{Controls the x-axis scale: transformation, limits, breaks, and labels.}
 \usage{
 scale_x(
   plot,

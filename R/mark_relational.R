@@ -11,6 +11,73 @@ NULL
 # * ._rel_canon_edges()      : one canonicalization rule for edges tables
 # * ._rel_label_aes()        : xc/yc/id label aes for layout anchors
 # * ._first_occurrence_fill(): node identity derived from edge groups
+# * ._rel_reject_dots()      : uniform "..." rejection pointing at layout_*
+# * ._rel_ribbon_layer()     : shared flow-band polygon layer
+# * ._rel_label_layer()      : shared conditional-colour label layer
+# * ._rel_legend_title()     : semantic legend title for derived fills
+# * ._rel_canvas()           : shared coordinate-free canvas chrome
+
+#' Warn and drop any arguments passed via `...` to a sugar mark.
+#' @noRd
+#' @keywords internal
+._rel_reject_dots <- function(dots, fn, hint) {
+  if (length(dots) > 0) {
+    cli::cli_warn(c(
+      "Arguments passed to {.fn {fn}} via {.arg ...} are ignored.",
+      "i" = "Use {hint} in the explicit pipeline form."
+    ))
+  }
+}
+
+#' Add the shared ribbon/band polygon layer (fill_grp x .ribbon_id).
+#' @noRd
+#' @keywords internal
+._rel_ribbon_layer <- function(plot, edge_alpha) {
+  band_mapping <- ggplot2::aes()
+  band_mapping$group <- rlang::sym(".ribbon_id")
+  band_mapping$fill <- rlang::sym("fill_grp")
+  mark_polygon(plot,
+    mapping = band_mapping, data = ~ribbons,
+    alpha = edge_alpha
+  )
+}
+
+#' Add the conditional-contrast label layer over `table` (~nodes/~leaves).
+#' White labels over an unmapped static fill, near-black over user-mapped
+#' channel colours.
+#' @noRd
+#' @keywords internal
+._rel_label_layer <- function(plot, table, has_fill, show_labels = TRUE) {
+  if (!isTRUE(show_labels)) {
+    return(plot)
+  }
+  lbl_args <- list(
+    plot = plot, mapping = ._rel_label_aes(), data = table,
+    size = ._MARK_STYLE$txt_note
+  )
+  lbl_args$colour <- if (!has_fill) "white" else "grey20"
+  do.call(mark_text, lbl_args)
+}
+
+#' Semantic legend title for the derived fill channel: "source" when the
+#' source-identity default is live, otherwise the user's own column name.
+#' @noRd
+#' @keywords internal
+._rel_legend_title <- function(has_fill, fill_name) {
+  if (!has_fill) "source" else (fill_name %||% "fill")
+}
+
+#' Apply the coordinate-free relational canvas: blank every axis element,
+#' optionally pinning a fixed aspect ratio (`clip = "off"` keeps outside-
+#' ring labels visible on chord diagrams).
+#' @noRd
+#' @keywords internal
+._rel_canvas <- function(plot, fixed = FALSE, clip = "on") {
+  if (fixed) {
+    plot@gg <- plot@gg + ggplot2::coord_fixed(clip = clip)
+  }
+  ._theme_blank_axes(plot)
+}
 
 # Canonicalize an edges table for the flow sugars (mark_sankey /
 # mark_chord):
@@ -91,7 +158,7 @@ NULL
   canon$fill_grp <- fill_vals
   skip_cols <- unique(c(
     src_nm, tgt_nm, val_nm,
-    "source", "target", "value", "fill_grp", ".sp", ".tp"
+    "source", "target", "value", "fill_grp"
   ))
   for (cl in setdiff(names(edges_df), skip_cols)) canon[[cl]] <- edges_df[[cl]]
 
@@ -151,12 +218,12 @@ NULL
 #'   \code{target} (required), \code{value} (optional).  Visual: \code{fill}
 #'   colours ribbons and nodes alike; ribbons default to source identity.
 #' @param data Optional edges data.frame for this layer
-#' @param position Position adjustment (ignored; the layout owns placement)
 #' @param node_color Default colour for node rectangles (used when no
 #'   \code{fill} mapping is present, default `._MARK_STYLE$ink` =
 #'   \code{"grey30"}).
 #' @param edge_alpha Alpha transparency for flow ribbons
 #'   (default `._MARK_STYLE$alpha_link` = 0.5).
+#' @param show_labels If `TRUE` (default), draw node ids inside the strips.
 #' @param ... Unused; fine-tuning (padding, curvature, node width) lives on
 #'   [layout_sankey()] in the explicit pipeline form.
 #' @return Modified plotit object; `@graph` holds the laid-out tables.
@@ -178,27 +245,24 @@ NULL
 #' @export
 mark_sankey <- S7::new_generic(
   "mark_sankey", "plot",
-  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+  function(plot, mapping = NULL, data = NULL, ...,
            node_color = ._MARK_STYLE$ink,
-           edge_alpha = ._MARK_STYLE$alpha_link) {
+           edge_alpha = ._MARK_STYLE$alpha_link,
+           show_labels = TRUE) {
     S7::S7_dispatch()
   }
 )
 
 #' @export
 S7::method(mark_sankey, plotit_class) <- function(
-  plot, mapping = NULL, data = NULL, position = NULL, ...,
+  plot, mapping = NULL, data = NULL, ...,
   node_color = ._MARK_STYLE$ink,
-  edge_alpha = ._MARK_STYLE$alpha_link
+  edge_alpha = ._MARK_STYLE$alpha_link,
+  show_labels = TRUE
 ) {
-  dots <- rlang::list2(...)
-  if (length(dots) > 0) {
-    cli::cli_warn(c(
-      "Arguments passed to {.fn mark_sankey} via {.arg ...} are ignored.",
-      "i" = "Use {.fn layout_sankey} in the explicit pipeline to control \\
-             padding, curvature and node width."
-    ))
-  }
+  ._rel_reject_dots(rlang::list2(...), "mark_sankey",
+    "{.fn layout_sankey} to control padding, curvature and node width"
+  )
 
   rel <- ._rel_canon_edges(
     data %||% plot@gg$data,
@@ -220,13 +284,7 @@ S7::method(mark_sankey, plotit_class) <- function(
   # suppression injected by plotit().
   plot <- ._clear_default_color(plot)
 
-  flow_mapping <- ggplot2::aes()
-  flow_mapping$fill <- rlang::sym("fill_grp")
-  flow_mapping$group <- rlang::sym(".ribbon_id")
-  plot <- mark_polygon(plot,
-    mapping = flow_mapping, data = ~ribbons,
-    alpha = edge_alpha
-  )
+  plot <- ._rel_ribbon_layer(plot, edge_alpha)
 
   if (rel$has_fill) {
     node_mapping <- ggplot2::aes()
@@ -236,33 +294,17 @@ S7::method(mark_sankey, plotit_class) <- function(
     plot <- mark_rect(plot, data = ~nodes, fill = node_color)
   }
 
-  # Labels sit inside the node strips: white over the default ink fill,
-  # near-black over user-mapped fills (override via mark_text for control).
-  txt_args <- list(
-    plot = plot, mapping = ._rel_label_aes(), data = ~nodes,
-    size = ._MARK_STYLE$txt_note
-  )
-  txt_args$colour <- if (!rel$has_fill) "white" else "grey20"
-  plot <- do.call(mark_text, txt_args)
+  # Labels sit inside the node strips (conditional contrast).
+  plot <- ._rel_label_layer(plot, ~nodes, rel$has_fill, show_labels)
 
   # Semantic legend title: the derived channel renders through the
   # fill_grp column, which would otherwise leak into the legend.  A user
   # mapping restores its own column name; label_legend() can override.
-  legend_title <- if (!rel$has_fill) {
-    "source"
-  } else {
-    rel$fill_name %||% "fill"
-  }
-  plot@gg <- plot@gg + ggplot2::labs(fill = legend_title)
-
-  # The derived fill channel is mark-owned: the layer-level auto-attach in
-  # ._mark_impl() curates it from the token palettes (identity/group channels
-  # -> friendly qualitative, continuous values -> viridis sequential), and a
-  # later scale_fill() replaces it (last call wins).
+  plot@gg <- plot@gg +
+    ggplot2::labs(fill = ._rel_legend_title(rel$has_fill, rel$fill_name))
 
   # Coordinate-free diagram: no axes around the layout canvas.
-  plot <- ._theme_blank_axes(plot)
-  plot
+  ._rel_canvas(plot)
 }
 
 # ---- mark_treemap ----
@@ -292,9 +334,6 @@ S7::method(mark_sankey, plotit_class) <- function(
 #'   Labels render white over the unmapped brand-blue fill; when a fill is
 #'   mapped they fall back to near-black -- chain
 #'   `mark_text(data = ~leaves, colour = ...)` for full control.
-#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
-#' @param rasterize_dpi DPI for rasterization (default 300).
-#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Unused; tiling fine-tuning lives on [layout_treemap()] in the
 #'   explicit pipeline form.
 #' @return Modified plotit object; `@graph` holds nodes/edges/leaves.
@@ -312,28 +351,22 @@ S7::method(mark_sankey, plotit_class) <- function(
 #' @export
 mark_treemap <- S7::new_generic(
   "mark_treemap", "plot",
-  function(plot, data = NULL, node_color = ._MARK_STYLE$primary,
-           show_labels = TRUE, ...,
-           rasterize = FALSE, rasterize_dpi = 300,
-           rasterize_dev = "cairo") {
+  function(plot, data = NULL,
+           node_color = ._MARK_STYLE$primary,
+           show_labels = TRUE, ...) {
     S7::S7_dispatch()
   }
 )
 
 #' @export
 S7::method(mark_treemap, plotit_class) <- function(
-  plot, data = NULL, node_color = ._MARK_STYLE$primary,
-  show_labels = TRUE, ...,
-  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+  plot, data = NULL,
+  node_color = ._MARK_STYLE$primary,
+  show_labels = TRUE, ...
 ) {
-  dots <- rlang::list2(...)
-  if (length(dots) > 0) {
-    cli::cli_warn(c(
-      "Arguments passed to {.fn mark_treemap} via {.arg ...} are ignored.",
-      "i" = "Use {.fn layout_treemap} in the explicit pipeline to control \\
-             the squarified tiling."
-    ))
-  }
+  ._rel_reject_dots(rlang::list2(...), "mark_treemap",
+    "{.fn layout_treemap} to control the squarified tiling"
+  )
 
   hier <- data %||% plot@gg$data
   if (!is.data.frame(hier) || !all(c("id", "parent") %in% names(hier))) {
@@ -363,27 +396,15 @@ S7::method(mark_treemap, plotit_class) <- function(
     # channels -> friendly, continuous values -> viridis); a later
     # scale_fill() replaces it (last call wins).
   }
-  rect_args <- list(
-    plot = plot, data = ~leaves, mapping = rect_mapping,
-    rasterize = rasterize, rasterize_dpi = rasterize_dpi,
-    rasterize_dev = rasterize_dev
-  )
+  rect_args <- list(plot = plot, data = ~leaves, mapping = rect_mapping)
   if (!has_fill) rect_args$fill <- node_color
   plot <- do.call(mark_rect, rect_args)
 
-  # Leaf labels centred on each tile (xc/yc from the layout engine).
-  if (isTRUE(show_labels)) {
-    lbl_args <- list(
-      plot = plot, mapping = ._rel_label_aes(), data = ~leaves,
-      size = ._MARK_STYLE$txt_note
-    )
-    lbl_args$colour <- if (!has_fill) "white" else "grey20"
-    plot <- do.call(mark_text, lbl_args)
-  }
+  # Leaf labels centred on each tile (conditional contrast).
+  plot <- ._rel_label_layer(plot, ~leaves, has_fill, show_labels)
 
   # Coordinate-free diagram: no axes around the canvas.
-  plot <- ._theme_blank_axes(plot)
-  plot
+  ._rel_canvas(plot)
 }
 
 # ---- mark_network ----
@@ -422,10 +443,18 @@ S7::method(mark_treemap, plotit_class) <- function(
 #'   mapped (default `._MARK_STYLE$faint` = \code{"grey70"}).
 #' @param edge_width Default edge width when no edge linewidth channel is
 #'   mapped (default `._MARK_STYLE$lw_thin` = 0.5).
+#' @param edge_alpha Optional alpha transparency for edge segments.
+#'   `NULL` (default) leaves the edges fully opaque -- unlike the area
+#'   bands of sankey/chord, thin strokes do not need translucency; the
+#'   parameter exists so the unified edge vocabulary
+#'   (`edge_color`/`edge_width`/`edge_alpha`) is available on every
+#'   relational sugar.
 #' @param node_color Default node colour, applied to the `colour` and
 #'   `fill` channels only where they are not mapped
 #'   (default `._MARK_STYLE$primary` = \code{"#4E79A7"}).
 #' @param node_size Default node size when `size` is not mapped (default 5).
+#' @param show_labels If `TRUE` (default), draw node labels when a global
+#'   `label` aesthetic is mapped.
 #' @param ... Other arguments passed to the edge segment layer (e.g.
 #'   \code{arrow}).
 #' @return Modified plotit object; `@graph` holds the laid-out tables.
@@ -456,7 +485,9 @@ mark_network <- S7::new_generic(
            layout = c("auto", "circle", "manual"),
            seed = NULL,
            edge_color = ._MARK_STYLE$faint, edge_width = ._MARK_STYLE$lw_thin,
-           node_color = ._MARK_STYLE$primary, node_size = 5, ...) {
+           edge_alpha = NULL,
+           node_color = ._MARK_STYLE$primary, node_size = 5,
+           show_labels = TRUE, ...) {
     S7::S7_dispatch()
   }
 )
@@ -469,7 +500,9 @@ S7::method(mark_network, plotit_class) <- function(
   layout = c("auto", "circle", "manual"),
   seed = NULL,
   edge_color = ._MARK_STYLE$faint, edge_width = ._MARK_STYLE$lw_thin,
-  node_color = ._MARK_STYLE$primary, node_size = 5, ...
+  edge_alpha = NULL,
+  node_color = ._MARK_STYLE$primary, node_size = 5,
+  show_labels = TRUE, ...
 ) {
   layout <- match.arg(layout)
 
@@ -505,55 +538,33 @@ S7::method(mark_network, plotit_class) <- function(
     g$nodes <- nodes_g[, c("id", setdiff(names(nodes_g), "id")), drop = FALSE]
     plot@graph <- g
   } else {
-    src_nm <- "source"
-    tgt_nm <- "target"
-    val <- NULL
-    val_nm <- NULL
-    if (is.null(encode_edges)) {
-      if (!all(c("source", "target") %in% names(edges))) {
-        cli::cli_abort(c(
-          "{.fn mark_network} needs structural columns or {.arg encode_edges}.",
-          "i" = "Provide literal {.col source}/{.col target} columns on \\
-                  {.arg edges}, or map them via
-                  {.code encode_edges = encode(source = ..., target = ...)}."
-        ))
-      }
-      src <- as.character(edges$source)
-      tgt <- as.character(edges$target)
-      if ("value" %in% names(edges)) {
-        val <- suppressWarnings(as.numeric(edges$value))
-        val_nm <- "value"
-      }
-    } else {
+    # Structural aesthetics come from encode_edges; everything else follows
+    # the single canonicalization rule shared with sankey/chord.
+    struct <- NULL
+    if (!is.null(encode_edges)) {
       if (is.null(encode_edges$source) || is.null(encode_edges$target)) {
         cli::cli_abort(c(
           "{.arg encode_edges} must map {.val source} and {.val target}.",
           "i" = "Use {.code encode(source = ..., target = ..., value = ...)}."
         ))
       }
-      src_nm <- ._quo_name_arg(encode_edges$source)
-      tgt_nm <- ._quo_name_arg(encode_edges$target)
-      src <- as.character(rlang::eval_tidy(encode_edges$source, edges))
-      tgt <- as.character(rlang::eval_tidy(encode_edges$target, edges))
-      if (!is.null(encode_edges$value)) {
-        val_nm <- ._quo_name_arg(encode_edges$value)
-        val <- suppressWarnings(as.numeric(rlang::eval_tidy(encode_edges$value, edges)))
-      }
+      struct <- ggplot2::aes()
+      struct$source <- encode_edges$source
+      struct$target <- encode_edges$target
+      if (!is.null(encode_edges$value)) struct$value <- encode_edges$value
+      class(struct) <- c("plotit_encode", oldClass(struct))
     }
-    if (anyNA(src) || anyNA(tgt)) {
-      cli::cli_abort("Edge endpoints must not contain {.val NA}.")
-    }
-    canon <- data.frame(source = src, target = tgt)
-    if (!is.null(val)) canon$value <- val
-    skip <- unique(c(src_nm, tgt_nm, val_nm, "source", "target", "value"))
-    for (cl in setdiff(names(edges), skip)) canon[[cl]] <- edges[[cl]]
+    # NOTE: never fall back to the global (nodes) mapping here -- its
+    # aesthetics reference node columns that do not exist on the edges
+    # table.
+    rel <- ._rel_canon_edges(edges, struct)
 
     nodes_g <- nodes
     nodes_g$id <- node_ids
     nodes_g <- nodes_g[, c("id", setdiff(names(nodes_g), "id")), drop = FALSE]
 
-    g <- ._graph_from_edgelist(canon, nodes_g, "source", "target",
-      if (!is.null(val)) "value" else NULL,
+    g <- ._graph_from_edgelist(rel$canon, nodes_g, "source", "target",
+      if ("value" %in% names(rel$canon)) "value" else NULL,
       directed = FALSE
     )
 
@@ -595,12 +606,13 @@ S7::method(mark_network, plotit_class) <- function(
     }
   }
   dots <- rlang::list2(...)
+  if (!is.null(edge_alpha)) dots$alpha <- edge_alpha
   if (length(edge_mapping) > 0) {
     args <- c(list(plot = plot, mapping = edge_mapping, data = ~edges), dots)
   } else {
     args <- c(list(
       plot = plot, data = ~edges,
-      colour = edge_color, linewidth = edge_width
+      color = edge_color, linewidth = edge_width
     ), dots)
   }
   plot <- do.call(mark_rule, args)
@@ -639,7 +651,7 @@ S7::method(mark_network, plotit_class) <- function(
   ), node_statics))
 
   # Node labels float just above their points instead of overlapping them.
-  if (!is.null(node_aes$label)) {
+  if (isTRUE(show_labels) && !is.null(node_aes$label)) {
     label_mapping <- ggplot2::aes()
     label_mapping$label <- node_aes$label
     plot <- mark_text(plot,
@@ -656,9 +668,7 @@ S7::method(mark_network, plotit_class) <- function(
 
   # Coordinate-free canvas with a true aspect ratio so the layout geometry
   # is not stretched by the panel shape.
-  plot@gg <- plot@gg + ggplot2::coord_fixed()
-  plot <- ._theme_blank_axes(plot)
-  plot
+  ._rel_canvas(plot, fixed = TRUE)
 }
 
 # ---- mark_chord ----
@@ -694,6 +704,7 @@ S7::method(mark_network, plotit_class) <- function(
 #'   to the layout's angular padding.
 #' @param edge_alpha Alpha transparency for link bands
 #'   (default `._MARK_STYLE$alpha_link` = 0.5).
+#' @param show_labels If `TRUE` (default), draw sector ids outside the ring.
 #' @param ... Unused; fine-tuning (inner radius, curvature, sector order)
 #'   lives on [layout_chord()] in the explicit pipeline form.
 #' @return Modified plotit object; `@graph` holds the laid-out tables.
@@ -715,7 +726,8 @@ S7::method(mark_network, plotit_class) <- function(
 mark_chord <- S7::new_generic(
   "mark_chord", "plot",
   function(plot, mapping = NULL, data = NULL,
-           gap_width = 4, edge_alpha = ._MARK_STYLE$alpha_link, ...) {
+           gap_width = 4, edge_alpha = ._MARK_STYLE$alpha_link,
+           show_labels = TRUE, ...) {
     S7::S7_dispatch()
   }
 )
@@ -723,16 +735,12 @@ mark_chord <- S7::new_generic(
 #' @export
 S7::method(mark_chord, plotit_class) <- function(
   plot, mapping = NULL, data = NULL,
-  gap_width = 4, edge_alpha = ._MARK_STYLE$alpha_link, ...
+  gap_width = 4, edge_alpha = ._MARK_STYLE$alpha_link,
+  show_labels = TRUE, ...
 ) {
-  dots <- rlang::list2(...)
-  if (length(dots) > 0) {
-    cli::cli_warn(c(
-      "Arguments passed to {.fn mark_chord} via {.arg ...} are ignored.",
-      "i" = "Use {.fn layout_chord} in the explicit pipeline to control \\
-             inner radius, curvature and sector order."
-    ))
-  }
+  ._rel_reject_dots(rlang::list2(...), "mark_chord",
+    "{.fn layout_chord} to control inner radius, curvature and sector order"
+  )
 
   rel <- ._rel_canon_edges(
     data %||% plot@gg$data,
@@ -754,13 +762,7 @@ S7::method(mark_chord, plotit_class) <- function(
   # Fills need legends; drop the default_color guides suppression.
   plot <- ._clear_default_color(plot)
 
-  band_mapping <- ggplot2::aes()
-  band_mapping$group <- rlang::sym(".ribbon_id")
-  band_mapping$fill <- rlang::sym("fill_grp")
-  plot <- mark_polygon(plot,
-    mapping = band_mapping, data = ~ribbons,
-    alpha = edge_alpha
-  )
+  plot <- ._rel_ribbon_layer(plot, edge_alpha)
 
   arc_mapping <- ggplot2::aes()
   arc_mapping$group <- rlang::sym(".arc_id")
@@ -768,23 +770,19 @@ S7::method(mark_chord, plotit_class) <- function(
   plot <- mark_polygon(plot, mapping = arc_mapping, data = ~arcs)
 
   # Sector labels float outside the ring on the layout's xc/yc anchors.
-  plot <- mark_text(plot,
-    mapping = ._rel_label_aes(), data = ~nodes,
-    size = ._MARK_STYLE$txt_note, colour = ._MARK_STYLE$ink
-  )
+  if (isTRUE(show_labels)) {
+    plot <- mark_text(plot,
+      mapping = ._rel_label_aes(), data = ~nodes,
+      size = ._MARK_STYLE$txt_note, colour = ._MARK_STYLE$ink
+    )
+  }
 
   # Semantic legend title (same rule as mark_sankey): derived channel gets
   # "source", a user mapping keeps its own column name.
-  legend_title <- if (!rel$has_fill) {
-    "source"
-  } else {
-    rel$fill_name %||% "fill"
-  }
-  plot@gg <- plot@gg + ggplot2::labs(fill = legend_title)
+  plot@gg <- plot@gg +
+    ggplot2::labs(fill = ._rel_legend_title(rel$has_fill, rel$fill_name))
 
   # True circles need a fixed aspect ratio; clip off so the outer labels
   # at radius > 1 are not cropped.  No axes around the canvas.
-  plot@gg <- plot@gg + ggplot2::coord_fixed(clip = "off")
-  plot <- ._theme_blank_axes(plot)
-  plot
+  ._rel_canvas(plot, fixed = TRUE, clip = "off")
 }

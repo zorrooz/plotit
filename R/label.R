@@ -170,10 +170,14 @@ NULL
     )
     for (a in aes_names) {
       val <- labels@legend[[a]] %||% labels@legend[["default"]]
+      # No stored intent for this aesthetic -> leave its title untouched.
+      # (Deleting gg$labels[[a]] here would silently wipe titles that came
+      # from scale names or earlier labs() calls on sibling legends.)
+      if (is.null(val)) {
+        next
+      }
       if (isTRUE(val == FALSE)) {
         plot@gg <- ._label_set_aes(plot@gg, a, NULL, hide = TRUE)
-      } else if (is.null(val)) {
-        plot@gg <- ._label_set_aes(plot@gg, a, NULL, hide = FALSE)
       } else {
         plot@gg <- ._label_set_aes(plot@gg, a, val, hide = FALSE)
       }

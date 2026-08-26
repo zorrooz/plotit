@@ -56,9 +56,20 @@ testthat::test_that("[BDD] default canvas is the compact academic size", {
   testthat::expect_equal(p@meta@width, 5)
   testthat::expect_equal(p@meta@height, 3.5)
   testthat::expect_equal(p@meta@unit, "in")
-  # Baked values match the meta canvas exactly
-  testthat::expect_equal(as.numeric(p@gg$theme$panel.widths), c(5, 5))
-  testthat::expect_equal(as.numeric(p@gg$theme$panel.heights), c(3.5, 3.5))
+  # Baked values match the meta canvas exactly: a single-panel 1x1 grid
+  # carries one width/height unit each (multi-panel facets spread the
+  # declared area across their cells).
+  testthat::expect_equal(as.numeric(p@gg$theme$panel.widths), 5)
+  testthat::expect_equal(as.numeric(p@gg$theme$panel.heights), 3.5)
+})
+
+testthat::test_that("[BDD] facet grids spread the declared panel area", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |>
+    split_wrap(Species, ncol = 3)
+  widths <- as.numeric(p@gg$theme$panel.widths)
+  testthat::expect_length(widths, 3)
+  testthat::expect_equal(sum(widths), 5) # total panel area preserved
 })
 
 testthat::test_that("[BDD] default theme uses the compact base font", {

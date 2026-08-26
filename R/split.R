@@ -1,6 +1,23 @@
 #' @include class.R
 NULL
 
+# Shared dots protocol for the facet family: unnamed quosures are facet
+# variables, named arguments are evaluated and passed through to the
+# underlying ggplot2 facet constructor.
+#' Split facet `...` into facet quosures and passthrough args.
+#' @noRd
+#' @keywords internal
+._split_facet_dots <- function(...) {
+  dots <- rlang::enquos(...)
+  dot_names <- names(dots) %||% character(length(dots))
+  is_named <- nzchar(dot_names)
+  list(
+    facets = dots[!is_named],
+    passthrough = lapply(dots[is_named], rlang::eval_tidy),
+    named = dot_names[is_named]
+  )
+}
+
 #' Generic for wrapping facets
 #'
 #' @param plot A plotit object.
@@ -25,6 +42,25 @@ split_wrap <- S7::new_generic(
   }
 )
 
+# Re-bake WYSIWYG panel sizing after the facet grid changes the panel
+# layout: meta sizes describe the whole panel area, so the baked
+# panel.widths/heights must be re-spread across the new grid dimensions.
+#' Re-bake panel sizing for the current facet grid.
+#' @noRd
+#' @keywords internal
+._split_rebake_size <- function(plot) {
+  meta <- plot@meta
+  if (isTRUE(meta@autofit) || is.null(meta@width) || is.null(meta@height)) {
+    return(plot)
+  }
+  plot@gg <- ._strip_panel_size(plot@gg)
+  plot@gg <- ._apply_panel_size(
+    plot@gg, meta@width, meta@height, meta@unit,
+    grid = ._panel_grid_dims(plot@gg)
+  )
+  plot
+}
+
 #' @export
 S7::method(split_wrap, plotit_class) <- function(
   plot,
@@ -33,21 +69,24 @@ S7::method(split_wrap, plotit_class) <- function(
   ncol = NULL,
   scales = "fixed"
 ) {
-  dots <- rlang::enquos(...)
-  dot_names <- names(dots) %||% character(length(dots))
-  is_named <- nzchar(dot_names)
-  # Unnamed args -> facet variables (quosures, passed to vars())
-  facet_quos <- dots[!is_named]
-  # Named args -> evaluated and passed through to facet_wrap()
-  passthrough <- lapply(dots[is_named], rlang::eval_tidy)
+  split <- ._split_facet_dots(...)
+  # A named `facets=` in `...` would collide with the constructed formal at
+  # do.call time and fail with an opaque match error -- catch it here.
+  if ("facets" %in% split$named) {
+    cli::cli_abort(c(
+      "{.code facets =} cannot be passed via {.arg ...} in {.fn split_wrap}.",
+      "i" = "Pass facet variables as unnamed arguments: \\
+             {.code split_wrap(Species, ncol = 3)}."
+    ))
+  }
 
   args <- c(
-    list(facets = ggplot2::vars(!!!facet_quos)),
+    list(facets = ggplot2::vars(!!!split$facets)),
     list(nrow = nrow, ncol = ncol, scales = scales),
-    passthrough
+    split$passthrough
   )
   plot@gg <- plot@gg + do.call(ggplot2::facet_wrap, args)
-  plot
+  ._split_rebake_size(plot)
 }
 
 #' Generic for grid facets
@@ -85,23 +124,23 @@ S7::method(split_grid, plotit_class) <- function(
   scales = "fixed",
   space = "fixed"
 ) {
-  dots <- rlang::enquos(...)
-  dot_names <- names(dots) %||% character(length(dots))
-  is_named <- nzchar(dot_names)
-  facet_quos <- dots[!is_named]
-  passthrough <- lapply(dots[is_named], rlang::eval_tidy)
+  split <- ._split_facet_dots(...)
 
-  if (length(facet_quos) > 0) {
+  if (length(split$facets) > 0) {
     if (!is.null(rows)) {
       cli::cli_warn("Both {.code ...} and {.code rows} provided; {.code ...} will be used.")
     }
-    rows <- ggplot2::vars(!!!facet_quos)
+    rows <- ggplot2::vars(!!!split$facets)
   }
 
   args <- c(
     list(rows = rows, cols = cols, scales = scales, space = space),
-    passthrough
+    split$passthrough
   )
   plot@gg <- plot@gg + do.call(ggplot2::facet_grid, args)
-  plot
+  ._split_rebake_size(plot)
 }
+
+# ---- split catalog ----------------------------------------------------------
+# Consumed by zzz.R to register plotit_composite rejection stubs.
+._CATALOG_SPLITS <- c("split_wrap", "split_grid")

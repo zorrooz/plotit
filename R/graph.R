@@ -38,7 +38,12 @@ NULL
   mark_bar       = c("x", "y"),
   mark_rule      = c("x", "y", "xend", "yend"),
   mark_rect      = c("xmin", "xmax", "ymin", "ymax", "x", "y"),
-  mark_errorbar  = c("x", "y", "xmin", "xmax", "ymin", "ymax")
+  mark_errorbar  = c("x", "y", "xmin", "xmax", "ymin", "ymax"),
+  # Filled 2D density binds like its unfilled sibling; beeswarm binds like
+  # the point family.  Explicit keys (not aliases) keep each mark's scope
+  # independently editable.
+  mark_density_2d = c("x", "y"),
+  mark_beeswarm   = c("x", "y")
 )
 
 # Resolve an argument that may be a bare symbol or a single string into a
@@ -248,9 +253,7 @@ NULL
 }
 
 ._graph_from_tbl_graph <- function(g) {
-  if (!requireNamespace("tidygraph", quietly = TRUE)) {
-    cli::cli_abort("Converting {.cls tbl_graph} requires the {.pkg tidygraph} package.")
-  }
+  ._require_pkg("tidygraph", "Converting {.cls tbl_graph} objects")
   nd <- as.data.frame(tidygraph::activate(g, nodes))
   ed <- as.data.frame(tidygraph::activate(g, edges))
   # Directedness via tidygraph's public graph-access API (tidygraph imports
@@ -312,6 +315,20 @@ as_graph <- function(edges, nodes = NULL,
   source_col <- ._arg_name(rlang::enquo(source), "source")
   target_col <- ._arg_name(rlang::enquo(target), "target")
   value_col <- ._arg_name(rlang::enquo(value), "value")
+
+  # Input types whose structure implies directionality decide for
+  # themselves; say so instead of silently swallowing the argument.
+  self_directed <-
+    inherits(edges, "hclust") ||
+    inherits(edges, "dendrogram") ||
+    inherits(edges, "tbl_graph") ||
+    (is.data.frame(edges) && all(c("id", "parent") %in% names(edges)))
+  if (!missing(directed) && self_directed) {
+    cli::cli_warn(
+      "{.arg directed} is ignored for this input: the structure already \\
+       implies its own directionality."
+    )
+  }
 
   if (inherits(edges, "hclust")) {
     return(._graph_from_hclust(edges))

@@ -3,7 +3,7 @@ NULL
 
 # The default theme builder (._theme_default) and every global visual token
 # live in theme.R -- the single style source of truth (AGENTS.md 3.3.11).
-# This file only exposes the user-facing style() / style_default() generics.
+# This file only exposes the user-facing style() generic.
 
 # ---- style ----
 #' Modify plot theme (aligns with ggplot2::theme)
@@ -47,35 +47,4 @@ S7::method(style, plotit_class) <- function(
   plot@gg <- plot@gg + thm + ggplot2::theme(...)
   attr(plot@meta, "plotit_theme_managed") <- TRUE
   plot
-}
-
-# ---- style_default ----
-#' Apply the default plotit theme (convenience wrapper for style())
-#'
-#' @param plot A plotit object.
-#' @param ... Ignored.
-#' @param base_size Base font size in pts (default 10).
-#' @param base_family Base font family (default `""` = system sans-serif).
-#' @return Modified plotit object.
-#' @examples
-#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
-#'   mark_point() |>
-#'   style_default()
-#' @export
-style_default <- S7::new_generic(
-  "style_default",
-  "plot",
-  function(plot, ..., base_size = NULL, base_family = NULL) {
-    S7::S7_dispatch()
-  }
-)
-
-#' @export
-S7::method(style_default, plotit_class) <- function(
-  plot,
-  base_size = NULL,
-  base_family = NULL,
-  ...
-) {
-  style(plot, ..., base_size = base_size, base_family = base_family)
 }

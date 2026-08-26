@@ -1,4 +1,4 @@
-#' @include class.R utils.R
+#' @include class.R utils.R theme.R
 NULL
 
 # ---- Internal helpers ----
@@ -78,14 +78,6 @@ NULL
     ))
   }
   trans
-}
-
-# Pick colour or fill variant of a scale function (eliminates aes branching)
-#' Pick colour or fill variant of a scale function.
-#' @noRd
-#' @keywords internal
-._cf <- function(aes, fun_c, fun_f) {
-  if (aes == "colour") fun_c else fun_f
 }
 
 # Scheme-based dispatch: viridis, brewer, grey, friendly, hue
@@ -225,7 +217,17 @@ NULL
       alpha = c(0.1, 1)
     )
   }
-  if (!is.null(range) && !binned && !discrete) args$range <- range
+  if (!is.null(range)) {
+    if (!discrete) {
+      # Continuous and binned scales both accept an output range.
+      args$range <- range
+    } else {
+      cli::cli_warn(c(
+        "{.arg range} is ignored for a discrete {.val {aes}} scale.",
+        "i" = "Output ranges apply to continuous or binned scales only."
+      ))
+    }
+  }
   if (reverse && !discrete) args$trans <- "reverse"
   # Discrete + reverse: reverse the guide order (symmetry with ._scale_discrete_fun)
   if (reverse && discrete) args$guide <- ggplot2::guide_legend(reverse = TRUE)
@@ -249,13 +251,15 @@ NULL
 
 # Build args list for scale_x/y
 ._scale_xy_impl <- function(plot, aes, name, trans, limits, range, breaks, labels, ...) {
+  trans <- ._resolve_trans(plot, aes, trans, ._TRANS_XY)
   discrete <- trans == "discrete"
   reverse <- trans == "reverse"
   binned <- trans == "binned"
 
   # When trans="reverse" and the mapped variable is discrete, route to
   # the discrete scale with reversed level order instead of attempting
-  # scale_x_continuous(trans="reverse") which breaks on factors.
+  # scale_x_continuous(trans="reverse") which breaks on factors.  Uses the
+  # same shared routing helper as the colour/fill and size/alpha pairs.
   if (reverse && ._detect_discrete_aes(plot, aes)) {
     discrete <- TRUE
   }
@@ -610,8 +614,7 @@ S7::method(scale_linetype, plotit_class) <- function(plot, name = ggplot2::waive
   ._scale_disc_visual_impl(plot, "linetype", name, trans, limits, range, breaks, labels, ...)
 }
 
-# ---- scale_x ----
-#' X-axis position scale
+# ---- scale_x ----#' X-axis position scale
 #'
 #' Controls the x-axis scale: transformation, limits, breaks, and labels.
 #'
@@ -645,7 +648,6 @@ S7::method(scale_x, plotit_class) <- function(plot, name = ggplot2::waiver(),
                                               trans = "identity", limits = NULL,
                                               range = NULL, breaks = NULL,
                                               labels = NULL, ...) {
-  trans <- ._resolve_trans(plot, "x", trans, ._TRANS_XY)
   ._scale_xy_impl(plot, "x", name, trans, limits, range, breaks, labels, ...)
 }
 
@@ -684,6 +686,12 @@ S7::method(scale_y, plotit_class) <- function(plot, name = ggplot2::waiver(),
                                               trans = "identity", limits = NULL,
                                               range = NULL, breaks = NULL,
                                               labels = NULL, ...) {
-  trans <- ._resolve_trans(plot, "y", trans, ._TRANS_XY)
   ._scale_xy_impl(plot, "y", name, trans, limits, range, breaks, labels, ...)
 }
+
+# ---- scale catalog ----------------------------------------------------------
+# Consumed by zzz.R to register plotit_composite rejection stubs.
+._CATALOG_SCALES <- c(
+  "scale_color", "scale_fill", "scale_size", "scale_alpha",
+  "scale_shape", "scale_linetype", "scale_x", "scale_y"
+)

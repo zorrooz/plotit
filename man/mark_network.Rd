@@ -12,8 +12,10 @@ mark_network(
   seed = NULL,
   edge_color = ._MARK_STYLE$faint,
   edge_width = ._MARK_STYLE$lw_thin,
+  edge_alpha = NULL,
   node_color = ._MARK_STYLE$primary,
   node_size = 5,
+  show_labels = TRUE,
   ...
 )
 }
@@ -42,11 +44,21 @@ mapped (default \code{._MARK_STYLE$faint} = \code{"grey70"}).}
 \item{edge_width}{Default edge width when no edge linewidth channel is
 mapped (default \code{._MARK_STYLE$lw_thin} = 0.5).}
 
+\item{edge_alpha}{Optional alpha transparency for edge segments.
+\code{NULL} (default) leaves the edges fully opaque -- unlike the area
+bands of sankey/chord, thin strokes do not need translucency; the
+parameter exists so the unified edge vocabulary
+(\code{edge_color}/\code{edge_width}/\code{edge_alpha}) is available on every
+relational sugar.}
+
 \item{node_color}{Default node colour, applied to the \code{colour} and
 \code{fill} channels only where they are not mapped
 (default \code{._MARK_STYLE$primary} = \code{"#4E79A7"}).}
 
 \item{node_size}{Default node size when \code{size} is not mapped (default 5).}
+
+\item{show_labels}{If \code{TRUE} (default), draw node labels when a global
+\code{label} aesthetic is mapped.}
 
 \item{...}{Other arguments passed to the edge segment layer (e.g.
 \code{arrow}).}

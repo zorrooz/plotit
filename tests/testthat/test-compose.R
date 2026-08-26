@@ -332,11 +332,11 @@ test_that("[BDD] compose_marginal pipeline: label + style + export", {
 })
 
 # =====================================================================
-# style_default on composite
+# style on composite (default-theme path)
 # =====================================================================
 
-test_that("[BDD] style_default on composite renders", {
-  c <- compose_grid(.p1, .p2) |> style_default()
+test_that("[BDD] style() on composite renders with default theme", {
+  c <- compose_grid(.p1, .p2) |> style()
   expect_s3_class(c, "plotit::plotit_composite")
   built <- ggplot2::ggplot_build(c@gg)
   # Default theme has white panel background
@@ -379,4 +379,24 @@ test_that("[BDD] marginal composites default to a sane export canvas", {
   export(c, f, dpi = 72)
   expect_gt(file.info(f)$size, 10000)
   unlink(f)
+})
+
+# =====================================================================
+# composite rejection stubs (single-plot verbs must refuse composites
+# with a targeted message, never fall through to the plotit method)
+# =====================================================================
+
+test_that("[BDD] mark_* on composite aborts with a targeted message", {
+  c <- compose_grid(.p1, .p2)
+  expect_error(c |> mark_point(), "not supported for .plotit_composite")
+  expect_error(c |> mark_bar(), "not supported for .plotit_composite")
+})
+
+test_that("[BDD] scale/project/split/label_axis on composite abort", {
+  c <- compose_grid(.p1, .p2)
+  expect_error(c |> scale_color(), "not supported for .plotit_composite")
+  expect_error(c |> project_polar(), "not supported for .plotit_composite")
+  expect_error(c |> split_wrap(Species), "not supported for .plotit_composite")
+  expect_error(c |> label_axis(text = "x", aes = "x"), "not supported for .plotit_composite")
+  expect_error(c |> label_legend(text = "x"), "not supported for .plotit_composite")
 })

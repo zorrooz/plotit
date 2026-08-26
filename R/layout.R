@@ -292,7 +292,7 @@ NULL
     t$nodes$y <- xx
   }
   t$edges <- ._map_edge_coords(t$nodes, t$edges)
-  ._new_graph(list(nodes = t$nodes, edges = t$edges), directed = TRUE)
+  ._new_graph_from_parts(t, directed = TRUE)
 }
 
 #' @noRd
@@ -517,7 +517,6 @@ NULL
     directed = TRUE
   )
 }
-
 # ---- squarify treemap ------------------------------------------------------
 
 # Bruls et al. squarify: pack positive `values` (arbitrary order; sorted
@@ -1212,3 +1211,10 @@ layout_chord <- S7::new_generic(
   }
 )
 ._register_layout_methods(layout_chord, ._layout_engine_chord)
+
+# ---- layout catalog ---------------------------------------------------------
+# Consumed by zzz.R to register plotit_composite rejection stubs.
+._CATALOG_LAYOUTS <- c(
+  "layout_force", "layout_circle", "layout_tree",
+  "layout_dendrogram", "layout_sankey", "layout_treemap", "layout_chord"
+)

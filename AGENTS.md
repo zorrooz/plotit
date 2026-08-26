@@ -45,7 +45,7 @@
 | 层级 | 稳定性 | 内容 |
 |------|--------|------|
 | 核心契约 | 1.0 后主版本稳定 | 函数名（`plotit`、`encode`、`mark_*`、`scale_*`、`label_*`、`compose_*`、`style`、`export`）、返回类型 `plotit` 支持管道、`plotit()` 的 `data` 和 `mapping` 参数；mark 的 `data` 参数接受 data.frame / `~table` 公式（兼容扩展） |
-| 扩展契约 | 2.0 可调整 | `scale_*` 的 `trans` 合法值集合（可增加不删除）、`label_*` 参数协议（`text`/`hide`/`reset`）、`project_*`/`split_*` 参数签名、关系数据体系（`as_graph()`、`layout_*`、`transform_corr()`、`plotit_graph`、`@graph` 槽） |
+| 扩展契约 | 2.0 可调整 | `scale_*` 的 `trans` 合法值集合（可增加不删除）、`label_*` 参数协议（`text`/`hide`/`reset`）、`project_*`/`split_*` 参数签名、关系数据体系（`as_graph()`、`layout_*`、`plotit_graph`、`@graph` 槽） |
 | 可迭代 | 不破坏上述两层 | 默认主题参数、启发式算法、默认调色板、内部工具函数实现 |
 
 例外：1.x 期间发现扩展契约中的设计缺陷允许经弃用→警告→移除周期（跨至少一个次版本）修正，不视为破坏性变更。
@@ -131,7 +131,7 @@
 | `mark_smooth` | `geom_smooth` | 回归平滑+置信带 ✅ |
 | `mark_hex` | `geom_hex` | 2D 六边形热力图 ✅ |
 | `mark_density_2d` | `geom_density_2d`/`geom_density_2d_filled` | 2D 密度等高线 ✅ |
-| `mark_corr` | `transform_corr()` + `geom_tile` 语法糖 | 相关性矩阵热力图 ✅ |
+| `mark_corr` | 内部 corr 变换 + `geom_tile` 语法糖 | 相关性矩阵热力图 ✅ |
 | `mark_errorbar` | `geom_errorbar`/`geom_errorbarh` | 误差棒 ✅ |
 | `mark_significance` | `mark_rule` + `mark_text` 语法糖 | 显著性标记 ✅ |
 | `mark_lollipop` | `mark_point` + 线段语法糖 | 棒棒糖图 ✅ |
@@ -180,7 +180,7 @@ G2 的每个复合 Mark 内部展开为 2-5 个基础 Mark 的组合，这与 pl
 | 15 | 统计 | `mark_smooth` | 统计 | `geom_smooth` | VL: layer组合/G2: transform | 回归平滑+置信带 ✅ |
 | 16 | 统计 | `mark_hex` | 统计 | `geom_hex` | G2 `heatmap`(corelib) | 2D 六边形分箱热力图 ✅ |
 | 17 | 统计 | `mark_density_2d` | 统计 | `geom_density_2d`/`geom_density_2d_filled` | G2 `density`(contour) | 2D 密度等高线 ✅ |
-| 18 | 统计 | `mark_corr` | 统计 | `geom_tile` + corr预处理 | G2 `cell`(相关性矩阵) | 相关性矩阵热力图 ✅ |
+| 18 | 统计 | `mark_corr` | 统计 | `geom_tile` + 内部 corr 预处理（`._transform_corr()`，不导出） | G2 `cell`(相关性矩阵) | 相关性矩阵热力图 ✅ |
 | | **第三层：复合 Mark** | | | | | |
 | 19 | 复合 | `mark_significance` | 标注 | `mark_rule` + `mark_text` 语法糖 | VL: layer组合 | 显著性标记（括号+星号） ✅ |
 | 20 | 复合 | `mark_errorbar` | 标注 | `geom_errorbar`/`geom_errorbarh` 包装 | VL `errorbar`(复合Mark) | 误差棒 ✅ |
@@ -223,6 +223,10 @@ data |> plotit(encode(x = 1, y = count, fill = category)) |>
 data |> plotit(encode(x = 1, y = count, fill = category)) |>
   mark_bar(position = "stack", width = 1) |>
   project_polar(theta = "y", inner_radius = 0.4)
+# 径向模式保留坐标轴（径向刻度对径向柱状图有意义）；饼/环形图若嫌
+# 刻度噪音，链式 style() 关闭：
+#   ... |> project_polar(theta = "y", inner_radius = 0.4) |>
+#   style(axis.text = element_blank(), axis.title = element_blank())
 
 # 玫瑰图 / 南丁格尔玫瑰图 — 无堆叠 + project_polar
 data |> plotit(encode(x = category, y = value, fill = category)) |>
@@ -245,6 +249,8 @@ data |> plotit(encode(x = category, y = value)) |>
 
 ```r
 # 雷达图 — mark_line + project_polar
+# 注意：mark_line 不闭合多边形；雷达轮廓需首尾闭合时，把第一个水平
+# 追加为最后一行（rbind(d, d[1, ])），或改用 mark_polygon(group = group)。
 data |> plotit(encode(x = variable, y = value, colour = group)) |>
   mark_line() |>
   project_polar()
@@ -329,7 +335,7 @@ plotit(data, mapping = encode(), autofit = FALSE,
 - `...` 透传底层 `geom_*`
 - `rasterize` 需 `ggrastr`
 - 内部通过 `._mark_impl()` 共享逻辑：resolve position、构建 geom、条件栅格化
-- **签名特例**（按 §3.3b 三层体系）：复合 Mark `mark_significance`/`mark_lollipop`/`mark_dumbbell` 无 `position`/`rasterize`（内层 Mark 各自处理）；关系类 `mark_sankey`/`mark_chord` 无 `rasterize`；统计 Mark `mark_corr` 无 `mapping`/`data`/`position`（自算相关性矩阵）；`mark_network` 用专用双数据源签名（`edges`/`encode_edges`）
+- **签名特例**（按 §3.3b 三层体系）：复合 Mark `mark_significance`/`mark_lollipop`/`mark_dumbbell` 无 `position`/`rasterize`（内层 Mark 各自处理）；关系类 `mark_sankey`/`mark_chord`/`mark_treemap`/`mark_network` 无 `position`/`rasterize`（布局拥有放置权；sankey 原先接受的死参 `position` 已删除，treemap 的 raster 三件套已按 §3.3b 原则 3 移除）；统计 Mark `mark_corr` 无 `mapping`/`data`/`position`（自算相关性矩阵）；`mark_network` 用专用双数据源签名（`edges`/`encode_edges`）。关系四 sugar 共有 `show_labels = TRUE`；`mark_rule` 静态色参数为美式 `color=`（旧拼写 `colour=` 经 `...` 透传仍兼容）
 
 #### 3.3.3a `make_mark()` / `make_theme()` — 用户可扩展工厂
 
@@ -423,7 +429,7 @@ style_dark <- make_theme("style_dark",
 | `mark_network` | `layout_force/circle()` + point/rule/text 语法糖 | 普通 ggplot2 层**加法式**组合（先前层/scale 全保留）；`@graph` 可供后续 `~nodes/~edges` 引用；直边渲染为已知局限；布局仅 `auto`/`circle`/`manual`（`linear/bipartite` 与 `weight=`/`width=` 别名已移除）；`manual` 需节点表自带数值 x/y；边绘制于节点下层，标签悬浮于点上方，`coord_fixed` 保持真实比例 |
 | `mark_chord` | `layout_chord()` + `mark_polygon(~ribbons)`/`mark_polygon(~arcs)` 语法糖 | 纯 ggplot2 层增量构建；`@graph` 存 nodes/edges/arcs/ribbons 四表；确定性环形布局（无外部依赖）；重复 (source,target) 对聚合为单带；自环占两个子弧段；`gap_width`(度) 映射布局角距；遗留格式自动探测（from/to、Var1/Freq、matrix）已移除——统一走结构映射或字面 source/target 列，其余格式经 `as_graph()` 收编 |
 
-**关系 sugar 统一词汇**：四个关系类 mark 的静态通道参数一律美式且跨 mark 同名——节点侧 `node_color`，边侧 `edge_color`/`edge_width`/`edge_alpha`（sankey 原名 `flow_alpha`、chord 原名 `link_alpha` 已统一为 `edge_alpha`）。edges 表规范化共享单一实现 `._rel_canon_edges()`（R/mark_relational.R）：结构映射 > 字面 source/target(/value) 列，其余格式报错引导至 `as_graph()`。
+**关系 sugar 统一词汇**：四个关系类 mark 的静态通道参数一律美式且跨 mark 同名——节点侧 `node_color`，边侧 `edge_color`/`edge_width`/`edge_alpha`（sankey 原名 `flow_alpha`、chord 原名 `link_alpha` 已统一为 `edge_alpha`；network 的 `edge_alpha` 默认 `NULL` = 不透明，细线边不需半透明，参数存在以补全词汇表）。标签开关 `show_labels = TRUE` 为四 sugar 共有参数（network 仅在全局 `label` 映射存在时生效）。edges 表规范化共享单一实现 `._rel_canon_edges()`（R/mark_relational.R，**四个 sugar 全部走此契约**，network 经 `encode_edges` 构造结构映射后复用）：结构映射 > 字面 source/target(/value) 列，其余格式报错引导至 `as_graph()`。共享渲染机制：`._rel_ribbon_layer()` / `._rel_label_layer()` / `._rel_legend_title()` / `._rel_canvas(fixed, clip)` / `._rel_reject_dots()`。
 
 **新增 Mark 判断流程**（更新）：
 
@@ -441,7 +447,7 @@ style_dark <- make_theme("style_dark",
 所有 mark 的样式字面量集中于 `R/mark_style.R`，单一事实来源：
 
 - **`._MARK_STYLE`（token 表）**：`primary="#4E79A7"`、`secondary="#E15759"`；中性灰阶 `ink`(grey30，强注释：显著性括号/sankey 节点)、`soft`(grey50，中连接线：棒棒糖茎/哑铃连线/参考线)、`faint`(grey70，弱结构：network 边)；线宽阶梯 `lw_data`(0.9，折线/路径/平滑) > `lw_thin`(0.5，细描边/括号/误差棒) > `lw_border`(0.25，柱/tile 白色发丝边框)；注释字号 `txt_note`(3.2)；半透明填充 `alpha_fill`(0.6，density/violin)、连接带 `alpha_link`(0.5，sankey/chord)；复合点径 `point_head`(3)。token 属 §1.4 可迭代层。
-- **`._MARK_DEFAULTS`（按 mark 注入的静态默认）**：line/path（linewidth 0.9 + round 端点）、smooth（linewidth 0.9）、bar（白色发丝边框 + width 0.7——槽位 dodge 0.8 下留组间空气，替代 ggplot2 默认 0.9 的拥挤观感）/histogram/rect（白色发丝边框；histogram 相邻 bin 必须贴合故不设 width）、area/polygon（linewidth 0 去描边）、density/violin（alpha 0.6）、rule（colour soft + linewidth thin）、errorbar（linewidth 0.5）、boxplot（瘦箱 width 0.5 + 发丝描边 lw_border + staplewidth 0.4 横须盖 + outlier.size 0.6，tidyplots 校准——槽位 dodge 0.8 下留 ~0.38 组间空隙）、corr/treemap（白色发丝分隔；treemap 经旧式 `size` 通道，geom_treemap 不接受 linewidth）。经 `._mark_impl()` 统一注入，标准 mark 由工厂自动携带 mark 名，手写 mark 显式传 `mark_name=`。
+- **`._MARK_DEFAULTS`（按 mark 注入的静态默认）**：line/path（linewidth 0.9 + round 端点）、smooth（linewidth 0.9）、bar（白色发丝边框 + width 0.7——槽位 dodge 0.8 下留组间空气，替代 ggplot2 默认 0.9 的拥挤观感）/histogram/rect（白色发丝边框；histogram 相邻 bin 必须贴合故不设 width）、area/polygon（linewidth 0 去描边）、density/violin（alpha 0.6）、rule（colour soft + linewidth thin）、errorbar（linewidth 0.5）、boxplot（瘦箱 width 0.5 + 发丝描边 lw_border + staplewidth 0.4 横须盖 + outlier.size 0.6，tidyplots 校准——槽位 dodge 0.8 下留 ~0.38 组间空隙）、corr（白色发丝分隔；treemap sugar 经 `mark_rect` 渲染，继承 rect 的发丝条目，自身无需条目——原 `mark_treemap` 的 treemapify 时代 `size` 通道条目已删除）。经 `._mark_impl()` 统一注入，标准 mark 由工厂自动携带 mark 名，手写 mark 显式传 `mark_name=`。
 - **合并规则**（`._apply_mark_defaults()`）：**用户显式参数 > 已映射美学（层或全局，含注入的 AsIs 常量）> mark 默认**。因此分组柱状图自动获得白色分隔边框、单色注入柱保持无边框、映射了 alpha 的图层不被默认覆盖。
 - **特例**：
   - `mark_boxplot` 在 default_color 注入存活且用户未指定 colour 时自动改用 `ink` 描边（避免蓝底蓝线中位线不可读），见 `._user_owned_aes()` 对 AsIs 注入常量的豁免逻辑；
@@ -477,7 +483,7 @@ style_dark <- make_theme("style_dark",
 
 **`name` vs `label_*`**：`scale_*(name=)` 设置 scale 层默认名，`label_*` 设置最终显示名——后执行者胜。
 
-**`_cf` 辅助函数**：`._cf(aes, fun_c, fun_f)` 根据 `aes` 是 `colour` 还是 `fill` 选择对应版本 scale 函数，消除 aes 分支样板代码。13 处引用集中于 scale.R。
+**`_cf` 辅助函数**：`._cf(aes, fun_c, fun_f)` 根据 `aes` 是 `colour` 还是 `fill` 选择对应版本 scale 函数，消除 aes 分支样板代码。定义于 theme.R（与色板决策点同域），scale.R 13 处 + theme.R 1 处引用。
 
 内部校验矩阵：
 ```
@@ -596,7 +602,7 @@ data |> as_graph() |> plotit() |>
 
 #### 3.3.8 `style()` — 主题
 
-`style(plot, ..., base_size=NULL, base_family=NULL, base_theme=NULL)`：先应用基础主题（空时内部 `%||%` 分发到 `._theme_default(base_size=10, base_family="")`，token 驱动），再叠加 `theme(...)` 覆盖。`style_default()` 为便捷别名。
+`style(plot, ..., base_size=NULL, base_family=NULL, base_theme=NULL)`：先应用基础主题（空时内部 `%||%` 分发到 `._theme_default(base_size=10, base_family="")`，token 驱动），再叠加 `theme(...)` 覆盖。`style(p)` 即恢复内置默认——曾存在的纯别名 `style_default()` 已删除（一个动词一个语义）。
 
 #### 3.3.9 `export()` — 导出
 
@@ -631,12 +637,12 @@ data |> as_graph() |> plotit() |>
 | `._theme_default(base_size, base_family)` | 学术简洁主题构建器（style.R 仅保留用户泛型，构建体已迁出） |
 | `._attach_default_colour_scale(p, data, mapping)` | 构造期自动挂载策划色板：映射的离散 colour/fill→friendly、连续→viridis；AsIs 常量与解析失败静默跳过 |
 | `._default_colour_scale(aes, data, var)` | **全包唯一色板决策点**：类别列→friendly 定性、数值列→viridis 顺序；构造期/图层/派生通道三条路径共用 |
-| `._apply_panel_size(gg, w, h, unit)` / `._strip_panel_size(gg)` / `._panel_sizing_supported()` | WYSIWYG 烘焙/剥离/能力探测 |
+| `._apply_panel_size(gg, w, h, unit, grid)` / `._strip_panel_size(gg)` / `._panel_sizing_supported()` / `._panel_grid_dims(gg)` | WYSIWYG 烘焙/剥离/能力探测/面板网格探测 |
 | `._gg_aspect_conflict(gg)` | 检测固定纵横比坐标系（CoordFixed）与烘焙面板尺寸的冲突 |
 
 **关键约定**：
 
-- **WYSIWYG**：`autofit=FALSE` 时构造期把 meta 尺寸烘焙为 `theme(panel.widths=, panel.heights=)`（ggplot2 ≥3.5，旧版优雅降级）。任意渲染路径面板物理尺寸恒定；`export()` 的 gtable 测量与之数值一致。
+- **WYSIWYG**：`autofit=FALSE` 时构造期把 meta 尺寸烘焙为 `theme(panel.widths=, panel.heights=)`（ggplot2 ≥3.5，旧版优雅降级）。meta 尺寸描述**整个面板区域**：单图 1×1 网格烘焙单值；`split_*` 分面后经 `._split_rebake_size()` 按新网格重烘焙（每格 = 声明值 ÷ 列/行数），`._build_fixed_gtable()` 同规则分摊——多面板导出保持声明总足迹。任意渲染路径面板物理尺寸恒定；`export()` 的 gtable 测量与之数值一致。
 - **纵横比优先于固定面板**（aspect-true outranks WYSIWYG）：绝对烘焙尺寸会拉伸 CoordFixed 坐标系（圆变椭圆）。两处对称修复——`_prepare_render()` 检测到冲突时剥离烘焙尺寸（knitr/pkgdown 路径）；`._build_fixed_gtable()` 按 `coordinates$aspect()` 信箱式缩放面板（print/export 路径）。多面板自由刻度取首面板范围（已文档化近似）。
 - **组合图默认尺寸**：patchworkGrob 的 `1null` 单位在视口外不解析，直接测量得到垃圾值。`._composite_default_size()` 从子图 meta 面板尺寸 + 布局类型（grid/marginal/inset）+ 固定 chrome 余量（1.6in）计算默认画布，print/export 共用。
 - **剥离**：组合图组装前 `._reset_sizing()` 先调 `._strip_panel_size()`（公开 API `+ theme(panel.widths=NULL)` 重置，不直改 `gg$theme`——ggplot2 ≥4.0 theme 为 S7 对象，list 子集赋值会校验失败）。
@@ -760,7 +766,7 @@ export(p, "output.pdf", dpi = 300)
 属于 §1.4 可迭代范围，具体参数可随版本调整。全部默认视觉决策集中于 `R/theme.R` 单一源头模块（§3.3.11），改一处全局生效。
 
 - **主题**：学术简洁风（对标 tidyplots `theme_tidyplot` 配方并适配 plotit 画布）——基于 `theme_minimal`，白色纸面 + 纯黑 ink 发丝轴线/刻度线（linewidth 0.25），无网格线，背景全透明，层级分明字号（title rel(1.15) plain 左对齐 / subtitle rel(0.95) 灰 / axis.title rel(0.95) / axis.text rel(0.85) 灰 / legend rel(0.85)，legend.key 3.5mm）。极坐标系自动关闭轴线/刻度线/轴文本。平行坐标系：`std`/`global` 模式共享原生 y 轴，`none` 模式每列渲染主题匹配轴线。
-- **WYSIWYG 所见即所得**：`plotit()` 构造时把 meta 面板尺寸经 ggplot2 ≥3.5 的 `theme(panel.widths=, panel.heights=)` 烘焙进 `@gg`——IDE 设备、knitr、pkgdown、ggsave 任意渲染路径下面板物理尺寸恒定，内容比例与导出完全一致（实测 6×6/9×7/14×10 英寸设备上面板恒等于声明值）。组合图组装前由 `._reset_sizing()` 剥离该约束交由 patchwork 布局。**纵横比优先**：固定纵横比坐标系（CoordFixed）下烘焙尺寸让位——渲染前剥离（`._prepare_render`）或信箱式缩放（`._build_fixed_gtable`），圆不因面板形状变椭圆。
+- **WYSIWYG 所见即所得**：`plotit()` 构造时把 meta 面板尺寸经 ggplot2 ≥3.5 的 `theme(panel.widths=, panel.heights=)` 烘焙进 `@gg`——IDE 设备、knitr、pkgdown、ggsave 任意渲染路径下面板物理尺寸恒定，内容比例与导出完全一致（实测 6×6/9×7/14×10 英寸设备上面板恒等于声明值）。meta 尺寸描述整个面板区域：`split_*` 分面后按网格重烘焙分摊（`._split_rebake_size()`），多面板导出保持声明总足迹。组合图组装前由 `._reset_sizing()` 剥离该约束交由 patchwork 布局。**纵横比优先**：固定纵横比坐标系（CoordFixed）下烘焙尺寸让位——渲染前剥离（`._prepare_render`）或信箱式缩放（`._build_fixed_gtable`），圆不因面板形状变椭圆。
 - **调色板**：无映射时默认 Tableau 蓝 `#4E79A7`（同时 `colour`+`fill`，图例隐藏）。有映射时自动挂载策划色板，**全包唯一决策点** `._default_colour_scale()`：**恒等/分组通道（类别列）→ friendly**（Okabe-Ito 色盲安全六色，黄位加深为 `#F5C710`：`#0072B2 #56B4E9 #009E73 #F5C710 #E69F00 #D55E00`；>6 档锚点插值，<6 档均匀取样），**量级通道（数值列）→ viridis 顺序色板**。三条挂载路径共享同一规则：构造期全局映射、图层映射（`._mark_impl` 自动挂载 + managed 注册表防覆盖用户 scale）、Mark 派生通道。用户之后链式 `scale_*()` 即替换（后执行者胜）；`encode(colour = I(...))` AsIs 常量走 identity 不被劫持；hue 色相轮退居可选方案 `range="hue"`。
 - **Mark 统一默认样式**：全部 mark 的样式字面量集中于 `R/mark_style.R`（详见 §3.3.3c）——品牌色 primary `#4E79A7` / secondary `#E15759`；中性灰阶 ink(grey30)/soft(grey50)/faint(grey70)；线宽阶梯 lw_data(0.9) > lw_thin(0.5) > lw_border(0.25)；注释字号 txt_note(3.2)；半透明填充 alpha_fill(0.6)、连接带 alpha_link(0.5)。柱宽默认槽位的 0.7（slot=dodge 0.8，留出组间空气）。用户显式参数与已映射美学始终优先于默认。
 - **封闭统计 Mark 自动 viridis**：量级派生通道（corr `value` / hex `count` / density_2d(filled) `level`）语义为数值大小 → viridis 顺序色板；关系类语法糖的恒等派生通道（sankey 流带/节点、chord 弧段/缎带、treemap 叶块均默认 source identity，network 节点 colour）按列类型路由 friendly/viridis——与全局映射同一规则、同一色板。用户之后链式调用 `scale_*()` 即替换（后执行者胜）。

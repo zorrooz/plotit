@@ -150,7 +150,7 @@ test_that("[BDD] pipeline mark_point + scale + label renders", {
     mark_point(size = 2) |>
     scale_color(name = "Species") |>
     label_title("Test") |>
-    style_default()
+    style()
   built <- .built(p)
   expect_length(built$data, 1)
 })
@@ -165,7 +165,7 @@ test_that("[BDD] pipeline mark_boxplot + scale + label + project renders", {
     label_axis(text = "Species", aes = "x") |>
     label_axis(text = "Sepal Length", aes = "y") |>
     project_cartesian(flip = TRUE) |>
-    style_default()
+    style()
   built <- .built(p)
   expect_length(built$data, 1)
 })
@@ -789,12 +789,8 @@ test_that("mark_treemap rejects non-hierarchy input and unknown dots", {
   expect_warning(mark_treemap(good, whatever = 1), "ignored")
 })
 
-test_that("mark_treemap supports rasterize", {
-  skip_if_not_installed("ggrastr")
-  p <- plotit(.hier, encode()) |>
-    mark_treemap(rasterize = TRUE, rasterize_dpi = 72)
-  expect_s3_class(p, "plotit::plotit")
-})
+# mark_treemap no longer accepts the raster trio: relational sugars keep
+# one rendering path (AGENTS.md 3.3.3b principle 3).
 
 # ---- mark_network ----
 test_that("[BDD] mark_network builds network (nodes + edges API)", {
@@ -1020,40 +1016,51 @@ test_that("mark_chord: edge_alpha applies to bands only; dots are rejected", {
   expect_true(any(grepl("ignored", msgs)))
 })
 
-# ---- transform_corr ----
-test_that("[BDD] transform_corr melts correlations into long form", {
+# ---- correlation transform (internal; asserted through mark_corr) ----
+# transform_corr() was folded back into the package interior (orphan
+# single-verb family); these BDD blocks pin the same behaviours through the
+# public surface, mark_corr().
+test_that("[BDD] mark_corr renders the melted correlation table", {
   d <- mtcars[, c("mpg", "disp", "hp")]
-  out <- transform_corr(d)
-
-  expect_setequal(names(out), c("Var1", "Var2", "value"))
-  expect_equal(nrow(out), 3^2)
-  expect_s3_class(out$Var1, "factor")
-  # diagonal is perfectly correlated
-  diag_rows <- out[out$Var1 == out$Var2, ]
-  expect_true(all(diag_rows$value == 1))
+  p <- plotit(d, encode()) |> mark_corr()
+  tbl <- .built(p)$data[[1]]
+  expect_equal(nrow(tbl), 3^2)
+  # symmetric matrix: fill(i,j) == fill(j,i)
+  get_fill <- function(xx, yy) {
+    tbl$fill[tbl$x == xx & tbl$y == yy]
+  }
+  codes <- unique(as.integer(tbl$x))
+  sym <- all(vapply(codes, function(i) {
+    all(vapply(codes, function(j) {
+      identical(get_fill(i, j), get_fill(j, i))
+    }, logical(1)))
+  }, logical(1)))
+  expect_true(sym)
 })
 
-test_that("transform_corr: reorder preserves the value multiset", {
+test_that("mark_corr reorder preserves the value multiset", {
   d <- mtcars[, c("mpg", "disp", "hp", "wt")]
-  r1 <- transform_corr(d, reorder = TRUE)
-  r0 <- transform_corr(d, reorder = FALSE)
+  r1 <- .built(plotit(d, encode()) |> mark_corr(reorder = TRUE))$data[[1]]
+  r0 <- .built(plotit(d, encode()) |> mark_corr(reorder = FALSE))$data[[1]]
 
-  expect_false(identical(levels(r1$Var1), levels(r0$Var1)))
-  expect_identical(sort(r1$value), sort(r0$value))
+  # reordering permutes rows/columns but never the correlation values
+  expect_identical(sort(r1$fill), sort(r0$fill))
 })
 
-test_that("transform_corr validates inputs", {
-  expect_error(transform_corr(data.frame(a = 1)), "numeric")
-  expect_error(transform_corr(as.matrix(iris[, 1:2])), "data.frame")
+test_that("mark_corr validates inputs", {
+  expect_error(plotit(data.frame(a = 1), encode()) |> mark_corr(), "numeric")
 })
 
-test_that("transform_corr skips reorder on NA matrix with warning", {
+test_that("mark_corr skips reorder on NA correlation with warning", {
   d <- data.frame(x = c(1, 1, 1), y = 1:3) # zero-variance x -> NA corr
-  expect_warning(out <- transform_corr(d), "skipping reorder")
-  expect_true(anyNA(out$value))
+  expect_warning(p <- plotit(d, encode()) |> mark_corr(), "skipping reorder")
+  tbl <- .built(p)$data[[1]]
+  # NA correlations render in the default na colour; only the perfect
+  # y-y diagonal keeps a real (viridis) colour.
+  expect_equal(sum(tbl$fill == "grey50"), 3)
 })
 
-test_that("mark_corr is sugar over transform_corr + tile layer", {
+test_that("mark_corr renders a tile layer over all column pairs", {
   p <- plotit(mtcars, encode()) |> mark_corr()
   built <- ggplot2::ggplot_build(p@gg)
   expect_length(built$plot$layers, 1)

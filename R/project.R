@@ -1,5 +1,7 @@
 #' @include class.R
 #' @include utils.R
+#' @include theme.R
+#' @include mark_style.R
 NULL
 
 # ---- project_cartesian ----
@@ -131,6 +133,10 @@ S7::method(project_polar, plotit_class) <- function(
   clip = "on",
   ...
 ) {
+  if (!is.numeric(inner_radius) || length(inner_radius) != 1 ||
+        is.na(inner_radius) || inner_radius < 0) {
+    cli::cli_abort("{.arg inner_radius} must be a single non-negative number.")
+  }
   use_radial <- inner_radius > 0 || isTRUE(r_axis_inside)
   if (use_radial && utils::packageVersion("ggplot2") < "3.5.0") {
     cli::cli_abort(c(
@@ -487,9 +493,6 @@ S7::method(project_parallel, plotit_class) <- function(
     }
   }
 
-  # ---- Resolve theme properties once (extracted helper) ----
-  tp <- ._parallel_theme_props(plot@gg$theme)
-
   # ---- Build per-column info (incl. raw values for break computation) ----
   col_info <- lapply(seq_along(columns), function(i) {
     cn <- columns[i]
@@ -537,6 +540,7 @@ S7::method(project_parallel, plotit_class) <- function(
   # ---- shared-scale modes (std / global) need nothing extra: the native
   # ---- y-axis guide already provides ticks and labels.
   if (!shared_scale) {
+    tp <- ._parallel_theme_props(plot@gg$theme)
     plot <- ._pp_draw_axes(plot, col_info, tp)
   }
 
@@ -582,9 +586,7 @@ S7::method(project_map, plotit_class) <- function(
   ...
 ) {
   if (!is.null(projection)) {
-    if (!requireNamespace("mapproj", quietly = TRUE)) {
-      cli::cli_abort("Map projections require the {.pkg mapproj} package.")
-    }
+    ._require_pkg("mapproj", "Map projections")
     plot@gg <- plot@gg +
       ggplot2::coord_map(
         projection = projection, xlim = xlim, ylim = ylim,
@@ -598,3 +600,9 @@ S7::method(project_map, plotit_class) <- function(
     ggplot2::theme(axis.title = ggplot2::element_blank())
   plot
 }
+
+# ---- project catalog --------------------------------------------------------
+# Consumed by zzz.R to register plotit_composite rejection stubs.
+._CATALOG_PROJECTS <- c(
+  "project_cartesian", "project_polar", "project_parallel", "project_map"
+)

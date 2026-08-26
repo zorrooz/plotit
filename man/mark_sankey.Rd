@@ -8,10 +8,10 @@ mark_sankey(
   plot,
   mapping = NULL,
   data = NULL,
-  position = NULL,
   ...,
   node_color = ._MARK_STYLE$ink,
-  edge_alpha = ._MARK_STYLE$alpha_link
+  edge_alpha = ._MARK_STYLE$alpha_link,
+  show_labels = TRUE
 )
 }
 \arguments{
@@ -23,8 +23,6 @@ colours ribbons and nodes alike; ribbons default to source identity.}
 
 \item{data}{Optional edges data.frame for this layer}
 
-\item{position}{Position adjustment (ignored; the layout owns placement)}
-
 \item{...}{Unused; fine-tuning (padding, curvature, node width) lives on
 \code{\link[=layout_sankey]{layout_sankey()}} in the explicit pipeline form.}
 
@@ -34,6 +32,8 @@ colours ribbons and nodes alike; ribbons default to source identity.}
 
 \item{edge_alpha}{Alpha transparency for flow ribbons
 (default \code{._MARK_STYLE$alpha_link} = 0.5).}
+
+\item{show_labels}{If \code{TRUE} (default), draw node ids inside the strips.}
 }
 \value{
 Modified plotit object; \verb{@graph} holds the laid-out tables.
