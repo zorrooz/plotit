@@ -57,9 +57,9 @@ combining two <code>mark_point</code> calls and a <code>geom_segment</code>.</p>
 <span>  <span class="va">plot</span>,</span>
 <span>  mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  colour_start <span class="op">=</span> <span class="va">._MARK_STYLE</span><span class="op">$</span><span class="va">primary</span>,</span>
-<span>  colour_end <span class="op">=</span> <span class="va">._MARK_STYLE</span><span class="op">$</span><span class="va">secondary</span>,</span>
-<span>  line_colour <span class="op">=</span> <span class="va">._MARK_STYLE</span><span class="op">$</span><span class="va">soft</span>,</span>
+<span>  color_start <span class="op">=</span> <span class="va">._MARK_STYLE</span><span class="op">$</span><span class="va">primary</span>,</span>
+<span>  color_end <span class="op">=</span> <span class="va">._MARK_STYLE</span><span class="op">$</span><span class="va">secondary</span>,</span>
+<span>  line_color <span class="op">=</span> <span class="va">._MARK_STYLE</span><span class="op">$</span><span class="va">soft</span>,</span>
 <span>  point_size <span class="op">=</span> <span class="va">._MARK_STYLE</span><span class="op">$</span><span class="va">point_head</span>,</span>
 <span>  line_width <span class="op">=</span> <span class="va">._MARK_STYLE</span><span class="op">$</span><span class="va">lw_data</span>,</span>
 <span>  <span class="va">...</span></span>
@@ -82,17 +82,17 @@ combining two <code>mark_point</code> calls and a <code>geom_segment</code>.</p>
 <dd><p>Optional data for this layer</p></dd>
 
 
-<dt id="arg-colour-start">colour_start<a class="anchor" aria-label="anchor" href="#arg-colour-start"></a></dt>
+<dt id="arg-color-start">color_start<a class="anchor" aria-label="anchor" href="#arg-color-start"></a></dt>
 <dd><p>Colour for the start point
 (default <code>._MARK_STYLE$primary</code> = <code>"#4E79A7"</code>).</p></dd>
 
 
-<dt id="arg-colour-end">colour_end<a class="anchor" aria-label="anchor" href="#arg-colour-end"></a></dt>
+<dt id="arg-color-end">color_end<a class="anchor" aria-label="anchor" href="#arg-color-end"></a></dt>
 <dd><p>Colour for the end point
 (default <code>._MARK_STYLE$secondary</code> = <code>"#E15759"</code>).</p></dd>
 
 
-<dt id="arg-line-colour">line_colour<a class="anchor" aria-label="anchor" href="#arg-line-colour"></a></dt>
+<dt id="arg-line-color">line_color<a class="anchor" aria-label="anchor" href="#arg-line-color"></a></dt>
 <dd><p>Colour for the connecting line
 (default <code>._MARK_STYLE$soft</code> = <code>"grey50"</code>).</p></dd>
 
@@ -117,8 +117,8 @@ combining two <code>mark_point</code> calls and a <code>geom_segment</code>.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Equivalent expansion:</p><div class="sourceCode"><pre><code><span></span>
 <span>  <span class="va">p</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/mark_rule.html">mark_rule</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, xend <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y_start</span>, yend <span class="op">=</span> <span class="va">y_end</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>       <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y_start</span>, colour <span class="op">=</span> <span class="va">colour_start</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>       <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y_end</span>, colour <span class="op">=</span> <span class="va">colour_end</span><span class="op">)</span></span></code></pre></div>
+<span>       <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y_start</span>, colour <span class="op">=</span> <span class="va">color_start</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>       <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y_end</span>, colour <span class="op">=</span> <span class="va">color_end</span><span class="op">)</span></span></code></pre></div>
 
     </div>
 

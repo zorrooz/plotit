@@ -12,7 +12,7 @@ mark_significance(
   comparisons,
   y_position = NULL,
   y_offset = NULL,
-  line_colour = ._MARK_STYLE$ink,
+  line_color = ._MARK_STYLE$ink,
   line_width = ._MARK_STYLE$lw_thin,
   text_size = ._MARK_STYLE$txt_note,
   tip_length = 0.02,
@@ -41,7 +41,7 @@ mark_significance(
 
   Text offset above the bracket line (default 0.5). In data units.
 
-- line_colour:
+- line_color:
 
   Colour for the bracket lines (default `._MARK_STYLE$ink` =
   `"grey30"`).

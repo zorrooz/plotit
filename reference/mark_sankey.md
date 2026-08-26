@@ -4,7 +4,8 @@ Creates a Sankey diagram showing directed flows between nodes.
 Equivalent to the pipeline
 `as_graph() |> layout_sankey() |> mark_polygon(data = ~ribbons) |> mark_rect(data = ~nodes)`
 – see §3.3.4a. Accepts an **edges table** with `source`, `target`, and
-optionally `value` columns; node and ribbon geometry come from the
+optionally `value` columns (either mapped via structural aesthetics or
+present as literal columns); node and ribbon geometry come from the
 built-in layered layout (deterministic, dependency-free). The derived
 flow/node fill channel defaults to source identity and ships with the
 curated token palette – friendly qualitative for categories, viridis
@@ -21,8 +22,8 @@ mark_sankey(
   data = NULL,
   position = NULL,
   ...,
-  node_colour = ._MARK_STYLE$ink,
-  flow_alpha = ._MARK_STYLE$alpha_link
+  node_color = ._MARK_STYLE$ink,
+  edge_alpha = ._MARK_STYLE$alpha_link
 )
 ```
 
@@ -52,12 +53,12 @@ mark_sankey(
   [`layout_sankey()`](https://zorrooz.github.io/plotit/reference/layout_sankey.md)
   in the explicit pipeline form.
 
-- node_colour:
+- node_color:
 
   Default colour for node rectangles (used when no `fill` mapping is
   present, default `._MARK_STYLE$ink` = `"grey30"`).
 
-- flow_alpha:
+- edge_alpha:
 
   Alpha transparency for flow ribbons (default `._MARK_STYLE$alpha_link`
   = 0.5).

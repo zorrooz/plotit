@@ -43,7 +43,7 @@ tiling.  Equivalent to the pipeline as_graph(hierarchy) |&amp;gt; layout_treemap
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Treemap layer (sugar)</h1>
-      <small class="dont-index">Source: <a href="https://github.com/zorrooz/plotit/blob/main/R/mark.R" class="external-link"><code>R/mark.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/zorrooz/plotit/blob/main/R/mark_relational.R" class="external-link"><code>R/mark_relational.R</code></a></small>
       <div class="d-none name"><code>mark_treemap.Rd</code></div>
     </div>
 
@@ -59,7 +59,7 @@ tiling.  Equivalent to the pipeline <code>as_graph(hierarchy) |&gt; layout_treem
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mark_treemap</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  node_colour <span class="op">=</span> <span class="va">._MARK_STYLE</span><span class="op">$</span><span class="va">primary</span>,</span>
+<span>  node_color <span class="op">=</span> <span class="va">._MARK_STYLE</span><span class="op">$</span><span class="va">primary</span>,</span>
 <span>  show_labels <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  rasterize <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -83,7 +83,7 @@ maps tile fill against any hierarchy column.</p></dd>
 <dd><p>Optional hierarchy table for this layer.</p></dd>
 
 
-<dt id="arg-node-colour">node_colour<a class="anchor" aria-label="anchor" href="#arg-node-colour"></a></dt>
+<dt id="arg-node-color">node_color<a class="anchor" aria-label="anchor" href="#arg-node-color"></a></dt>
 <dd><p>Default tile fill when no fill aesthetic is mapped
 (default <code>._MARK_STYLE$primary</code> = <code>"#4E79A7"</code>).</p></dd>
 

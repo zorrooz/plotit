@@ -13,7 +13,7 @@ for further tuning.
 mark_treemap(
   plot,
   data = NULL,
-  node_colour = ._MARK_STYLE$primary,
+  node_color = ._MARK_STYLE$primary,
   show_labels = TRUE,
   ...,
   rasterize = FALSE,
@@ -36,7 +36,7 @@ mark_treemap(
 
   Optional hierarchy table for this layer.
 
-- node_colour:
+- node_color:
 
   Default tile fill when no fill aesthetic is mapped (default
   `._MARK_STYLE$primary` = `"#4E79A7"`).

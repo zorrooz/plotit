@@ -15,11 +15,11 @@ mark_network(
   plot,
   edges = NULL,
   encode_edges = NULL,
-  layout = c("auto", "circle", "linear", "bipartite", "manual"),
+  layout = c("auto", "circle", "manual"),
   seed = NULL,
-  edge_colour = ._MARK_STYLE$faint,
+  edge_color = ._MARK_STYLE$faint,
   edge_width = ._MARK_STYLE$lw_thin,
-  node_colour = ._MARK_STYLE$primary,
+  node_color = ._MARK_STYLE$primary,
   node_size = 5,
   ...
 )
@@ -34,28 +34,27 @@ mark_network(
 
 - edges:
 
-  A data.frame of **edges**.
+  A data.frame of **edges** with literal `source`/`target` columns, or
+  mapped through `encode_edges`.
 
 - encode_edges:
 
   An [`encode()`](https://zorrooz.github.io/plotit/reference/encode.md)
   object with `source` (required), `target` (required), `value`
-  (optional magnitude; `weight` is a deprecated alias). Visual channels
-  supported on edges: `colour`/`linewidth`/`linetype`/`alpha`,
-  referenced against original edge columns. When omitted, `edges` may
-  carry literal `source`/`target`/`value` columns.
+  (optional magnitude). Visual channels supported on edges:
+  `colour`/`linewidth`/`linetype`/`alpha`, referenced against original
+  edge columns.
 
 - layout:
 
-  Layout algorithm: `"auto"` (force-directed), `"circle"`, or
-  `"manual"`. `"linear"` and `"bipartite"` are deprecated and fall back
-  to `"auto"`.
+  Layout algorithm: `"auto"` (force-directed), `"circle"`, or `"manual"`
+  (numeric `x`/`y` columns on the nodes table).
 
 - seed:
 
   Random seed for the force layout (reproducibility).
 
-- edge_colour:
+- edge_color:
 
   Default edge colour when no edge colour channel is mapped (default
   `._MARK_STYLE$faint` = `"grey70"`).
@@ -65,7 +64,7 @@ mark_network(
   Default edge width when no edge linewidth channel is mapped (default
   `._MARK_STYLE$lw_thin` = 0.5).
 
-- node_colour:
+- node_color:
 
   Default node colour, applied to the `colour` and `fill` channels only
   where they are not mapped (default `._MARK_STYLE$primary` =
@@ -107,17 +106,13 @@ nodes <- data.frame(
   value = c(10, 20, 15, 25)
 )
 edges <- data.frame(
-  from   = c("A", "A", "B", "C"),
-  to     = c("B", "C", "C", "D"),
-  weight = c(1, 2, 3, 4)
+  source = c("A", "A", "B", "C"),
+  target = c("B", "C", "C", "D"),
+  value  = c(1, 2, 3, 4)
 )
 nodes |>
   plotit(encode(color = group, size = value, label = name)) |>
-  mark_network(
-    edges = edges,
-    encode_edges = encode(source = from, target = to, value = weight),
-    seed = 1
-  ) |>
+  mark_network(edges = edges, seed = 1) |>
   scale_color(range = "viridis") |>
   scale_size(range = c(5, 20))
 #> Scale for colour is already present.

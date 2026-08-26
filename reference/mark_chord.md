@@ -4,7 +4,8 @@ Creates a chord diagram showing pairwise relationships between groups.
 Equivalent to the pipeline
 `as_graph() |> layout_chord() |> mark_polygon(data = ~ribbons) |> mark_polygon(data = ~arcs)`
 – see §3.3.4a. Accepts an **edges table** with `source`, `target`, and
-optionally `value` columns; sector arcs and bezier bands come from the
+optionally `value` columns (either mapped via structural aesthetics or
+present as literal columns); sector arcs and bezier bands come from the
 built-in circular layout (deterministic, dependency-free). The fill
 channel defaults to source identity (the same derived-channel rule as
 [`mark_sankey()`](https://zorrooz.github.io/plotit/reference/mark_sankey.md))
@@ -21,7 +22,7 @@ mark_chord(
   mapping = NULL,
   data = NULL,
   gap_width = 4,
-  link_alpha = ._MARK_STYLE$alpha_link,
+  edge_alpha = ._MARK_STYLE$alpha_link,
   ...
 )
 ```
@@ -40,16 +41,17 @@ mark_chord(
 
 - data:
 
-  Optional edges data.frame for this layer. Legacy formats (`from`/`to`,
-  `Var1`/`Var2`/`Freq`, adjacency matrix) are still auto-detected and
-  coerced.
+  Optional edges data.frame for this layer. Other formats (adjacency
+  matrices, contingency tables) convert via
+  [`as_graph()`](https://zorrooz.github.io/plotit/reference/as_graph.md)
+  first – its `edges` table plugs straight into this mark.
 
 - gap_width:
 
   Gap between sectors in degrees (default 4); translated to the layout's
   angular padding.
 
-- link_alpha:
+- edge_alpha:
 
   Alpha transparency for link bands (default `._MARK_STYLE$alpha_link` =
   0.5).
