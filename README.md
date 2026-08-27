@@ -115,7 +115,7 @@ compose_*(p1, p2, ...) |> label_*() |> style() |> export()
 
 ### `mark_*` — Geometric layers
 
-27 marks across three tiers: basic geometry, statistical, and composite/relational.
+39 marks across three tiers: basic geometry, statistical, and composite/relational.
 Composite and relational marks are documented syntax sugar over the primitives
 below (e.g. `mark_significance()` ≈ `mark_rule()` + `mark_text()`).
 
@@ -123,30 +123,41 @@ below (e.g. `mark_significance()` ≈ `mark_rule()` + `mark_text()`).
 |:---|:---|:---|
 | `mark_point()` | `geom_point()` | Scatter / bubble plots |
 | `mark_line()` | `geom_line()` | Lines and trends |
-| `mark_area()` | `geom_area()` / `geom_ribbon()` | Filled area charts |
+| `mark_area()` | `geom_area()` / `geom_ribbon()` | Filled areas; `ymin`/`ymax` become interval bands |
 | `mark_bar()` | `geom_bar()` / `geom_col()` | Bar charts |
 | `mark_rect()` | `geom_tile()` / `geom_rect()` | Heatmap cells / rectangles |
 | `mark_polygon()` | `geom_polygon()` | Polygons / custom shapes |
 | `mark_text()` | `geom_text()` / ggrepel | Text labels and annotations |
-| `mark_rule()` | `geom_hline/vline/abline/segment` | Reference lines and ranges |
+| `mark_label()` | `geom_label()` / ggrepel | Boxed labels |
+| `mark_rule()` | `geom_hline/vline/abline/segment` | Reference lines, ranges, data segments |
 | `mark_path()` | `geom_path()` | Paths and trajectories |
+| `mark_step()` | `geom_step()` | Staircase lines (`direction = "vh"/"hv"/"mid"`) |
+| `mark_rug()` | `geom_rug()` | Marginal ticks (censoring marks, 1D marginals) |
+| `mark_spoke()` | `geom_spoke()` | Radial segments (angle + radius) |
+| `mark_curve()` | `geom_curve()` | Curved links (arc diagrams, arrows) |
 | `mark_histogram()` | `geom_histogram()` | Histograms |
 | `mark_density()` | `geom_density()` | 1D kernel density curves |
 | `mark_boxplot()` | `geom_boxplot()` | Box-and-whisker plots |
 | `mark_violin()` | `geom_violin()` | Violin plots |
+| `mark_ecdf()` | `geom_step` + `stat_ecdf` | Empirical CDF |
+| `mark_qq()` / `mark_qq_line()` | `geom_qq(_line)` | Quantile-quantile diagnostics |
 | `mark_map()` | sf + `geom_sf()` | Geographic maps |
 | `mark_smooth()` | `geom_smooth()` | Regression fits with confidence bands |
+| `mark_count()` | `geom_count()` | Overlap-aware sized points |
 | `mark_hex()` | `geom_hex()` | 2D hexagonal binning |
-| `mark_density_2d()` | `geom_density_2d()` | 2D density contours |
+| `mark_bin2d()` | `geom_bin_2d()` | 2D rectangular binning heatmap |
+| `mark_density_2d()` | `geom_density_2d()` | 2D density contours (lines or filled) |
+| `mark_contour()` | `geom_contour()` | Contours of an observed z field |
 | `mark_corr()` | internal corr transform + `geom_tile()` | Correlation heatmap |
-| `mark_errorbar()` | `geom_errorbar()` / `-h` | Error bars |
+| `mark_errorbar()` | `geom_errorbar()` / `geom_linerange()` | Error bars / interval lines (`caps =`) |
 | `mark_significance()` | sugar: rule + text | Significance brackets |
 | `mark_lollipop()` | sugar: point + stem | Lollipop charts |
 | `mark_dumbbell()` | sugar: two points + stem | Dumbbell comparison charts |
+| `mark_forest()` | sugar: errorbar + point + rule | Meta-analysis / coefficient forests |
 | `mark_beeswarm()` | ggbeeswarm | Beeswarm scatter (collision detection) |
 | `mark_sankey()` | `layout_sankey()` sugar | Sankey flow diagrams |
 | `mark_treemap()` | `layout_treemap()` sugar | Treemaps |
-| `mark_network()` | `layout_force()/circle()` sugar | Force-directed network graphs |
+| `mark_network()` | `layout_force()/circle()` sugar | Network graphs (straight or curved edges) |
 | `mark_chord()` | `layout_chord()` sugar | Chord diagrams |
 
 ### Relational data — `as_graph()` + `layout_*()`
@@ -188,6 +199,7 @@ edges |>
 | `scale_color()` | colour |
 | `scale_fill()` | fill |
 | `scale_size()` | size |
+| `scale_radius()` | radius (area-honest bubbles) |
 | `scale_alpha()` | alpha |
 | `scale_shape()` | shape |
 | `scale_linetype()` | linetype |
@@ -249,7 +261,10 @@ edges |>
 
 ## Documentation
 
-Full documentation is available at [zorrooz.github.io/plotit](https://zorrooz.github.io/plotit/).
+Full documentation is available at [zorrooz.github.io/plotit](https://zorrooz.github.io/plotit/),
+including a [relational-charts guide](https://zorrooz.github.io/plotit/articles/relational.html)
+and figure galleries (groups, distributions, relationships, coordinates,
+relational charts, composition & annotation) under **Articles → Gallery**.
 
 ## Contributing
 

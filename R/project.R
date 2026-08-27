@@ -133,8 +133,8 @@ S7::method(project_polar, plotit_class) <- function(
   clip = "on",
   ...
 ) {
-  if (!is.numeric(inner_radius) || length(inner_radius) != 1 ||
-        is.na(inner_radius) || inner_radius < 0) {
+  bad_r <- !is.numeric(inner_radius) || length(inner_radius) != 1 || is.na(inner_radius) || inner_radius < 0
+  if (bad_r) {
     cli::cli_abort("{.arg inner_radius} must be a single non-negative number.")
   }
   use_radial <- inner_radius > 0 || isTRUE(r_axis_inside)

@@ -28,6 +28,26 @@ NULL
   if (!is.null(mapping) && (!is.null(mapping$colour) || !is.null(mapping$fill))) {
     plot <- ._clear_default_color(plot, mapping)
   }
+  # Record the evaluated kind of every layer-resolved visual channel so a
+  # later scale_*() auto-detection can see it (graph plots have no global
+  # mapping at all, and the scale layer is otherwise blind).
+  if (!is.null(mapping)) {
+    channels <- intersect(
+      names(mapping),
+      c("colour", "fill", "size", "alpha", "shape", "linetype")
+    )
+    kinds <- list()
+    for (ch in channels) {
+      col <- tryCatch(
+        rlang::eval_tidy(mapping[[ch]], data %||% plot@gg$data),
+        error = function(e) NULL
+      )
+      if (!is.null(col) && !inherits(col, "AsIs")) {
+        kinds[[ch]] <- is.factor(col) || is.character(col) || is.logical(col)
+      }
+    }
+    plot <- ._aes_kinds_add(plot, kinds)
+  }
   # Token default palette for layer-level channels that no managed scale
   # covers yet (construction attached globals; explicit relational pipelines
   # start unmanaged).  Keeps every path on the same curated palettes without
@@ -116,12 +136,84 @@ NULL
   suppressMessages(scale_fill(plot, trans = trans, range = range))
 }
 
+# ---- closed statistical-mark fill ownership ----
+# mark_hex / mark_bin2d / filled density_2d / filled contour own their fill
+# channel: the computed count/level drives the colouring, so the
+# plotit()-injected single-colour constants must go first, and a curated
+# viridis scale is attached afterwards (a later user scale_*() replaces it,
+# last-wins).  One pre/post pair keeps the five call sites identical.
+#' Pre-step: capture user fill ownership, then clear the injection.
+#' @noRd
+#' @keywords internal
+._closed_fill_pre <- function(plot, mapping) {
+  user_fill <- !is.null(mapping$fill) ||
+    "fill" %in% ._user_owned_aes(plot, mapping)
+  list(plot = ._clear_default_color(plot), user_fill = user_fill)
+}
+
+#' Post-step: attach the default viridis scale unless the user owns fill.
+#' @noRd
+#' @keywords internal
+._closed_fill_post <- function(plot, user_fill, trans) {
+  if (!user_fill) {
+    plot <- ._derived_fill(plot, trans = trans)
+  }
+  plot
+}
+
+# Resolve a distribution name ("norm") to its quantile function ("qnorm").
+# Shared by mark_qq / mark_qq_line (AGENTS.md 4.3 error-wording parity).
+#' Resolve a q*-function from a distribution short name.
+#' @noRd
+#' @keywords internal
+._resolve_qfun <- function(distribution) {
+  qfun <- paste0("q", distribution)
+  if (!exists(qfun, mode = "function")) {
+    cli::cli_abort(c(
+      "{.arg distribution} must name a `q*` function (e.g. {.val norm} for {.fn qnorm}).",
+      "x" = "{.fn {qfun}} was not found."
+    ))
+  }
+  get(qfun, mode = "function")
+}
+
+# ---- composite-mark shared helper ----
+# The composite sugars (lollipop / dumbbell / forest) share one contract:
+# resolve the effective layer data/mapping, require a fixed set of
+# aesthetics, and evaluate them to plain vectors for `!!`-injection.
+# Centralising it keeps every sugar's validation and error wording
+# identical (AGENTS.md 4.3).
+#' Resolve layer data/mapping, require aesthetics, evaluate to vectors.
+#' @noRd
+#' @keywords internal
+._eval_layer_aes <- function(plot, mapping, data, required, mark_name) {
+  d <- data %||% plot@gg$data
+  m <- mapping %||% plot@gg$mapping
+  missing_aes <- setdiff(required, names(m))
+  if (length(missing_aes) > 0) {
+    cli::cli_abort(c(
+      "{.fn {mark_name}} requires the {.val {missing_aes}} aesthetic{?s}.",
+      "i" = "Use {.code encode(...)} in {.fn plotit} or pass a layer {.arg mapping}."
+    ))
+  }
+  cols <- lapply(required, function(a) rlang::eval_tidy(m[[a]], d))
+  names(cols) <- required
+  list(data = d, mapping = m, cols = cols)
+}
+
 # ---- mark method factory ----
 # Generates only the S7 method for a standard mark.  The S7 generic
 # (`new_generic`) stays hand-written with @export so roxygen2 can see it.
 #
 # generic  : the S7 generic object (e.g. mark_point)
 # geom_fun : the ggplot2 geom function (e.g. ggplot2::geom_point)
+#
+# NOTE on stat_* wrappers: ggplot2's `stat_ecdf(geom = "step")` etc.
+# resolve their counterpart layer through substitute() side effects that
+# misfire under this package's do.call argument splicing (the "step"
+# string escapes into stats::step).  Marks pairing a geom with a
+# different stat therefore wrap the GEOM constructor and hand it the stat
+# as a ggproto object -- the same object the wrapper resolves to.
 #' Register an S7 method for a standard mark.
 #' @noRd
 #' @keywords internal
@@ -177,6 +269,32 @@ NULL
 #' @export
 mark_point <- ._make_mark_generic("mark_point")
 ._register_mark_method(mark_point, ggplot2::geom_point)
+
+# ---- shared aesthetic-name filter ----
+# Keep only the channels a point-like sugar layer understands.
+# geom_point does not know xend/yend (or any other foreign column), so
+# generic "drop the end channels" filtering used to leak new geometry
+# columns into composite sugars.  A whitelist makes the filter stable as
+# the geometry vocabulary grows.
+._POINT_BIND_AES <- c(
+  "x", "y", "colour", "fill", "size", "shape",
+  "alpha", "linetype", "stroke", "group"
+)
+
+# Channels a segment/interval layer understands (geom_errorbar/linerange).
+# Used by mark_forest to strip fill from a global mapping the bar geom has
+# no use for (which would otherwise warn "Ignoring unknown aesthetics").
+._INTERVAL_BIND_AES <- c(
+  "x", "y", "ymin", "ymax", "xmin", "xmax",
+  "colour", "alpha", "linetype", "linewidth", "group"
+)
+
+#' Keep a mapping down to the channels a given geom family accepts.
+#' @noRd
+#' @keywords internal
+._filter_aes <- function(m, allowed) {
+  structure(m[intersect(names(m), allowed)], class = oldClass(m))
+}
 
 # ---- mark_line ----
 #' Line layer
@@ -261,8 +379,11 @@ mark_density <- ._make_mark_generic("mark_density")
 # ---- mark_area ----
 #' Area layer
 #'
-#' Adds a filled area layer. Use for stacked area charts, stream graphs,
-#' or error bands.
+#' Adds a filled area layer.  With `y` mapped this is a classic
+#' (optionally stacked) area chart via `geom_area`; with `ymin`/`ymax`
+#' mapped instead it becomes an interval band via `geom_ribbon` —
+#' confidence bands, min/max envelopes, or any "area between two
+#' curves" view (Vega-Lite's `area` covers both, as does G2).
 #'
 #' @param plot A plotit object
 #' @param mapping Optional new aesthetics
@@ -271,14 +392,50 @@ mark_density <- ._make_mark_generic("mark_density")
 #' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
 #' @param rasterize_dpi DPI for rasterization (default 300).
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
-#' @param ... Other arguments passed to `geom_area`
+#' @param ... Other arguments passed to `geom_area` (or `geom_ribbon`
+#'   when `ymin`/`ymax` drive the layer)
 #' @return Modified plotit object
+#' @references
+#' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/area.html}{Area} /
+#' \href{https://vega.github.io/vega-lite/docs/band.html}{Band}
+#'
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/area}{Area}
 #' @examples
 #' plotit(ggplot2::economics, encode(x = date, y = unemploy)) |>
 #'   mark_area(alpha = 0.5)
+#'
+#' # interval band: smooth fit with 95% confidence envelope
+#' fit <- stats::loess(mpg ~ wt, data = mtcars)
+#' band <- data.frame(
+#'   wt = mtcars$wt,
+#'   fit = stats::predict(fit),
+#'   se = stats::predict(fit, se = TRUE)$se.fit
+#' )
+#' band$lo <- band$fit - 1.96 * band$se
+#' band$hi <- band$fit + 1.96 * band$se
+#' plotit(band, encode(x = wt, ymin = lo, ymax = hi)) |>
+#'   mark_area(alpha = 0.2, fill = "#4E79A7") |>
+#'   mark_line(mapping = encode(x = wt, y = fit))
 #' @export
 mark_area <- ._make_mark_generic("mark_area")
-._register_mark_method(mark_area, ggplot2::geom_area)
+# Registered by hand (not via ._register_mark_method): the geom choice
+# depends on whether the layer is driven by `y` (area) or `ymin`/`ymax`
+# (band), mirroring the geom_col/geom_bar dispatch in mark_bar.
+#' @export
+S7::method(mark_area, plotit_class) <- function(
+  plot, mapping = NULL, data = NULL, position = NULL, ...,
+  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+) {
+  eff <- if (is.null(mapping)) plot@gg$mapping else mapping
+  band <- !is.null(eff$ymin) && !is.null(eff$ymax)
+  geom_fun <- if (band) ggplot2::geom_ribbon else ggplot2::geom_area
+  ._mark_impl(plot, mapping, data, position, geom_fun,
+    rasterize, rasterize_dpi, rasterize_dev,
+    # A single band must not dodge against sibling layers.
+    auto_dodge = !band,
+    bind_aes = ._MARK_BIND_AES$mark_area, mark_name = "mark_area", ...
+  )
+}
 
 # ---- mark_text ----
 #' Text layer
@@ -384,6 +541,12 @@ S7::method(mark_map, plotit_class) <- function(
   rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
 ) {
   ._require_pkg("sf", "{.fn mark_map}")
+  if (!is.null(position)) {
+    cli::cli_warn(c(
+      "{.arg position} is ignored by {.fn mark_map}.",
+      "i" = "{.fn geom_sf} implements no position adjustments."
+    ))
+  }
   layer_data <- data %||% plot@gg$data
   if (!inherits(layer_data, "sf")) {
     cli::cli_abort(c(
@@ -535,8 +698,14 @@ S7::method(mark_rule, plotit_class) <- function(
   rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
 ) {
   # Data-driven segment mode: render one segment per row (e.g. network
-  # edges from a layout_* transform).  Endpoints come from the mapping
-  # (auto-bound from layout geometry when data is a ~table reference).
+  # edges from a layout_* transform, or a global x/xend/y/yend mapping).
+  # Endpoints come from the mapping (auto-bound from layout geometry when
+  # data is a ~table reference; global mapping when data is omitted).
+  eff_mapping <- if (is.null(mapping)) plot@gg$mapping else mapping
+  seg_aes <- all(c("x", "xend", "y", "yend") %in% names(eff_mapping))
+  if (is.null(data) && !is.null(eff_mapping) && seg_aes) {
+    data <- plot@gg$data
+  }
   if (!is.null(data)) {
     scalar_endpoints <- any(
       !is.null(x), !is.null(xend),
@@ -550,6 +719,12 @@ S7::method(mark_rule, plotit_class) <- function(
     }
     resolved <- ._resolve_layer_data(data, plot)
     seg_data <- resolved$data
+    # Graph layers bind geometry from their own table and must never fall
+    # back to the global mapping (a graph's global aes would reference
+    # node-table columns the edges table lacks).
+    if (is.null(mapping) && !resolved$from_graph) {
+      mapping <- eff_mapping
+    }
     if (resolved$from_graph) {
       mapping <- ._auto_bind_geometry(mapping, seg_data,
         scope = ._MARK_BIND_AES$mark_rule
@@ -786,13 +961,10 @@ S7::method(mark_hex, plotit_class) <- function(
   rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
 ) {
   ._require_pkg("hexbin", "{.fn mark_hex}")
-  # Track whether the user owns the fill channel before the injected
-  # default_color constants are cleared below.
-  user_fill <- !is.null(mapping$fill) ||
-    "fill" %in% ._user_owned_aes(plot, mapping)
-  # The bin-count fill is owned by this closed statistical mark: drop the
-  # injected single-colour constants so the count scale can render.
-  plot <- ._clear_default_color(plot)
+  # The bin-count fill is owned by this closed statistical mark (shared
+  # pre/post: clear injection, then attach the curated viridis default).
+  pre <- ._closed_fill_pre(plot, mapping)
+  plot <- pre$plot
   params <- rlang::list2(...)
   params$bins <- bins
   plot <- ._impl_with(plot, mapping, data, position, ggplot2::geom_hex,
@@ -800,12 +972,7 @@ S7::method(mark_hex, plotit_class) <- function(
     bind_aes = ._MARK_BIND_AES$mark_hex, mark_name = "mark_hex",
     extra = params
   )
-  # Default continuous fill (AGENTS.md §6): viridis unless the user mapped
-  # their own fill.  A later scale_fill() call replaces it (last wins).
-  if (!user_fill) {
-    plot <- ._derived_fill(plot, trans = "identity")
-  }
-  plot
+  ._closed_fill_post(plot, pre$user_fill, trans = "identity")
 }
 
 # ---- mark_density_2d ----
@@ -855,7 +1022,8 @@ S7::method(mark_density_2d, plotit_class) <- function(
   # statistical mark: clear injected colour constants and default the band
   # scale to viridis (AGENTS.md §6).
   if (filled) {
-    plot <- ._clear_default_color(plot)
+    pre <- ._closed_fill_pre(plot, mapping)
+    plot <- pre$plot
   }
   plot <- ._impl_with(plot, mapping, data, position, geom_fun,
     rasterize, rasterize_dpi, rasterize_dev,
@@ -863,7 +1031,7 @@ S7::method(mark_density_2d, plotit_class) <- function(
     extra = dots
   )
   if (filled) {
-    plot <- ._derived_fill(plot, trans = "discrete")
+    plot <- ._closed_fill_post(plot, pre$user_fill, trans = "discrete")
   }
   plot
 }
@@ -985,37 +1153,56 @@ S7::method(mark_corr, plotit_class) <- function(
 }
 
 # ---- mark_errorbar ----
-#' Error bar layer
+#' Error bar / interval layer
 #'
-#' Adds error bars showing confidence intervals, standard errors,
-#' or other variability measures. Data should include columns for
-#' `ymin`/`ymax` (vertical) or `xmin`/`xmax` (horizontal).
+#' Adds interval bars showing confidence intervals, standard errors,
+#' or other variability measures.
+#' Vertical bars (default) map the position on `x` and the interval on
+#' `ymin`/`ymax`; horizontal bars map the position on `y` and the interval
+#' on `xmin`/`xmax` (G2's `rangeX`/`rangeY` semantics).  Set `caps = FALSE`
+#' for plain interval lines without end caps (Vega-Lite's `errorband`).
 #'
 #' @param plot A plotit object
-#' @param mapping Optional new aesthetics (must include `ymin`/`ymax`
-#'   or `xmin`/`xmax`)
+#' @param mapping Optional new aesthetics (must include the interval
+#'   columns for the chosen orientation: `ymin`/`ymax` vertical,
+#'   `xmin`/`xmax` horizontal)
 #' @param data Optional data for this layer
 #' @param position Position adjustment.
-#' @param width Width of the error bar caps (default 0.5).
+#' @param width Size of the error bar caps as a fraction of the resolution
+#'   of the data (default 0.5).  Ignored when `caps = FALSE`.
 #' @param orientation `"vertical"` (default) or `"horizontal"`.
+#' @param caps If `TRUE` (default), draw end caps; `FALSE` renders bare
+#'   interval lines (`geom_linerange`).
 #' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
 #' @param rasterize_dpi DPI for rasterization (default 300).
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to the underlying geom
 #' @return Modified plotit object
 #' @references
-#' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/errorbar.html}{Errorbar} (composite mark)
+#' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/errorbar.html}{Errorbar} /
+#' \href{https://vega.github.io/vega-lite/docs/errorband.html}{Errorband} (composite marks)
+#'
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/range}{Range}
 #' @examples
 #' df <- data.frame(
 #'   x = c("A", "B"), y = c(10, 20), ymin = c(8, 18), ymax = c(12, 22)
 #' )
 #' plotit(df, encode(x = x, y = y, ymin = ymin, ymax = ymax)) |>
 #'   mark_errorbar(width = 0.3)
+#'
+#' # horizontal interval (position on y, range on x)
+#' dfh <- data.frame(
+#'   y = c("A", "B"), x = c(10, 20), xmin = c(8, 18), xmax = c(12, 22)
+#' )
+#' plotit(dfh, encode(x = x, y = y, xmin = xmin, xmax = xmax)) |>
+#'   mark_point() |>
+#'   mark_errorbar(orientation = "horizontal", caps = FALSE)
 #' @export
 mark_errorbar <- S7::new_generic(
   "mark_errorbar", "plot",
   function(plot, mapping = NULL, data = NULL, position = NULL, ...,
            width = 0.5, orientation = c("vertical", "horizontal"),
+           caps = TRUE,
            rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
     S7::S7_dispatch()
   }
@@ -1025,16 +1212,16 @@ mark_errorbar <- S7::new_generic(
 S7::method(mark_errorbar, plotit_class) <- function(
   plot, mapping = NULL, data = NULL, position = NULL, ...,
   width = 0.5, orientation = c("vertical", "horizontal"),
+  caps = TRUE,
   rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
 ) {
   orientation <- match.arg(orientation)
-  geom_fun <- if (orientation == "horizontal") {
-    ggplot2::geom_errorbarh
-  } else {
-    ggplot2::geom_errorbar
-  }
+  gg_orient <- if (orientation == "horizontal") "y" else "x"
+  geom_fun <- if (isTRUE(caps)) ggplot2::geom_errorbar else ggplot2::geom_linerange
   params <- rlang::list2(...)
-  params$width <- width
+  params$orientation <- gg_orient
+  # Cap width is an errorbar-only parameter; linerange has no caps.
+  if (isTRUE(caps)) params$width <- width
   ._impl_with(plot, mapping, data, position, geom_fun,
     rasterize, rasterize_dpi, rasterize_dev,
     bind_aes = ._MARK_BIND_AES$mark_errorbar, mark_name = "mark_errorbar",
@@ -1139,52 +1326,55 @@ S7::method(mark_significance, plotit_class) <- function(
     (is.null(x_scale) && (is.factor(x_var) || is.character(x_var)))
   x_levels <- if (is.factor(x_var)) levels(x_var) else sort(unique(as.character(x_var)))
   if (is.character(x_scale$limits)) x_levels <- as.character(x_scale$limits)
-  # Draw brackets
-  for (i in seq_len(nrow(comparisons))) {
-    g1 <- as.character(comparisons$group1[i])
-    g2 <- as.character(comparisons$group2[i])
-    if (is_discrete_x) {
-      # Skip comparisons involving levels outside the visible axis
-      if (!(g1 %in% x_levels) || !(g2 %in% x_levels)) next
-      x1 <- g1
-      x2 <- g2
-    } else {
-      x1 <- as.numeric(g1)
-      x2 <- as.numeric(g2)
-      if (is.na(x1) || is.na(x2)) next
-    }
-    y_pos <- if (i <= length(y_position)) y_position[i] else y_position[1] + (i - 1) * y_span * 0.08
-    # Bracket line
-    plot@gg <- plot@gg + ggplot2::annotate(
+  # Draw every bracket in one vectorized pass (annotate() is vectorized, so
+  # a single segment + tick-pair + text layer replaces 3 annotate layers
+  # *per comparison*; order-invariant since brackets never overlap).
+  g1 <- as.character(comparisons$group1)
+  g2 <- as.character(comparisons$group2)
+  if (is_discrete_x) {
+    keep <- g1 %in% x_levels & g2 %in% x_levels
+    x1 <- g1[keep]
+    x2 <- g2[keep]
+    tick_len <- rep(tip_length * length(x_levels), sum(keep))
+    mid_x <- (match(g1[keep], x_levels) + match(g2[keep], x_levels)) / 2
+  } else {
+    n1 <- suppressWarnings(as.numeric(g1))
+    n2 <- suppressWarnings(as.numeric(g2))
+    keep <- !is.na(n1) & !is.na(n2)
+    x1 <- n1[keep]
+    x2 <- n2[keep]
+    tick_len <- tip_length * abs(x2 - x1)
+    mid_x <- (x1 + x2) / 2
+  }
+  if (!any(keep)) {
+    return(plot)
+  }
+  if (length(y_position) >= nrow(comparisons)) {
+    y_pos <- y_position[keep]
+  } else {
+    y_all <- y_position[1] + (seq_len(nrow(comparisons)) - 1) * y_span * 0.08
+    y_pos <- y_all[keep]
+  }
+  plot@gg <- plot@gg +
+    # Bracket lines
+    ggplot2::annotate(
       "segment",
       x = x1, xend = x2, y = y_pos, yend = y_pos,
       colour = line_color, linewidth = line_width
-    )
-    # Left tick
-    tick_len <- if (is_discrete_x) tip_length * length(x_levels) else tip_length * diff(range(c(x1, x2)))
-    plot@gg <- plot@gg + ggplot2::annotate(
+    ) +
+    # End ticks (left and right ends share one segment layer)
+    ggplot2::annotate(
       "segment",
-      x = x1, xend = x1, y = y_pos - tick_len, yend = y_pos,
+      x = c(x1, x2), xend = c(x1, x2),
+      y = c(y_pos - tick_len, y_pos - tick_len), yend = c(y_pos, y_pos),
       colour = line_color, linewidth = line_width
-    )
-    # Right tick
-    plot@gg <- plot@gg + ggplot2::annotate(
-      "segment",
-      x = x2, xend = x2, y = y_pos - tick_len, yend = y_pos,
-      colour = line_color, linewidth = line_width
-    )
-    # Label (midpoint in numeric position space for discrete axes)
-    mid_x <- if (is_discrete_x) {
-      (match(g1, x_levels) + match(g2, x_levels)) / 2
-    } else {
-      (x1 + x2) / 2
-    }
-    plot@gg <- plot@gg + ggplot2::annotate(
+    ) +
+    # Labels (midpoint in numeric position space for discrete axes)
+    ggplot2::annotate(
       "text",
       x = mid_x, y = y_pos + y_offset,
-      label = comparisons$label[i], size = text_size, ...
+      label = comparisons$label[keep], size = text_size, ...
     )
-  }
   plot
 }
 
@@ -1231,18 +1421,11 @@ S7::method(mark_lollipop, plotit_class) <- function(
   stem_color = ._MARK_STYLE$soft, stem_width = ._MARK_STYLE$lw_thin,
   point_size = ._MARK_STYLE$point_head, ref = 0, ...
 ) {
-  d <- data %||% plot@gg$data
-  m <- mapping %||% plot@gg$mapping
-  if (is.null(m$x) || is.null(m$y)) {
-    cli::cli_abort(c(
-      "{.fn mark_lollipop} requires {.arg x} and {.arg y} aesthetics.",
-      "i" = "Use {.code encode(x = ..., y = ...)} in {.fn plotit} or \\
-             pass a layer {.arg mapping}."
-    ))
-  }
-  # Extract x and y from mapping
-  x_col <- rlang::eval_tidy(m$x, d)
-  y_col <- rlang::eval_tidy(m$y, d)
+  resolved <- ._eval_layer_aes(
+    plot, mapping, data, c("x", "y"), "mark_lollipop"
+  )
+  x_col <- resolved$cols$x
+  y_col <- resolved$cols$y
   # Stem: segment from `ref` to y.  Values are injected with !! so the
   # aes do not depend on data column names (D4).
   stem_mapping <- encode(x = !!x_col, xend = !!x_col, y = !!ref, yend = !!y_col)
@@ -1252,11 +1435,10 @@ S7::method(mark_lollipop, plotit_class) <- function(
   )
   plot <- ._add_geom(plot, geome)
   # Point at the top: keep the visual channels (colour/fill/...) but drop
-  # positional extras such as `yend`, which geom_point does not understand.
-  keep <- setdiff(names(m), c("xend", "yend"))
-  point_mapping <- structure(m[keep], class = oldClass(m))
+  # positional extras the point geom does not understand.
   plot <- plot |> mark_point(
-    mapping = point_mapping, data = d, size = point_size, ...
+    mapping = ._filter_aes(resolved$mapping, ._POINT_BIND_AES),
+    data = resolved$data, size = point_size, ...
   )
   plot
 }
@@ -1454,6 +1636,788 @@ S7::method(mark_bar, plotit_class) <- function(plot, mapping = NULL, data = NULL
   )
 }
 
+# ---- mark_step ----
+#' Step layer
+#'
+#' Adds a stair-step line layer: observations are connected with
+#' axis-parallel segments, so every change renders as an explicit jump.
+#' Use for discrete state changes over time, reference thresholds, or
+#' cumulative (ECDF-style) views.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param direction `"vh"` (default) draws vertical-then-horizontal steps;
+#'   `"hv"` the reverse; `"mid"` steps at the midpoint.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_step`
+#' @return Modified plotit object
+#' @references
+#' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/line.html}{Line} with `interpolate: "step"`
+#'
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/line}{Line} with `shape: "hv"`
+#' @examples
+#' plotit(ggplot2::economics, encode(x = date, y = unemploy)) |>
+#'   mark_step()
+#'
+#' # horizontal-then-vertical steps
+#' plotit(ggplot2::economics, encode(x = date, y = unemploy)) |>
+#'   mark_step(direction = "hv")
+#'
+#' # grouped steps
+#' plotit(
+#'   subset(ggplot2::economics, date > "1990-01-01"),
+#'   encode(x = date, y = psavert, colour = "savings")
+#' ) |>
+#'   mark_step() |>
+#'   mark_line(colour = "#E15759", alpha = 0.3)
+#' @export
+mark_step <- S7::new_generic(
+  "mark_step", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           direction = c("vh", "hv", "mid"),
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_step, plotit_class) <- function(
+  plot, mapping = NULL, data = NULL, position = NULL, ...,
+  direction = c("vh", "hv", "mid"),
+  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+) {
+  direction <- match.arg(direction)
+  params <- rlang::list2(...)
+  params$direction <- direction
+  ._impl_with(plot, mapping, data, position, ggplot2::geom_step,
+    rasterize, rasterize_dpi, rasterize_dev,
+    bind_aes = ._MARK_BIND_AES$mark_step, mark_name = "mark_step",
+    extra = params
+  )
+}
+
+# ---- mark_rug ----
+#' Rug / tick layer
+#'
+#' Adds marginal tick marks along the axes: one short segment per
+#' observation.  Use for 1D marginals under a histogram or density,
+#' censoring ticks in survival timelines, or exact data positions
+#' behind a smoothed curve.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param sides Which sides to draw on: any combination of `"b"` (bottom),
+#'   `"l"` (left), `"t"` (top), `"r"` (right).  Default `"bl"`.
+#' @param length Tick length as a fraction of the panel (default 0.03).
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_rug`
+#' @return Modified plotit object
+#' @references
+#' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/rule.html}{Rule} (marginal tick pattern)
+#'
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/range}{Range} (brush ticks)
+#' @examples
+#' plotit(faithful, encode(x = eruptions)) |>
+#'   mark_histogram(bins = 20) |>
+#'   mark_rug()
+#'
+#' # top rug to frame a density
+#' plotit(faithful, encode(x = eruptions)) |>
+#'   mark_density() |>
+#'   mark_rug(sides = "t", color = "#E15759")
+#'
+#' # two 1D marginals beside a scatter
+#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+#'   mark_point(alpha = 0.5) |>
+#'   mark_rug(sides = "bl")
+#' @export
+mark_rug <- S7::new_generic(
+  "mark_rug", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           sides = "bl", length = NULL,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_rug, plotit_class) <- function(
+  plot, mapping = NULL, data = NULL, position = NULL, ...,
+  sides = "bl", length = NULL,
+  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+) {
+  # rug is a marginal annotation layer: collision with dodge placement is
+  # not meaningful, so never auto-dodge here.
+  params <- rlang::list2(...)
+  params$sides <- sides
+  if (!is.null(length)) params$length <- grid::unit(length, "npc")
+  ._impl_with(plot, mapping, data, position, ggplot2::geom_rug,
+    rasterize, rasterize_dpi, rasterize_dev,
+    auto_dodge = FALSE, bind_aes = ._MARK_BIND_AES$mark_rug,
+    mark_name = "mark_rug", extra = params
+  )
+}
+
+# ---- mark_spoke ----
+#' Spoke layer
+#'
+#' Draws a radial segment ("spoke") from each point `(x, y)` at `angle`
+#' (radians) for `radius` length.  A first-class primitive for
+#' direction/velocity fields and for radial network edges whose endpoints
+#' are naturally expressed in polar terms.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics (must include `x`, `y`,
+#'   `angle` in radians, and `radius`)
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_spoke`
+#' @return Modified plotit object
+#' @references
+#' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/spoke.html}{Spoke}
+#' @examples
+#' df <- data.frame(
+#'   x = c(0, 1, 2), y = c(0, 1, 0),
+#'   angle = c(0, pi / 2, pi), radius = c(0.5, 0.8, 0.3)
+#' )
+#' plotit(df, encode(x = x, y = y, angle = angle, radius = radius)) |>
+#'   mark_spoke()
+#' @export
+mark_spoke <- ._make_mark_generic("mark_spoke")
+._register_mark_method(mark_spoke, ggplot2::geom_spoke)
+
+# ---- mark_curve ----
+#' Curved link layer
+#'
+#' Draws curved segments between `(x, y)` and `(xend, yend)` endpoints --
+#' the link/diagram edge for arc diagrams, bipartite layouts and network
+#' charts, where straight rules overlap node labels.  Arrows are available
+#' through `arrow = grid::arrow()` via `...`.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics (must include `x`, `y`,
+#'   `xend`, `yend`; layout tables bind them automatically)
+#' @param data Optional data for this layer; accepts a `~table` graph
+#'   reference
+#' @param position Position adjustment.
+#' @param curvature Amount of curvature: `1` is a semicircle, smaller
+#'   values are flatter, negative values bend the other way (default 0.5).
+#' @param angle Angle at which the curve approaches the endpoint, in
+#'   degrees (default 90).
+#' @param arrow Optional `grid::arrow()` object to draw arrow heads.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_curve`
+#' @return Modified plotit object
+#' @references
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/link}{Link}
+#'
+#' D3: `d3.linkHorizontal` / arc-diagram link generator
+#' @examples
+#' edges <- data.frame(
+#'   x = c(1, 2, 3), y = c(0, 0, 0),
+#'   xend = c(2, 3, 4), yend = c(1, 1, 1)
+#' )
+#' plotit(edges, encode(x = x, y = y, xend = xend, yend = yend)) |>
+#'   mark_point(colour = "#4E79A7", size = 3) |>
+#'   mark_point(
+#'     mapping = encode(x = xend, y = yend),
+#'     colour = "#E15759", size = 3
+#'   ) |>
+#'   mark_curve(curvature = 0.3)
+#'
+#' # curved flow with arrows
+#' plotit(edges, encode(x = x, y = y, xend = xend, yend = yend)) |>
+#'   mark_curve(arrow = grid::arrow(length = grid::unit(0.1, "cm")))
+#' @export
+mark_curve <- S7::new_generic(
+  "mark_curve", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           curvature = 0.5, angle = 90, arrow = NULL,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_curve, plotit_class) <- function(
+  plot, mapping = NULL, data = NULL, position = NULL, ...,
+  curvature = 0.5, angle = 90, arrow = NULL,
+  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+) {
+  # Curves are graph-edge connectors: dodge placement is meaningless here.
+  params <- rlang::list2(...)
+  params$curvature <- curvature
+  params$angle <- angle
+  if (!is.null(arrow)) params$arrow <- arrow
+  ._impl_with(plot, mapping, data, position, ggplot2::geom_curve,
+    rasterize, rasterize_dpi, rasterize_dev,
+    auto_dodge = FALSE, bind_aes = ._MARK_BIND_AES$mark_curve,
+    mark_name = "mark_curve", extra = params
+  )
+}
+
+# ---- mark_count ----
+#' Count layer (overlap-aware points)
+#'
+#' Draws each unique point once, sized by the number of observations at
+#' that location (`stat_sum`).  The standard answer to overplotting in
+#' scatter plots of discrete or binned data; pair with [scale_radius()]
+#' for an area-proportional legend.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_count`
+#' @return Modified plotit object
+#' @references
+#' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/point.html}{Point} with `aggregate: count`
+#'
+#' tidyplots: `add_count_dot()` equivalent
+#' @examples
+#' plotit(ggplot2::diamonds, encode(x = cut, y = carat)) |> mark_count()
+#'
+#' plotit(ggplot2::diamonds, encode(x = carat, y = price)) |> mark_count()
+#' @export
+mark_count <- ._make_mark_generic("mark_count")
+._register_mark_method(mark_count, ggplot2::geom_count)
+
+# ---- mark_bin2d ----
+#' 2D binned heatmap layer
+#'
+#' Divides the x-y plane into rectangular bins and fills each by the count
+#' (or another aggregation) of observations it holds.  The rectangular
+#' sibling of [mark_hex()]: exact bin boundaries make counts easier to read
+#' against the axes, hex bins pack denser.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param bins Number of bins along each axis (default 30).
+#' @param binwidth Bin width along each axis; overrides `bins` when given.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_bin_2d`
+#' @return Modified plotit object
+#' @details
+#' The bin-count fill is owned by this closed statistical mark: it defaults
+#' to the sequential viridis scale (colour-blind safe).  Chain
+#' [scale_fill()] afterwards to replace it (last call wins).
+#' @references
+#' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/rect.html}{Rect} with `bin` transform
+#'
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/heatmap}{Heatmap} (corelib)
+#' @examples
+#' plotit(ggplot2::diamonds, encode(x = carat, y = price)) |>
+#'   mark_bin2d(bins = 20)
+#'
+#' plotit(faithful, encode(x = eruptions, y = waiting)) |>
+#'   mark_bin2d(bins = 15) |>
+#'   scale_fill(trans = "binned")
+#' @export
+mark_bin2d <- S7::new_generic(
+  "mark_bin2d", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           bins = NULL, binwidth = NULL,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_bin2d, plotit_class) <- function(
+  plot, mapping = NULL, data = NULL, position = NULL, ...,
+  bins = NULL, binwidth = NULL,
+  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+) {
+  # The bin-count fill is owned by this closed statistical mark (shared
+  # pre/post, same contract as mark_hex).
+  pre <- ._closed_fill_pre(plot, mapping)
+  plot <- pre$plot
+  params <- rlang::list2(...)
+  params$bins <- bins
+  params$binwidth <- binwidth
+  plot <- ._impl_with(plot, mapping, data, position, ggplot2::geom_bin_2d,
+    rasterize, rasterize_dpi, rasterize_dev,
+    bind_aes = ._MARK_BIND_AES$mark_bin2d, mark_name = "mark_bin2d",
+    extra = params
+  )
+  ._closed_fill_post(plot, pre$user_fill, trans = "identity")
+}
+
+# ---- mark_contour ----
+#' Contour layer for 2D scalar fields
+#'
+#' Draws contour lines of a 2D scalar field: the data must carry a `z`
+#' aesthetic (value at each `x`/`y` grid point).  Use `filled = TRUE` for
+#' banded fills.  Where [mark_density_2d()] estimates density from points,
+#' `mark_contour()` renders an *observed* field (elevation, temperature,
+#' a fitted surface).
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics (must include `x`, `y`, `z`)
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param filled If `TRUE`, draw filled contour bands via
+#'   `geom_contour_filled`; otherwise contour lines via `geom_contour`.
+#' @param bins Number of contour bins.
+#' @param breaks Numeric vector of exact contour levels; overrides `bins`.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to the underlying geom
+#' @return Modified plotit object
+#' @details
+#' Filled bands map `fill` to a computed level factor owned by this closed
+#' statistical mark; the band scale defaults to discrete viridis and can be
+#' replaced by chaining [scale_fill()] afterwards.
+#' @references
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/contour}{Contour}
+#'
+#' Observable Plot: `Plot.contour`
+#' @examples
+#' df <- expand.grid(x = seq(0, 10, length.out = 30), y = seq(0, 10, length.out = 30))
+#' df$z <- with(df, sin(x / 2) * cos(y / 2))
+#' plotit(df, encode(x = x, y = y, z = z)) |>
+#'   mark_contour(breaks = seq(-1, 1, by = 0.25))
+#'
+#' plotit(df, encode(x = x, y = y, z = z)) |>
+#'   mark_contour(filled = TRUE, bins = 10)
+#' @export
+mark_contour <- S7::new_generic(
+  "mark_contour", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           filled = FALSE, bins = NULL, breaks = NULL,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_contour, plotit_class) <- function(
+  plot, mapping = NULL, data = NULL, position = NULL, ...,
+  filled = FALSE, bins = NULL, breaks = NULL,
+  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+) {
+  geom_fun <- if (filled) ggplot2::geom_contour_filled else ggplot2::geom_contour
+  dots <- rlang::list2(...)
+  if (!is.null(bins)) dots$bins <- bins
+  if (!is.null(breaks)) dots$breaks <- breaks
+  # Filled bands map fill to a computed level factor owned by this closed
+  # statistical mark: shared pre/post, same contract as mark_density_2d.
+  if (filled) {
+    pre <- ._closed_fill_pre(plot, mapping)
+    plot <- pre$plot
+  }
+  plot <- ._impl_with(plot, mapping, data, position, geom_fun,
+    rasterize, rasterize_dpi, rasterize_dev,
+    bind_aes = ._MARK_BIND_AES$mark_contour, mark_name = "mark_contour",
+    extra = dots
+  )
+  if (filled) {
+    plot <- ._closed_fill_post(plot, pre$user_fill, trans = "discrete")
+  }
+  plot
+}
+
+# ---- mark_qq / mark_qq_line ----
+#' Quantile-quantile points layer
+#'
+#' Adds sample quantiles against theoretical (or another sample's)
+#' quantiles -- the classic normality check.  Map `x` to the sample; `y`
+#' is optional (another sample for two-sample QQ).  Add a reference line
+#' with [mark_qq_line()].
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics (`x` required, `y` optional)
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param distribution Theoretical distribution function without the
+#'   `q` prefix (`"norm"` default); any `q*` function works: `"norm"`,
+#'   `"unif"`, `"exp"`, `"lnorm"`, ...
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_qq` (e.g. `dparams`)
+#' @return Modified plotit object
+#' @references
+#' Observable Plot: \href{https://observablehq.com/plot/plots/qq}{Plot.qq}
+#' @examples
+#' ecdf_data <- data.frame(eruptions = faithful$eruptions)
+#' plotit(ecdf_data, encode(x = eruptions)) |>
+#'   mark_qq() |>
+#'   mark_qq_line()
+#'
+#' # two-sample QQ against an exponential reference
+#' set.seed(42)
+#' df <- data.frame(value = rexp(200))
+#' plotit(df, encode(x = value)) |>
+#'   mark_qq(distribution = "exp") |>
+#'   mark_qq_line(distribution = "exp")
+#' @export
+mark_qq <- S7::new_generic(
+  "mark_qq", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           distribution = "norm",
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+# ggplot2 >= 4.0 renamed the quantile-stat input aesthetic from `x` to
+# `sample` (StatQq$required_aes == "sample").  A coexisting `x` -- even one
+# overridden with NULL -- makes the stat drop `x` during transformation and
+# the point/line geoms then report it missing; only a layer whose effective
+# mapping has no `x` at all works.  The plotit contract keeps `x` as the
+# user-facing sample channel (positional thinking, consistent with every
+# other mark) and translates it here: the layer mapping is rebuilt from the
+# global visuals plus the sample (user mapping wins over global), and the
+# layer runs with inherit.aes = FALSE so the global `x` cannot leak in.
+# Shared by mark_qq and mark_qq_line.
+#' Build the sample-only effective mapping for the QQ marks.
+#' Returns list(mapping, statics): AsIs constants from plotit()'s
+#' default-color injection are lifted out of the aes and handed back as
+#' static parameters, so the explicit layer mapping neither re-triggers the
+#' default_color clear nor surfaces a spurious single-key legend.
+#' @noRd
+#' @keywords internal
+._qq_sample_mapping <- function(plot, mapping, mark_name, keep_fill = TRUE) {
+  layer <- if (is.null(mapping)) ggplot2::aes() else mapping
+  global <- plot@gg$mapping %||% ggplot2::aes()
+  src <- layer$sample %||% layer$x %||% global$sample %||% global$x
+  if (is.null(src)) {
+    cli::cli_abort(c(
+      "{.fn {mark_name}} requires the {.val x} aesthetic (the sample).",
+      "i" = "Use {.code encode(x = ...)} in {.fn plotit} or a layer {.arg mapping}."
+    ))
+  }
+  m <- utils::modifyList(global[names(global) != "x"], layer[names(layer) != "x"])
+  m$sample <- src
+  m$x <- NULL
+  statics <- list()
+  for (ch in intersect(c("colour", "fill"), names(m))) {
+    e <- m[[ch]]
+    # Injected defaults are plain AsIs constants; user mappings are
+    # quosures.  Only the plain constants are lifted to statics:
+    # mark_qq_line's abline geom has no `fill` parameter and would warn.
+    if (inherits(e, "AsIs")) {
+      if (ch == "fill" && !keep_fill) {
+        m[[ch]] <- NULL
+      } else {
+        statics[[ch]] <- as.vector(e)
+        m[[ch]] <- NULL
+      }
+    }
+  }
+  list(mapping = m, statics = statics)
+}
+
+#' @export
+S7::method(mark_qq, plotit_class) <- function(
+  plot, mapping = NULL, data = NULL, position = NULL, ...,
+  distribution = "norm",
+  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+) {
+  params <- rlang::list2(...)
+  params$distribution <- ._resolve_qfun(distribution)
+  qq <- ._qq_sample_mapping(plot, mapping, "mark_qq")
+  params <- utils::modifyList(qq$statics, params)
+  params$inherit.aes <- FALSE
+  ._impl_with(plot, qq$mapping, data,
+    position, ggplot2::geom_qq,
+    rasterize, rasterize_dpi, rasterize_dev,
+    bind_aes = ._MARK_BIND_AES$mark_qq, mark_name = "mark_qq",
+    extra = params
+  )
+}
+
+#' Quantile-quantile reference line layer
+#'
+#' Adds a fitted reference line to a [mark_qq()] layer: quantiles of the
+#' data projected onto the theoretical distribution.  A two-parameter fit
+#' passes through the first and third quartile pairs.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics (inherit from the QQ layer's
+#'   data: `x` required)
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param distribution Theoretical quantile function name without `q`
+#'   (default `"norm"`).
+#' @param line.p Quantile pair used for the fit (default `c(0.25, 0.75)`).
+#' @param fullrange If `TRUE`, extend the line across the panel range.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_qq_line`
+#' @return Modified plotit object
+#' @examples
+#' ecdf_data <- data.frame(eruptions = faithful$eruptions)
+#' plotit(ecdf_data, encode(x = eruptions)) |>
+#'   mark_qq() |>
+#'   mark_qq_line()
+#' @export
+mark_qq_line <- S7::new_generic(
+  "mark_qq_line", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           distribution = "norm", line.p = c(0.25, 0.75), fullrange = FALSE,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_qq_line, plotit_class) <- function(
+  plot, mapping = NULL, data = NULL, position = NULL, ...,
+  distribution = "norm", line.p = c(0.25, 0.75), fullrange = FALSE,
+  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+) {
+  # Build the sample-only mapping first; the qq-line geom (abline) does not
+  # take an `x` at all and does not accept a `fill` parameter.
+  qq <- ._qq_sample_mapping(plot, mapping, "mark_qq_line")
+  params <- rlang::list2(...)
+  params$distribution <- ._resolve_qfun(distribution)
+  params$line.p <- line.p
+  params$fullrange <- fullrange
+  params$inherit.aes <- FALSE
+  ._impl_with(plot, qq$mapping, data,
+    position, ggplot2::geom_qq_line,
+    rasterize, rasterize_dpi, rasterize_dev,
+    bind_aes = ._MARK_BIND_AES$mark_qq_line, mark_name = "mark_qq_line",
+    extra = params
+  )
+}
+
+# ---- mark_ecdf ----
+#' Empirical CDF layer
+#'
+#' Plots the empirical cumulative distribution function as a stair step.
+#' A distribution view with no binning parameter to choose: every point is
+#' exactly represented, and group comparisons (quantiles, shifts, tails)
+#' are easy to read.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics (`x` is the sample)
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param n Oversampling factor for the step function (default 1000;
+#'   use `Inf` for the exact step function).
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to the underlying step layer
+#' @return Modified plotit object
+#' @references
+#' Observable Plot: \href{https://observablehq.com/plot/marks/ecdf}{Plot.ecdf}
+#'
+#' Vega-Lite: `line`/`step` with cumulative `window` transform
+#' @examples
+#' plotit(faithful, encode(x = eruptions)) |> mark_ecdf()
+#'
+#' # ECDF comparison
+#' df <- data.frame(
+#'   value = c(iris$Sepal.Length, iris$Petal.Length),
+#'   part = rep(c("Sepal", "Petal"), each = 150)
+#' )
+#' plotit(df, encode(x = value, colour = part)) |>
+#'   mark_ecdf()
+#' @export
+mark_ecdf <- S7::new_generic(
+  "mark_ecdf", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           n = 1000,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_ecdf, plotit_class) <- function(
+  plot, mapping = NULL, data = NULL, position = NULL, ...,
+  n = 1000,
+  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+) {
+  # geom_step + the StatEcdf ggproto object.  (`ggplot2::stat_ecdf()`
+  # resolves its geom through substitute() side effects that misfire under
+  # this package's do.call argument splicing -- see the factory note.)
+  step_ecdf <- function(...) ggplot2::geom_step(stat = ggplot2::StatEcdf, ...)
+  params <- rlang::list2(...)
+  params$n <- n
+  ._impl_with(plot, mapping, data, position, step_ecdf,
+    rasterize, rasterize_dpi, rasterize_dev,
+    auto_dodge = FALSE, bind_aes = ._MARK_BIND_AES$mark_ecdf,
+    mark_name = "mark_ecdf", extra = params
+  )
+}
+
+# ---- mark_label ----
+#' Label layer
+#'
+#' Adds a text layer where every label sits inside a rounded box -- the
+#' readable-over-data sibling of [mark_text()].  For collision-avoiding
+#' placement, install the optional \pkg{ggrepel} package and set
+#' `repel = TRUE`.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics (e.g. `encode(label = ...)`)
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param repel If `TRUE`, use `ggrepel::geom_label_repel` instead of
+#'   `geom_label`. Requires the \pkg{ggrepel} package.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_label` or `geom_label_repel`
+#' @return Modified plotit object
+#' @references
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/text}{Text} (`badge` state)
+#' @examples
+#' agg <- aggregate(mpg ~ cyl, data = mtcars, FUN = mean)
+#' plotit(agg, encode(x = cyl, y = mpg, label = round(mpg, 1))) |>
+#'   mark_point() |>
+#'   mark_label(nudge_y = 1.5, size = 3)
+#' @export
+mark_label <- S7::new_generic(
+  "mark_label", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           repel = FALSE,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_label, plotit_class) <- function(
+  plot, mapping = NULL, data = NULL, position = NULL, ...,
+  repel = FALSE,
+  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+) {
+  if (repel) {
+    ._require_pkg("ggrepel", "{.arg repel = TRUE}")
+    geom_fun <- ggrepel::geom_label_repel
+  } else {
+    geom_fun <- ggplot2::geom_label
+  }
+  ._impl_with(
+    plot, mapping, data, position, geom_fun,
+    rasterize, rasterize_dpi, rasterize_dev,
+    bind_aes = ._MARK_BIND_AES$mark_text, mark_name = "mark_label",
+    extra = rlang::list2(...)
+  )
+}
+
+# ---- mark_forest ----
+#' Forest plot layer (estimate + interval)
+#'
+#' Draws an estimate point with its confidence interval per row -- the
+#' standard meta-analysis / effect-size panel.  This is a **syntax-sugar
+#' composite mark** combining [mark_errorbar()] and [mark_point()], plus a
+#' vertical reference rule when `ref` is supplied.
+#'
+#' Equivalent expansion:
+#' \preformatted{
+#'   p |> mark_errorbar(width = 0.3) |>
+#'        mark_point(size = 2) |>
+#'        mark_rule(xintercept = ref, linetype = "dashed")
+#' }
+#'
+#' Each row needs `y` (the study/category label position), `x` (the
+#' estimate) and `xmin`/`xmax` (the interval); map them through
+#' `encode()`.  This is the standard horizontal forest; for a vertical
+#' forest, flip the whole plot afterwards with
+#' `project_cartesian(flip = TRUE)`.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional new aesthetics (must include `x`, `y`, `xmin`,
+#'   `xmax`)
+#' @param data Optional data for this layer
+#' @param ref Reference value for the null-effect rule (e.g. `0` for
+#'   differences, `1` for ratios).  `NULL` (default) draws no rule.
+#' @param point_size Size of the estimate points (default 2).
+#' @param bar_width Width of the interval bars as a fraction of the
+#'   categorical slot (default 0.4).
+#' @param line_color Colour for the interval bars and reference rule
+#'   (default `._MARK_STYLE$soft` = `"grey50"`).
+#' @param line_width Stroke width for interval bars (default 0.5).
+#' @param ... Other arguments passed to the estimate point layer
+#' @return Modified plotit object
+#' @references
+#' tidyplots: `add_ci95_errorbar()` + `add_mean_dot()` + `add_reference_lines()`
+#'
+#' Vega-Lite: `point` + `errorbar` layer composition
+#' @examples
+#' studies <- data.frame(
+#'   trial = paste0("Trial ", 1:5),
+#'   es    = c(0.42, 0.31, 0.55, 0.20, 0.48),
+#'   lo    = c(0.10, -0.05, 0.30, -0.10, 0.22),
+#'   hi    = c(0.74, 0.67, 0.80, 0.50, 0.74)
+#' )
+#' studies |>
+#'   plotit(encode(x = es, y = trial, xmin = lo, xmax = hi)) |>
+#'   mark_forest(ref = 0) |>
+#'   project_cartesian(flip = TRUE)
+#' @export
+mark_forest <- S7::new_generic(
+  "mark_forest", "plot",
+  function(plot, mapping = NULL, data = NULL,
+           ref = NULL, point_size = 2, bar_width = 0.4,
+           line_color = ._MARK_STYLE$soft, line_width = ._MARK_STYLE$lw_thin,
+           ...) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_forest, plotit_class) <- function(
+  plot, mapping = NULL, data = NULL,
+  ref = NULL, point_size = 2, bar_width = 0.4,
+  line_color = ._MARK_STYLE$soft, line_width = ._MARK_STYLE$lw_thin,
+  ...
+) {
+  resolved <- ._eval_layer_aes(
+    plot, mapping, data, c("y", "x", "xmin", "xmax"), "mark_forest"
+  )
+  d <- resolved$data
+  # Interval bar (horizontal: position on y, range on x) behind the
+  # estimate point.  The mapping is filtered to interval-channel aesthetics
+  # so an injected `fill` from plotit()'s default does not leak to the bar
+  # geom ("Ignoring unknown aesthetics: fill").
+  bar_aes <- ._filter_aes(resolved$mapping, ._INTERVAL_BIND_AES)
+  plot <- plot |>
+    mark_errorbar(
+      mapping = bar_aes, data = d, orientation = "horizontal",
+      width = bar_width, color = line_color, linewidth = line_width
+    )
+  point_aes <- ._filter_aes(resolved$mapping, ._POINT_BIND_AES)
+  plot <- plot |>
+    mark_point(
+      mapping = point_aes, data = d, size = point_size, ...
+    )
+  if (!is.null(ref)) {
+    plot <- plot |>
+      mark_rule(xintercept = ref, color = line_color, linetype = "dashed")
+  }
+  plot
+}
+
 # ---- mark catalog -----------------------------------------------------------
 # Single source of truth for every built-in mark generic.  zzz.R consumes
 # this to register the plotit_composite rejection stubs, so a newly added
@@ -1463,15 +2427,18 @@ S7::method(mark_bar, plotit_class) <- function(plot, mapping = NULL, data = NULL
   # Basic geometry
   "mark_point", "mark_line", "mark_area", "mark_bar", "mark_rect",
   "mark_polygon", "mark_text", "mark_rule", "mark_path",
+  "mark_step", "mark_rug", "mark_spoke", "mark_curve",
   # Distributions
   "mark_histogram", "mark_density", "mark_boxplot", "mark_violin",
+  "mark_ecdf",
   # Geographic
   "mark_map",
   # Statistical
   "mark_smooth", "mark_hex", "mark_density_2d", "mark_corr",
+  "mark_count", "mark_bin2d", "mark_contour", "mark_qq", "mark_qq_line",
   # Composite / annotation
   "mark_errorbar", "mark_significance", "mark_lollipop", "mark_dumbbell",
-  "mark_beeswarm",
+  "mark_beeswarm", "mark_forest", "mark_label",
   # Relational sugars
   "mark_sankey", "mark_treemap", "mark_network", "mark_chord"
 )

@@ -8,7 +8,14 @@ NULL
   if (!is.null(var)) {
     return(is_discrete(plot@gg$data, var))
   }
-  # Only check global mapping (AGENTS.md 4.6: gg$layers is internal).
+  # Layer-resolved channels (graph pipelines declare aesthetics on marks
+  # only): the mark path records each channel's evaluated kind.
+  kinds <- ._aes_kinds_get(plot)
+  if (!is.null(kinds[[aes_name]])) {
+    return(kinds[[aes_name]])
+  }
+  # Unknown channel with no trace anywhere: assume discrete (AGENTS.md
+  # 4.6: gg$layers is internal, so we cannot re-scan layer mappings).
   TRUE
 }
 
@@ -614,7 +621,8 @@ S7::method(scale_linetype, plotit_class) <- function(plot, name = ggplot2::waive
   ._scale_disc_visual_impl(plot, "linetype", name, trans, limits, range, breaks, labels, ...)
 }
 
-# ---- scale_x ----#' X-axis position scale
+# ---- scale_x ----
+#' X-axis position scale
 #'
 #' Controls the x-axis scale: transformation, limits, breaks, and labels.
 #'
@@ -689,9 +697,96 @@ S7::method(scale_y, plotit_class) <- function(plot, name = ggplot2::waiver(),
   ._scale_xy_impl(plot, "y", name, trans, limits, range, breaks, labels, ...)
 }
 
+# ---- scale_radius ----
+# Vega-aligned: scaleRadius maps the data value to the circle RADIUS, so
+# the perceived *area* scales quadratically -- the honest default for
+# bubble charts (scale_size maps linearly to ggplot2's area-like size unit).
+# ggplot2 ships scale_radius() for the continuous channel only, so
+# discrete/binned routes abort with directed guidance.
+._TRANS_RADIUS <- c("identity", "log", "log10", "log2", "sqrt", "reverse")
+
+#' Build the radius scale function.
+#' @noRd
+#' @keywords internal
+._scale_radius_fun <- function(trans, range, ...) {
+  if (trans %in% c("discrete", "binned")) {
+    cli::cli_abort(c(
+      "{.fn scale_radius} maps a continuous variable to circle radius.",
+      "i" = "For discrete or binned sizes use {.fn scale_size} instead."
+    ))
+  }
+  args <- ._strip_nulls(list(...))
+  if (!is.null(range)) args$range <- range
+  if (!identical(trans, "identity")) args$trans <- trans
+  do.call(ggplot2::scale_radius, args)
+}
+#' Radius scale (area-proportional bubble size)
+#'
+#' Maps the data value to the circle **radius**, so perceived bubble area
+#' grows quadratically with the value -- the correct encoding for magnitude
+#' comparisons (Vega-Lite's `scaleRadius`).  Where [scale_size()] maps to
+#' ggplot2's area-like size unit linearly, `scale_radius()` emphasizes
+#' relative magnitudes.
+#'
+#' @param plot A plotit object.
+#' @param name Scale title (legend name).
+#' @param trans Scale transformation. Default `"identity"`. Allowed:
+#'   `"identity"`, `"log"`, `"log10"`, `"log2"`, `"sqrt"`, `"reverse"`.
+#'   Discrete/binned routes are rejected with guidance toward
+#'   [scale_size()].
+#' @param limits Data domain.
+#' @param range Output radius range as `c(min, max)`. `NULL` = default
+#'   `c(1, 6)`.
+#' @param breaks Legend key positions.
+#' @param labels Legend key labels.
+#' @param ... Passed to the underlying ggplot2 scale function.
+#' @return A modified plotit object.
+#' @references
+#' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/radius.html}{Radius}
+#' @examples
+#' plotit(
+#'   ggplot2::midwest,
+#'   encode(x = popdensity, y = percollege, size = poptotal)
+#' ) |>
+#'   mark_point(alpha = 0.5) |>
+#'   scale_radius(range = c(1, 10))
+#' @export
+scale_radius <- S7::new_generic(
+  "scale_radius", "plot",
+  function(plot, name = ggplot2::waiver(), trans = "identity",
+           limits = NULL, range = NULL, breaks = NULL, labels = NULL, ...) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(scale_radius, plotit_class) <- function(plot, name = ggplot2::waiver(),
+                                                   trans = "identity",
+                                                   limits = NULL, range = NULL,
+                                                   breaks = NULL, labels = NULL,
+                                                   ...) {
+  # Resolution mirrors ._resolve_trans but keyed on the `size` channel
+  # (the mapping users pass to encode()) and skips ._validate_trans's
+  # size-specific log/sqrt guidance: for a radius scale those transforms
+  # apply *before* the radius mapping and are supported by design.
+  if (is.null(trans)) {
+    trans <- if (._detect_discrete_aes(plot, "size")) "discrete" else "identity"
+  } else if (!(trans %in% c(._TRANS_RADIUS, "discrete", "binned"))) {
+    cli::cli_abort(c(
+      "{.arg trans} must be one of {.val {c(._TRANS_RADIUS, \"discrete\", \"binned\")}} for this scale.",
+      "x" = "Got {.val {trans}}."
+    ))
+  }
+  plot@gg <- plot@gg +
+    ._scale_radius_fun(trans, range,
+      name = name, limits = limits, breaks = breaks, labels = labels, ...
+    )
+  plot
+}
+
 # ---- scale catalog ----------------------------------------------------------
 # Consumed by zzz.R to register plotit_composite rejection stubs.
 ._CATALOG_SCALES <- c(
   "scale_color", "scale_fill", "scale_size", "scale_alpha",
-  "scale_shape", "scale_linetype", "scale_x", "scale_y"
+  "scale_shape", "scale_linetype", "scale_x", "scale_y", "scale_radius"
 )

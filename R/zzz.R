@@ -11,6 +11,10 @@ NULL
 )
 
 .onLoad <- function(libname, pkgname) {
+  # NSE bindings evaluated inside tidygraph/dplyr data masks (R CMD check
+  # cannot see them statically).
+  utils::globalVariables(c("nodes", "edges", ".data"))
+
   op <- options()
   toset <- !(names(.plotit_options) %in% names(op))
   if (any(toset)) options(.plotit_options[toset])

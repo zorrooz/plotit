@@ -43,6 +43,21 @@ navbar:
         href: articles/customizing.html
       - text: Composing Figures
         href: articles/composing.html
+      - text: Relational Charts
+        href: articles/relational.html
+      - nav-break
+      - text: "Gallery: Groups"
+        href: articles/gallery-groups.html
+      - text: "Gallery: Distributions"
+        href: articles/gallery-distributions.html
+      - text: "Gallery: Relationships"
+        href: articles/gallery-relationships.html
+      - text: "Gallery: Time & Coordinates"
+        href: articles/gallery-coordinates.html
+      - text: "Gallery: Relational"
+        href: articles/gallery-relational.html
+      - text: "Gallery: Annotation & Composition"
+        href: articles/gallery-composing.html
     news:
       text: News
       href: news/index.html

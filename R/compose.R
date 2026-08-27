@@ -477,8 +477,8 @@ S7::method(export, plotit_composite) <- function(
   # synthetic one and are skipped.
   meta_unit <- NULL
   for (p in plot@plots) {
-    if (S7::S7_inherits(p, plotit_class) &&
-          !S7::S7_inherits(p, plotit_composite)) {
+    is_plain <- S7::S7_inherits(p, plotit_class) && !S7::S7_inherits(p, plotit_composite)
+    if (is_plain) {
       meta_unit <- p@meta@unit
       break
     }

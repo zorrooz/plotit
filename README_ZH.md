@@ -112,7 +112,7 @@ compose_*(p1, p2, ...) |> label_*() |> style() |> export()
 
 ### `mark_*` — 几何图层
 
-共 27 种 mark，分三层体系：基础几何、统计、复合/关系。
+共 39 种 mark，分三层体系：基础几何、统计、复合/关系。
 复合与关系 mark 均为下层原语的文档化语法糖
 （如 `mark_significance()` ≈ `mark_rule()` + `mark_text()`）。
 
@@ -120,30 +120,41 @@ compose_*(p1, p2, ...) |> label_*() |> style() |> export()
 |:---|:---|:---|
 | `mark_point()` | `geom_point()` | 散点/气泡图 |
 | `mark_line()` | `geom_line()` | 折线与趋势线 |
-| `mark_area()` | `geom_area()` / `geom_ribbon()` | 面积图 |
+| `mark_area()` | `geom_area()` / `geom_ribbon()` | 面积图；`ymin`/`ymax` 自动转为区间带 |
 | `mark_bar()` | `geom_bar()` / `geom_col()` | 柱状图 |
 | `mark_rect()` | `geom_tile()` / `geom_rect()` | 热力图单元格/矩形 |
 | `mark_polygon()` | `geom_polygon()` | 多边形/自定义形状 |
 | `mark_text()` | `geom_text()` / ggrepel | 文本标签与数据标注 |
-| `mark_rule()` | `geom_hline/vline/abline/segment` | 参考线/参考区域 |
+| `mark_label()` | `geom_label()` / ggrepel | 带框标签 |
+| `mark_rule()` | `geom_hline/vline/abline/segment` | 参考线/参考区域/数据段 |
 | `mark_path()` | `geom_path()` | 路径/轨迹 |
+| `mark_step()` | `geom_step()` | 阶梯线（`direction=` vh/hv/mid） |
+| `mark_rug()` | `geom_rug()` | 边缘地毯刻度（删失标记、1D 边际） |
+| `mark_spoke()` | `geom_spoke()` | 径向线段（angle + radius） |
+| `mark_curve()` | `geom_curve()` | 曲线连接（弧图边、箭头） |
 | `mark_histogram()` | `geom_histogram()` | 直方图 |
 | `mark_density()` | `geom_density()` | 1D 核密度曲线 |
 | `mark_boxplot()` | `geom_boxplot()` | 箱线图 |
 | `mark_violin()` | `geom_violin()` | 小提琴图 |
+| `mark_ecdf()` | `geom_step` + `stat_ecdf` | 经验累积分布 |
+| `mark_qq()` / `mark_qq_line()` | `geom_qq(_line)` | QQ 诊断 |
 | `mark_map()` | sf + `geom_sf()` | 地图/地理空间 |
 | `mark_smooth()` | `geom_smooth()` | 回归拟合 + 置信带 |
+| `mark_count()` | `geom_count()` | 重叠计数缩点 |
 | `mark_hex()` | `geom_hex()` | 2D 六边形分箱热力图 |
+| `mark_bin2d()` | `geom_bin_2d()` | 2D 矩形分箱热力图 |
 | `mark_density_2d()` | `geom_density_2d()` | 2D 密度等高线 |
+| `mark_contour()` | `geom_contour()` | 观测 z 场等高线 |
 | `mark_corr()` | 内部相关性变换 + `geom_tile()` | 相关性矩阵热力图 |
-| `mark_errorbar()` | `geom_errorbar()` / `-h` | 误差棒 |
+| `mark_errorbar()` | `geom_errorbar()` / `geom_linerange()` | 误差棒/区间线（`caps=`） |
 | `mark_significance()` | 语法糖：rule + text | 显著性标记（括号+星号） |
 | `mark_lollipop()` | 语法糖：point + 线段 | 棒棒糖图 |
 | `mark_dumbbell()` | 语法糖：双 point + 线段 | 哑铃对比图 |
+| `mark_forest()` | 语法糖：errorbar + point + rule | 森林图（meta 分析/系数图） |
 | `mark_beeswarm()` | ggbeeswarm | 蜂群散点（碰撞检测） |
 | `mark_sankey()` | `layout_sankey()` 语法糖 | 桑基流向图 |
 | `mark_treemap()` | `layout_treemap()` 语法糖 | 矩形树图 |
-| `mark_network()` | `layout_force()/circle()` 语法糖 | 力导向网络图 |
+| `mark_network()` | `layout_force()/circle()` 语法糖 | 网络图（直/曲边 `edge_shape=`） |
 | `mark_chord()` | `layout_chord()` 语法糖 | 弦图 |
 
 ### 关系数据 — `as_graph()` + `layout_*()`
@@ -184,6 +195,7 @@ edges |>
 | `scale_color()` | 颜色 |
 | `scale_fill()` | 填充 |
 | `scale_size()` | 大小 |
+| `scale_radius()` | 半径（气泡面积诚实编码） |
 | `scale_alpha()` | 透明度 |
 | `scale_shape()` | 形状 |
 | `scale_linetype()` | 线型 |
@@ -245,7 +257,9 @@ edges |>
 
 ## 文档
 
-完整文档见 [zorrooz.github.io/plotit](https://zorrooz.github.io/plotit/)。
+完整文档见 [zorrooz.github.io/plotit](https://zorrooz.github.io/plotit/)，
+含[关系类图表系统指南](https://zorrooz.github.io/plotit/articles/relational.html)
+与图形画廊（分组、分布、关系、坐标系、关系图、组合与标注），见 **Articles → Gallery**。
 
 ## 贡献
 

@@ -339,3 +339,50 @@ test_that("[BDD] hide then set restores typography (no residual blank)", {
   expect_false(inherits(p@gg$theme$plot.title, "element_blank"))
   expect_equal(p@gg$labels$title, "Second")
 })
+
+# ---- review regressions: legend reset after sync & priority protocol ----
+test_that("label_legend reset after a synced custom title restores the default", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+    mark_point() |>
+    label_legend(text = "Custom", aes = "colour")
+  s1 <- plotit:::._sync_labels(p)
+  expect_equal(s1@gg$labels$colour, "Custom")
+  s2 <- plotit:::._sync_labels(label_legend(s1, reset = TRUE, aes = "colour"))
+  expect_null(s2@gg$labels$colour)
+})
+
+test_that("label_legend global reset clears all synced legend titles", {
+  p <- plotit(
+    iris,
+    encode(x = Sepal.Width, y = Sepal.Length, colour = Species, size = Petal.Width)
+  ) |>
+    mark_point() |>
+    label_legend(text = "Everything")
+  s1 <- plotit:::._sync_labels(p)
+  expect_equal(s1@gg$labels$colour, "Everything")
+  expect_equal(s1@gg$labels$size, "Everything")
+  s2 <- plotit:::._sync_labels(label_legend(s1, reset = TRUE))
+  expect_null(s2@gg$labels$colour)
+  expect_null(s2@gg$labels$size)
+})
+
+test_that("reset outranks hide in the three-parameter protocol (axis)", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |>
+    label_axis(text = "Width", aes = "x")
+  s1 <- plotit:::._sync_labels(p)
+  r <- label_axis(s1, aes = "x", reset = TRUE, hide = TRUE)
+  s2 <- plotit:::._sync_labels(r)
+  # reset wins: element is NOT blanked, custom text removed
+  expect_false(inherits(s2@gg$theme$axis.title.x, "element_blank"))
+  expect_null(s2@gg$labels$x)
+})
+
+test_that("reset outranks hide in the three-parameter protocol (legend)", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+    mark_point() |>
+    label_legend(text = "Custom", aes = "colour")
+  s1 <- plotit:::._sync_labels(p)
+  s2 <- plotit:::._sync_labels(label_legend(s1, aes = "colour", reset = TRUE, hide = TRUE))
+  expect_null(s2@gg$labels$colour)
+})

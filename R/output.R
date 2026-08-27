@@ -110,10 +110,18 @@ pkgdown_print.plotit_composite <- function(x, visible = TRUE) {
 #' @param x A plotit object
 #' @param ... Additional arguments (not used)
 #' @return The plotit object (invisibly)
+#' Shared print body for the S3 and S7 print paths.
+#'
+#' plotit() prepends the unqualified class "plotit", so ordinary print()
+#' dispatch lands on the S3 print.plotit below; the S7 method only fires
+#' for explicit S7 dispatch (e.g. S7 objects held under the namespaced
+#' class alone).  Both route through here so interactive device sizing —
+#' the documented WYSIWYG behavior (AGENTS.md 7) — is never silently lost
+#' on whichever path dispatch takes.
 #' @noRd
-S7::method(print, plotit_class) <- function(x, ...) {
+#' @keywords internal
+._print_plotit_impl <- function(x) {
   x <- ._prepare_render(x)
-
   dev_opt <- getOption("plotit.device", "default")
   if (interactive() && !is.null(x@meta@width) && !is.null(x@meta@height) && !is.null(dev_opt)) {
     gt <- ._build_fixed_gtable(x@gg, x@meta@width, x@meta@height, x@meta@unit)
@@ -125,11 +133,16 @@ S7::method(print, plotit_class) <- function(x, ...) {
   }
 }
 
-# S3 print method — reaches knitr/vignette contexts where S7 dispatch doesn't fire
+#' @noRd
+S7::method(print, plotit_class) <- function(x, ...) {
+  ._print_plotit_impl(x)
+}
+
+# S3 print method — the live dispatch path for plotit objects (class is
+# prepended unqualified in plotit()); also what knitr/vignettes reach.
 #' @export
 print.plotit <- function(x, ...) {
-  x <- ._prepare_render(x)
-  ._render_plotit(x)
+  ._print_plotit_impl(x)
 }
 
 # ---- knit_print ----

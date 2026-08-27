@@ -8,6 +8,9 @@ NULL
 #   hide  = TRUE     -> remove element from layout (element_blank())
 #   reset = TRUE     -> restore variable name (axis/legend) or remove (title/subtitle/caption)
 #   text + reset     -> mutually exclusive; error if both are set
+# Priority: reset > hide > text — checked in exactly that order so a
+# reset+hide call restores rather than blanks (matching the documented
+# contract; an explicit reset always wins over an older intent).
 
 # Check text/reset mutual exclusion
 #' Check mutual exclusion of text and reset parameters.
@@ -32,11 +35,11 @@ NULL
 #' @keywords internal
 ._set_text_label <- function(plot, slot_name, text, hide, reset, fun_name) {
   ._check_text_reset(text, reset, fun_name)
-  if (hide) {
-    S7::prop(plot@meta@labels, slot_name) <- FALSE
-    plot@meta@labels@dirty[[slot_name]] <- TRUE
-  } else if (isTRUE(reset)) {
+  if (isTRUE(reset)) {
     S7::prop(plot@meta@labels, slot_name) <- NULL
+    plot@meta@labels@dirty[[slot_name]] <- TRUE
+  } else if (hide) {
+    S7::prop(plot@meta@labels, slot_name) <- FALSE
     plot@meta@labels@dirty[[slot_name]] <- TRUE
   } else if (!is.null(text)) {
     S7::prop(plot@meta@labels, slot_name) <- text
@@ -64,11 +67,15 @@ NULL
   do.call(ggplot2::labs, args)
 }
 
+# Aesthetic families that can carry a legend title, used by both the sync
+# pass and the validation in label_legend().
+._LEGEND_AES <- c("colour", "fill", "shape", "linetype", "size", "alpha")
+
 # Collect all aesthetic names from global + layer-level mappings
 #' Collect aesthetic names from global mapping.
 #' @noRd
 #' @keywords internal
-._collect_aes_names <- function(gg, candidates) {
+._collect_aes_names <- function(gg, candidates = ._LEGEND_AES) {
   if (inherits(gg, "patchwork")) {
     return(unique(unlist(lapply(gg$plots, function(p) {
       ._collect_aes_names(p, candidates)
@@ -162,12 +169,12 @@ NULL
     plot <- ._sync_one_label(plot, slot, m$theme, m$labs)
   }
 
-  # Legend entries (non-uniform: state machine with default fallback)
+  # Legend entries (non-uniform: state machine with default fallback).
+  # Stored intent encodings: character = set text, FALSE = hide,
+  # TRUE = reset (drop the synced custom title, restore the scale-derived
+  # one), NULL/absent = no intent for that aesthetic.
   if ("legend" %in% dirty && length(labels@legend) > 0) {
-    aes_names <- ._collect_aes_names(
-      plot@gg,
-      c("colour", "fill", "shape", "linetype", "size", "alpha")
-    )
+    aes_names <- ._collect_aes_names(plot@gg, ._LEGEND_AES)
     for (a in aes_names) {
       val <- labels@legend[[a]] %||% labels@legend[["default"]]
       # No stored intent for this aesthetic -> leave its title untouched.
@@ -176,7 +183,9 @@ NULL
       if (is.null(val)) {
         next
       }
-      if (isTRUE(val == FALSE)) {
+      if (isTRUE(val)) {
+        plot@gg <- ._label_set_aes(plot@gg, a, NULL, hide = FALSE)
+      } else if (isFALSE(val)) {
         plot@gg <- ._label_set_aes(plot@gg, a, NULL, hide = TRUE)
       } else {
         plot@gg <- ._label_set_aes(plot@gg, a, val, hide = FALSE)
@@ -325,26 +334,28 @@ label_legend <- S7::new_generic(
 S7::method(label_legend, plotit_class) <- function(plot, text = NULL, aes = NULL,
                                                    hide = FALSE, reset = FALSE, ...) {
   ._check_text_reset(text, reset, "label_legend")
-  eff_text <- if (isTRUE(reset)) NULL else text
-  if (is.null(eff_text) && !isTRUE(hide) && !isTRUE(reset)) {
+  # Priority reset > hide > text (mirrors ._set_text_label and the
+  # documented protocol).  TRUE is the reset sentinel consumed by
+  # ._sync_labels; it must survive a later sync (NULL would read as
+  # "no intent" and leave a previously applied custom title in place).
+  intent <- if (isTRUE(reset)) TRUE else if (isTRUE(hide)) FALSE else text
+  if (is.null(intent)) {
     return(plot)
   }
   if (is.null(aes)) {
-    # Global reset: clear all per-aes entries so they don't shadow default
+    # Global mode: drop per-aes entries on reset so the restore intent
+    # reaches every mapped aesthetic (per-aes entries shadow the default).
     if (isTRUE(reset)) {
       plot@meta@labels@legend <- list()
     }
-    plot@meta@labels@legend[["default"]] <- if (hide) FALSE else eff_text
+    plot@meta@labels@legend[["default"]] <- intent
     plot@meta@labels@dirty[["legend"]] <- TRUE
   } else {
-    aes_all <- ._collect_aes_names(
-      plot@gg,
-      c("colour", "fill", "shape", "linetype", "size", "alpha")
-    )
+    aes_all <- ._collect_aes_names(plot@gg, ._LEGEND_AES)
     if (!(aes %in% aes_all)) {
       cli::cli_warn("Aesthetic {.val {aes}} is not present in the plot mapping.")
     } else {
-      plot@meta@labels@legend[[aes]] <- if (hide) FALSE else eff_text
+      plot@meta@labels@legend[[aes]] <- intent
       plot@meta@labels@dirty[["legend"]] <- TRUE
     }
   }

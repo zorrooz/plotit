@@ -162,3 +162,43 @@ plotit <- function(
   class(out) <- c("plotit", class(out))
   out
 }
+
+# ---- ggplot2 escape hatch ----
+# `plotit + <ggplot2 object>` forwards to the underlying ggplot, giving
+# advanced users the full ggplot2 vocabulary (annotate, guides, labs,
+# custom layers, facets) without dropping the plotit wrapper.  The verb
+# API stays the recommended path: direct `+ scale_*()` bypasses the
+# package's managed colour registry, and `+` on a `plotit_composite`
+# follows patchwork semantics (applies to the last sub-panel).
+# Implemented as a plain S3 method on the Ops group generic: it is the
+# only form that persists into the installed package's NAMESPACE
+# (S7::method assignment registers at build time only).
+#' Add a ggplot2 component to a plotit object
+#'
+#' Escape hatch for advanced ggplot2 usage: `p + ggplot2::annotate(...)`,
+#' `p + ggplot2::guides(...)`, `p + ggplot2::labs(...)` etc. modify the
+#' underlying ggplot and return the `plotit` object so the pipeline
+#' continues.  Prefer the verb API (`mark_*`, `scale_*`, `label_*`,
+#' `style`) for reproducible, well-validated plots.
+#'
+#' @param e1 A `plotit` object.
+#' @param e2 Any object ggplot2's `+` accepts (layer, scale, coord, facet,
+#'   theme, labs, or a ggplot2 object).
+#' @return A modified `plotit` object.
+#' @examples
+#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+#'   mark_point() +
+#'   ggplot2::annotate("text", x = 2.5, y = 7.9, label = "high", size = 3)
+#' @export
+`+.plotit` <- function(e1, e2) {
+  e1@gg <- e1@gg + e2
+  e1
+}
+
+#' @export
+`+.plotit_composite` <- function(e1, e2) {
+  # patchwork owns `+` for composite gg objects (applies to the last
+  # sub-panel; use style() to reach every panel).
+  e1@gg <- e1@gg + e2
+  e1
+}

@@ -23,27 +23,38 @@ NULL
 # (which would trigger ggplot2 "unknown aesthetics" warnings).  Marks not
 # listed fall back to the full whitelist.
 ._MARK_BIND_AES <- list(
-  mark_point     = c("x", "y"),
-  mark_line      = c("x", "y"),
-  mark_path      = c("x", "y"),
-  mark_polygon   = c("x", "y"),
-  mark_text      = c("x", "y"),
-  mark_area      = c("x", "y"),
-  mark_density   = c("x", "y"),
+  mark_point = c("x", "y"),
+  mark_line = c("x", "y"),
+  mark_path = c("x", "y"),
+  mark_polygon = c("x", "y"),
+  mark_text = c("x", "y"),
+  mark_area = c("x", "y", "ymin", "ymax"),
+  mark_density = c("x", "y"),
   mark_histogram = c("x", "y"),
-  mark_boxplot   = c("x", "y"),
-  mark_violin    = c("x", "y"),
-  mark_smooth    = c("x", "y"),
-  mark_hex       = c("x", "y"),
-  mark_bar       = c("x", "y"),
-  mark_rule      = c("x", "y", "xend", "yend"),
-  mark_rect      = c("xmin", "xmax", "ymin", "ymax", "x", "y"),
-  mark_errorbar  = c("x", "y", "xmin", "xmax", "ymin", "ymax"),
+  mark_boxplot = c("x", "y"),
+  mark_violin = c("x", "y"),
+  mark_smooth = c("x", "y"),
+  mark_hex = c("x", "y"),
+  mark_bar = c("x", "y"),
+  mark_rule = c("x", "y", "xend", "yend"),
+  mark_rect = c("xmin", "xmax", "ymin", "ymax", "x", "y"),
+  mark_errorbar = c("x", "y", "xmin", "xmax", "ymin", "ymax"),
   # Filled 2D density binds like its unfilled sibling; beeswarm binds like
   # the point family.  Explicit keys (not aliases) keep each mark's scope
   # independently editable.
   mark_density_2d = c("x", "y"),
-  mark_beeswarm   = c("x", "y")
+  mark_beeswarm = c("x", "y"),
+  mark_step = c("x", "y"),
+  mark_rug = c("x", "y"),
+  mark_spoke = c("x", "y"),
+  mark_curve = c("x", "y", "xend", "yend"),
+  mark_count = c("x", "y"),
+  mark_bin2d = c("x", "y"),
+  mark_contour = c("x", "y"),
+  mark_qq = c("x", "y"),
+  mark_qq_line = c("x", "y"),
+  mark_ecdf = c("x", "y"),
+  mark_label = c("x", "y")
 )
 
 # Resolve an argument that may be a bare symbol or a single string into a
@@ -318,11 +329,12 @@ as_graph <- function(edges, nodes = NULL,
 
   # Input types whose structure implies directionality decide for
   # themselves; say so instead of silently swallowing the argument.
-  self_directed <-
-    inherits(edges, "hclust") ||
-    inherits(edges, "dendrogram") ||
-    inherits(edges, "tbl_graph") ||
-    (is.data.frame(edges) && all(c("id", "parent") %in% names(edges)))
+  self_directed <- any(c(
+    inherits(edges, "hclust"),
+    inherits(edges, "dendrogram"),
+    inherits(edges, "tbl_graph"),
+    is.data.frame(edges) && all(c("id", "parent") %in% names(edges))
+  ))
   if (!missing(directed) && self_directed) {
     cli::cli_warn(
       "{.arg directed} is ignored for this input: the structure already \\
