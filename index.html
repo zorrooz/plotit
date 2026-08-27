@@ -41,6 +41,14 @@
 <li><a class="dropdown-item" href="articles/plotit.html">Getting Started</a></li>
     <li><a class="dropdown-item" href="articles/customizing.html">Customizing Plots</a></li>
     <li><a class="dropdown-item" href="articles/composing.html">Composing Figures</a></li>
+    <li><a class="dropdown-item" href="articles/relational.html">Relational Charts</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="articles/gallery-groups.html">Gallery: Groups</a></li>
+    <li><a class="dropdown-item" href="articles/gallery-distributions.html">Gallery: Distributions</a></li>
+    <li><a class="dropdown-item" href="articles/gallery-relationships.html">Gallery: Relationships</a></li>
+    <li><a class="dropdown-item" href="articles/gallery-coordinates.html">Gallery: Time &amp; Coordinates</a></li>
+    <li><a class="dropdown-item" href="articles/gallery-relational.html">Gallery: Relational</a></li>
+    <li><a class="dropdown-item" href="articles/gallery-composing.html">Gallery: Annotation &amp; Composition</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">News</a></li>
@@ -208,7 +216,7 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <h3 id="mark_--geometric-layers">
 <code>mark_*</code> — Geometric layers<a class="anchor" aria-label="anchor" href="#mark_--geometric-layers"></a>
 </h3>
-<p>27 marks across three tiers: basic geometry, statistical, and composite/relational. Composite and relational marks are documented syntax sugar over the primitives below (e.g. <code><a href="reference/mark_significance.html">mark_significance()</a></code> ≈ <code><a href="reference/mark_rule.html">mark_rule()</a></code> + <code><a href="reference/mark_text.html">mark_text()</a></code>).</p>
+<p>39 marks across three tiers: basic geometry, statistical, and composite/relational. Composite and relational marks are documented syntax sugar over the primitives below (e.g. <code><a href="reference/mark_significance.html">mark_significance()</a></code> ≈ <code><a href="reference/mark_rule.html">mark_rule()</a></code> + <code><a href="reference/mark_text.html">mark_text()</a></code>).</p>
 <table class="table">
 <colgroup>
 <col width="33%">
@@ -236,7 +244,7 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <td align="left">
 <code>geom_area()</code> / <code>geom_ribbon()</code>
 </td>
-<td align="left">Filled area charts</td>
+<td align="left">Filled areas; <code>ymin</code>/<code>ymax</code> become interval bands</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/mark_bar.html">mark_bar()</a></code></td>
@@ -264,14 +272,40 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <td align="left">Text labels and annotations</td>
 </tr>
 <tr>
+<td align="left"><code><a href="reference/mark_label.html">mark_label()</a></code></td>
+<td align="left">
+<code>geom_label()</code> / ggrepel</td>
+<td align="left">Boxed labels</td>
+</tr>
+<tr>
 <td align="left"><code><a href="reference/mark_rule.html">mark_rule()</a></code></td>
 <td align="left"><code>geom_hline/vline/abline/segment</code></td>
-<td align="left">Reference lines and ranges</td>
+<td align="left">Reference lines, ranges, data segments</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/mark_path.html">mark_path()</a></code></td>
 <td align="left"><code>geom_path()</code></td>
 <td align="left">Paths and trajectories</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_step.html">mark_step()</a></code></td>
+<td align="left"><code>geom_step()</code></td>
+<td align="left">Staircase lines (<code>direction = "vh"/"hv"/"mid"</code>)</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_rug.html">mark_rug()</a></code></td>
+<td align="left"><code>geom_rug()</code></td>
+<td align="left">Marginal ticks (censoring marks, 1D marginals)</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_spoke.html">mark_spoke()</a></code></td>
+<td align="left"><code>geom_spoke()</code></td>
+<td align="left">Radial segments (angle + radius)</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_curve.html">mark_curve()</a></code></td>
+<td align="left"><code>geom_curve()</code></td>
+<td align="left">Curved links (arc diagrams, arrows)</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/mark_histogram.html">mark_histogram()</a></code></td>
@@ -294,6 +328,20 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <td align="left">Violin plots</td>
 </tr>
 <tr>
+<td align="left"><code><a href="reference/mark_ecdf.html">mark_ecdf()</a></code></td>
+<td align="left">
+<code>geom_step</code> + <code>stat_ecdf</code>
+</td>
+<td align="left">Empirical CDF</td>
+</tr>
+<tr>
+<td align="left">
+<code><a href="reference/mark_qq.html">mark_qq()</a></code> / <code><a href="reference/mark_qq_line.html">mark_qq_line()</a></code>
+</td>
+<td align="left"><code>geom_qq(_line)</code></td>
+<td align="left">Quantile-quantile diagnostics</td>
+</tr>
+<tr>
 <td align="left"><code><a href="reference/mark_map.html">mark_map()</a></code></td>
 <td align="left">sf + <code>geom_sf()</code>
 </td>
@@ -305,14 +353,29 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <td align="left">Regression fits with confidence bands</td>
 </tr>
 <tr>
+<td align="left"><code><a href="reference/mark_count.html">mark_count()</a></code></td>
+<td align="left"><code>geom_count()</code></td>
+<td align="left">Overlap-aware sized points</td>
+</tr>
+<tr>
 <td align="left"><code><a href="reference/mark_hex.html">mark_hex()</a></code></td>
 <td align="left"><code>geom_hex()</code></td>
 <td align="left">2D hexagonal binning</td>
 </tr>
 <tr>
+<td align="left"><code><a href="reference/mark_bin2d.html">mark_bin2d()</a></code></td>
+<td align="left"><code>geom_bin_2d()</code></td>
+<td align="left">2D rectangular binning heatmap</td>
+</tr>
+<tr>
 <td align="left"><code><a href="reference/mark_density_2d.html">mark_density_2d()</a></code></td>
 <td align="left"><code>geom_density_2d()</code></td>
-<td align="left">2D density contours</td>
+<td align="left">2D density contours (lines or filled)</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_contour.html">mark_contour()</a></code></td>
+<td align="left"><code>geom_contour()</code></td>
+<td align="left">Contours of an observed z field</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/mark_corr.html">mark_corr()</a></code></td>
@@ -323,9 +386,9 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <tr>
 <td align="left"><code><a href="reference/mark_errorbar.html">mark_errorbar()</a></code></td>
 <td align="left">
-<code>geom_errorbar()</code> / <code>-h</code>
+<code>geom_errorbar()</code> / <code>geom_linerange()</code>
 </td>
-<td align="left">Error bars</td>
+<td align="left">Error bars / interval lines (<code>caps =</code>)</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/mark_significance.html">mark_significance()</a></code></td>
@@ -341,6 +404,11 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <td align="left"><code><a href="reference/mark_dumbbell.html">mark_dumbbell()</a></code></td>
 <td align="left">sugar: two points + stem</td>
 <td align="left">Dumbbell comparison charts</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_forest.html">mark_forest()</a></code></td>
+<td align="left">sugar: errorbar + point + rule</td>
+<td align="left">Meta-analysis / coefficient forests</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/mark_beeswarm.html">mark_beeswarm()</a></code></td>
@@ -363,7 +431,7 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <td align="left"><code><a href="reference/mark_network.html">mark_network()</a></code></td>
 <td align="left">
 <code>layout_force()/circle()</code> sugar</td>
-<td align="left">Force-directed network graphs</td>
+<td align="left">Network graphs (straight or curved edges)</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/mark_chord.html">mark_chord()</a></code></td>
@@ -457,6 +525,10 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <tr>
 <td align="left"><code><a href="reference/scale_size.html">scale_size()</a></code></td>
 <td align="left">size</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/scale_radius.html">scale_radius()</a></code></td>
+<td align="left">radius (area-honest bubbles)</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/scale_alpha.html">scale_alpha()</a></code></td>
@@ -645,7 +717,7 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <div class="section level2">
 <h2 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
 </h2>
-<p>Full documentation is available at <a href="https://zorrooz.github.io/plotit/">zorrooz.github.io/plotit</a>.</p>
+<p>Full documentation is available at <a href="https://zorrooz.github.io/plotit/">zorrooz.github.io/plotit</a>, including a <a href="https://zorrooz.github.io/plotit/articles/relational.html">relational-charts guide</a> and figure galleries (groups, distributions, relationships, coordinates, relational charts, composition &amp; annotation) under <strong>Articles → Gallery</strong>.</p>
 </div>
 <div class="section level2">
 <h2 id="contributing">Contributing<a class="anchor" aria-label="anchor" href="#contributing"></a>

@@ -111,7 +111,7 @@ flows |>
 
 ### `mark_*` — 几何图层
 
-共 27 种 mark，分三层体系：基础几何、统计、复合/关系。 复合与关系 mark
+共 39 种 mark，分三层体系：基础几何、统计、复合/关系。 复合与关系 mark
 均为下层原语的文档化语法糖 （如
 [`mark_significance()`](https://zorrooz.github.io/plotit/reference/mark_significance.md)
 ≈
@@ -122,30 +122,41 @@ flows |>
 |:---|:---|:---|
 | [`mark_point()`](https://zorrooz.github.io/plotit/reference/mark_point.md) | `geom_point()` | 散点/气泡图 |
 | [`mark_line()`](https://zorrooz.github.io/plotit/reference/mark_line.md) | `geom_line()` | 折线与趋势线 |
-| [`mark_area()`](https://zorrooz.github.io/plotit/reference/mark_area.md) | `geom_area()` / `geom_ribbon()` | 面积图 |
+| [`mark_area()`](https://zorrooz.github.io/plotit/reference/mark_area.md) | `geom_area()` / `geom_ribbon()` | 面积图；`ymin`/`ymax` 自动转为区间带 |
 | [`mark_bar()`](https://zorrooz.github.io/plotit/reference/mark_bar.md) | `geom_bar()` / `geom_col()` | 柱状图 |
 | [`mark_rect()`](https://zorrooz.github.io/plotit/reference/mark_rect.md) | `geom_tile()` / `geom_rect()` | 热力图单元格/矩形 |
 | [`mark_polygon()`](https://zorrooz.github.io/plotit/reference/mark_polygon.md) | `geom_polygon()` | 多边形/自定义形状 |
 | [`mark_text()`](https://zorrooz.github.io/plotit/reference/mark_text.md) | `geom_text()` / ggrepel | 文本标签与数据标注 |
-| [`mark_rule()`](https://zorrooz.github.io/plotit/reference/mark_rule.md) | `geom_hline/vline/abline/segment` | 参考线/参考区域 |
+| [`mark_label()`](https://zorrooz.github.io/plotit/reference/mark_label.md) | `geom_label()` / ggrepel | 带框标签 |
+| [`mark_rule()`](https://zorrooz.github.io/plotit/reference/mark_rule.md) | `geom_hline/vline/abline/segment` | 参考线/参考区域/数据段 |
 | [`mark_path()`](https://zorrooz.github.io/plotit/reference/mark_path.md) | `geom_path()` | 路径/轨迹 |
+| [`mark_step()`](https://zorrooz.github.io/plotit/reference/mark_step.md) | `geom_step()` | 阶梯线（`direction=` vh/hv/mid） |
+| [`mark_rug()`](https://zorrooz.github.io/plotit/reference/mark_rug.md) | `geom_rug()` | 边缘地毯刻度（删失标记、1D 边际） |
+| [`mark_spoke()`](https://zorrooz.github.io/plotit/reference/mark_spoke.md) | `geom_spoke()` | 径向线段（angle + radius） |
+| [`mark_curve()`](https://zorrooz.github.io/plotit/reference/mark_curve.md) | `geom_curve()` | 曲线连接（弧图边、箭头） |
 | [`mark_histogram()`](https://zorrooz.github.io/plotit/reference/mark_histogram.md) | `geom_histogram()` | 直方图 |
 | [`mark_density()`](https://zorrooz.github.io/plotit/reference/mark_density.md) | `geom_density()` | 1D 核密度曲线 |
 | [`mark_boxplot()`](https://zorrooz.github.io/plotit/reference/mark_boxplot.md) | `geom_boxplot()` | 箱线图 |
 | [`mark_violin()`](https://zorrooz.github.io/plotit/reference/mark_violin.md) | `geom_violin()` | 小提琴图 |
+| [`mark_ecdf()`](https://zorrooz.github.io/plotit/reference/mark_ecdf.md) | `geom_step` + `stat_ecdf` | 经验累积分布 |
+| [`mark_qq()`](https://zorrooz.github.io/plotit/reference/mark_qq.md) / [`mark_qq_line()`](https://zorrooz.github.io/plotit/reference/mark_qq_line.md) | `geom_qq(_line)` | QQ 诊断 |
 | [`mark_map()`](https://zorrooz.github.io/plotit/reference/mark_map.md) | sf + `geom_sf()` | 地图/地理空间 |
 | [`mark_smooth()`](https://zorrooz.github.io/plotit/reference/mark_smooth.md) | `geom_smooth()` | 回归拟合 + 置信带 |
+| [`mark_count()`](https://zorrooz.github.io/plotit/reference/mark_count.md) | `geom_count()` | 重叠计数缩点 |
 | [`mark_hex()`](https://zorrooz.github.io/plotit/reference/mark_hex.md) | `geom_hex()` | 2D 六边形分箱热力图 |
+| [`mark_bin2d()`](https://zorrooz.github.io/plotit/reference/mark_bin2d.md) | `geom_bin_2d()` | 2D 矩形分箱热力图 |
 | [`mark_density_2d()`](https://zorrooz.github.io/plotit/reference/mark_density_2d.md) | `geom_density_2d()` | 2D 密度等高线 |
+| [`mark_contour()`](https://zorrooz.github.io/plotit/reference/mark_contour.md) | `geom_contour()` | 观测 z 场等高线 |
 | [`mark_corr()`](https://zorrooz.github.io/plotit/reference/mark_corr.md) | 内部相关性变换 + `geom_tile()` | 相关性矩阵热力图 |
-| [`mark_errorbar()`](https://zorrooz.github.io/plotit/reference/mark_errorbar.md) | `geom_errorbar()` / `-h` | 误差棒 |
+| [`mark_errorbar()`](https://zorrooz.github.io/plotit/reference/mark_errorbar.md) | `geom_errorbar()` / `geom_linerange()` | 误差棒/区间线（`caps=`） |
 | [`mark_significance()`](https://zorrooz.github.io/plotit/reference/mark_significance.md) | 语法糖：rule + text | 显著性标记（括号+星号） |
 | [`mark_lollipop()`](https://zorrooz.github.io/plotit/reference/mark_lollipop.md) | 语法糖：point + 线段 | 棒棒糖图 |
 | [`mark_dumbbell()`](https://zorrooz.github.io/plotit/reference/mark_dumbbell.md) | 语法糖：双 point + 线段 | 哑铃对比图 |
+| [`mark_forest()`](https://zorrooz.github.io/plotit/reference/mark_forest.md) | 语法糖：errorbar + point + rule | 森林图（meta 分析/系数图） |
 | [`mark_beeswarm()`](https://zorrooz.github.io/plotit/reference/mark_beeswarm.md) | ggbeeswarm | 蜂群散点（碰撞检测） |
 | [`mark_sankey()`](https://zorrooz.github.io/plotit/reference/mark_sankey.md) | [`layout_sankey()`](https://zorrooz.github.io/plotit/reference/layout_sankey.md) 语法糖 | 桑基流向图 |
 | [`mark_treemap()`](https://zorrooz.github.io/plotit/reference/mark_treemap.md) | [`layout_treemap()`](https://zorrooz.github.io/plotit/reference/layout_treemap.md) 语法糖 | 矩形树图 |
-| [`mark_network()`](https://zorrooz.github.io/plotit/reference/mark_network.md) | `layout_force()/circle()` 语法糖 | 力导向网络图 |
+| [`mark_network()`](https://zorrooz.github.io/plotit/reference/mark_network.md) | `layout_force()/circle()` 语法糖 | 网络图（直/曲边 `edge_shape=`） |
 | [`mark_chord()`](https://zorrooz.github.io/plotit/reference/mark_chord.md) | [`layout_chord()`](https://zorrooz.github.io/plotit/reference/layout_chord.md) 语法糖 | 弦图 |
 
 ### 关系数据 — `as_graph()` + `layout_*()`
@@ -187,6 +198,7 @@ edges |>
 | [`scale_color()`](https://zorrooz.github.io/plotit/reference/scale_color.md) | 颜色 |
 | [`scale_fill()`](https://zorrooz.github.io/plotit/reference/scale_fill.md) | 填充 |
 | [`scale_size()`](https://zorrooz.github.io/plotit/reference/scale_size.md) | 大小 |
+| [`scale_radius()`](https://zorrooz.github.io/plotit/reference/scale_radius.md) | 半径（气泡面积诚实编码） |
 | [`scale_alpha()`](https://zorrooz.github.io/plotit/reference/scale_alpha.md) | 透明度 |
 | [`scale_shape()`](https://zorrooz.github.io/plotit/reference/scale_shape.md) | 形状 |
 | [`scale_linetype()`](https://zorrooz.github.io/plotit/reference/scale_linetype.md) | 线型 |
@@ -249,7 +261,10 @@ edges |>
 ## 文档
 
 完整文档见
-[zorrooz.github.io/plotit](https://zorrooz.github.io/plotit/)。
+[zorrooz.github.io/plotit](https://zorrooz.github.io/plotit/)，
+含[关系类图表系统指南](https://zorrooz.github.io/plotit/articles/relational.html)
+与图形画廊（分组、分布、关系、坐标系、关系图、组合与标注），见
+**Articles → Gallery**。
 
 ## 贡献
 

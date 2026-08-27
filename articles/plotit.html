@@ -39,6 +39,14 @@
 <li><a class="dropdown-item" href="../articles/plotit.html">Getting Started</a></li>
     <li><a class="dropdown-item" href="../articles/customizing.html">Customizing Plots</a></li>
     <li><a class="dropdown-item" href="../articles/composing.html">Composing Figures</a></li>
+    <li><a class="dropdown-item" href="../articles/relational.html">Relational Charts</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="../articles/gallery-groups.html">Gallery: Groups</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-distributions.html">Gallery: Distributions</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-relationships.html">Gallery: Relationships</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-coordinates.html">Gallery: Time &amp; Coordinates</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-relational.html">Gallery: Relational</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-composing.html">Gallery: Annotation &amp; Composition</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -161,11 +169,16 @@ scales, <code>label_*()</code> sets labels.</p>
 <h3 id="mark_-geometric-layers">
 <code>mark_*()</code> — Geometric Layers<a class="anchor" aria-label="anchor" href="#mark_-geometric-layers"></a>
 </h3>
-<p>Twenty-seven mark functions add visual elements to your plot,
-spanning basic geometry, statistical summaries, and composite/relational
-sugar. Standard marks share a unified signature: <code>mapping</code>,
-<code>data</code>, <code>position</code>, <code>rasterize</code>, and
-<code>...</code> forwarded to the underlying geom.</p>
+<p>Thirty-nine mark functions add visual elements to your plot, spanning
+basic geometry (including step lines, ruggeds, spokes and curved links),
+distributions (histogram, density, box, violin, beeswarm, ECDF, QQ),
+statistical layers (smooth, hex, bin2d, density_2d, contour, correlation
+matrices, overlap-aware counts), composite sugar (error bars,
+significance brackets, lollipops, dumbbells, forest plots, labels) and
+the relational family (sankey, treemap, network, chord). Standard marks
+share a unified signature: <code>mapping</code>, <code>data</code>,
+<code>position</code>, <code>rasterize</code>, and <code>...</code>
+forwarded to the underlying geom.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Scatter plot</span></span>
 <span><span class="va">mtcars</span> <span class="op">|&gt;</span></span>
@@ -329,7 +342,9 @@ the tables, and any sub-table (<code>~nodes</code>, <code>~edges</code>,
 <span>    source <span class="op">=</span> <span class="va">source</span>, target <span class="op">=</span> <span class="va">target</span>,</span>
 <span>    value <span class="op">=</span> <span class="va">value</span>, fill <span class="op">=</span> <span class="va">source</span></span>
 <span>  <span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/mark_sankey.html">mark_sankey</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/mark_sankey.html">mark_sankey</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Coordinate system already present.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Adding new coordinate system, which will replace the existing one.</span></span></code></pre></div>
 <p><img src="plotit_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="672"></p>
 <p>For full control, build the graph explicitly with
 <code><a href="../reference/as_graph.html">as_graph()</a></code>, apply a <code>layout_*()</code> transform, then

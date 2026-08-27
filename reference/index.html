@@ -23,6 +23,14 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/plotit.html">Getting Started</a></li>
     <li><a class="dropdown-item" href="../articles/customizing.html">Customizing Plots</a></li>
     <li><a class="dropdown-item" href="../articles/composing.html">Composing Figures</a></li>
+    <li><a class="dropdown-item" href="../articles/relational.html">Relational Charts</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="../articles/gallery-groups.html">Gallery: Groups</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-distributions.html">Gallery: Distributions</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-relationships.html">Gallery: Relationships</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-coordinates.html">Gallery: Time &amp; Coordinates</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-relational.html">Gallery: Relational</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-composing.html">Gallery: Annotation &amp; Composition</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -62,6 +70,13 @@
 
         </dt>
         <dd>Create aesthetic mapping</dd>
+
+        <dt>
+
+          <code><a href="plus-.plotit.html">`+`(<i>&lt;plotit&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Add a ggplot2 component to a plotit object</dd>
       </dl></div><div class="section level2">
       <h2 id="geometric-layers">Geometric Layers<a class="anchor" aria-label="anchor" href="#geometric-layers"></a></h2>
 
@@ -95,6 +110,13 @@
 
         <dt>
 
+          <code><a href="mark_bin2d.html">mark_bin2d()</a></code>
+
+        </dt>
+        <dd>2D binned heatmap layer</dd>
+
+        <dt>
+
           <code><a href="mark_boxplot.html">mark_boxplot()</a></code>
 
         </dt>
@@ -109,10 +131,31 @@
 
         <dt>
 
+          <code><a href="mark_contour.html">mark_contour()</a></code>
+
+        </dt>
+        <dd>Contour layer for 2D scalar fields</dd>
+
+        <dt>
+
           <code><a href="mark_corr.html">mark_corr()</a></code>
 
         </dt>
         <dd>Correlation matrix heatmap (sugar)</dd>
+
+        <dt>
+
+          <code><a href="mark_count.html">mark_count()</a></code>
+
+        </dt>
+        <dd>Count layer (overlap-aware points)</dd>
+
+        <dt>
+
+          <code><a href="mark_curve.html">mark_curve()</a></code>
+
+        </dt>
+        <dd>Curved link layer</dd>
 
         <dt>
 
@@ -137,10 +180,31 @@
 
         <dt>
 
+          <code><a href="mark_ecdf.html">mark_ecdf()</a></code>
+
+        </dt>
+        <dd>Empirical CDF layer</dd>
+
+        <dt>
+
           <code><a href="mark_errorbar.html">mark_errorbar()</a></code>
 
         </dt>
-        <dd>Error bar layer</dd>
+        <dd>Error bar / interval layer</dd>
+
+        <dt>
+
+          <code><a href="mark_forest.html">mark_forest()</a></code>
+
+        </dt>
+        <dd>Forest plot layer (estimate + interval)</dd>
+
+        <dt>
+
+          <code><a href="mark_heatmap.html">mark_heatmap()</a></code>
+
+        </dt>
+        <dd>Matrix heatmap layer (sugar)</dd>
 
         <dt>
 
@@ -155,6 +219,13 @@
 
         </dt>
         <dd>Histogram layer</dd>
+
+        <dt>
+
+          <code><a href="mark_label.html">mark_label()</a></code>
+
+        </dt>
+        <dd>Label layer</dd>
 
         <dt>
 
@@ -207,10 +278,31 @@
 
         <dt>
 
+          <code><a href="mark_qq.html">mark_qq()</a></code>
+
+        </dt>
+        <dd>Quantile-quantile points layer</dd>
+
+        <dt>
+
+          <code><a href="mark_qq_line.html">mark_qq_line()</a></code>
+
+        </dt>
+        <dd>Quantile-quantile reference line layer</dd>
+
+        <dt>
+
           <code><a href="mark_rect.html">mark_rect()</a></code>
 
         </dt>
         <dd>Rectangle layer</dd>
+
+        <dt>
+
+          <code><a href="mark_rug.html">mark_rug()</a></code>
+
+        </dt>
+        <dd>Rug / tick layer</dd>
 
         <dt>
 
@@ -239,6 +331,20 @@
 
         </dt>
         <dd>Smoothed conditional mean layer</dd>
+
+        <dt>
+
+          <code><a href="mark_spoke.html">mark_spoke()</a></code>
+
+        </dt>
+        <dd>Spoke layer</dd>
+
+        <dt>
+
+          <code><a href="mark_step.html">mark_step()</a></code>
+
+        </dt>
+        <dd>Step layer</dd>
 
         <dt>
 
@@ -300,6 +406,13 @@
 
         <dt>
 
+          <code><a href="scale_radius.html">scale_radius()</a></code>
+
+        </dt>
+        <dd>Radius scale (area-proportional bubble size)</dd>
+
+        <dt>
+
           <code><a href="scale_shape.html">scale_shape()</a></code>
 
         </dt>
@@ -317,7 +430,7 @@
           <code><a href="scale_x.html">scale_x()</a></code>
 
         </dt>
-        <dd>Controls the x-axis scale: transformation, limits, breaks, and labels.</dd>
+        <dd>X-axis position scale</dd>
 
         <dt>
 

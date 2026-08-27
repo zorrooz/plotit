@@ -110,7 +110,7 @@ Multi-plot compositions follow their own outermost pipeline:
 
 ### `mark_*` — Geometric layers
 
-27 marks across three tiers: basic geometry, statistical, and
+39 marks across three tiers: basic geometry, statistical, and
 composite/relational. Composite and relational marks are documented
 syntax sugar over the primitives below
 (e.g. [`mark_significance()`](https://zorrooz.github.io/plotit/reference/mark_significance.md)
@@ -122,30 +122,41 @@ syntax sugar over the primitives below
 |:---|:---|:---|
 | [`mark_point()`](https://zorrooz.github.io/plotit/reference/mark_point.md) | `geom_point()` | Scatter / bubble plots |
 | [`mark_line()`](https://zorrooz.github.io/plotit/reference/mark_line.md) | `geom_line()` | Lines and trends |
-| [`mark_area()`](https://zorrooz.github.io/plotit/reference/mark_area.md) | `geom_area()` / `geom_ribbon()` | Filled area charts |
+| [`mark_area()`](https://zorrooz.github.io/plotit/reference/mark_area.md) | `geom_area()` / `geom_ribbon()` | Filled areas; `ymin`/`ymax` become interval bands |
 | [`mark_bar()`](https://zorrooz.github.io/plotit/reference/mark_bar.md) | `geom_bar()` / `geom_col()` | Bar charts |
 | [`mark_rect()`](https://zorrooz.github.io/plotit/reference/mark_rect.md) | `geom_tile()` / `geom_rect()` | Heatmap cells / rectangles |
 | [`mark_polygon()`](https://zorrooz.github.io/plotit/reference/mark_polygon.md) | `geom_polygon()` | Polygons / custom shapes |
 | [`mark_text()`](https://zorrooz.github.io/plotit/reference/mark_text.md) | `geom_text()` / ggrepel | Text labels and annotations |
-| [`mark_rule()`](https://zorrooz.github.io/plotit/reference/mark_rule.md) | `geom_hline/vline/abline/segment` | Reference lines and ranges |
+| [`mark_label()`](https://zorrooz.github.io/plotit/reference/mark_label.md) | `geom_label()` / ggrepel | Boxed labels |
+| [`mark_rule()`](https://zorrooz.github.io/plotit/reference/mark_rule.md) | `geom_hline/vline/abline/segment` | Reference lines, ranges, data segments |
 | [`mark_path()`](https://zorrooz.github.io/plotit/reference/mark_path.md) | `geom_path()` | Paths and trajectories |
+| [`mark_step()`](https://zorrooz.github.io/plotit/reference/mark_step.md) | `geom_step()` | Staircase lines (`direction = "vh"/"hv"/"mid"`) |
+| [`mark_rug()`](https://zorrooz.github.io/plotit/reference/mark_rug.md) | `geom_rug()` | Marginal ticks (censoring marks, 1D marginals) |
+| [`mark_spoke()`](https://zorrooz.github.io/plotit/reference/mark_spoke.md) | `geom_spoke()` | Radial segments (angle + radius) |
+| [`mark_curve()`](https://zorrooz.github.io/plotit/reference/mark_curve.md) | `geom_curve()` | Curved links (arc diagrams, arrows) |
 | [`mark_histogram()`](https://zorrooz.github.io/plotit/reference/mark_histogram.md) | `geom_histogram()` | Histograms |
 | [`mark_density()`](https://zorrooz.github.io/plotit/reference/mark_density.md) | `geom_density()` | 1D kernel density curves |
 | [`mark_boxplot()`](https://zorrooz.github.io/plotit/reference/mark_boxplot.md) | `geom_boxplot()` | Box-and-whisker plots |
 | [`mark_violin()`](https://zorrooz.github.io/plotit/reference/mark_violin.md) | `geom_violin()` | Violin plots |
+| [`mark_ecdf()`](https://zorrooz.github.io/plotit/reference/mark_ecdf.md) | `geom_step` + `stat_ecdf` | Empirical CDF |
+| [`mark_qq()`](https://zorrooz.github.io/plotit/reference/mark_qq.md) / [`mark_qq_line()`](https://zorrooz.github.io/plotit/reference/mark_qq_line.md) | `geom_qq(_line)` | Quantile-quantile diagnostics |
 | [`mark_map()`](https://zorrooz.github.io/plotit/reference/mark_map.md) | sf + `geom_sf()` | Geographic maps |
 | [`mark_smooth()`](https://zorrooz.github.io/plotit/reference/mark_smooth.md) | `geom_smooth()` | Regression fits with confidence bands |
+| [`mark_count()`](https://zorrooz.github.io/plotit/reference/mark_count.md) | `geom_count()` | Overlap-aware sized points |
 | [`mark_hex()`](https://zorrooz.github.io/plotit/reference/mark_hex.md) | `geom_hex()` | 2D hexagonal binning |
-| [`mark_density_2d()`](https://zorrooz.github.io/plotit/reference/mark_density_2d.md) | `geom_density_2d()` | 2D density contours |
+| [`mark_bin2d()`](https://zorrooz.github.io/plotit/reference/mark_bin2d.md) | `geom_bin_2d()` | 2D rectangular binning heatmap |
+| [`mark_density_2d()`](https://zorrooz.github.io/plotit/reference/mark_density_2d.md) | `geom_density_2d()` | 2D density contours (lines or filled) |
+| [`mark_contour()`](https://zorrooz.github.io/plotit/reference/mark_contour.md) | `geom_contour()` | Contours of an observed z field |
 | [`mark_corr()`](https://zorrooz.github.io/plotit/reference/mark_corr.md) | internal corr transform + `geom_tile()` | Correlation heatmap |
-| [`mark_errorbar()`](https://zorrooz.github.io/plotit/reference/mark_errorbar.md) | `geom_errorbar()` / `-h` | Error bars |
+| [`mark_errorbar()`](https://zorrooz.github.io/plotit/reference/mark_errorbar.md) | `geom_errorbar()` / `geom_linerange()` | Error bars / interval lines (`caps =`) |
 | [`mark_significance()`](https://zorrooz.github.io/plotit/reference/mark_significance.md) | sugar: rule + text | Significance brackets |
 | [`mark_lollipop()`](https://zorrooz.github.io/plotit/reference/mark_lollipop.md) | sugar: point + stem | Lollipop charts |
 | [`mark_dumbbell()`](https://zorrooz.github.io/plotit/reference/mark_dumbbell.md) | sugar: two points + stem | Dumbbell comparison charts |
+| [`mark_forest()`](https://zorrooz.github.io/plotit/reference/mark_forest.md) | sugar: errorbar + point + rule | Meta-analysis / coefficient forests |
 | [`mark_beeswarm()`](https://zorrooz.github.io/plotit/reference/mark_beeswarm.md) | ggbeeswarm | Beeswarm scatter (collision detection) |
 | [`mark_sankey()`](https://zorrooz.github.io/plotit/reference/mark_sankey.md) | [`layout_sankey()`](https://zorrooz.github.io/plotit/reference/layout_sankey.md) sugar | Sankey flow diagrams |
 | [`mark_treemap()`](https://zorrooz.github.io/plotit/reference/mark_treemap.md) | [`layout_treemap()`](https://zorrooz.github.io/plotit/reference/layout_treemap.md) sugar | Treemaps |
-| [`mark_network()`](https://zorrooz.github.io/plotit/reference/mark_network.md) | `layout_force()/circle()` sugar | Force-directed network graphs |
+| [`mark_network()`](https://zorrooz.github.io/plotit/reference/mark_network.md) | `layout_force()/circle()` sugar | Network graphs (straight or curved edges) |
 | [`mark_chord()`](https://zorrooz.github.io/plotit/reference/mark_chord.md) | [`layout_chord()`](https://zorrooz.github.io/plotit/reference/layout_chord.md) sugar | Chord diagrams |
 
 ### Relational data — `as_graph()` + `layout_*()`
@@ -189,6 +200,7 @@ like-named arguments).
 | [`scale_color()`](https://zorrooz.github.io/plotit/reference/scale_color.md) | colour |
 | [`scale_fill()`](https://zorrooz.github.io/plotit/reference/scale_fill.md) | fill |
 | [`scale_size()`](https://zorrooz.github.io/plotit/reference/scale_size.md) | size |
+| [`scale_radius()`](https://zorrooz.github.io/plotit/reference/scale_radius.md) | radius (area-honest bubbles) |
 | [`scale_alpha()`](https://zorrooz.github.io/plotit/reference/scale_alpha.md) | alpha |
 | [`scale_shape()`](https://zorrooz.github.io/plotit/reference/scale_shape.md) | shape |
 | [`scale_linetype()`](https://zorrooz.github.io/plotit/reference/scale_linetype.md) | linetype |
@@ -251,7 +263,12 @@ like-named arguments).
 ## Documentation
 
 Full documentation is available at
-[zorrooz.github.io/plotit](https://zorrooz.github.io/plotit/).
+[zorrooz.github.io/plotit](https://zorrooz.github.io/plotit/), including
+a [relational-charts
+guide](https://zorrooz.github.io/plotit/articles/relational.html) and
+figure galleries (groups, distributions, relationships, coordinates,
+relational charts, composition & annotation) under **Articles →
+Gallery**.
 
 ## Contributing
 

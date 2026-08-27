@@ -6,6 +6,8 @@
   Initialize a plotit object
 - [`encode()`](https://zorrooz.github.io/plotit/reference/encode.md) :
   Create aesthetic mapping
+- [`` `+`( ``*`<plotit>`*`)`](https://zorrooz.github.io/plotit/reference/plus-.plotit.md)
+  : Add a ggplot2 component to a plotit object
 
 ## Geometric Layers
 
@@ -17,24 +19,40 @@ Add visual marks to your plot.
   : Bar layer
 - [`mark_beeswarm()`](https://zorrooz.github.io/plotit/reference/mark_beeswarm.md)
   : Beeswarm plot layer
+- [`mark_bin2d()`](https://zorrooz.github.io/plotit/reference/mark_bin2d.md)
+  : 2D binned heatmap layer
 - [`mark_boxplot()`](https://zorrooz.github.io/plotit/reference/mark_boxplot.md)
   : Boxplot layer
 - [`mark_chord()`](https://zorrooz.github.io/plotit/reference/mark_chord.md)
   : Chord diagram layer (sugar)
+- [`mark_contour()`](https://zorrooz.github.io/plotit/reference/mark_contour.md)
+  : Contour layer for 2D scalar fields
 - [`mark_corr()`](https://zorrooz.github.io/plotit/reference/mark_corr.md)
   : Correlation matrix heatmap (sugar)
+- [`mark_count()`](https://zorrooz.github.io/plotit/reference/mark_count.md)
+  : Count layer (overlap-aware points)
+- [`mark_curve()`](https://zorrooz.github.io/plotit/reference/mark_curve.md)
+  : Curved link layer
 - [`mark_density()`](https://zorrooz.github.io/plotit/reference/mark_density.md)
   : Density layer
 - [`mark_density_2d()`](https://zorrooz.github.io/plotit/reference/mark_density_2d.md)
   : 2D density contour layer
 - [`mark_dumbbell()`](https://zorrooz.github.io/plotit/reference/mark_dumbbell.md)
   : Dumbbell comparison chart layer
+- [`mark_ecdf()`](https://zorrooz.github.io/plotit/reference/mark_ecdf.md)
+  : Empirical CDF layer
 - [`mark_errorbar()`](https://zorrooz.github.io/plotit/reference/mark_errorbar.md)
-  : Error bar layer
+  : Error bar / interval layer
+- [`mark_forest()`](https://zorrooz.github.io/plotit/reference/mark_forest.md)
+  : Forest plot layer (estimate + interval)
+- [`mark_heatmap()`](https://zorrooz.github.io/plotit/reference/mark_heatmap.md)
+  : Matrix heatmap layer (sugar)
 - [`mark_hex()`](https://zorrooz.github.io/plotit/reference/mark_hex.md)
   : Hexagonal heatmap layer
 - [`mark_histogram()`](https://zorrooz.github.io/plotit/reference/mark_histogram.md)
   : Histogram layer
+- [`mark_label()`](https://zorrooz.github.io/plotit/reference/mark_label.md)
+  : Label layer
 - [`mark_line()`](https://zorrooz.github.io/plotit/reference/mark_line.md)
   : Line layer
 - [`mark_lollipop()`](https://zorrooz.github.io/plotit/reference/mark_lollipop.md)
@@ -49,8 +67,14 @@ Add visual marks to your plot.
   : Point layer
 - [`mark_polygon()`](https://zorrooz.github.io/plotit/reference/mark_polygon.md)
   : Polygon layer
+- [`mark_qq()`](https://zorrooz.github.io/plotit/reference/mark_qq.md) :
+  Quantile-quantile points layer
+- [`mark_qq_line()`](https://zorrooz.github.io/plotit/reference/mark_qq_line.md)
+  : Quantile-quantile reference line layer
 - [`mark_rect()`](https://zorrooz.github.io/plotit/reference/mark_rect.md)
   : Rectangle layer
+- [`mark_rug()`](https://zorrooz.github.io/plotit/reference/mark_rug.md)
+  : Rug / tick layer
 - [`mark_rule()`](https://zorrooz.github.io/plotit/reference/mark_rule.md)
   : Reference line / segment layer
 - [`mark_sankey()`](https://zorrooz.github.io/plotit/reference/mark_sankey.md)
@@ -59,6 +83,10 @@ Add visual marks to your plot.
   : Significance annotation layer
 - [`mark_smooth()`](https://zorrooz.github.io/plotit/reference/mark_smooth.md)
   : Smoothed conditional mean layer
+- [`mark_spoke()`](https://zorrooz.github.io/plotit/reference/mark_spoke.md)
+  : Spoke layer
+- [`mark_step()`](https://zorrooz.github.io/plotit/reference/mark_step.md)
+  : Step layer
 - [`mark_text()`](https://zorrooz.github.io/plotit/reference/mark_text.md)
   : Text layer
 - [`mark_treemap()`](https://zorrooz.github.io/plotit/reference/mark_treemap.md)
@@ -78,12 +106,14 @@ Control how data maps to visual properties.
   : Fill scale
 - [`scale_linetype()`](https://zorrooz.github.io/plotit/reference/scale_linetype.md)
   : Linetype scale
+- [`scale_radius()`](https://zorrooz.github.io/plotit/reference/scale_radius.md)
+  : Radius scale (area-proportional bubble size)
 - [`scale_shape()`](https://zorrooz.github.io/plotit/reference/scale_shape.md)
   : Shape scale
 - [`scale_size()`](https://zorrooz.github.io/plotit/reference/scale_size.md)
   : Size scale
 - [`scale_x()`](https://zorrooz.github.io/plotit/reference/scale_x.md) :
-  Controls the x-axis scale: transformation, limits, breaks, and labels.
+  X-axis position scale
 - [`scale_y()`](https://zorrooz.github.io/plotit/reference/scale_y.md) :
   Y-axis position scale
 

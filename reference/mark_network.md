@@ -20,6 +20,7 @@ mark_network(
   edge_color = ._MARK_STYLE$faint,
   edge_width = ._MARK_STYLE$lw_thin,
   edge_alpha = NULL,
+  edge_shape = c("straight", "curved"),
   node_color = ._MARK_STYLE$primary,
   node_size = 5,
   show_labels = TRUE,
@@ -73,6 +74,14 @@ mark_network(
   strokes do not need translucency; the parameter exists so the unified
   edge vocabulary (`edge_color`/`edge_width`/`edge_alpha`) is available
   on every relational sugar.
+
+- edge_shape:
+
+  `"straight"` (default) renders each edge as a rule; `"curved"` renders
+  quadratic-bezier links through
+  [`mark_curve()`](https://zorrooz.github.io/plotit/reference/mark_curve.md),
+  reducing visual overlap in dense networks. Curve tension is tunable
+  via `curvature` in `...`.
 
 - node_color:
 

@@ -4,8 +4,15 @@ pkgdown_sha: ~
 articles:
   composing: composing.html
   customizing: customizing.html
+  articles/gallery-composing: gallery-composing.html
+  articles/gallery-coordinates: gallery-coordinates.html
+  articles/gallery-distributions: gallery-distributions.html
+  articles/gallery-groups: gallery-groups.html
+  articles/gallery-relational: gallery-relational.html
+  articles/gallery-relationships: gallery-relationships.html
   plotit: plotit.html
-last_built: 2026-08-26T15:58Z
+  relational: relational.html
+last_built: 2026-08-27T16:13Z
 urls:
   reference: https://zorrooz.github.io/plotit/reference
   article: https://zorrooz.github.io/plotit/articles

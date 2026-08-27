@@ -93,6 +93,8 @@ df |>
   )) |>
   mark_sankey() |>
   scale_fill(range = "viridis")
+#> Coordinate system already present.
+#> ℹ Adding new coordinate system, which will replace the existing one.
 #> Scale for fill is already present.
 #> Adding another scale for fill, which will replace the existing scale.
 ```

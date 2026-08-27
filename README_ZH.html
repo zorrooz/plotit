@@ -23,6 +23,14 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="articles/plotit.html">Getting Started</a></li>
     <li><a class="dropdown-item" href="articles/customizing.html">Customizing Plots</a></li>
     <li><a class="dropdown-item" href="articles/composing.html">Composing Figures</a></li>
+    <li><a class="dropdown-item" href="articles/relational.html">Relational Charts</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="articles/gallery-groups.html">Gallery: Groups</a></li>
+    <li><a class="dropdown-item" href="articles/gallery-distributions.html">Gallery: Distributions</a></li>
+    <li><a class="dropdown-item" href="articles/gallery-relationships.html">Gallery: Relationships</a></li>
+    <li><a class="dropdown-item" href="articles/gallery-coordinates.html">Gallery: Time &amp; Coordinates</a></li>
+    <li><a class="dropdown-item" href="articles/gallery-relational.html">Gallery: Relational</a></li>
+    <li><a class="dropdown-item" href="articles/gallery-composing.html">Gallery: Annotation &amp; Composition</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -154,7 +162,7 @@ plotit 处于活跃的预发布开发中。每次更新都<strong>极有可能</
 <div class="section level3">
 <h3 id="mark_--几何图层">
 <code>mark_*</code> — 几何图层<a class="anchor" aria-label="anchor" href="#mark_--%E5%87%A0%E4%BD%95%E5%9B%BE%E5%B1%82"></a></h3>
-<p>共 27 种 mark，分三层体系：基础几何、统计、复合/关系。 复合与关系 mark 均为下层原语的文档化语法糖 （如 <code><a href="reference/mark_significance.html">mark_significance()</a></code> ≈ <code><a href="reference/mark_rule.html">mark_rule()</a></code> + <code><a href="reference/mark_text.html">mark_text()</a></code>）。</p>
+<p>共 39 种 mark，分三层体系：基础几何、统计、复合/关系。 复合与关系 mark 均为下层原语的文档化语法糖 （如 <code><a href="reference/mark_significance.html">mark_significance()</a></code> ≈ <code><a href="reference/mark_rule.html">mark_rule()</a></code> + <code><a href="reference/mark_text.html">mark_text()</a></code>）。</p>
 <table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th align="left">函数</th>
 <th align="left">底层引擎</th>
 <th align="left">说明</th>
@@ -168,7 +176,7 @@ plotit 处于活跃的预发布开发中。每次更新都<strong>极有可能</
 <td align="left">
 <code>geom_area()</code> / <code>geom_ribbon()</code>
 </td>
-<td align="left">面积图</td>
+<td align="left">面积图；<code>ymin</code>/<code>ymax</code> 自动转为区间带</td>
 </tr><tr><td align="left"><code><a href="reference/mark_bar.html">mark_bar()</a></code></td>
 <td align="left">
 <code>geom_bar()</code> / <code>geom_col()</code>
@@ -186,12 +194,28 @@ plotit 处于活跃的预发布开发中。每次更新都<strong>极有可能</
 <td align="left">
 <code>geom_text()</code> / ggrepel</td>
 <td align="left">文本标签与数据标注</td>
+</tr><tr><td align="left"><code><a href="reference/mark_label.html">mark_label()</a></code></td>
+<td align="left">
+<code>geom_label()</code> / ggrepel</td>
+<td align="left">带框标签</td>
 </tr><tr><td align="left"><code><a href="reference/mark_rule.html">mark_rule()</a></code></td>
 <td align="left"><code>geom_hline/vline/abline/segment</code></td>
-<td align="left">参考线/参考区域</td>
+<td align="left">参考线/参考区域/数据段</td>
 </tr><tr><td align="left"><code><a href="reference/mark_path.html">mark_path()</a></code></td>
 <td align="left"><code>geom_path()</code></td>
 <td align="left">路径/轨迹</td>
+</tr><tr><td align="left"><code><a href="reference/mark_step.html">mark_step()</a></code></td>
+<td align="left"><code>geom_step()</code></td>
+<td align="left">阶梯线（<code>direction=</code> vh/hv/mid）</td>
+</tr><tr><td align="left"><code><a href="reference/mark_rug.html">mark_rug()</a></code></td>
+<td align="left"><code>geom_rug()</code></td>
+<td align="left">边缘地毯刻度（删失标记、1D 边际）</td>
+</tr><tr><td align="left"><code><a href="reference/mark_spoke.html">mark_spoke()</a></code></td>
+<td align="left"><code>geom_spoke()</code></td>
+<td align="left">径向线段（angle + radius）</td>
+</tr><tr><td align="left"><code><a href="reference/mark_curve.html">mark_curve()</a></code></td>
+<td align="left"><code>geom_curve()</code></td>
+<td align="left">曲线连接（弧图边、箭头）</td>
 </tr><tr><td align="left"><code><a href="reference/mark_histogram.html">mark_histogram()</a></code></td>
 <td align="left"><code>geom_histogram()</code></td>
 <td align="left">直方图</td>
@@ -204,6 +228,16 @@ plotit 处于活跃的预发布开发中。每次更新都<strong>极有可能</
 </tr><tr><td align="left"><code><a href="reference/mark_violin.html">mark_violin()</a></code></td>
 <td align="left"><code>geom_violin()</code></td>
 <td align="left">小提琴图</td>
+</tr><tr><td align="left"><code><a href="reference/mark_ecdf.html">mark_ecdf()</a></code></td>
+<td align="left">
+<code>geom_step</code> + <code>stat_ecdf</code>
+</td>
+<td align="left">经验累积分布</td>
+</tr><tr><td align="left">
+<code><a href="reference/mark_qq.html">mark_qq()</a></code> / <code><a href="reference/mark_qq_line.html">mark_qq_line()</a></code>
+</td>
+<td align="left"><code>geom_qq(_line)</code></td>
+<td align="left">QQ 诊断</td>
 </tr><tr><td align="left"><code><a href="reference/mark_map.html">mark_map()</a></code></td>
 <td align="left">sf + <code>geom_sf()</code>
 </td>
@@ -211,21 +245,30 @@ plotit 处于活跃的预发布开发中。每次更新都<strong>极有可能</
 </tr><tr><td align="left"><code><a href="reference/mark_smooth.html">mark_smooth()</a></code></td>
 <td align="left"><code>geom_smooth()</code></td>
 <td align="left">回归拟合 + 置信带</td>
+</tr><tr><td align="left"><code><a href="reference/mark_count.html">mark_count()</a></code></td>
+<td align="left"><code>geom_count()</code></td>
+<td align="left">重叠计数缩点</td>
 </tr><tr><td align="left"><code><a href="reference/mark_hex.html">mark_hex()</a></code></td>
 <td align="left"><code>geom_hex()</code></td>
 <td align="left">2D 六边形分箱热力图</td>
+</tr><tr><td align="left"><code><a href="reference/mark_bin2d.html">mark_bin2d()</a></code></td>
+<td align="left"><code>geom_bin_2d()</code></td>
+<td align="left">2D 矩形分箱热力图</td>
 </tr><tr><td align="left"><code><a href="reference/mark_density_2d.html">mark_density_2d()</a></code></td>
 <td align="left"><code>geom_density_2d()</code></td>
 <td align="left">2D 密度等高线</td>
+</tr><tr><td align="left"><code><a href="reference/mark_contour.html">mark_contour()</a></code></td>
+<td align="left"><code>geom_contour()</code></td>
+<td align="left">观测 z 场等高线</td>
 </tr><tr><td align="left"><code><a href="reference/mark_corr.html">mark_corr()</a></code></td>
 <td align="left">内部相关性变换 + <code>geom_tile()</code>
 </td>
 <td align="left">相关性矩阵热力图</td>
 </tr><tr><td align="left"><code><a href="reference/mark_errorbar.html">mark_errorbar()</a></code></td>
 <td align="left">
-<code>geom_errorbar()</code> / <code>-h</code>
+<code>geom_errorbar()</code> / <code>geom_linerange()</code>
 </td>
-<td align="left">误差棒</td>
+<td align="left">误差棒/区间线（<code>caps=</code>）</td>
 </tr><tr><td align="left"><code><a href="reference/mark_significance.html">mark_significance()</a></code></td>
 <td align="left">语法糖：rule + text</td>
 <td align="left">显著性标记（括号+星号）</td>
@@ -235,6 +278,9 @@ plotit 处于活跃的预发布开发中。每次更新都<strong>极有可能</
 </tr><tr><td align="left"><code><a href="reference/mark_dumbbell.html">mark_dumbbell()</a></code></td>
 <td align="left">语法糖：双 point + 线段</td>
 <td align="left">哑铃对比图</td>
+</tr><tr><td align="left"><code><a href="reference/mark_forest.html">mark_forest()</a></code></td>
+<td align="left">语法糖：errorbar + point + rule</td>
+<td align="left">森林图（meta 分析/系数图）</td>
 </tr><tr><td align="left"><code><a href="reference/mark_beeswarm.html">mark_beeswarm()</a></code></td>
 <td align="left">ggbeeswarm</td>
 <td align="left">蜂群散点（碰撞检测）</td>
@@ -249,7 +295,7 @@ plotit 处于活跃的预发布开发中。每次更新都<strong>极有可能</
 </tr><tr><td align="left"><code><a href="reference/mark_network.html">mark_network()</a></code></td>
 <td align="left">
 <code>layout_force()/circle()</code> 语法糖</td>
-<td align="left">力导向网络图</td>
+<td align="left">网络图（直/曲边 <code>edge_shape=</code>）</td>
 </tr><tr><td align="left"><code><a href="reference/mark_chord.html">mark_chord()</a></code></td>
 <td align="left">
 <code><a href="reference/layout_chord.html">layout_chord()</a></code> 语法糖</td>
@@ -300,6 +346,8 @@ plotit 处于活跃的预发布开发中。每次更新都<strong>极有可能</
 <td align="left">填充</td>
 </tr><tr><td align="left"><code><a href="reference/scale_size.html">scale_size()</a></code></td>
 <td align="left">大小</td>
+</tr><tr><td align="left"><code><a href="reference/scale_radius.html">scale_radius()</a></code></td>
+<td align="left">半径（气泡面积诚实编码）</td>
 </tr><tr><td align="left"><code><a href="reference/scale_alpha.html">scale_alpha()</a></code></td>
 <td align="left">透明度</td>
 </tr><tr><td align="left"><code><a href="reference/scale_shape.html">scale_shape()</a></code></td>
@@ -389,7 +437,7 @@ plotit 处于活跃的预发布开发中。每次更新都<strong>极有可能</
 </div>
 <div class="section level2">
 <h2 id="文档">文档<a class="anchor" aria-label="anchor" href="#%E6%96%87%E6%A1%A3"></a></h2>
-<p>完整文档见 <a href="https://zorrooz.github.io/plotit/">zorrooz.github.io/plotit</a>。</p>
+<p>完整文档见 <a href="https://zorrooz.github.io/plotit/">zorrooz.github.io/plotit</a>， 含<a href="https://zorrooz.github.io/plotit/articles/relational.html">关系类图表系统指南</a> 与图形画廊（分组、分布、关系、坐标系、关系图、组合与标注），见 <strong>Articles → Gallery</strong>。</p>
 </div>
 <div class="section level2">
 <h2 id="贡献">贡献<a class="anchor" aria-label="anchor" href="#%E8%B4%A1%E7%8C%AE"></a></h2>

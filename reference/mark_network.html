@@ -35,6 +35,14 @@ call are preserved (additive composition)."><style>.r-plt { display: block; marg
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/plotit.html">Getting Started</a></li>
     <li><a class="dropdown-item" href="../articles/customizing.html">Customizing Plots</a></li>
     <li><a class="dropdown-item" href="../articles/composing.html">Composing Figures</a></li>
+    <li><a class="dropdown-item" href="../articles/relational.html">Relational Charts</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="../articles/gallery-groups.html">Gallery: Groups</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-distributions.html">Gallery: Distributions</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-relationships.html">Gallery: Relationships</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-coordinates.html">Gallery: Time &amp; Coordinates</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-relational.html">Gallery: Relational</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-composing.html">Gallery: Annotation &amp; Composition</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -74,6 +82,7 @@ call are preserved (additive composition).</p>
 <span>  edge_color <span class="op">=</span> <span class="va">._MARK_STYLE</span><span class="op">$</span><span class="va">faint</span>,</span>
 <span>  edge_width <span class="op">=</span> <span class="va">._MARK_STYLE</span><span class="op">$</span><span class="va">lw_thin</span>,</span>
 <span>  edge_alpha <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  edge_shape <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"straight"</span>, <span class="st">"curved"</span><span class="op">)</span>,</span>
 <span>  node_color <span class="op">=</span> <span class="va">._MARK_STYLE</span><span class="op">$</span><span class="va">primary</span>,</span>
 <span>  node_size <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>  show_labels <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -130,6 +139,13 @@ bands of sankey/chord, thin strokes do not need translucency; the
 parameter exists so the unified edge vocabulary
 (<code>edge_color</code>/<code>edge_width</code>/<code>edge_alpha</code>) is available on every
 relational sugar.</p></dd>
+
+
+<dt id="arg-edge-shape">edge_shape<a class="anchor" aria-label="anchor" href="#arg-edge-shape"></a></dt>
+<dd><p><code>"straight"</code> (default) renders each edge as a rule;
+<code>"curved"</code> renders quadratic-bezier links through <code><a href="mark_curve.html">mark_curve()</a></code>,
+reducing visual overlap in dense networks.  Curve tension is tunable
+via <code>curvature</code> in <code>...</code>.</p></dd>
 
 
 <dt id="arg-node-color">node_color<a class="anchor" aria-label="anchor" href="#arg-node-color"></a></dt>
