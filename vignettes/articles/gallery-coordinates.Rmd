@@ -72,24 +72,51 @@ weekly |>
 ```{r}
 skills <- data.frame(
   person = rep(c("Ada", "Lin"), each = 5),
-  trait = rep(c("design", "code", "research", "comms", "ops"), 2),
+  trait = factor(rep(c("design", "code", "research", "comms", "ops"), 2),
+    levels = c("design", "code", "research", "comms", "ops")
+  ),
   score = c(7, 9, 6, 5, 8, 9, 5, 7, 8, 6)
 )
-skills |>
-  plotit(encode(x = trait, y = score, colour = person)) |>
+# A radar needs straight chords, which coord_polar cannot give a polygon
+# (it arcs the connecting path). Pre-compute cartesian polar coordinates
+# instead and close each person's ring back to the first vertex.
+ring <- do.call(rbind, lapply(
+  split(skills, skills$person, drop = TRUE),
+  function(d) rbind(d, d[1, ])
+))
+theta <- (as.numeric(ring$trait) - 1) / 5 * 2 * pi
+ring$px <- ring$score * sin(theta)
+ring$py <- ring$score * cos(theta)
+spokes <- do.call(rbind, lapply(seq_len(5), function(i) {
+  a <- (i - 1) / 5 * 2 * pi
+  data.frame(x = 0, y = 0, xend = 9 * sin(a), yend = 9 * cos(a))
+}))
+ring |>
+  plotit(encode(x = px, y = py, colour = person, group = person), dodge = 0) |>
+  mark_rule(
+    data = spokes, mapping = encode(x = x, y = y, xend = xend, yend = yend),
+    inherit.aes = FALSE, color = "grey85", linewidth = 0.3
+  ) |>
   mark_polygon(alpha = 0.15, linewidth = 0.8) |>
   mark_point(size = 2) |>
-  project_polar() |>
-  label_title("Radar = mark_polygon + project_polar")
+  project_cartesian(fixed = 1) |>
+  style(
+    axis.text = ggplot2::element_blank(), axis.title = ggplot2::element_blank(),
+    axis.ticks = ggplot2::element_blank(), panel.border = ggplot2::element_blank()
+  ) |>
+  label_title("Radar = polar coords + mark_polygon")
 ```
 
 ### Polar histogram
 
 ```{r}
 set.seed(5)
-angles <- data.frame(a = c(rnorm(300, 0, 1), rnorm(300, 3, 0.7)))
+angles <- data.frame(
+  a = c(rnorm(300, 0, 1), rnorm(300, 3, 0.7)),
+  half = rep(c("low", "high"), each = 300)
+)
 angles |>
-  plotit(encode(x = a, fill = cut(angles$a, 2, labels = c("A", "B")))) |>
+  plotit(encode(x = a, fill = half)) |>
   mark_histogram(bins = 24) |>
   project_polar() |>
   style(axis.text = ggplot2::element_blank(), axis.title = ggplot2::element_blank()) |>

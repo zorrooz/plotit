@@ -75,6 +75,10 @@ NULL
 ._rel_canvas <- function(plot, fixed = FALSE, clip = "on") {
   if (fixed) {
     plot@gg <- plot@gg + ggplot2::coord_fixed(clip = clip)
+  } else if (!identical(clip, "on")) {
+    # Non-fixed canvas (sankey fills the panel) still needs a coord to carry
+    # clip="off", so edge-strip labels are not cut by the panel boundary.
+    plot@gg <- plot@gg + ggplot2::coord_cartesian(clip = clip)
   }
   ._theme_blank_axes(plot)
 }
@@ -304,8 +308,10 @@ S7::method(mark_sankey, plotit_class) <- function(
   plot@gg <- plot@gg +
     ggplot2::labs(fill = ._rel_legend_title(rel$has_fill, rel$fill_name))
 
-  # Coordinate-free diagram: no axes around the layout canvas.
-  ._rel_canvas(plot)
+  # Coordinate-free diagram: no axes around the layout canvas.  clip="off"
+  # so the node-id labels (centred on the edge strips at x=0 / x=1) are not
+  # cut by the panel boundary -- matches the chord sugar's outer labels.
+  ._rel_canvas(plot, clip = "off")
 }
 
 # ---- mark_treemap ----

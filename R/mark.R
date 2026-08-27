@@ -84,7 +84,7 @@ NULL
   # Closed-cell heatmap chrome: tiles span the full data range, so axis
   # lines/ticks double the grid the cells already draw and expansion padding
   # would detach cells from the panel edge (AGENTS.md 6, cell-chrome rule).
-  if (!is.null(mark_name) && mark_name %in% c("mark_rect", "mark_corr")) {
+  if (!is.null(mark_name) && mark_name %in% c("mark_rect", "mark_corr", "mark_heatmap")) {
     plot@gg <- ._gg_tile_chrome(plot@gg)
   }
   plot
@@ -286,6 +286,15 @@ mark_point <- ._make_mark_generic("mark_point")
 # no use for (which would otherwise warn "Ignoring unknown aesthetics").
 ._INTERVAL_BIND_AES <- c(
   "x", "y", "ymin", "ymax", "xmin", "xmax",
+  "colour", "alpha", "linetype", "linewidth", "group"
+)
+
+# Channels geom_segment understands. mark_rule's data-driven segment mode
+# adopts the global mapping, which carries the default_color-injected
+# `fill` that geom_segment rejects with an "Ignoring unknown aesthetics"
+# warning; filtering to this whitelist keeps colour and drops fill.
+._SEGMENT_BIND_AES <- c(
+  "x", "y", "xend", "yend",
   "colour", "alpha", "linetype", "linewidth", "group"
 )
 
@@ -730,6 +739,10 @@ S7::method(mark_rule, plotit_class) <- function(
         scope = ._MARK_BIND_AES$mark_rule
       )
     }
+    # geom_segment rejects `fill` (and any foreign channel the global
+    # mapping may carry, e.g. the default_color-injected fill) with an
+    # "Ignoring unknown aesthetics" warning; keep only segment channels.
+    mapping <- ._filter_aes(mapping, ._SEGMENT_BIND_AES)
     need <- c("x", "xend", "y", "yend")
     if (!all(need %in% names(mapping))) {
       cli::cli_abort(c(
@@ -1148,6 +1161,166 @@ S7::method(mark_corr, plotit_class) <- function(
   # Synthetic Var1/Var2 titles carry no meaning; the variable names on the
   # axes do.  (Axis lines/ticks and expansion are handled by the shared
   # closed-cell chrome inside ._mark_impl.)
+  plot@gg <- plot@gg + ggplot2::theme(axis.title = ggplot2::element_blank())
+  plot
+}
+
+# ---- mark_heatmap ----
+# Tidyheatmaps-style matrix heatmap expressed as a plotit MARK, not a
+# standalone system: it reads a matrix / wide data.frame / tidy long mapping
+# from the pipeline, optionally z-scores and hclust-reorders it, and renders
+# the tile grid through the shared mark path (so it inherits the unified
+# white-hairline cell chrome, the managed viridis fill default, and stays
+# chainable with scale_fill()/label_*/compose_*).
+
+# Coerce the pipeline input to a numeric matrix with named rows/cols.
+#' @noRd
+#' @keywords internal
+._heatmap_to_matrix <- function(data, mapping) {
+  mnames <- names(mapping)
+  if (is.matrix(data)) {
+    mat <- data
+    if (is.null(rownames(mat))) rownames(mat) <- as.character(seq_len(nrow(mat)))
+    if (is.null(colnames(mat))) colnames(mat) <- as.character(seq_len(ncol(mat)))
+    return(mat)
+  }
+  if (!is.data.frame(data)) {
+    cli::cli_abort(c(
+      "{.fn mark_heatmap} needs a matrix, a wide numeric data.frame,",
+      "i" = "or a tidy {.code encode(x =, y =, fill =)} mapping."
+    ))
+  }
+  # Tidy long form: explicit x / y / fill(value) aesthetics define the grid.
+  if (all(c("x", "y", "fill") %in% mnames)) {
+    long <- data.frame(
+      .x = rlang::eval_tidy(mapping$x, data),
+      .y = rlang::eval_tidy(mapping$y, data),
+      .v = as.numeric(rlang::eval_tidy(mapping$fill, data))
+    )
+    long$.x <- as.character(long$.x)
+    long$.y <- as.character(long$.y)
+    return(
+      stats::xtabs(.v ~ .y + .x, data = long, drop.unused.levels = TRUE)
+    )
+  }
+  # Wide numeric data.frame: columns -> heatmap columns, rows -> observations.
+  num <- vapply(data, is.numeric, logical(1))
+  if (sum(num) < 1) {
+    cli::cli_abort("{.fn mark_heatmap} found no numeric columns and no {.code x/y/fill} mapping.")
+  }
+  mat <- as.matrix(data[, num, drop = FALSE])
+  if (is.null(rownames(mat))) rownames(mat) <- as.character(seq_len(nrow(mat)))
+  mat
+}
+
+# Row/column z-score normalisation (pheatmap `scale` semantics).
+#' @noRd
+#' @keywords internal
+._heatmap_scale <- function(mat, scale) {
+  if (identical(scale, "none")) {
+    return(mat)
+  }
+  z <- function(r) {
+    s <- stats::sd(r, na.rm = TRUE)
+    if (!is.finite(s) || s == 0) s <- 1
+    (r - mean(r, na.rm = TRUE)) / s
+  }
+  if (identical(scale, "row")) {
+    # apply(MARGIN = 1) stacks row results as COLUMNS; transpose back.
+    return(t(apply(mat, 1L, z)))
+  }
+  # apply(MARGIN = 2) already keeps the original orientation.
+  apply(mat, 2L, z)
+}
+
+# Hierarchical clustering reorder of rows and/or columns.
+#' @noRd
+#' @keywords internal
+._heatmap_cluster <- function(mat, cluster) {
+  row_ord <- rownames(mat)
+  col_ord <- colnames(mat)
+  if (cluster %in% c("row", "both") && nrow(mat) > 2) {
+    row_ord <- rownames(mat)[stats::hclust(stats::dist(mat))$order]
+  }
+  if (cluster %in% c("column", "both") && ncol(mat) > 2) {
+    col_ord <- colnames(mat)[stats::hclust(stats::dist(t(mat)))$order]
+  }
+  list(row = row_ord, col = col_ord)
+}
+
+#' Matrix heatmap layer (sugar)
+#'
+#' Renders a tidyheatmaps-style matrix heatmap as a plotit mark. Accepts a
+#' numeric matrix, a wide numeric data.frame (columns become heatmap
+#' columns), or a tidy long mapping (`encode(x =, y =, fill =)`). Optionally
+#' z-score normalises rows/columns ([base::scale()]) and reorders them by
+#' hierarchical clustering ([stats::hclust()]). The tile grid reuses the
+#' shared mark path, so it inherits the white-hairline cell chrome (tiles
+#' hug the panel, no 0-origin whitespace) and the colour-blind-safe viridis
+#' fill default; chain [scale_fill()] to replace it (last call wins). This is
+#' a mark, not a separate system: combine it with [layout_dendrogram()] and
+#' [compose_marginal()] for a full annotated heatmap.
+#'
+#' @param plot A plotit object carrying the matrix / data.frame / tidy mapping.
+#' @param cluster Reorder axes by hierarchical clustering: `"both"` (default),
+#'   `"row"`, `"column"`, or `"none"`.
+#' @param scale z-score normalisation: `"none"` (default), `"row"`, or
+#'   `"column"`.
+#' @param ... Other arguments passed to [ggplot2::geom_tile()].
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @return Modified plotit object.
+#' @references
+#' tidyheatmaps: \href{https://jbengler.github.io/tidyheatmaps/}{Heatmaps from Tidy Data}
+#' @examples
+#' mat <- matrix(rnorm(30),
+#'   nrow = 6,
+#'   dimnames = list(paste0("g", 1:6), paste0("s", 1:5))
+#' )
+#' plotit(mat, encode()) |> mark_heatmap()
+#' plotit(mat, encode()) |> mark_heatmap(cluster = "both", scale = "row")
+#' @export
+mark_heatmap <- S7::new_generic(
+  "mark_heatmap", "plot",
+  function(plot, cluster = c("both", "row", "column", "none"),
+           scale = c("none", "row", "column"), ...,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_heatmap, plotit_class) <- function(
+  plot, cluster = c("both", "row", "column", "none"),
+  scale = c("none", "row", "column"), ...,
+  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+) {
+  cluster <- match.arg(cluster)
+  scale <- match.arg(scale)
+  plot <- ._clear_default_color(plot)
+  mat <- ._heatmap_to_matrix(plot@gg$data, plot@gg$mapping)
+  mat <- ._heatmap_scale(mat, scale)
+  ord <- ._heatmap_cluster(mat, cluster)
+  mat <- mat[ord$row, ord$col, drop = FALSE]
+  df <- expand.grid(
+    Var2 = factor(ord$col, levels = ord$col),
+    Var1 = factor(ord$row, levels = ord$row)
+  )
+  # expand.grid varies Var2 (the matrix column) fastest, which walks `mat`
+  # in row-major order; as.vector() is column-major, so transpose first to
+  # keep tile <-> value pairing correct.
+  df$value <- as.vector(t(mat))
+  mapping <- encode(x = Var2, y = Var1, fill = value)
+  plot <- ._colour_managed_add(plot, "fill")
+  plot <- ._impl_with(plot, mapping, df,
+    position = NULL, ggplot2::geom_tile,
+    rasterize, rasterize_dpi, rasterize_dev,
+    auto_dodge = FALSE, bind_aes = NULL, mark_name = "mark_heatmap",
+    extra = rlang::list2(...)
+  )
+  plot <- ._derived_fill(plot, trans = "identity")
+  # Synthetic Var1/Var2 titles carry no meaning; the axis labels do.
   plot@gg <- plot@gg + ggplot2::theme(axis.title = ggplot2::element_blank())
   plot
 }
@@ -2434,7 +2607,7 @@ S7::method(mark_forest, plotit_class) <- function(
   # Geographic
   "mark_map",
   # Statistical
-  "mark_smooth", "mark_hex", "mark_density_2d", "mark_corr",
+  "mark_smooth", "mark_hex", "mark_density_2d", "mark_corr", "mark_heatmap",
   "mark_count", "mark_bin2d", "mark_contour", "mark_qq", "mark_qq_line",
   # Composite / annotation
   "mark_errorbar", "mark_significance", "mark_lollipop", "mark_dumbbell",

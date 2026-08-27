@@ -45,7 +45,7 @@ navbar:
         href: articles/composing.html
       - text: Relational Charts
         href: articles/relational.html
-      - nav-break
+      - text: "---"
       - text: "Gallery: Groups"
         href: articles/gallery-groups.html
       - text: "Gallery: Distributions"
@@ -71,6 +71,7 @@ reference:
   contents:
   - plotit
   - encode
+  - "+.plotit"
 - title: Geometric Layers
   desc: Add visual marks to your plot.
   contents:

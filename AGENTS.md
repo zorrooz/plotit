@@ -8,7 +8,7 @@
 - **默认美观**：预设主题、配色与尺寸，开箱即出版/报告可用。
 - **一致性**：统一的 API 风格、参数命名和错误处理策略。
 - **可扩展性**：基于 ggplot2 及其扩展包构造，通过 `...` 透传底层能力，不作过度封装。
-- **Mark 多样性**：对标 **Vega-Lite** / **AntV-G2** 的视觉通道丰富度，超越原生 ggplot2 几何图层类型范围。已实现 39 种 mark 类型（§3.2），覆盖基础几何、分布展示、关系层次和地理空间四大领域。
+- **Mark 多样性**：对标 **Vega-Lite** / **AntV-G2** 的视觉通道丰富度，超越原生 ggplot2 几何图层类型范围。已实现 40 种 mark 类型（§3.2），覆盖基础几何、分布展示、关系层次和地理空间四大领域。
 - **默认美观与低配置成本**：调色板（离散/连续/定性）精心选择并持续扩展。`scale_*` 的 `range` 参数保持 `"scheme_name"` 字符串接口简便性，用户无需掌握色彩理论即可产出出版可用图表。
 - **最小化实现**：能用已有原语组合实现的图表效果，不新增 mark。mark 是语法糖的最终边界——之前所有组合（mark + project + scale + split）都应该是有效的管道链。新增 mark 的唯一理由是无法用已有原语在合理管道内表达该视觉形态。
 
@@ -137,7 +137,7 @@ styler::style_pkg()
 对标 Vega-Lite / AntV-G2 的视觉通道丰富度，不限于 ggplot2 原生几何。
 新 mark 按需引入，遵循统一 S7 泛型+方法模式（`mark_<type>` + `geom_<底层>`）。标准/统计 mark 支持 `rasterize`；复合与关系类 mark 不接受（§3.3b 原则 3）。
 
-**已实现**（39）：
+**已实现**（40）：
 
 | 函数 | 对应 | 用途 |
 |---|---|---|
@@ -169,6 +169,7 @@ styler::style_pkg()
 | `mark_ecdf` | `geom_step`+`StatEcdf` | 经验累积分布 ✅ |
 | `mark_qq` / `mark_qq_line` | `geom_qq`/`geom_qq_line`（`distribution=`） | QQ 诊断 ✅ |
 | `mark_corr` | 内部 corr 变换 + `geom_tile` 语法糖 | 相关性矩阵热力图 ✅ |
+| `mark_heatmap` | 内部 matrix melt + `geom_tile` 语法糖（`cluster=`/`scale=`） | 矩阵热图（聚类/z-score）✅ |
 | `mark_errorbar` | `geom_errorbar`/`geom_linerange`（`caps=`，orientation 路由） | 误差棒/区间线 ✅ |
 | `mark_significance` | 向量化 annotate 语法糖 | 显著性标记 ✅ |
 | `mark_lollipop` | `mark_point` + 线段语法糖 | 棒棒糖图 ✅ |
@@ -188,14 +189,14 @@ Vega-Lite 和 AntV G2 采用不同策略处理统计/复合 Mark，plotit 取两
 |---|---|---|---|
 | **Vega-Lite** | 11 原语 (`area`/`bar`/`line`/`point`/`rect`/`rule`/`text`/`tick`/`circle`/`square`/`geoshape`) | 3 个复合 Mark 宏观展开为多层原语 | `boxplot`(5 层)、`errorbar`(2 层)、`errorband`(2 层) |
 | **AntV G2 5.0** | 24 基础 (corelib) | 3 层库体系：基础→统计(3)→复合(10) | `boxplot`/`gauge`/`liquid`(plotlib) + `sankey`/`treemap`/`chord`/`forceGraph` 等(graphlib) |
-| **plotit** | 39 已实现（18 基础 + 9 统计 + 12 复合含关系） | **三层体系**：基础 Mark → 统计 Mark → 复合 Mark（语法糖）+ 关系类 | 见下表 |
+| **plotit** | 40 已实现（18 基础 + 10 统计 + 12 复合含关系） | **三层体系**：基础 Mark → 统计 Mark → 复合 Mark（语法糖）+ 关系类 | 见下表 |
 
 G2 的每个复合 Mark 内部展开为 2-5 个基础 Mark 的组合，这与 plotit "组合优先"原则一致。参考两方经验，plotit 新增两类：
 
 - **统计 Mark**：对标 Vega-Lite 复合 Mark (`boxplot`/`errorbar`/`errorband`)的统计聚合能力 + G2 corelib 的 `density`/`heatmap`/`beeswarm`
 - **复合 Mark**：对标 Vega-Lite `layer` 运算符和 G2 graphlib/plotlib 的组合模式，封装 2+ 已有 Mark 的固定搭配
 
-**完整规划**（39 种，对标 Vega-Lite 15+ 种 + AntV G2 30+ 种，三层体系：基础 → 统计 → 复合；已全部实现。历史 27 种规划表保留如下，28–39 为本轮覆盖扩展）：
+**完整规划**（40 种，对标 Vega-Lite 15+ 种 + AntV G2 30+ 种，三层体系：基础 → 统计 → 复合；已全部实现。历史 27 种规划表保留如下，28–39 为 2025-12 覆盖扩展，40 为矩阵热图轮新增 `mark_heatmap`）：
 
 | # | 层级 | 函数 | 类别 | 底层 R 实现 | 对标来源 | 用途 |
 |---|---|---|---|---|---|---|
@@ -230,6 +231,7 @@ G2 的每个复合 Mark 内部展开为 2-5 个基础 Mark 的组合，这与 pl
 | 36 | 统计 | `mark_ecdf` | 统计 | `geom_step`+`StatEcdf`（stat wrapper 的 substitute 陷阱走 ggproto 对象） | Observable `Plot.ecdf` | 经验累积分布 ✅ |
 | 37 | 统计 | `mark_qq` | 统计 | `geom_qq`（`x`→`sample` 翻译） | Observable `Plot.qq`/`ggpubr::ggqqplot` | QQ 散点 ✅ |
 | 38 | 统计 | `mark_qq_line` | 统计 | `geom_qq_line`（同上翻译） | Observable `Plot.qqx` | QQ 参考线 ✅ |
+| 40 | 统计 | `mark_heatmap` | 统计 | `geom_tile` + 内部 matrix 重塑（`._heatmap_to_matrix/scale/cluster()`，hclust 重排 + z-score） | tidyheatmaps heatmap / G2 `cell` | 矩阵热图（聚类/z-score）✅ |
 | | **第三层：复合 Mark** | | | | | |
 | 19 | 复合 | `mark_significance` | 标注 | 向量化 `annotate("segment")`×2 + `annotate("text")` | VL: layer组合 | 显著性标记（括号+星号） ✅ |
 | 20 | 复合 | `mark_errorbar` | 标注 | `geom_errorbar`/`geom_linerange`（`caps=`；orientation 走 ggplot2 4 参数而非弃用 `geom_errorbarh`） | VL `errorbar`+`errorband` | 误差棒/区间线 ✅ |
@@ -300,12 +302,18 @@ data |> plotit(encode(x = value)) |>
 #### 雷达图
 
 ```r
-# 雷达图 — mark_line + project_polar
-# 注意：mark_line 不闭合多边形；雷达轮廓需首尾闭合时，把第一个水平
-# 追加为最后一行（rbind(d, d[1, ])），或改用 mark_polygon(group = group)。
-data |> plotit(encode(x = variable, y = value, colour = group)) |>
-  mark_line() |>
-  project_polar()
+# 雷达图 — 预计算极坐标 + mark_polygon（笛卡尔空间）
+# 关键：coord_polar 会把多边形的边沿角度"拉弧"，画不出直连弦，
+# 因此雷达不能用 mark_polygon/mark_line + project_polar，而要在数据
+# 阶段把 (variable, value) 转成直角坐标 (px, py)，再用 project_cartesian(fixed = 1)。
+# 每个 group 需首尾闭合（把第一行追加为最后一行）且显式 group = person。
+lv <- levels(factor(d$variable))
+d$theta <- (as.numeric(d$variable) - 1) / length(lv) * 2 * pi
+d$px <- d$value * sin(d$theta); d$py <- d$value * cos(d$theta)
+ring <- do.call(rbind, lapply(split(d, d$group, drop = TRUE), function(g) rbind(g, g[1, ])))
+ring |> plotit(encode(x = px, y = py, colour = group, group = group), dodge = 0) |>
+  mark_polygon(alpha = 0.15) |>
+  project_cartesian(fixed = 1)
 ```
 
 #### 树图 / 冰柱图（替代 `mark_tree`）

@@ -265,7 +265,10 @@ as_graph(data.frame(
 ### Dendrogram from a cluster
 
 ```{r}
-hc <- hclust(dist(iris[1:4]), method = "ward.D2")
+# A 150-leaf dendrogram smears its labels; a small subset keeps it legible.
+iris15 <- iris[c(1:5, 51:55, 101:105), 1:4]
+rownames(iris15) <- paste0(rep(c("set", "ver", "vir"), each = 5), ".", 1:5)
+hc <- hclust(dist(iris15), method = "ward.D2")
 p_dendro <- as_graph(hc) |>
   plotit() |>
   layout_dendrogram()
@@ -274,7 +277,7 @@ p_dendro |>
   mark_text(
     data = subset(p_dendro@graph$nodes, leaf),
     mapping = encode(x = x, y = y, label = id),
-    size = 2.2, vjust = 1.2
+    size = 2.5, angle = 90, hjust = 1, vjust = 0.5
   ) |>
   label_title("Ward.D2 dendrogram (leaf labels from the nodes table)")
 ```
