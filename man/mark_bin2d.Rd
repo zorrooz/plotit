@@ -53,12 +53,12 @@ to the sequential viridis scale (colour-blind safe).  Chain
 \code{\link[=scale_fill]{scale_fill()}} afterwards to replace it (last call wins).
 }
 \examples{
-plotit(diamonds, encode(x = carat, y = price)) |>
+plotit(ggplot2::diamonds, encode(x = carat, y = price)) |>
   mark_bin2d(bins = 20)
 
 plotit(faithful, encode(x = eruptions, y = waiting)) |>
   mark_bin2d(bins = 15) |>
-  scale_fill(trans = "log")
+  scale_fill(trans = "binned")
 }
 \references{
 Vega-Lite: \href{https://vega.github.io/vega-lite/docs/rect.html}{Rect} with \code{bin} transform

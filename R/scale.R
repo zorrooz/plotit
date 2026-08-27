@@ -8,7 +8,14 @@ NULL
   if (!is.null(var)) {
     return(is_discrete(plot@gg$data, var))
   }
-  # Only check global mapping (AGENTS.md 4.6: gg$layers is internal).
+  # Layer-resolved channels (graph pipelines declare aesthetics on marks
+  # only): the mark path records each channel's evaluated kind.
+  kinds <- ._aes_kinds_get(plot)
+  if (!is.null(kinds[[aes_name]])) {
+    return(kinds[[aes_name]])
+  }
+  # Unknown channel with no trace anywhere: assume discrete (AGENTS.md
+  # 4.6: gg$layers is internal, so we cannot re-scan layer mappings).
   TRUE
 }
 

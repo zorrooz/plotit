@@ -47,7 +47,8 @@ ggplot2's area-like size unit linearly, \code{scale_radius()} emphasizes
 relative magnitudes.
 }
 \examples{
-plotit(ggplot2::midwest,
+plotit(
+  ggplot2::midwest,
   encode(x = popdensity, y = percollege, size = poptotal)
 ) |>
   mark_point(alpha = 0.5) |>

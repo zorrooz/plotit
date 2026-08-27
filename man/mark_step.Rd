@@ -54,7 +54,8 @@ plotit(ggplot2::economics, encode(x = date, y = unemploy)) |>
   mark_step(direction = "hv")
 
 # grouped steps
-plotit(subset(ggplot2::economics, date > "1990-01-01"),
+plotit(
+  subset(ggplot2::economics, date > "1990-01-01"),
   encode(x = date, y = psavert, colour = "savings")
 ) |>
   mark_step() |>

@@ -60,10 +60,15 @@ data |> plotit(encode(...)) |> mark_*() |> scale_*() |> layout_*() |> split_*() 
 
 ### `mark_*()` — Geometric Layers
 
-Twenty-seven mark functions add visual elements to your plot, spanning basic
-geometry, statistical summaries, and composite/relational sugar. Standard marks
-share a unified signature: `mapping`, `data`, `position`, `rasterize`, and
-`...` forwarded to the underlying geom.
+Thirty-nine mark functions add visual elements to your plot, spanning basic
+geometry (including step lines, ruggeds, spokes and curved links),
+distributions (histogram, density, box, violin, beeswarm, ECDF, QQ),
+statistical layers (smooth, hex, bin2d, density_2d, contour, correlation
+matrices, overlap-aware counts), composite sugar (error bars, significance
+brackets, lollipops, dumbbells, forest plots, labels) and the relational
+family (sankey, treemap, network, chord). Standard marks share a unified
+signature: `mapping`, `data`, `position`, `rasterize`, and `...` forwarded
+to the underlying geom.
 
 ```{r}
 # Scatter plot

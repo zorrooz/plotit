@@ -28,6 +28,26 @@ NULL
   if (!is.null(mapping) && (!is.null(mapping$colour) || !is.null(mapping$fill))) {
     plot <- ._clear_default_color(plot, mapping)
   }
+  # Record the evaluated kind of every layer-resolved visual channel so a
+  # later scale_*() auto-detection can see it (graph plots have no global
+  # mapping at all, and the scale layer is otherwise blind).
+  if (!is.null(mapping)) {
+    channels <- intersect(
+      names(mapping),
+      c("colour", "fill", "size", "alpha", "shape", "linetype")
+    )
+    kinds <- list()
+    for (ch in channels) {
+      col <- tryCatch(
+        rlang::eval_tidy(mapping[[ch]], data %||% plot@gg$data),
+        error = function(e) NULL
+      )
+      if (!is.null(col) && !inherits(col, "AsIs")) {
+        kinds[[ch]] <- is.factor(col) || is.character(col) || is.logical(col)
+      }
+    }
+    plot <- ._aes_kinds_add(plot, kinds)
+  }
   # Token default palette for layer-level channels that no managed scale
   # covers yet (construction attached globals; explicit relational pipelines
   # start unmanaged).  Keeps every path on the same curated palettes without
@@ -678,8 +698,14 @@ S7::method(mark_rule, plotit_class) <- function(
   rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
 ) {
   # Data-driven segment mode: render one segment per row (e.g. network
-  # edges from a layout_* transform).  Endpoints come from the mapping
-  # (auto-bound from layout geometry when data is a ~table reference).
+  # edges from a layout_* transform, or a global x/xend/y/yend mapping).
+  # Endpoints come from the mapping (auto-bound from layout geometry when
+  # data is a ~table reference; global mapping when data is omitted).
+  eff_mapping <- if (is.null(mapping)) plot@gg$mapping else mapping
+  seg_aes <- all(c("x", "xend", "y", "yend") %in% names(eff_mapping))
+  if (is.null(data) && !is.null(eff_mapping) && seg_aes) {
+    data <- plot@gg$data
+  }
   if (!is.null(data)) {
     scalar_endpoints <- any(
       !is.null(x), !is.null(xend),
@@ -693,6 +719,12 @@ S7::method(mark_rule, plotit_class) <- function(
     }
     resolved <- ._resolve_layer_data(data, plot)
     seg_data <- resolved$data
+    # Graph layers bind geometry from their own table and must never fall
+    # back to the global mapping (a graph's global aes would reference
+    # node-table columns the edges table lacks).
+    if (is.null(mapping) && !resolved$from_graph) {
+      mapping <- eff_mapping
+    }
     if (resolved$from_graph) {
       mapping <- ._auto_bind_geometry(mapping, seg_data,
         scope = ._MARK_BIND_AES$mark_rule
@@ -1859,9 +1891,9 @@ S7::method(mark_curve, plotit_class) <- function(
 #'
 #' tidyplots: `add_count_dot()` equivalent
 #' @examples
-#' plotit(diamonds, encode(x = cut, y = carat)) |> mark_count()
+#' plotit(ggplot2::diamonds, encode(x = cut, y = carat)) |> mark_count()
 #'
-#' plotit(diamonds, encode(x = carat, y = price)) |> mark_count()
+#' plotit(ggplot2::diamonds, encode(x = carat, y = price)) |> mark_count()
 #' @export
 mark_count <- ._make_mark_generic("mark_count")
 ._register_mark_method(mark_count, ggplot2::geom_count)
@@ -1894,12 +1926,12 @@ mark_count <- ._make_mark_generic("mark_count")
 #'
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/heatmap}{Heatmap} (corelib)
 #' @examples
-#' plotit(diamonds, encode(x = carat, y = price)) |>
+#' plotit(ggplot2::diamonds, encode(x = carat, y = price)) |>
 #'   mark_bin2d(bins = 20)
 #'
 #' plotit(faithful, encode(x = eruptions, y = waiting)) |>
 #'   mark_bin2d(bins = 15) |>
-#'   scale_fill(trans = "log")
+#'   scale_fill(trans = "binned")
 #' @export
 mark_bin2d <- S7::new_generic(
   "mark_bin2d", "plot",

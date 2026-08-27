@@ -8,7 +8,7 @@
 - **默认美观**：预设主题、配色与尺寸，开箱即出版/报告可用。
 - **一致性**：统一的 API 风格、参数命名和错误处理策略。
 - **可扩展性**：基于 ggplot2 及其扩展包构造，通过 `...` 透传底层能力，不作过度封装。
-- **Mark 多样性**：对标 **Vega-Lite** / **AntV-G2** 的视觉通道丰富度，超越原生 ggplot2 几何图层类型范围。已实现 27 种 mark 类型（§3.2），覆盖基础几何、分布展示、关系层次和地理空间四大领域。
+- **Mark 多样性**：对标 **Vega-Lite** / **AntV-G2** 的视觉通道丰富度，超越原生 ggplot2 几何图层类型范围。已实现 39 种 mark 类型（§3.2），覆盖基础几何、分布展示、关系层次和地理空间四大领域。
 - **默认美观与低配置成本**：调色板（离散/连续/定性）精心选择并持续扩展。`scale_*` 的 `range` 参数保持 `"scheme_name"` 字符串接口简便性，用户无需掌握色彩理论即可产出出版可用图表。
 - **最小化实现**：能用已有原语组合实现的图表效果，不新增 mark。mark 是语法糖的最终边界——之前所有组合（mark + project + scale + split）都应该是有效的管道链。新增 mark 的唯一理由是无法用已有原语在合理管道内表达该视觉形态。
 
@@ -68,6 +68,33 @@
 - 临时脚本运行完成后**必须手动清理**（删除文件本身），不得保留在仓库中；结论应提炼写入正式文档（如 `CODE_REVIEW.md`、`NEWS.md`）而非依赖脚本留存。
 - 运行测试/示例产生的垃圾产物（`Rplots.pdf`、`*.svg` 等）应及时删除，保持根目录清洁。
 
+### 1.8 本地验证
+
+修改代码后、提交前，按渐进式层级执行验证：
+
+**快速检查**（每次提交必跑）：
+
+```r
+# 1. 单元测试
+devtools::test()
+
+# 2. Lint 检查
+lintr::lint_package()
+```
+
+**完整检查**（发布前或改动涉及 DESCRIPTION/NAMESPACE 时）：
+
+```r
+# 3. 代码格式化（最后一步执行——修改行号后不再跑其他修改）
+styler::style_pkg()
+
+# 4. R CMD check（需在终端执行，非 R 控制台）
+# R CMD build . --no-build-vignettes
+# R CMD check *.tar.gz --no-manual --no-build-vignettes
+```
+
+> 详细的分层 SOP 和 CI 差异说明见 §12.3。
+
 ---
 
 ## 2. 技术选型
@@ -110,7 +137,7 @@
 对标 Vega-Lite / AntV-G2 的视觉通道丰富度，不限于 ggplot2 原生几何。
 新 mark 按需引入，遵循统一 S7 泛型+方法模式（`mark_<type>` + `geom_<底层>`）。标准/统计 mark 支持 `rasterize`；复合与关系类 mark 不接受（§3.3b 原则 3）。
 
-**已实现**（27）：
+**已实现**（39）：
 
 | 函数 | 对应 | 用途 |
 |---|---|---|
@@ -120,26 +147,37 @@
 | `mark_boxplot` | `geom_boxplot` | 箱线图 ✅ |
 | `mark_histogram` | `geom_histogram` | 直方图 ✅ |
 | `mark_density` | `geom_density` | 密度曲线 ✅ |
-| `mark_area` | `geom_area` | 面积图 ✅ |
+| `mark_area` | `geom_area`/`geom_ribbon`（ymin/ymax 自动路由） | 面积图/置信带 ✅ |
 | `mark_text` | `geom_text`/`geom_text_repel` | 文本标签 ✅ |
+| `mark_label` | `geom_label`/`geom_label_repel` | 带框标签 ✅ |
 | `mark_violin` | `geom_violin` | 小提琴图 ✅ |
 | `mark_map` | `geom_sf` | 地图 ✅ |
 | `mark_rect` | `geom_tile` | 矩形/热力图 ✅ |
-| `mark_rule` | `geom_hline/vline/abline/segment` | 参考线/参考区域 ✅ |
+| `mark_rule` | `geom_hline/vline/abline/segment` | 参考线/数据段 ✅ |
 | `mark_path` | `geom_path` | 路径/轨迹 ✅ |
 | `mark_polygon` | `geom_polygon` | 多边形 ✅ |
+| `mark_step` | `geom_step` | 阶梯线（`direction=` vh/hv/mid）✅ |
+| `mark_rug` | `geom_rug` | 边缘地毯刻度（`sides=`/`length=`）✅ |
+| `mark_spoke` | `geom_spoke` | 径向线段（VL spoke）✅ |
+| `mark_curve` | `geom_curve` | 曲线连接（G2 link、弧图边）✅ |
 | `mark_smooth` | `geom_smooth` | 回归平滑+置信带 ✅ |
 | `mark_hex` | `geom_hex` | 2D 六边形热力图 ✅ |
-| `mark_density_2d` | `geom_density_2d`/`geom_density_2d_filled` | 2D 密度等高线 ✅ |
+| `mark_bin2d` | `geom_bin_2d` | 矩形 2D 分箱热力图 ✅ |
+| `mark_count` | `geom_count` | 计数缩分散点（重叠感知）✅ |
+| `mark_density_2d` | `geom_density_2d`/`_filled` | 2D 密度等高线 ✅ |
+| `mark_contour` | `geom_contour`/`_filled`（`filled=`） | 观测标量场等高线 ✅ |
+| `mark_ecdf` | `geom_step`+`StatEcdf` | 经验累积分布 ✅ |
+| `mark_qq` / `mark_qq_line` | `geom_qq`/`geom_qq_line`（`distribution=`） | QQ 诊断 ✅ |
 | `mark_corr` | 内部 corr 变换 + `geom_tile` 语法糖 | 相关性矩阵热力图 ✅ |
-| `mark_errorbar` | `geom_errorbar`/`geom_errorbarh` | 误差棒 ✅ |
-| `mark_significance` | `mark_rule` + `mark_text` 语法糖 | 显著性标记 ✅ |
+| `mark_errorbar` | `geom_errorbar`/`geom_linerange`（`caps=`，orientation 路由） | 误差棒/区间线 ✅ |
+| `mark_significance` | 向量化 annotate 语法糖 | 显著性标记 ✅ |
 | `mark_lollipop` | `mark_point` + 线段语法糖 | 棒棒糖图 ✅ |
 | `mark_dumbbell` | `mark_point`×2 + 线段语法糖 | 哑铃对比图 ✅ |
+| `mark_forest` | `mark_errorbar`+`mark_point`+`mark_rule` 语法糖 | 森林图 ✅ |
 | `mark_beeswarm` | `ggbeeswarm::geom_beeswarm` | 蜂群散点 ✅ |
 | `mark_sankey` | `layout_sankey()` + polygon/rect 语法糖（edges-table API） | 桑基流向图 ✅ |
 | `mark_treemap` | `layout_treemap()` + rect/text 语法糖（自研 squarify） | 矩形树图 ✅ |
-| `mark_network` | `layout_force/circle()` + point/rule 语法糖（nodes+edges 双数据源） | 力导向网络图 ✅ |
+| `mark_network` | `layout_force/circle()` + point/rule/curve 语法糖（`edge_shape=`） | 网络图 ✅ |
 | `mark_chord` | `layout_chord()` + polygon 语法糖（edges-table API） | 弦图 ✅ |
 
 #### Vega-Lite vs AntV G2 复合 Mark 全量对比
@@ -150,47 +188,59 @@ Vega-Lite 和 AntV G2 采用不同策略处理统计/复合 Mark，plotit 取两
 |---|---|---|---|
 | **Vega-Lite** | 11 原语 (`area`/`bar`/`line`/`point`/`rect`/`rule`/`text`/`tick`/`circle`/`square`/`geoshape`) | 3 个复合 Mark 宏观展开为多层原语 | `boxplot`(5 层)、`errorbar`(2 层)、`errorband`(2 层) |
 | **AntV G2 5.0** | 24 基础 (corelib) | 3 层库体系：基础→统计(3)→复合(10) | `boxplot`/`gauge`/`liquid`(plotlib) + `sankey`/`treemap`/`chord`/`forceGraph` 等(graphlib) |
-| **plotit** | 27 已实现（14 基础 + 4 统计 + 9 复合） | **三层体系**：基础 Mark → 统计 Mark → 复合 Mark（语法糖）+ 关系类 | 见下表 |
+| **plotit** | 39 已实现（18 基础 + 9 统计 + 12 复合含关系） | **三层体系**：基础 Mark → 统计 Mark → 复合 Mark（语法糖）+ 关系类 | 见下表 |
 
 G2 的每个复合 Mark 内部展开为 2-5 个基础 Mark 的组合，这与 plotit "组合优先"原则一致。参考两方经验，plotit 新增两类：
 
 - **统计 Mark**：对标 Vega-Lite 复合 Mark (`boxplot`/`errorbar`/`errorband`)的统计聚合能力 + G2 corelib 的 `density`/`heatmap`/`beeswarm`
 - **复合 Mark**：对标 Vega-Lite `layer` 运算符和 G2 graphlib/plotlib 的组合模式，封装 2+ 已有 Mark 的固定搭配
 
-**完整规划**（27 种，对标 Vega-Lite 15+ 种 + AntV G2 30+ 种，三层体系：基础 → 统计 → 复合；已全部实现）：
+**完整规划**（39 种，对标 Vega-Lite 15+ 种 + AntV G2 30+ 种，三层体系：基础 → 统计 → 复合；已全部实现。历史 27 种规划表保留如下，28–39 为本轮覆盖扩展）：
 
 | # | 层级 | 函数 | 类别 | 底层 R 实现 | 对标来源 | 用途 |
 |---|---|---|---|---|---|---|
 | | **第一层：基础 Mark** | | | | | |
 | 1 | 基础 | `mark_point` | 几何 | `geom_point` | VL `point`/G2 `point` | 散点/气泡 ✅ |
 | 2 | 基础 | `mark_line` | 几何 | `geom_line` | VL `line`/G2 `line` | 折线/趋势 ✅ |
-| 3 | 基础 | `mark_area` | 几何 | `geom_area`/`geom_ribbon` | VL `area`/G2 `area` | 面积图/堆叠面积 ✅ |
+| 3 | 基础 | `mark_area` | 几何 | `geom_area`/`geom_ribbon`（ymin/ymax 路由） | VL `area`+`band`/G2 `area` | 面积图/堆叠/置信带 ✅ |
 | 4 | 基础 | `mark_bar` | 几何 | `geom_bar`/`geom_col` | VL `bar`/G2 `interval` | 柱状/条形图 ✅ |
 | 5 | 基础 | `mark_rect` | 几何 | `geom_tile`/`geom_rect` | VL `rect`/G2 `cell` `rect` | 矩形/热力图单元格 ✅ |
 | 6 | 基础 | `mark_polygon` | 几何 | `geom_polygon` | G2 `polygon` | 多边形/自定义形状 ✅ |
 | 7 | 基础 | `mark_text` | 几何 | `geom_text`/`ggrepel` | VL `text`/G2 `text` | 文本标签/数据标注 ✅ |
-| 8 | 基础 | `mark_rule` | 几何 | `geom_hline`/`geom_vline`/`geom_abline`/`geom_segment` | VL `rule`/G2 `lineX` `lineY` `rangeX` `rangeY` | 参考线/参考区域/误差线 ✅ |
+| 8 | 基础 | `mark_rule` | 几何 | `geom_hline`/`geom_vline`/`geom_abline`/`geom_segment`（全局映射段模式） | VL `rule`/G2 `lineX` `lineY` `rangeX` `rangeY` | 参考线/数据段 ✅ |
 | 9 | 基础 | `mark_path` | 几何 | `geom_path` | G2 `path` | 路径/轨迹 ✅ |
 | 10 | 基础 | `mark_histogram` | 分布 | `geom_histogram` | VL `bar`(binned) | 直方图 ✅ |
 | 11 | 基础 | `mark_density` | 分布 | `geom_density` | G2 `density` | 1D 核密度曲线 ✅ |
 | 12 | 基础 | `mark_boxplot` | 分布 | `geom_boxplot` | VL `boxplot`/G2 `boxplot` | 箱线图 ✅ |
 | 13 | 基础 | `mark_violin` | 分布 | `geom_violin` | G2 `density`(violin) | 小提琴图 ✅ |
 | 14 | 基础 | `mark_map` | 地理 | `sf`+`geom_sf` | VL `geoshape`/G2 `geoPath` | 地图/地理空间 ✅ |
+| 28 | 基础 | `mark_step` | 几何 | `geom_step`（`direction=` vh/hv/mid） | VL line `interpolate:"step"`/G2 `line` shape | 阶梯线 ✅ |
+| 29 | 基础 | `mark_rug` | 几何 | `geom_rug`（`sides=`/`length=`） | VL `tick`/G2 range-filter ticks | 边缘地毯刻度 ✅ |
+| 30 | 基础 | `mark_spoke` | 几何 | `geom_spoke` | VL `spoke` | 径向线段 ✅ |
+| 31 | 基础 | `mark_curve` | 几何 | `geom_curve`（`curvature=`/`angle=`/`arrow=`） | G2 `link`/D3 link | 曲线连接/弧图边 ✅ |
+| 32 | 基础 | `mark_label` | 几何 | `geom_label`/`ggrepel` | G2 text `badge` | 带框标签 ✅ |
 | | **第二层：统计 Mark** | | | | | |
 | 15 | 统计 | `mark_smooth` | 统计 | `geom_smooth` | VL: layer组合/G2: transform | 回归平滑+置信带 ✅ |
 | 16 | 统计 | `mark_hex` | 统计 | `geom_hex` | G2 `heatmap`(corelib) | 2D 六边形分箱热力图 ✅ |
 | 17 | 统计 | `mark_density_2d` | 统计 | `geom_density_2d`/`geom_density_2d_filled` | G2 `density`(contour) | 2D 密度等高线 ✅ |
 | 18 | 统计 | `mark_corr` | 统计 | `geom_tile` + 内部 corr 预处理（`._transform_corr()`，不导出） | G2 `cell`(相关性矩阵) | 相关性矩阵热力图 ✅ |
+| 33 | 统计 | `mark_count` | 统计 | `geom_count`(`stat_sum`) | VL point+aggregate/G2 point | 重叠计数缩点 ✅ |
+| 34 | 统计 | `mark_bin2d` | 统计 | `geom_bin_2d`(`stat_bin_2d`) | VL rect+bin/G2 heatmap | 矩形 2D 分箱热力图 ✅ |
+| 35 | 统计 | `mark_contour` | 统计 | `geom_contour`/`_filled`（`filled=`） | Observable `Plot.contour` | 观测标量场等高线 ✅ |
+| 36 | 统计 | `mark_ecdf` | 统计 | `geom_step`+`StatEcdf`（stat wrapper 的 substitute 陷阱走 ggproto 对象） | Observable `Plot.ecdf` | 经验累积分布 ✅ |
+| 37 | 统计 | `mark_qq` | 统计 | `geom_qq`（`x`→`sample` 翻译） | Observable `Plot.qq`/`ggpubr::ggqqplot` | QQ 散点 ✅ |
+| 38 | 统计 | `mark_qq_line` | 统计 | `geom_qq_line`（同上翻译） | Observable `Plot.qqx` | QQ 参考线 ✅ |
 | | **第三层：复合 Mark** | | | | | |
-| 19 | 复合 | `mark_significance` | 标注 | `mark_rule` + `mark_text` 语法糖 | VL: layer组合 | 显著性标记（括号+星号） ✅ |
-| 20 | 复合 | `mark_errorbar` | 标注 | `geom_errorbar`/`geom_errorbarh` 包装 | VL `errorbar`(复合Mark) | 误差棒 ✅ |
-| 21 | 复合 | `mark_lollipop` | 图表 | `mark_point` + `mark_line` 语法糖 | — | 棒棒糖图 ✅ |
-| 22 | 复合 | `mark_dumbbell` | 图表 | `mark_point`×2 + `mark_line` 语法糖 | G2 `link`(corelib) | 哑铃对比图 ✅ |
+| 19 | 复合 | `mark_significance` | 标注 | 向量化 `annotate("segment")`×2 + `annotate("text")` | VL: layer组合 | 显著性标记（括号+星号） ✅ |
+| 20 | 复合 | `mark_errorbar` | 标注 | `geom_errorbar`/`geom_linerange`（`caps=`；orientation 走 ggplot2 4 参数而非弃用 `geom_errorbarh`） | VL `errorbar`+`errorband` | 误差棒/区间线 ✅ |
+| 21 | 复合 | `mark_lollipop` | 图表 | `mark_point` + 线段语法糖 | — | 棒棒糖图 ✅ |
+| 22 | 复合 | `mark_dumbbell` | 图表 | `mark_point`×2 + 线段语法糖 | G2 `link`(corelib) | 哑铃对比图 ✅ |
+| 39 | 复合 | `mark_forest` | 标注 | `mark_errorbar`(horizontal)+`mark_point`+`mark_rule(xintercept=ref)` | tidyplots `add_ci95_errorbar`+`add_mean_dot`+`add_reference_lines` | 森林图 ✅ |
 | | **第三层（关系）** | | | | | |
 | 23 | 复合 | `mark_beeswarm` | 分布 | `ggbeeswarm::geom_beeswarm` | G2 `beeswarm`(corelib) | 蜂群散点（碰撞检测） ✅ |
 | 24 | 复合 | `mark_sankey` | 关系 | `layout_sankey()` + polygon/rect 语法糖（edges-table API） | G2 `sankey`(graphlib) | 桑基流向图 ✅ |
 | 25 | 复合 | `mark_treemap` | 关系 | `layout_treemap()` + rect/text 语法糖（自研 Bruls squarify） | G2 `treemap`(graphlib) | 矩形树图 ✅ |
-| 26 | 复合 | `mark_network` | 关系 | `layout_force/circle()` + point/rule 语法糖（nodes+edges 双数据源） | G2 `forceGraph`(graphlib) | 力导向网络图 ✅ |
+| 26 | 复合 | `mark_network` | 关系 | `layout_force/circle()` + point/rule 或 point/curve（`edge_shape=`）语法糖 | G2 `forceGraph`(graphlib) | 网络图（可曲边）✅ |
 | 27 | 复合 | `mark_chord` | 关系 | `layout_chord()` + polygon 语法糖（edges-table API） | G2 `chord`(graphlib) | 弦图 ✅ |
 
 **三层判断规则**：
@@ -241,8 +291,10 @@ data |> plotit(encode(x = category, y = value, fill = category)) |>
 data |> plotit(encode(x = category, y = value)) |>
   mark_point(position = "jitter", alpha = 0.5, size = 1.5)
 
-# Rug — 用 ggplot2::geom_rug 通过 mark 的 ... 透传
-# （若需要，可封装为 mark_rug，但属于 theme 辅助非核心 mark）
+# Rug — mark_rug（基础 mark 已封装 geom_rug，sides 控制边位）
+data |> plotit(encode(x = value)) |>
+  mark_histogram() |>
+  mark_rug(sides = "b")
 ```
 
 #### 雷达图
@@ -335,7 +387,8 @@ plotit(data, mapping = encode(), autofit = FALSE,
 - `...` 透传底层 `geom_*`
 - `rasterize` 需 `ggrastr`
 - 内部通过 `._mark_impl()` 共享逻辑：resolve position、构建 geom、条件栅格化
-- **签名特例**（按 §3.3b 三层体系）：复合 Mark `mark_significance`/`mark_lollipop`/`mark_dumbbell` 无 `position`/`rasterize`（内层 Mark 各自处理）；关系类 `mark_sankey`/`mark_chord`/`mark_treemap`/`mark_network` 无 `position`/`rasterize`（布局拥有放置权；sankey 原先接受的死参 `position` 已删除，treemap 的 raster 三件套已按 §3.3b 原则 3 移除）；统计 Mark `mark_corr` 无 `mapping`/`data`/`position`（自算相关性矩阵）；`mark_network` 用专用双数据源签名（`edges`/`encode_edges`）。关系四 sugar 共有 `show_labels = TRUE`；`mark_rule` 静态色参数为美式 `color=`（旧拼写 `colour=` 经 `...` 透传仍兼容）
+- **签名特例**（按 §3.3b 三层体系）：复合 Mark `mark_significance`/`mark_lollipop`/`mark_dumbbell`/`mark_forest` 无 `position`/`rasterize`（内层 Mark 各自处理）；关系类 `mark_sankey`/`mark_chord`/`mark_treemap`/`mark_network` 无 `position`/`rasterize`（布局拥有放置权；sankey 原先接受的死参 `position` 已删除，treemap 的 raster 三件套已按 §3.3b 原则 3 移除）；统计 Mark `mark_corr` 无 `mapping`/`data`/`position`（自算相关性矩阵）；`mark_network` 用专用双数据源签名（`edges`/`encode_edges`）。带具名参数的 mark：`mark_step(direction=)`、`mark_rug(sides=, length=)`、`mark_curve(curvature=, angle=, arrow=)`、`mark_text(repel=)`/`mark_label(repel=)`、`mark_bin2d(bins=, binwidth=)`、`mark_contour(filled=, bins=, breaks=)`、`mark_ecdf(n=)`、`mark_qq(distribution=)`/`mark_qq_line(distribution=, line.p=, fullrange=)`、`mark_errorbar(width=, orientation=, caps=)`。关系四 sugar 共有 `show_labels = TRUE`，`mark_network` 另有 `edge_shape = c("straight","curved")`；`mark_rule` 静态色参数为美式 `color=`（旧拼写 `colour=` 经 `...` 透传仍兼容）；`mark_rule` 亦支持数据段模式（`data=` 或全局映射含 x/xend/y/yend 时逐行画段）
+- **`+` 逃生舱**：`plotit + ggplot2对象` 经 S3 `+.plotit`/`+.plotit_composite` 直转底层 gg（annotate/guides/labs/自定义层皆可达）；动词 API 仍是规范路径（`+ scale_*()` 会绕过 managed 注册表），composite 上遵循 patchwork 语义
 
 #### 3.3.3a `make_mark()` / `make_theme()` — 用户可扩展工厂
 
@@ -407,14 +460,15 @@ style_dark <- make_theme("style_dark",
 | 复合 Mark | 展开等价管道 | 对标来源 | 典型参数 |
 |---|---|---|---|
 | `mark_significance` | `mark_rule(x=x, xend=x2, y=y, yend=y)` + `mark_text(x=mid(x,x2), y=y+offset, label=sig)` | Vega-Lite: layer(bar+rule+text) 社区惯用模式 | `comparisons`(data.frame，含 `group1`/`group2`/`label` 列), `y_position`, `y_offset` |
-| `mark_errorbar` | `geom_errorbar`/`geom_errorbarh` 包装 | Vega-Lite `errorbar`（3大复合Mark 之一） | `width`, `orientation` |
+| `mark_errorbar` | `geom_errorbar`（`caps=TRUE`）/ `geom_linerange`（`caps=FALSE`）包装，orientation 走 ggplot2 4 的 `orientation=` 参数（弃用 `geom_errorbarh`） | Vega-Lite `errorbar`+`errorband`（复合Mark） | `width`, `orientation`, `caps` |
+| `mark_forest` | `mark_errorbar(orientation="horizontal")` + `mark_point` + 可选 `mark_rule(xintercept=ref)` | tidyplots `add_ci95_errorbar`+`add_mean_dot`+`add_reference_lines` | `ref`, `point_size`, `bar_width`, `line_color`, `line_width` |
 | `mark_lollipop` | `mark_rule(x=x, xend=x, y=ref, yend=y)` + `mark_point(x=x, y=y)`（`ref` 默认 0） | 无直接对标 | `stem_color`, `stem_width`, `point_size`, `ref` |
 | `mark_dumbbell` | `mark_rule(x=x, xend=x, y=y_start, yend=y_end)` + `mark_point(x=x, y=y_start)` + `mark_point(x=x, y=y_end)` | G2 `mark.link` | `color_start`, `color_end`, `line_color` |
 
 **复合 Mark 实现原则**：
 1. 必须在文档中注明等价展开（"该函数等价于 `mark_rule + mark_text` 的组合"）
 2. `@export` 但标注为"语法糖"
-3. 不接受 `rasterize` 参数（内层 Mark 各自处理）。例外：`mark_errorbar` 直接包装 `geom_errorbar`/`geom_errorbarh`，保留 `rasterize` 支持
+3. 不接受 `rasterize` 参数（内层 Mark 各自处理）。例外：`mark_errorbar` 直接包装 `geom_errorbar`/`geom_linerange`，保留 `rasterize` 支持
 4. 返回 `plotit` 对象，可继续链式调用其他函数
 
 **第三层（关系类）：渲染定位**
@@ -426,7 +480,7 @@ style_dark <- make_theme("style_dark",
 | `mark_beeswarm` | `ggbeeswarm` geom | 标准 ggplot2 层；跳过全局自动 dodge（碰撞检测自排布） |
 | `mark_sankey` | `layout_sankey()` + `mark_polygon(~ribbons)`/`mark_rect(~nodes)` 语法糖 | 纯 ggplot2 层增量构建；`@graph` 存 nodes/edges/ribbons 三表；确定性分层布局（无外部依赖）；节点填充取首次出现身份，数值 fill 保持 double（#5） |
 | `mark_treemap` | `layout_treemap()` 自研 squarify + `mark_rect(~leaves)`/`mark_text(~leaves)` 语法糖 | 纯 ggplot2 层增量构建；`@graph` 存 nodes/edges/leaves 三表；白色发丝分隔 + 无轴画布 + 叶标签；输入层次表（id/parent/value）；treemapify 已退役 |
-| `mark_network` | `layout_force/circle()` + point/rule/text 语法糖 | 普通 ggplot2 层**加法式**组合（先前层/scale 全保留）；`@graph` 可供后续 `~nodes/~edges` 引用；直边渲染为已知局限；布局仅 `auto`/`circle`/`manual`（`linear/bipartite` 与 `weight=`/`width=` 别名已移除）；`manual` 需节点表自带数值 x/y；边绘制于节点下层，标签悬浮于点上方，`coord_fixed` 保持真实比例 |
+| `mark_network` | `layout_force/circle()` + point/rule(或 curve)/text 语法糖 | 普通 ggplot2 层**加法式**组合（先前层/scale 全保留）；`@graph` 可供后续 `~nodes/~edges` 引用；`edge_shape = "curved"` 经 `mark_curve` 渲染贝塞尔边（直边为默认）；布局仅 `auto`/`circle`/`manual`（`linear/bipartite` 与 `weight=`/`width=` 别名已移除）；`manual` 需节点表自带数值 x/y；边绘制于节点下层，标签悬浮于点上方，`coord_fixed` 保持真实比例；`seed` 仅对 force 生效（其他布局给出警告） |
 | `mark_chord` | `layout_chord()` + `mark_polygon(~ribbons)`/`mark_polygon(~arcs)` 语法糖 | 纯 ggplot2 层增量构建；`@graph` 存 nodes/edges/arcs/ribbons 四表；确定性环形布局（无外部依赖）；重复 (source,target) 对聚合为单带；自环占两个子弧段；`gap_width`(度) 映射布局角距；遗留格式自动探测（from/to、Var1/Freq、matrix）已移除——统一走结构映射或字面 source/target 列，其余格式经 `as_graph()` 收编 |
 
 **关系 sugar 统一词汇**：四个关系类 mark 的静态通道参数一律美式且跨 mark 同名——节点侧 `node_color`，边侧 `edge_color`/`edge_width`/`edge_alpha`（sankey 原名 `flow_alpha`、chord 原名 `link_alpha` 已统一为 `edge_alpha`；network 的 `edge_alpha` 默认 `NULL` = 不透明，细线边不需半透明，参数存在以补全词汇表）。标签开关 `show_labels = TRUE` 为四 sugar 共有参数（network 仅在全局 `label` 映射存在时生效）。edges 表规范化共享单一实现 `._rel_canon_edges()`（R/mark_relational.R，**四个 sugar 全部走此契约**，network 经 `encode_edges` 构造结构映射后复用）：结构映射 > 字面 source/target(/value) 列，其余格式报错引导至 `as_graph()`。共享渲染机制：`._rel_ribbon_layer()` / `._rel_label_layer()` / `._rel_legend_title()` / `._rel_canvas(fixed, clip)` / `._rel_reject_dots()`。
@@ -447,7 +501,7 @@ style_dark <- make_theme("style_dark",
 所有 mark 的样式字面量集中于 `R/mark_style.R`，单一事实来源：
 
 - **`._MARK_STYLE`（token 表）**：`primary="#4E79A7"`、`secondary="#E15759"`；中性灰阶 `ink`(grey30，强注释：显著性括号/sankey 节点)、`soft`(grey50，中连接线：棒棒糖茎/哑铃连线/参考线)、`faint`(grey70，弱结构：network 边)；线宽阶梯 `lw_data`(0.9，折线/路径/平滑) > `lw_thin`(0.5，细描边/括号/误差棒) > `lw_border`(0.25，柱/tile 白色发丝边框)；注释字号 `txt_note`(3.2)；半透明填充 `alpha_fill`(0.6，density/violin)、连接带 `alpha_link`(0.5，sankey/chord)；复合点径 `point_head`(3)。token 属 §1.4 可迭代层。
-- **`._MARK_DEFAULTS`（按 mark 注入的静态默认）**：line/path（linewidth 0.9 + round 端点）、smooth（linewidth 0.9）、bar（白色发丝边框 + width 0.7——槽位 dodge 0.8 下留组间空气，替代 ggplot2 默认 0.9 的拥挤观感）/histogram/rect（白色发丝边框；histogram 相邻 bin 必须贴合故不设 width）、area/polygon（linewidth 0 去描边）、density/violin（alpha 0.6）、rule（colour soft + linewidth thin）、errorbar（linewidth 0.5）、boxplot（瘦箱 width 0.5 + 发丝描边 lw_border + staplewidth 0.4 横须盖 + outlier.size 0.6，tidyplots 校准——槽位 dodge 0.8 下留 ~0.38 组间空隙）、corr（白色发丝分隔；treemap sugar 经 `mark_rect` 渲染，继承 rect 的发丝条目，自身无需条目——原 `mark_treemap` 的 treemapify 时代 `size` 通道条目已删除）。经 `._mark_impl()` 统一注入，标准 mark 由工厂自动携带 mark 名，手写 mark 显式传 `mark_name=`。
+- **`._MARK_DEFAULTS`（按 mark 注入的静态默认）**：line/path（linewidth 0.9 + round 端点）、step/ecdf（linewidth 0.9 + **mitre** 角——grid 拼写为 "mitre"，"miter" 会在绘制时报 invalid line join）、curve/spoke（linewidth 0.5 连接线）、smooth（linewidth 0.9）、bar（白色发丝边框 + width 0.7——槽位 dodge 0.8 下留组间空气，替代 ggplot2 默认 0.9 的拥挤观感）/histogram/rect/bin2d（白色发丝边框；histogram 相邻 bin 必须贴合故不设 width）、area/polygon（linewidth 0 去描边）、density/violin（alpha 0.6）、rule（colour soft + linewidth thin）、errorbar（linewidth 0.5）、qq_line（soft 细虚线）、boxplot（瘦箱 width 0.5 + 发丝描边 lw_border + staplewidth 0.4 横须盖 + outlier.size 0.6，tidyplots 校准——槽位 dodge 0.8 下留 ~0.38 组间空隙）、corr（白色发丝分隔；treemap sugar 经 `mark_rect` 渲染，继承 rect 的发丝条目，自身无需条目——原 `mark_treemap` 的 treemapify 时代 `size` 通道条目已删除）。经 `._mark_impl()` 统一注入，标准 mark 由工厂自动携带 mark 名，手写 mark 显式传 `mark_name=`。
 - **合并规则**（`._apply_mark_defaults()`）：**用户显式参数 > 已映射美学（层或全局，含注入的 AsIs 常量）> mark 默认**。因此分组柱状图自动获得白色分隔边框、单色注入柱保持无边框、映射了 alpha 的图层不被默认覆盖。
 - **特例**：
   - `mark_boxplot` 在 default_color 注入存活且用户未指定 colour 时自动改用 `ink` 描边（避免蓝底蓝线中位线不可读），见 `._user_owned_aes()` 对 AsIs 注入常量的豁免逻辑；
@@ -467,17 +521,18 @@ style_dark <- make_theme("style_dark",
 | `scale_color`/`scale_fill` | `NULL` | 自动检测（离散→`discrete`，连续→`identity`） |
 | `scale_size`/`scale_alpha` | `NULL` | 同上 |
 | `scale_shape`/`scale_linetype` | `"discrete"` | — |
+| `scale_radius` | `"identity"` | 同上；discrete/binned 定向报错引导 `scale_size`（VL scaleRadius 对齐，泡图面积诚实编码） |
 
 **`trans` 合法矩阵**：
 
-| `trans` | x/y（位置） | colour/fill/size/alpha（视觉连续） | shape/linetype（视觉离散） |
-|---|---|---|---|
-| `NULL` | → identity | auto-detect | → discrete |
-| `"identity"` | ✅ 默认 | ✅ 默认 | ❌ |
-| `"log"`/`"log10"`/`"log2"`/`"sqrt"` | ✅ | ❌ | ❌ |
-| `"reverse"` | ✅ | ✅ | ✅ |
-| `"discrete"` | ✅ | ✅ | ✅ 默认 |
-| `"binned"` | ✅ | ✅ | ❌ |
+| `trans` | x/y（位置） | colour/fill/size/alpha（视觉连续） | shape/linetype（视觉离散） | radius |
+|---|---|---|---|---|
+| `NULL` | → identity | auto-detect | → discrete | — |
+| `"identity"` | ✅ 默认 | ✅ 默认 | ❌ | ✅ 默认 |
+| `"log"`/`"log10"`/`"log2"`/`"sqrt"` | ✅ | ❌ | ❌ | ✅ |
+| `"reverse"` | ✅ | ✅ | ✅ | ✅ |
+| `"discrete"` | ✅ | ✅ | ✅ 默认 | ❌（引导 scale_size） |
+| `"binned"` | ✅ | ✅ | ❌ | ❌（引导 scale_size） |
 
 不支持的组合给出 `cli::cli_abort` 定向错误。
 
@@ -514,6 +569,8 @@ x/y 的 `range` 表示数据在面板上的视觉占比，通过 `limits` + `exp
 **x/y 的 `range`**：表示数据在面板上的视觉占比（Vega-aligned：`range: [0, width]`），而非数据值。通过 `limits` + `expand=c(0,0)` 精确实现。与 `limits` 同时非 NULL 时后设置者胜，冲突时警告。
 
 **`default_color` 覆盖**：任何用户提供的 `colour`/`fill` 映射都触发清除 `default_color` 注入的 `mapping$colour`/`mapping$fill` 和 `guides(colour="none", fill="none")`。清除点（`._clear_default_color()`）：统一 mark 路径（`._mark_impl` 传入 layer mapping 时）、手写 mark（`mark_map`/`mark_corr`/`mark_treemap`/`mark_sankey`）、`scale_color`/`scale_fill`（无条件）、`project_parallel`（group 引入 colour 时）。均已对称处理两侧。
+
+**aes-kind registry（`._aes_kinds_add/get`，meta 属性）**：scale 自动检测只能看全局映射；图层声明的通道（图管道 mark 的 `encode(...)`，或普通管道的 layer mapping）由 `._mark_impl` 评估后登记离散/连续 kind，`._detect_discrete_aes` 在全局映射缺席时回退查表——图数据管道的 `scale_size()`/`scale_color()` 等从此与糖标语义一致。最后登记胜。
 
 #### 3.3.4a `layout_*` — 关系图布局变换（Vega transform 模式）
 
@@ -811,7 +868,7 @@ export(p, "output.pdf", dpi = 300)
 | 阶段 | 名称 | 范围 | 状态 |
 |---|---|---|---|
 | 0 | 固本 | 架构清债 + 代码质量 | 🔄 进行中（单图侧 patchwork 剥离、`._sync_labels` 抽象、mark 工厂函数、@examples 均已 ✅；剩余：组合图 patchwork 剥离） |
-| 1-4 | mark 扩展 | 13 种新 mark（20 种规划 − 6 已实现 − 1 已移除组合） | ✅ 已完成（实际 27 种，见 §3.2） |
+| 1-4 | mark 扩展 | 13 种新 mark（20 种规划 − 6 已实现 − 1 已移除组合） | ✅ 已完成（现 39 种，见 §3.2；2025-12 覆盖轮 +12） |
 | 5 | 收尾 | 文档补齐、全量验证、发布准备 | ⬜ 未开始 |
 
 ---
@@ -951,7 +1008,7 @@ export(p, "output.pdf", dpi = 300)
 
 **验收标准**：
 
-- [x] 20 种 mark 至少 15 个已实现（≥75% mark 覆盖率）——实际 27 种已达成
+- [x] 20 种 mark 至少 15 个已实现（≥75% mark 覆盖率）——实际 39 种已达成
 - [ ] `R CMD check` 4 平台（Linux/macOS/Windows + R-devel）零 ERROR 零 WARNING
 - [ ] `lintr::lint_package()` 零 lint 问题
 - [ ] pkgdown 网站完整渲染所有函数参考页

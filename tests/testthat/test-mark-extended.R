@@ -340,6 +340,18 @@ test_that("+ works on composites (patchwork semantics)", {
   expect_s3_class(c1, "plotit::plotit_composite")
 })
 
+# ---- mark_rule global segment mode ----
+test_that("mark_rule() picks up segment endpoints from the global mapping", {
+  segs <- data.frame(
+    x = c(1, 2), xend = c(2, 3), y = c(1, 2), yend = c(2, 3)
+  )
+  p <- plotit(segs, encode(x = x, y = y, xend = xend, yend = yend)) |>
+    mark_rule(color = "grey40")
+  b <- .built(p)
+  expect_true(inherits(p@gg$layers[[1]]$geom, "GeomSegment"))
+  expect_equal(nrow(b$data[[1]]), 2)
+})
+
 # ---- composite rejection stubs cover the new marks ----
 test_that("new marks reject plotit_composite", {
   p1 <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
@@ -350,12 +362,54 @@ test_that("new marks reject plotit_composite", {
   expect_error(scale_radius(cmp), "not supported")
 })
 
+# ---- draw-time smoke tests ----
+# ggplot_build() never exercises the grid linejoin/lineend parameters --
+# invalid values only explode at grob draw time (a "miter" default once
+# shipped past a green suite).  Render the mark families that carry
+# stroke-style defaults to an in-memory raster device.
+test_that("stroke-style defaults survive actual drawing", {
+  skip_if_not_installed("ragg")
+  econ <- ggplot2::economics
+  cases <- list(
+    step = plotit(econ, encode(x = date, y = unemploy)) |> mark_step(),
+    ecdf = plotit(faithful, encode(x = eruptions)) |> mark_ecdf(),
+    curve = plotit(
+      data.frame(x = 0, y = 0, xend = 1, yend = 1),
+      encode(x = x, y = y, xend = xend, yend = yend)
+    ) |>
+      mark_curve(),
+    qqline = plotit(
+      data.frame(v = faithful$eruptions), encode(x = v)
+    ) |>
+      mark_qq() |>
+      mark_qq_line()
+  )
+  for (nm in names(cases)) {
+    tmp <- tempfile(fileext = ".png")
+    expect_error(
+      {
+        ragg::agg_png(tmp, width = 400, height = 300, res = 100)
+        print(cases[[nm]]@gg)
+        invisible(grDevices::dev.off())
+      },
+      NA,
+      info = nm
+    )
+    unlink(tmp)
+  }
+})
+
 # ---- catalogue integrity ----
-test_that("every catalogued mark has a generic and a man page", {
+test_that("every catalogued mark is exported and callable", {
+  # (R CMD check has no man/ directory, so assert export membership rather
+  # than Rd files on disk; roxygen guarantees the Rd.)
+  ex <- getNamespaceExports("plotit")
   for (nm in plotit:::._CATALOG_MARKS) {
+    expect_true(nm %in% ex, info = nm)
     expect_true(exists(nm, mode = "function"), info = nm)
-    rd <- file.path("..", "..", "man", paste0(nm, ".Rd"))
-    expect_true(file.exists(rd), info = nm)
+  }
+  for (nm in plotit:::._CATALOG_SCALES) {
+    expect_true(nm %in% ex, info = nm)
   }
 })
 
@@ -369,4 +423,25 @@ test_that("._MARK_BIND_AES covers every catalogued mark family it needs to", {
   )) {
     expect_true(nm %in% names(bind), info = nm)
   }
+})
+
+# ---- aesthetic-kind registry (layer-declared channels) ----
+test_that("scale_* auto-detection sees layer-resolved channels", {
+  e <- data.frame(source = c("a", "b"), target = c("b", "c"), w = c(1, 2))
+  n <- data.frame(id = c("a", "b", "c"), m = c(10, 20, 5))
+  p <- as_graph(e, nodes = n) |>
+    plotit() |>
+    layout_force(seed = 1) |>
+    mark_point(data = ~nodes, encode(size = m)) |>
+    scale_size()
+  sc <- p@gg$scales$get_scales("size")
+  expect_s3_class(sc, "ScaleContinuous")
+})
+
+test_that("discrete layer channels keep discrete auto-detection", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point(mapping = encode(colour = Species)) |>
+    scale_color()
+  sc <- p@gg$scales$get_scales("colour")
+  expect_true(inherits(sc, "ScaleDiscrete"))
 })

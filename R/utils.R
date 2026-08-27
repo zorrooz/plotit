@@ -100,6 +100,32 @@ NULL
   ._colour_managed_remove(plot, c("colour", "fill"))
 }
 
+# ---- aesthetic-kind registry ----
+# scale_* auto-detection (trans = NULL) can only see the *global* mapping.
+# Graph plots declare aesthetics exclusively at the layer level, so the
+# mark pipeline records the evaluated kind (continuous/discrete) of every
+# channel it resolves, and ._detect_discrete_aes consults this registry as
+# a fallback.  Stored as an attribute on meta, like the colour-managed
+# registry above; last write wins.
+#' Record the discrete/continuous kind of layer-resolved channels.
+#' @noRd
+#' @keywords internal
+._aes_kinds_add <- function(plot, kinds) {
+  if (length(kinds) == 0) {
+    return(plot)
+  }
+  attr(plot@meta, "plotit_aes_kinds") <-
+    utils::modifyList(._aes_kinds_get(plot), kinds)
+  plot
+}
+
+#' Read the recorded channel kinds.
+#' @noRd
+#' @keywords internal
+._aes_kinds_get <- function(plot) {
+  attr(plot@meta, "plotit_aes_kinds", exact = TRUE) %||% list()
+}
+
 # ---- optional-dependency guards ----
 
 # Single choke point for the "requires package X" abort used by every

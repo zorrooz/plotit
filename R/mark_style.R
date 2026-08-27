@@ -46,15 +46,15 @@ NULL
     lineend = "round",
     linejoin = "round"
   ),
-  # Step families use miter joins so corners stay crisp; round joins smear
-  # the step geometry at steep slopes.
+  # Step families use mitre joins so corners stay crisp; round joins smear
+  # the step geometry at steep slopes.  (grid spells it "mitre".)
   mark_step = list(
     linewidth = ._MARK_STYLE$lw_data,
-    linejoin = "miter"
+    linejoin = "mitre"
   ),
   mark_ecdf = list(
     linewidth = ._MARK_STYLE$lw_data,
-    linejoin = "miter"
+    linejoin = "mitre"
   ),
   # Link/connector marks share the thin stroke rung of the width ladder.
   mark_curve = list(linewidth = ._MARK_STYLE$lw_thin),

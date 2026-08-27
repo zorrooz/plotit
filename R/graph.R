@@ -329,11 +329,12 @@ as_graph <- function(edges, nodes = NULL,
 
   # Input types whose structure implies directionality decide for
   # themselves; say so instead of silently swallowing the argument.
-  self_directed <-
-    inherits(edges, "hclust") ||
-    inherits(edges, "dendrogram") ||
-    inherits(edges, "tbl_graph") ||
-    (is.data.frame(edges) && all(c("id", "parent") %in% names(edges)))
+  self_directed <- any(c(
+    inherits(edges, "hclust"),
+    inherits(edges, "dendrogram"),
+    inherits(edges, "tbl_graph"),
+    is.data.frame(edges) && all(c("id", "parent") %in% names(edges))
+  ))
   if (!missing(directed) && self_directed) {
     cli::cli_warn(
       "{.arg directed} is ignored for this input: the structure already \\

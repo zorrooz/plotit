@@ -42,9 +42,9 @@ scatter plots of discrete or binned data; pair with \code{\link[=scale_radius]{s
 for an area-proportional legend.
 }
 \examples{
-plotit(diamonds, encode(x = cut, y = carat)) |> mark_count()
+plotit(ggplot2::diamonds, encode(x = cut, y = carat)) |> mark_count()
 
-plotit(diamonds, encode(x = carat, y = price)) |> mark_count()
+plotit(ggplot2::diamonds, encode(x = carat, y = price)) |> mark_count()
 }
 \references{
 Vega-Lite: \href{https://vega.github.io/vega-lite/docs/point.html}{Point} with \code{aggregate: count}
