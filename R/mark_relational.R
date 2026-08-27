@@ -260,7 +260,8 @@ S7::method(mark_sankey, plotit_class) <- function(
   edge_alpha = ._MARK_STYLE$alpha_link,
   show_labels = TRUE
 ) {
-  ._rel_reject_dots(rlang::list2(...), "mark_sankey",
+  ._rel_reject_dots(
+    rlang::list2(...), "mark_sankey",
     "{.fn layout_sankey} to control padding, curvature and node width"
   )
 
@@ -364,7 +365,8 @@ S7::method(mark_treemap, plotit_class) <- function(
   node_color = ._MARK_STYLE$primary,
   show_labels = TRUE, ...
 ) {
-  ._rel_reject_dots(rlang::list2(...), "mark_treemap",
+  ._rel_reject_dots(
+    rlang::list2(...), "mark_treemap",
     "{.fn layout_treemap} to control the squarified tiling"
   )
 
@@ -449,6 +451,10 @@ S7::method(mark_treemap, plotit_class) <- function(
 #'   parameter exists so the unified edge vocabulary
 #'   (`edge_color`/`edge_width`/`edge_alpha`) is available on every
 #'   relational sugar.
+#' @param edge_shape `"straight"` (default) renders each edge as a rule;
+#'   `"curved"` renders quadratic-bezier links through [mark_curve()],
+#'   reducing visual overlap in dense networks.  Curve tension is tunable
+#'   via `curvature` in `...`.
 #' @param node_color Default node colour, applied to the `colour` and
 #'   `fill` channels only where they are not mapped
 #'   (default `._MARK_STYLE$primary` = \code{"#4E79A7"}).
@@ -485,7 +491,7 @@ mark_network <- S7::new_generic(
            layout = c("auto", "circle", "manual"),
            seed = NULL,
            edge_color = ._MARK_STYLE$faint, edge_width = ._MARK_STYLE$lw_thin,
-           edge_alpha = NULL,
+           edge_alpha = NULL, edge_shape = c("straight", "curved"),
            node_color = ._MARK_STYLE$primary, node_size = 5,
            show_labels = TRUE, ...) {
     S7::S7_dispatch()
@@ -500,11 +506,12 @@ S7::method(mark_network, plotit_class) <- function(
   layout = c("auto", "circle", "manual"),
   seed = NULL,
   edge_color = ._MARK_STYLE$faint, edge_width = ._MARK_STYLE$lw_thin,
-  edge_alpha = NULL,
+  edge_alpha = NULL, edge_shape = c("straight", "curved"),
   node_color = ._MARK_STYLE$primary, node_size = 5,
   show_labels = TRUE, ...
 ) {
   layout <- match.arg(layout)
+  edge_shape <- match.arg(edge_shape)
 
   nodes <- plot@gg$data
   if (is.null(nodes) || !is.data.frame(nodes)) {
@@ -569,6 +576,12 @@ S7::method(mark_network, plotit_class) <- function(
     )
 
     # ---- layout via shared engines ----
+    if (!is.null(seed) && layout != "auto") {
+      cli::cli_warn(c(
+        "{.arg seed} is ignored for {.code layout = {layout}}.",
+        "i" = "Only the force layout is stochastic; circle and manual layouts are deterministic."
+      ))
+    }
     if (layout == "manual") {
       has_xy <- all(c("x", "y") %in% names(nodes)) &&
         is.numeric(nodes$x) && is.numeric(nodes$y)
@@ -607,6 +620,9 @@ S7::method(mark_network, plotit_class) <- function(
   }
   dots <- rlang::list2(...)
   if (!is.null(edge_alpha)) dots$alpha <- edge_alpha
+  # Straight rules vs curved links -- same data/mapping contract, the
+  # graph-edge geometry binds on both mark families.
+  edge_marker <- if (identical(edge_shape, "curved")) mark_curve else mark_rule
   if (length(edge_mapping) > 0) {
     args <- c(list(plot = plot, mapping = edge_mapping, data = ~edges), dots)
   } else {
@@ -615,7 +631,7 @@ S7::method(mark_network, plotit_class) <- function(
       color = edge_color, linewidth = edge_width
     ), dots)
   }
-  plot <- do.call(mark_rule, args)
+  plot <- do.call(edge_marker, args)
 
   # ---- node layer on top of edges: statics gated per channel ----
   # A ggplot2 layer parameter would silently override an aesthetic mapping
@@ -738,7 +754,8 @@ S7::method(mark_chord, plotit_class) <- function(
   gap_width = 4, edge_alpha = ._MARK_STYLE$alpha_link,
   show_labels = TRUE, ...
 ) {
-  ._rel_reject_dots(rlang::list2(...), "mark_chord",
+  ._rel_reject_dots(
+    rlang::list2(...), "mark_chord",
     "{.fn layout_chord} to control inner radius, curvature and sector order"
   )
 

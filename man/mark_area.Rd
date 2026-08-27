@@ -24,7 +24,8 @@ mark_area(
 
 \item{position}{Position adjustment.}
 
-\item{...}{Other arguments passed to \code{geom_area}}
+\item{...}{Other arguments passed to \code{geom_area} (or \code{geom_ribbon}
+when \code{ymin}/\code{ymax} drive the layer)}
 
 \item{rasterize}{If \code{TRUE}, rasterize via \code{ggrastr::rasterise()}.}
 
@@ -36,10 +37,32 @@ mark_area(
 Modified plotit object
 }
 \description{
-Adds a filled area layer. Use for stacked area charts, stream graphs,
-or error bands.
+Adds a filled area layer.  With \code{y} mapped this is a classic
+(optionally stacked) area chart via \code{geom_area}; with \code{ymin}/\code{ymax}
+mapped instead it becomes an interval band via \code{geom_ribbon} —
+confidence bands, min/max envelopes, or any "area between two
+curves" view (Vega-Lite's \code{area} covers both, as does G2).
 }
 \examples{
 plotit(ggplot2::economics, encode(x = date, y = unemploy)) |>
   mark_area(alpha = 0.5)
+
+# interval band: smooth fit with 95\% confidence envelope
+fit <- stats::loess(mpg ~ wt, data = mtcars)
+band <- data.frame(
+  wt = mtcars$wt,
+  fit = stats::predict(fit),
+  se = stats::predict(fit, se = TRUE)$se.fit
+)
+band$lo <- band$fit - 1.96 * band$se
+band$hi <- band$fit + 1.96 * band$se
+plotit(band, encode(x = wt, ymin = lo, ymax = hi)) |>
+  mark_area(alpha = 0.2, fill = "#4E79A7") |>
+  mark_line(mapping = encode(x = wt, y = fit))
+}
+\references{
+Vega-Lite: \href{https://vega.github.io/vega-lite/docs/area.html}{Area} /
+\href{https://vega.github.io/vega-lite/docs/band.html}{Band}
+
+AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/area}{Area}
 }

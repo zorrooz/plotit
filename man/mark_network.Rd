@@ -13,6 +13,7 @@ mark_network(
   edge_color = ._MARK_STYLE$faint,
   edge_width = ._MARK_STYLE$lw_thin,
   edge_alpha = NULL,
+  edge_shape = c("straight", "curved"),
   node_color = ._MARK_STYLE$primary,
   node_size = 5,
   show_labels = TRUE,
@@ -50,6 +51,11 @@ bands of sankey/chord, thin strokes do not need translucency; the
 parameter exists so the unified edge vocabulary
 (\code{edge_color}/\code{edge_width}/\code{edge_alpha}) is available on every
 relational sugar.}
+
+\item{edge_shape}{\code{"straight"} (default) renders each edge as a rule;
+\code{"curved"} renders quadratic-bezier links through \code{\link[=mark_curve]{mark_curve()}},
+reducing visual overlap in dense networks.  Curve tension is tunable
+via \code{curvature} in \code{...}.}
 
 \item{node_color}{Default node colour, applied to the \code{colour} and
 \code{fill} channels only where they are not mapped

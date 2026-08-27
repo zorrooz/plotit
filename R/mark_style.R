@@ -46,18 +46,37 @@ NULL
     lineend = "round",
     linejoin = "round"
   ),
+  # Step families use miter joins so corners stay crisp; round joins smear
+  # the step geometry at steep slopes.
+  mark_step = list(
+    linewidth = ._MARK_STYLE$lw_data,
+    linejoin = "miter"
+  ),
+  mark_ecdf = list(
+    linewidth = ._MARK_STYLE$lw_data,
+    linejoin = "miter"
+  ),
+  # Link/connector marks share the thin stroke rung of the width ladder.
+  mark_curve = list(linewidth = ._MARK_STYLE$lw_thin),
+  mark_spoke = list(linewidth = ._MARK_STYLE$lw_thin),
   mark_smooth = list(linewidth = ._MARK_STYLE$lw_data),
   # Bars: 0.7 of the slot (slot = global dodge 0.8) -- slimmer than ggplot2's
   # 0.9 so single-series bars get air and grouped slots keep clear gaps.
   mark_bar = list(colour = "white", linewidth = ._MARK_STYLE$lw_border, width = 0.7),
   mark_histogram = list(colour = "white", linewidth = ._MARK_STYLE$lw_border),
   mark_rect = list(colour = "white", linewidth = ._MARK_STYLE$lw_border),
+  mark_bin2d = list(colour = "white", linewidth = ._MARK_STYLE$lw_border),
   mark_area = list(linewidth = 0),
   mark_polygon = list(linewidth = 0),
   mark_density = list(alpha = ._MARK_STYLE$alpha_fill),
   mark_violin = list(alpha = ._MARK_STYLE$alpha_fill),
   mark_rule = list(colour = ._MARK_STYLE$soft, linewidth = ._MARK_STYLE$lw_thin),
   mark_errorbar = list(linewidth = ._MARK_STYLE$lw_thin),
+  mark_qq_line = list(
+    linewidth = ._MARK_STYLE$lw_thin,
+    linetype = "dashed",
+    colour = ._MARK_STYLE$soft
+  ),
   # Boxplots: slim boxes with generous slot spacing and hairline strokes,
   # calibrated against tidyplots' add_boxplot (box_width 0.6 / lw 0.25 /
   # tiny outliers).  Slot width is the global dodge (0.8), so a 0.5-wide

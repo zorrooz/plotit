@@ -2,7 +2,7 @@
 % Please edit documentation in R/mark.R
 \name{mark_errorbar}
 \alias{mark_errorbar}
-\title{Error bar layer}
+\title{Error bar / interval layer}
 \usage{
 mark_errorbar(
   plot,
@@ -12,6 +12,7 @@ mark_errorbar(
   ...,
   width = 0.5,
   orientation = c("vertical", "horizontal"),
+  caps = TRUE,
   rasterize = FALSE,
   rasterize_dpi = 300,
   rasterize_dev = "cairo"
@@ -20,8 +21,9 @@ mark_errorbar(
 \arguments{
 \item{plot}{A plotit object}
 
-\item{mapping}{Optional new aesthetics (must include \code{ymin}/\code{ymax}
-or \code{xmin}/\code{xmax})}
+\item{mapping}{Optional new aesthetics (must include the interval
+columns for the chosen orientation: \code{ymin}/\code{ymax} vertical,
+\code{xmin}/\code{xmax} horizontal)}
 
 \item{data}{Optional data for this layer}
 
@@ -29,9 +31,13 @@ or \code{xmin}/\code{xmax})}
 
 \item{...}{Other arguments passed to the underlying geom}
 
-\item{width}{Width of the error bar caps (default 0.5).}
+\item{width}{Size of the error bar caps as a fraction of the resolution
+of the data (default 0.5).  Ignored when \code{caps = FALSE}.}
 
 \item{orientation}{\code{"vertical"} (default) or \code{"horizontal"}.}
+
+\item{caps}{If \code{TRUE} (default), draw end caps; \code{FALSE} renders bare
+interval lines (\code{geom_linerange}).}
 
 \item{rasterize}{If \code{TRUE}, rasterize via \code{ggrastr::rasterise()}.}
 
@@ -43,9 +49,12 @@ or \code{xmin}/\code{xmax})}
 Modified plotit object
 }
 \description{
-Adds error bars showing confidence intervals, standard errors,
-or other variability measures. Data should include columns for
-\code{ymin}/\code{ymax} (vertical) or \code{xmin}/\code{xmax} (horizontal).
+Adds interval bars showing confidence intervals, standard errors,
+or other variability measures.
+Vertical bars (default) map the position on \code{x} and the interval on
+\code{ymin}/\code{ymax}; horizontal bars map the position on \code{y} and the interval
+on \code{xmin}/\code{xmax} (G2's \code{rangeX}/\code{rangeY} semantics).  Set \code{caps = FALSE}
+for plain interval lines without end caps (Vega-Lite's \code{errorband}).
 }
 \examples{
 df <- data.frame(
@@ -53,7 +62,18 @@ df <- data.frame(
 )
 plotit(df, encode(x = x, y = y, ymin = ymin, ymax = ymax)) |>
   mark_errorbar(width = 0.3)
+
+# horizontal interval (position on y, range on x)
+dfh <- data.frame(
+  y = c("A", "B"), x = c(10, 20), xmin = c(8, 18), xmax = c(12, 22)
+)
+plotit(dfh, encode(x = x, y = y, xmin = xmin, xmax = xmax)) |>
+  mark_point() |>
+  mark_errorbar(orientation = "horizontal", caps = FALSE)
 }
 \references{
-Vega-Lite: \href{https://vega.github.io/vega-lite/docs/errorbar.html}{Errorbar} (composite mark)
+Vega-Lite: \href{https://vega.github.io/vega-lite/docs/errorbar.html}{Errorbar} /
+\href{https://vega.github.io/vega-lite/docs/errorband.html}{Errorband} (composite marks)
+
+AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/range}{Range}
 }
