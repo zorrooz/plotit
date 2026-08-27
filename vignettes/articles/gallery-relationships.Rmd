@@ -189,6 +189,20 @@ ggplot2::mpg[, sapply(ggplot2::mpg, is.numeric)] |>
   label_title("Numeric columns of mpg, reordered by clustering")
 ```
 
+### Matrix heatmap
+
+```{r}
+set.seed(42)
+expr <- matrix(rnorm(60),
+  nrow = 12,
+  dimnames = list(paste0("gene", 1:12), paste0("sample", 1:5))
+)
+expr |>
+  plotit(encode()) |>
+  mark_heatmap(cluster = "both", scale = "row") |>
+  label_title("mark_heatmap(): hclust reordering + row z-scores")
+```
+
 ### 2D contour field
 
 ```{r}

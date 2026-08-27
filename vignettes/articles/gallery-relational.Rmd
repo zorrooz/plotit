@@ -8,6 +8,7 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
+library(plotit)
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -117,8 +118,9 @@ flows |>
   mark_rect(data = ~nodes, fill = "grey30") |>
   mark_text(
     data = ~nodes, encode(x = xc, y = yc, label = id),
-    size = 3, colour = "white"
+    size = 3, colour = "grey20"
   ) |>
+  project_cartesian(clip = "off") |>
   label_title("layout_sankey() + primitives")
 ```
 
@@ -220,7 +222,11 @@ tree |>
 ### Dendrogram from hclust
 
 ```{r}
-hc <- hclust(dist(iris[1:4]), method = "ward.D2")
+# A 150-leaf dendrogram smears its labels into an unreadable band; a small
+# subset keeps the tree structure legible.
+iris15 <- iris[c(1:5, 51:55, 101:105), 1:4]
+rownames(iris15) <- paste0(rep(c("set", "ver", "vir"), each = 5), ".", 1:5)
+hc <- hclust(dist(iris15), method = "ward.D2")
 p_dend <- as_graph(hc) |>
   plotit() |>
   layout_dendrogram()
@@ -229,7 +235,7 @@ p_dend |>
   mark_text(
     data = subset(p_dend@graph$nodes, leaf),
     mapping = encode(x = x, y = y, label = id),
-    size = 2, vjust = 1.2
+    size = 2.5, angle = 90, hjust = 1, vjust = 0.5
   ) |>
   label_title("as_graph(hclust) + layout_dendrogram()")
 ```

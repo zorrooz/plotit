@@ -445,3 +445,135 @@ test_that("discrete layer channels keep discrete auto-detection", {
   sc <- p@gg$scales$get_scales("colour")
   expect_true(inherits(sc, "ScaleDiscrete"))
 })
+
+# ---- mark_heatmap ----
+# Ordered integer matrix: clustering must reorder rows/columns away from
+# this layout, cluster = "none" must not.
+.hm_mat <- function() {
+  m <- matrix(1:30,
+    nrow = 6,
+    dimnames = list(paste0("g", 1:6), paste0("s", 1:5))
+  )
+  m[1, ] <- c(10, 11, 12, 1, 2)
+  m[2, ] <- c(9, 8, 7, 20, 21)
+  m[3, ] <- c(13, 14, 15, 3, 4)
+  m[4, ] <- c(6, 5, 4, 22, 23)
+  m[5, ] <- c(30, 29, 28, 5, 6)
+  m[6, ] <- c(27, 26, 25, 7, 8)
+  m
+}
+
+test_that("[BDD] mark_heatmap renders a matrix as a tile grid", {
+  m <- .hm_mat()
+  p <- plotit(m, encode()) |> mark_heatmap(cluster = "none")
+  b <- .built(p)
+  expect_true(inherits(p@gg$layers[[1]]$geom, "GeomTile"))
+  expect_equal(nrow(b$data[[1]]), 30)
+  # Order preserved: rows/cols keep the matrix dimnames, and every tile's
+  # value matches mat[row, col] (guards the expand.grid orientation).
+  d <- p@gg$layers[[1]]$data
+  expect_equal(levels(d$Var1), rownames(m))
+  expect_equal(levels(d$Var2), colnames(m))
+  expect_equal(d$value, as.vector(t(m)))
+})
+
+test_that("mark_heatmap accepts a wide numeric data.frame", {
+  df <- as.data.frame(.hm_mat())
+  p <- plotit(df, encode()) |> mark_heatmap(cluster = "none")
+  expect_equal(nrow(.built(p)$data[[1]]), 30)
+})
+
+test_that("mark_heatmap accepts a tidy x/y/fill mapping", {
+  long <- expand.grid(
+    gene = c("a", "b", "c"), samp = c("p", "q"),
+    stringsAsFactors = FALSE
+  )
+  long$val <- seq_len(nrow(long))
+  p <- plotit(long, encode(x = samp, y = gene, fill = val)) |>
+    mark_heatmap(cluster = "none")
+  b <- .built(p)
+  expect_equal(nrow(b$data[[1]]), 6)
+  d <- p@gg$layers[[1]]$data
+  expect_equal(levels(d$Var2), c("p", "q"))
+  # xtabs orientation: mat[gene, samp] -- cell (a, p) holds long$val[1] = 1.
+  expect_equal(d$value[d$Var1 == "a" & d$Var2 == "p"], 1)
+})
+
+test_that("mark_heatmap cluster reorders away from the input order", {
+  kept <- plotit(.hm_mat(), encode()) |> mark_heatmap(cluster = "none")
+  moved <- plotit(.hm_mat(), encode()) |> mark_heatmap(cluster = "both")
+  dk <- kept@gg$layers[[1]]$data
+  dm <- moved@gg$layers[[1]]$data
+  expect_false(identical(levels(dk$Var1), levels(dm$Var1)))
+  # Reordering is a permutation: the value multiset is unchanged.
+  expect_equal(sort(dk$value), sort(dm$value))
+})
+
+test_that("mark_heatmap scale z-scores rows and columns", {
+  p_row <- plotit(.hm_mat(), encode()) |>
+    mark_heatmap(cluster = "none", scale = "row")
+  d <- p_row@gg$layers[[1]]$data
+  rms <- tapply(d$value, d$Var1, mean)
+  rsd <- tapply(d$value, d$Var1, stats::sd)
+  expect_true(all(abs(rms) < 1e-9))
+  expect_true(all(abs(rsd - 1) < 1e-8))
+
+  p_col <- plotit(.hm_mat(), encode()) |>
+    mark_heatmap(cluster = "none", scale = "column")
+  dc <- p_col@gg$layers[[1]]$data
+  cms <- tapply(dc$value, dc$Var2, mean)
+  expect_true(all(abs(cms) < 1e-9))
+})
+
+test_that("mark_heatmap owns a managed continuous fill scale, replaceable", {
+  p <- plotit(.hm_mat(), encode()) |> mark_heatmap()
+  expect_true(inherits(p@gg$scales$get_scales("fill"), "ScaleContinuous"))
+  p2 <- suppressMessages(
+    p |> scale_fill(trans = "identity", range = "brewer")
+  )
+  expect_true(inherits(p2@gg$scales$get_scales("fill"), "ScaleContinuous"))
+  expect_true(!is.null(.built(p2)))
+})
+
+test_that("mark_heatmap blanks the synthetic axis titles", {
+  p <- plotit(.hm_mat(), encode()) |> mark_heatmap()
+  expect_true(inherits(p@gg$theme$axis.title, "element_blank"))
+})
+
+test_that("mark_heatmap validates input and arguments", {
+  expect_error(
+    plotit(data.frame(a = letters[1:3]), encode()) |> mark_heatmap(),
+    "numeric"
+  )
+  expect_error(
+    plotit(.hm_mat(), encode()) |> mark_heatmap(cluster = "rows"),
+    "should be one of"
+  )
+})
+
+test_that("mark_heatmap survives actual drawing", {
+  skip_if_not_installed("ragg")
+  p <- plotit(.hm_mat(), encode()) |> mark_heatmap(scale = "row")
+  tmp <- tempfile(fileext = ".png")
+  expect_error(
+    {
+      ragg::agg_png(tmp, width = 400, height = 300, res = 100)
+      print(p@gg)
+      invisible(grDevices::dev.off())
+    },
+    NA
+  )
+  unlink(tmp)
+})
+
+# ---- mark_rule data-segment mode keeps foreign channels out ----
+test_that("mark_rule segment mode does not warn about injected fill", {
+  # The default_color injection puts `fill` into the global mapping;
+  # geom_segment used to reject it with "Ignoring unknown aesthetics".
+  segs <- data.frame(
+    x = c(1, 2), xend = c(2, 3), y = c(1, 2), yend = c(2, 3)
+  )
+  p <- plotit(segs, encode(x = x, y = y, xend = xend, yend = yend)) |>
+    mark_rule()
+  expect_no_warning(.built(p))
+})

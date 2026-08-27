@@ -105,29 +105,63 @@ NULL
 # measures ~0.7 x 1.2 in).  Instead, compute the canvas from the sub-plot
 # panel sizes (meta) plus a fixed chrome allowance -- the same numbers the
 # single-plot WYSIWYG path uses.
+# Declared panel size (inches) of one sub-plot, falling back to the default
+# canvas when the plot carries no explicit width/height.
+#' @noRd
+#' @keywords internal
+._subplot_panel_size <- function(p) {
+  def_size <- ._default_panel_size()
+  sized <- S7::S7_inherits(p, plotit_class) &&
+    !S7::S7_inherits(p, plotit_composite) &&
+    !is.null(p@meta@width) && !is.null(p@meta@height)
+  if (sized) {
+    list(
+      w = ._unit_to_inches(p@meta@width, p@meta@unit),
+      h = ._unit_to_inches(p@meta@height, p@meta@unit)
+    )
+  } else {
+    list(w = def_size$width, h = def_size$height)
+  }
+}
+
+# Resolve the effective (ncol, nrow) of a grid layout for n plots, honouring
+# whichever of ncol/nrow the caller fixed.
+#' @noRd
+#' @keywords internal
+._grid_dims <- function(layout, n) {
+  ncol <- layout$ncol %||% if (!is.null(layout$nrow)) ceiling(n / layout$nrow) else 1L
+  nrow <- layout$nrow %||% ceiling(n / ncol)
+  list(ncol = ncol, nrow = nrow)
+}
+
+# Relative column widths / row heights that preserve each sub-plot's own
+# aspect ratio as far as a shared grid allows: a column is as wide as its
+# widest cell, a row as tall as its tallest cell.  For the common single
+# column (ncol = 1) or single row (nrow = 1) stacks this keeps every panel
+# at its declared size; for a mixed grid it is the best a shared-gridline
+# layout can do.  Returns inch vectors ready for patchwork.
+#' @noRd
+#' @keywords internal
+._grid_units <- function(sizes, ncol, nrow, byrow = TRUE) {
+  n <- length(sizes)
+  w <- vapply(sizes, function(s) s$w, numeric(1))
+  h <- vapply(sizes, function(s) s$h, numeric(1))
+  col_of <- if (byrow) ((seq_len(n) - 1) %% ncol) + 1 else (((seq_len(n) - 1) %/% max(nrow, 1)) + 1)
+  row_of <- if (byrow) ((seq_len(n) - 1) %/% ncol) + 1 else ((seq_len(n) - 1) %% nrow) + 1
+  widths <- vapply(seq_len(ncol), function(j) max(w[col_of == j & seq_len(n) <= n], 0), numeric(1))
+  heights <- vapply(seq_len(nrow), function(i) max(h[row_of == i & seq_len(n) <= n], 0), numeric(1))
+  list(widths = widths, heights = heights)
+}
+
 #' Default width/height (inches) for a composite without explicit size.
 #' @noRd
 #' @keywords internal
 ._composite_default_size <- function(cmp) {
-  def_size <- ._default_panel_size()
-  panel_size <- function(p) {
-    is_sized_plot <- S7::S7_inherits(p, plotit_class) &&
-      !S7::S7_inherits(p, plotit_composite) &&
-      !is.null(p@meta@width) && !is.null(p@meta@height)
-    if (is_sized_plot) {
-      list(
-        w = ._unit_to_inches(p@meta@width, p@meta@unit),
-        h = ._unit_to_inches(p@meta@height, p@meta@unit)
-      )
-    } else {
-      list(w = def_size$width, h = def_size$height)
-    }
-  }
+  sizes <- lapply(cmp@plots, ._subplot_panel_size)
   # Chrome allowance: axes / labels / legend / annotation around one panel
   # (mirrors the single-plot 5 x 3.5 panel -> ~6.6 in footprint budget).
   allowance_w <- 1.6
   allowance_h <- 1.6
-  sizes <- lapply(cmp@plots, panel_size)
   n <- length(sizes)
   lt <- cmp@layout$type %||% "grid"
   if (lt == "marginal") {
@@ -142,17 +176,11 @@ NULL
     base <- sizes[[1]]
     list(width = base$w + allowance_w, height = base$h + allowance_h)
   } else {
-    ncol <- cmp@layout$ncol %||% if (!is.null(cmp@layout$nrow)) {
-      ceiling(n / cmp@layout$nrow)
-    } else {
-      1
-    }
-    nrow <- cmp@layout$nrow %||% ceiling(n / ncol)
-    cell_w <- max(vapply(sizes, function(s) s$w, numeric(1)))
-    cell_h <- max(vapply(sizes, function(s) s$h, numeric(1)))
+    grid <- ._grid_dims(cmp@layout, n)
+    units <- ._grid_units(sizes, grid$ncol, grid$nrow, cmp@layout$byrow %||% TRUE)
     list(
-      width  = ncol * cell_w + allowance_w,
-      height = nrow * cell_h + allowance_h
+      width  = sum(units$widths) + allowance_w,
+      height = sum(units$heights) + allowance_h
     )
   }
 }
@@ -166,12 +194,28 @@ NULL
   ggs <- lapply(plots, ._extract_gg)
   ggs <- lapply(ggs, ._reset_sizing)
 
+  # When the caller did not pin column/row proportions, derive them from each
+  # sub-plot's own declared panel size so the composite keeps original
+  # ratios instead of forcing every cell to one aspect.
+  widths <- layout$widths
+  heights <- layout$heights
+  if (is.null(widths) || is.null(heights)) {
+    lt <- layout$type %||% "grid"
+    if (lt == "grid" || is.null(layout$type)) {
+      sizes <- lapply(plots, ._subplot_panel_size)
+      grid <- ._grid_dims(layout, length(sizes))
+      units <- ._grid_units(sizes, grid$ncol, grid$nrow, layout$byrow %||% TRUE)
+      if (is.null(widths)) widths <- grid::unit(units$widths, "cm")
+      if (is.null(heights)) heights <- grid::unit(units$heights, "cm")
+    }
+  }
+
   args <- c(ggs, list(
     ncol    = layout$ncol,
     nrow    = layout$nrow,
     byrow   = layout$byrow %||% TRUE,
-    widths  = layout$widths,
-    heights = layout$heights,
+    widths  = widths,
+    heights = heights,
     guides  = layout$guides
   ))
   gg <- do.call(patchwork::wrap_plots, args)
