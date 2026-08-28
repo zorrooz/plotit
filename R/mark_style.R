@@ -31,6 +31,7 @@ NULL
   # Translucency for overlapping filled forms
   alpha_fill = 0.6, # density curves, violins
   alpha_link = 0.5, # sankey flows, chord bands
+  alpha_ci = 0.25, # statistical confidence ribbons
   # Composite point heads
   point_head = 3 # lollipop heads, dumbbell endpoints
 )

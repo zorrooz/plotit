@@ -1397,22 +1397,111 @@ S7::method(mark_heatmap, plotit_class) <- function(
   plot
 }
 
+# ---- statistical entity fun-data (D-01, design/03 §2) ----
+# fun.data contracts for ggplot2::stat_summary: input is the value vector of
+# the central aesthetic, output is a data.frame with `y`, `ymin`, `ymax`
+# (ggplot2's orientation machinery maps these to xmin/xmax for horizontal
+# orientation).  Pure R, zero new dependencies.  `mean_` names the CENTER;
+# the interval semantics follow Vega-Lite's `extent` enumeration
+# (sem <-> stderr, sd <-> stdev, ci95 <-> ci; range is tidyplots semantics).
+
+._fun_data_mean_sem <- function(x, ...) {
+  x <- x[!is.na(x)]
+  n <- length(x)
+  m <- mean(x)
+  se <- if (n > 1) stats::sd(x) / sqrt(n) else NA_real_
+  data.frame(y = m, ymin = m - se, ymax = m + se)
+}
+
+._fun_data_mean_sd <- function(x, ...) {
+  x <- x[!is.na(x)]
+  n <- length(x)
+  m <- mean(x)
+  s <- if (n > 1) stats::sd(x) else NA_real_
+  data.frame(y = m, ymin = m - s, ymax = m + s)
+}
+
+._fun_data_mean_range <- function(x, ...) {
+  x <- x[!is.na(x)]
+  data.frame(y = mean(x), ymin = min(x), ymax = max(x))
+}
+
+# Two-sided t interval at confidence `level`: mean +- qt((1+level)/2, n-1)*se.
+._fun_data_mean_ci <- function(x, level = 0.95, ci_method = "normal",
+                               seed = NULL, ...) {
+  x <- x[!is.na(x)]
+  n <- length(x)
+  m <- mean(x)
+  if (identical(ci_method, "boot")) {
+    if (!is.null(seed)) {
+      set.seed(seed)
+    }
+    boot_means <- replicate(1000, mean(sample(x, n, replace = TRUE)))
+    qs <- stats::quantile(
+      boot_means, c((1 - level) / 2, 1 - (1 - level) / 2)
+    )
+    return(data.frame(y = m, ymin = unname(qs[1]), ymax = unname(qs[2])))
+  }
+  se <- if (n > 1) stats::sd(x) / sqrt(n) else NA_real_
+  tcrit <- stats::qt((1 + level) / 2, df = n - 1)
+  data.frame(y = m, ymin = m - tcrit * se, ymax = m + tcrit * se)
+}
+
+# Shared validation for the statistical-entity parameters.  Returns the
+# cleaned stat string; aborts with targeted three-part messages otherwise.
+#' Validate statistical-entity parameters shared by errorbar and ribbon.
+#' @noRd
+#' @keywords internal
+._validate_stat_entity <- function(stat, level, ci_method, seed) {
+  stat <- match.arg(stat, c(
+    "identity", "mean_sem", "mean_sd", "mean_range", "mean_ci95"
+  ))
+  if (length(level) != 1 || is.na(level) || level <= 0 || level >= 1) {
+    ._abort_arg_range("level", "in (0, 1)", got = level)
+  }
+  if (identical(ci_method, "boot") && is.null(seed)) {
+    ._abort_hint(
+      "{.code ci_method = \"boot\"} requires a {.arg seed} for reproducible resampling.",
+      "Pass a fixed integer, e.g. {.code seed = 1}."
+    )
+  }
+  if (!identical(stat, "identity") && !identical(stat, "mean_ci95") &&
+      !is.null(seed)) {
+    ._warn_ignored("seed", "only {.code ci_method = \"boot\"} resamples")
+  }
+  stat
+}
+
 # ---- mark_errorbar ----
 #' Error bar / interval layer
 #'
-#' Adds interval bars showing confidence intervals, standard errors,
-#' or other variability measures.
+#' Adds interval bars showing pre-computed intervals (`stat = "identity"`,
+#' the default: `ymin`/`ymax` come straight from the data) or statistical
+#' entities computed per group (`stat = "mean_sem"`, `"mean_sd"`,
+#' `"mean_range"`, `"mean_ci95"`): the interval is aggregated from the raw
+#' `y` values of each x group with no manual pre-computation.
+#'
 #' Vertical bars (default) map the position on `x` and the interval on
 #' `ymin`/`ymax`; horizontal bars map the position on `y` and the interval
 #' on `xmin`/`xmax` (G2's `rangeX`/`rangeY` semantics).  Set `caps = FALSE`
 #' for plain interval lines without end caps (Vega-Lite's `errorband`).
 #'
 #' @param plot A plotit object
-#' @param mapping Optional new aesthetics (must include the interval
-#'   columns for the chosen orientation: `ymin`/`ymax` vertical,
-#'   `xmin`/`xmax` horizontal)
+#' @param mapping Optional new aesthetics.  With `stat = "identity"` it must
+#'   include the interval columns for the chosen orientation (`ymin`/`ymax`
+#'   vertical, `xmin`/`xmax` horizontal); with a statistical entity it only
+#'   needs `x` (group) and `y` (value).
 #' @param data Optional data for this layer
 #' @param position Position adjustment.
+#' @param stat Statistical entity: `"identity"` (pre-computed intervals,
+#'   no implicit aggregation) or one of `"mean_sem"`, `"mean_sd"`,
+#'   `"mean_range"`, `"mean_ci95"` (per-group aggregation of `y`).
+#' @param level Confidence level for `stat = "mean_ci95"`, in `(0, 1)`
+#'   (default 0.95).
+#' @param ci_method `"normal"` (default, t-based normal approximation) or
+#'   `"boot"` (percentile bootstrap of the mean; requires `seed`).
+#' @param seed RNG seed for `ci_method = "boot"`; required for
+#'   reproducibility of the bootstrap.
 #' @param width Size of the error bar caps as a fraction of the resolution
 #'   of the data (default 0.5).  Ignored when `caps = FALSE`.
 #' @param orientation `"vertical"` (default) or `"horizontal"`.
@@ -1425,7 +1514,8 @@ S7::method(mark_heatmap, plotit_class) <- function(
 #' @return Modified plotit object
 #' @references
 #' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/errorbar.html}{Errorbar} /
-#' \href{https://vega.github.io/vega-lite/docs/errorband.html}{Errorband} (composite marks)
+#' \href{https://vega.github.io/vega-lite/docs/errorband.html}{Errorband}
+#' (`extent`: stderr <-> sem, stdev <-> sd, ci <-> ci95)
 #'
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/range}{Range}
 #' @examples
@@ -1434,6 +1524,10 @@ S7::method(mark_heatmap, plotit_class) <- function(
 #' )
 #' plotit(df, encode(x = x, y = y, ymin = ymin, ymax = ymax)) |>
 #'   mark_errorbar(width = 0.3)
+#'
+#' # statistical entity: mean +- sem aggregated per group from raw y
+#' plotit(iris, encode(x = Species, y = Sepal.Length)) |>
+#'   mark_errorbar(stat = "mean_sem")
 #'
 #' # horizontal interval (position on y, range on x)
 #' dfh <- data.frame(
@@ -1446,6 +1540,8 @@ S7::method(mark_heatmap, plotit_class) <- function(
 mark_errorbar <- S7::new_generic(
   "mark_errorbar", "plot",
   function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           stat = "identity", level = 0.95,
+           ci_method = c("normal", "boot"), seed = NULL,
            width = 0.5, orientation = c("vertical", "horizontal"),
            caps = TRUE,
            rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
@@ -1456,20 +1552,141 @@ mark_errorbar <- S7::new_generic(
 #' @export
 S7::method(mark_errorbar, plotit_class) <- function(
   plot, mapping = NULL, data = NULL, position = NULL, ...,
+  stat = "identity", level = 0.95,
+  ci_method = c("normal", "boot"), seed = NULL,
   width = 0.5, orientation = c("vertical", "horizontal"),
   caps = TRUE,
   rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
 ) {
   orientation <- match.arg(orientation)
+  ci_method <- match.arg(ci_method)
+  stat <- ._validate_stat_entity(stat, level, ci_method, seed)
   gg_orient <- if (orientation == "horizontal") "y" else "x"
   geom_fun <- if (isTRUE(caps)) ggplot2::geom_errorbar else ggplot2::geom_linerange
   params <- rlang::list2(...)
   params$orientation <- gg_orient
   # Cap width is an errorbar-only parameter; linerange has no caps.
   if (isTRUE(caps)) params$width <- width
+  if (!identical(stat, "identity")) {
+    params$stat <- "summary"
+    params$fun.data <- switch(stat,
+      mean_sem = ._fun_data_mean_sem,
+      mean_sd = ._fun_data_mean_sd,
+      mean_range = ._fun_data_mean_range,
+      mean_ci95 = function(x, ...) {
+        ._fun_data_mean_ci(
+          x, level = level, ci_method = ci_method, seed = seed
+        )
+      }
+    )
+  }
   ._impl_with(plot, mapping, data, position, geom_fun,
     rasterize, rasterize_dpi, rasterize_dev,
     bind_aes = ._MARK_BIND_AES$mark_errorbar, mark_name = "mark_errorbar",
+    extra = params
+  )
+}
+
+# ---- mark_ribbon ----
+#' Statistical ribbon layer
+#'
+#' Draws an interval band.  This is a **syntax-sugar composite mark** over
+#' `geom_ribbon`:
+#'
+#' Equivalent expansion:
+#' \preformatted{
+#'   stat = "identity"  is  mark_area()'s interval routing (ymin/ymax from
+#'                      the data, no aggregation)
+#'   stat = "mean_sem"  is  stat_summary(fun.data = mean_sem, geom = "ribbon")
+#'                      (tidyplots add_sem_ribbon is the same shape)
+#' }
+#'
+#' @param plot A plotit object
+#' @param mapping Optional aesthetics: `x` plus `ymin`/`ymax` for
+#'   `stat = "identity"`, or `x` (group) + `y` (value) for a statistical
+#'   entity.
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param stat Statistical entity: `"identity"` (pre-computed band) or
+#'   `"mean_sem"` / `"mean_sd"` / `"mean_range"` / `"mean_ci95"`
+#'   (per-group aggregation of `y`; shares the engine with
+#'   [mark_errorbar()]).
+#' @param level Confidence level for `stat = "mean_ci95"`, in `(0, 1)`.
+#' @param ci_method `"normal"` (t-based approximation) or `"boot"`
+#'   (percentile bootstrap; requires `seed`).
+#' @param seed RNG seed for `ci_method = "boot"`.
+#' @param alpha Band fill opacity; `NULL` (default) uses the statistical
+#'   token `alpha_ci` (0.25), tuned so stacked evidence stays readable
+#'   behind points and lines.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_ribbon`
+#' @return Modified plotit object
+#' @references
+#' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/errorband.html}{Errorband}
+#' (`extent`: stderr <-> sem, stdev <-> sd, ci <-> ci95)
+#'
+#' tidyplots: `add_sem_ribbon()` / `add_ci95()` (same aggregation shapes)
+#' @examples
+#' fit <- stats::loess(mpg ~ wt, data = mtcars)
+#' band <- data.frame(
+#'   wt = mtcars$wt,
+#'   fit = stats::predict(fit),
+#'   se = stats::predict(fit, se = TRUE)$se.fit
+#' )
+#' band$lo <- band$fit - 1.96 * band$se
+#' band$hi <- band$fit + 1.96 * band$se
+#' plotit(band, encode(x = wt, ymin = lo, ymax = hi)) |>
+#'   mark_ribbon() |>
+#'   mark_line(mapping = encode(x = wt, y = fit))
+#'
+#' # statistical entity: mean +- sem per group from raw y
+#' plotit(iris, encode(x = Species, y = Sepal.Length)) |>
+#'   mark_ribbon(stat = "mean_sem") |>
+#'   mark_point(stat = "summary", fun = "mean")
+#' @export
+mark_ribbon <- S7::new_generic(
+  "mark_ribbon", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           stat = "identity", level = 0.95,
+           ci_method = c("normal", "boot"), seed = NULL, alpha = NULL,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_ribbon, plotit_class) <- function(
+  plot, mapping = NULL, data = NULL, position = NULL, ...,
+  stat = "identity", level = 0.95,
+  ci_method = c("normal", "boot"), seed = NULL, alpha = NULL,
+  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+) {
+  ci_method <- match.arg(ci_method)
+  stat <- ._validate_stat_entity(stat, level, ci_method, seed)
+  params <- rlang::list2(...)
+  if (is.null(alpha)) {
+    alpha <- ._MARK_STYLE$alpha_ci
+  }
+  params$alpha <- alpha
+  if (!identical(stat, "identity")) {
+    params$stat <- "summary"
+    params$fun.data <- switch(stat,
+      mean_sem = ._fun_data_mean_sem,
+      mean_sd = ._fun_data_mean_sd,
+      mean_range = ._fun_data_mean_range,
+      mean_ci95 = function(x, ...) {
+        ._fun_data_mean_ci(
+          x, level = level, ci_method = ci_method, seed = seed
+        )
+      }
+    )
+  }
+  ._impl_with(plot, mapping, data, position, ggplot2::geom_ribbon,
+    rasterize, rasterize_dpi, rasterize_dev,
+    auto_dodge = FALSE,
+    bind_aes = ._MARK_BIND_AES$mark_ribbon, mark_name = "mark_ribbon",
     extra = params
   )
 }
@@ -2708,6 +2925,7 @@ S7::method(mark_forest, plotit_class) <- function(
   # Statistical
   "mark_smooth", "mark_hex", "mark_density_2d", "mark_corr", "mark_heatmap",
   "mark_count", "mark_bin2d", "mark_contour", "mark_qq", "mark_qq_line",
+  "mark_ribbon",
   # Composite / annotation
   "mark_errorbar", "mark_significance", "mark_lollipop", "mark_dumbbell",
   "mark_beeswarm", "mark_forest", "mark_label",

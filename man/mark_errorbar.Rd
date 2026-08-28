@@ -10,6 +10,10 @@ mark_errorbar(
   data = NULL,
   position = NULL,
   ...,
+  stat = "identity",
+  level = 0.95,
+  ci_method = c("normal", "boot"),
+  seed = NULL,
   width = 0.5,
   orientation = c("vertical", "horizontal"),
   caps = TRUE,
@@ -21,15 +25,29 @@ mark_errorbar(
 \arguments{
 \item{plot}{A plotit object}
 
-\item{mapping}{Optional new aesthetics (must include the interval
-columns for the chosen orientation: \code{ymin}/\code{ymax} vertical,
-\code{xmin}/\code{xmax} horizontal)}
+\item{mapping}{Optional new aesthetics.  With \code{stat = "identity"} it must
+include the interval columns for the chosen orientation (\code{ymin}/\code{ymax}
+vertical, \code{xmin}/\code{xmax} horizontal); with a statistical entity it only
+needs \code{x} (group) and \code{y} (value).}
 
 \item{data}{Optional data for this layer}
 
 \item{position}{Position adjustment.}
 
 \item{...}{Other arguments passed to the underlying geom}
+
+\item{stat}{Statistical entity: \code{"identity"} (pre-computed intervals,
+no implicit aggregation) or one of \code{"mean_sem"}, \code{"mean_sd"},
+\code{"mean_range"}, \code{"mean_ci95"} (per-group aggregation of \code{y}).}
+
+\item{level}{Confidence level for \code{stat = "mean_ci95"}, in \verb{(0, 1)}
+(default 0.95).}
+
+\item{ci_method}{\code{"normal"} (default, t-based normal approximation) or
+\code{"boot"} (percentile bootstrap of the mean; requires \code{seed}).}
+
+\item{seed}{RNG seed for \code{ci_method = "boot"}; required for
+reproducibility of the bootstrap.}
 
 \item{width}{Size of the error bar caps as a fraction of the resolution
 of the data (default 0.5).  Ignored when \code{caps = FALSE}.}
@@ -49,8 +67,13 @@ interval lines (\code{geom_linerange}).}
 Modified plotit object
 }
 \description{
-Adds interval bars showing confidence intervals, standard errors,
-or other variability measures.
+Adds interval bars showing pre-computed intervals (\code{stat = "identity"},
+the default: \code{ymin}/\code{ymax} come straight from the data) or statistical
+entities computed per group (\code{stat = "mean_sem"}, \code{"mean_sd"},
+\code{"mean_range"}, \code{"mean_ci95"}): the interval is aggregated from the raw
+\code{y} values of each x group with no manual pre-computation.
+}
+\details{
 Vertical bars (default) map the position on \code{x} and the interval on
 \code{ymin}/\code{ymax}; horizontal bars map the position on \code{y} and the interval
 on \code{xmin}/\code{xmax} (G2's \code{rangeX}/\code{rangeY} semantics).  Set \code{caps = FALSE}
@@ -63,6 +86,10 @@ df <- data.frame(
 plotit(df, encode(x = x, y = y, ymin = ymin, ymax = ymax)) |>
   mark_errorbar(width = 0.3)
 
+# statistical entity: mean +- sem aggregated per group from raw y
+plotit(iris, encode(x = Species, y = Sepal.Length)) |>
+  mark_errorbar(stat = "mean_sem")
+
 # horizontal interval (position on y, range on x)
 dfh <- data.frame(
   y = c("A", "B"), x = c(10, 20), xmin = c(8, 18), xmax = c(12, 22)
@@ -73,7 +100,8 @@ plotit(dfh, encode(x = x, y = y, xmin = xmin, xmax = xmax)) |>
 }
 \references{
 Vega-Lite: \href{https://vega.github.io/vega-lite/docs/errorbar.html}{Errorbar} /
-\href{https://vega.github.io/vega-lite/docs/errorband.html}{Errorband} (composite marks)
+\href{https://vega.github.io/vega-lite/docs/errorband.html}{Errorband}
+(\code{extent}: stderr <-> sem, stdev <-> sd, ci <-> ci95)
 
 AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/range}{Range}
 }
