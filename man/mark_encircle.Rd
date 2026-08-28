@@ -27,6 +27,8 @@ channel (\code{colour}/\code{fill}/\code{group}) giving one envelope per level}
 
 \item{data}{Optional data for this layer}
 
+\item{position}{Position adjustment.}
+
 \item{...}{Other arguments passed to the underlying \code{geom_polygon}
 (\code{fill}, \code{colour}, \code{linewidth} default to the primary token, the
 faint neutral, and the thin stroke).}

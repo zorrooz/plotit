@@ -8,7 +8,7 @@
 - **默认美观**：预设主题、配色与尺寸，开箱即出版/报告可用。
 - **一致性**：统一的 API 风格、参数命名和错误处理策略。
 - **可扩展性**：基于 ggplot2 及其扩展包构造，通过 `...` 透传底层能力，不作过度封装。
-- **Mark 多样性**：对标 **Vega-Lite** / **AntV-G2** 的视觉通道丰富度，超越原生 ggplot2 几何图层类型范围。已实现 41 种 mark 类型（§3.2），覆盖基础几何、分布展示、关系层次和地理空间四大领域。
+- **Mark 多样性**：对标 **Vega-Lite** / **AntV-G2** 的视觉通道丰富度，超越原生 ggplot2 几何图层类型范围。已实现 43 种 mark 类型（§3.2），覆盖基础几何、分布展示、关系层次和地理空间四大领域。
 - **默认美观与低配置成本**：调色板（离散/连续/定性）精心选择并持续扩展。`scale_*` 的 `range` 参数保持 `"scheme_name"` 字符串接口简便性，用户无需掌握色彩理论即可产出出版可用图表。
 - **最小化实现**：能用已有原语组合实现的图表效果，不新增 mark。mark 是语法糖的最终边界——之前所有组合（mark + project + scale + split）都应该是有效的管道链。新增 mark 的唯一理由是无法用已有原语在合理管道内表达该视觉形态。
 
@@ -172,6 +172,8 @@ styler::style_pkg()
 | `mark_heatmap` | 内部 matrix melt + `geom_tile` 语法糖（`cluster=`/`scale=`） | 矩阵热图（聚类/z-score）✅ |
 | `mark_errorbar` | `geom_errorbar`/`geom_linerange`（`caps=`，orientation 路由；`stat=` 统计实体） | 误差棒/区间线 ✅ |
 | `mark_ribbon` | `geom_ribbon` 语法糖（与 errorbar 同统计实体枚举，alpha 默认 token alpha_ci） | 统计区间带 ✅ |
+| `mark_image` | 自研 `GeomPlotitImage`（rasterGrob + alpha 蒙版圆裁剪；src 通道） | 图像散点/ISOTYPE ✅ |
+| `mark_encircle` | `chull`/`stat_ellipse` 引擎 + 均匀外扩 + Chaikin 圆角语法糖 | 分组圈注 ✅ |
 | `mark_significance` | 向量化 annotate 语法糖 | 显著性标记 ✅ |
 | `mark_lollipop` | `mark_point` + 线段语法糖 | 棒棒糖图 ✅ |
 | `mark_dumbbell` | `mark_point`×2 + 线段语法糖 | 哑铃对比图 ✅ |
@@ -190,7 +192,7 @@ Vega-Lite 和 AntV G2 采用不同策略处理统计/复合 Mark，plotit 取两
 |---|---|---|---|
 | **Vega-Lite** | 11 原语 (`area`/`bar`/`line`/`point`/`rect`/`rule`/`text`/`tick`/`circle`/`square`/`geoshape`) | 3 个复合 Mark 宏观展开为多层原语 | `boxplot`(5 层)、`errorbar`(2 层)、`errorband`(2 层) |
 | **AntV G2 5.0** | 24 基础 (corelib) | 六库注册（5.4.8 源码实测）：core 24 / graph 7 / plot 4 / geo 2 / lite 1 = 34 mark 类；复合经 CompositeMarkComponent 展开为子 mark 数组 | `boxplot`/`gauge`/`liquid`(plotlib) + `sankey`/`treemap`/`chord`/`forceGraph` 等(graphlib) |
-| **plotit** | 41 已实现（18 基础 + 11 统计 + 12 复合含关系） | **三层体系**：基础 Mark → 统计 Mark → 复合 Mark（语法糖）+ 关系类 | 见下表 |
+| **plotit** | 43 已实现（19 基础 + 12 统计 + 12 复合含关系） | **三层体系**：基础 Mark → 统计 Mark → 复合 Mark（语法糖）+ 关系类 | 见下表 |
 
 G2 的每个复合 Mark 内部展开为 2-5 个基础 Mark 的组合，这与 plotit "组合优先"原则一致。参考两方经验，plotit 新增两类：
 
@@ -396,7 +398,7 @@ plotit(data, mapping = encode(), autofit = FALSE,
 - `...` 透传底层 `geom_*`
 - `rasterize` 需 `ggrastr`
 - 内部通过 `._mark_impl()` 共享逻辑：resolve position、构建 geom、条件栅格化
-- **签名特例**（按 §3.3b 三层体系）：复合 Mark `mark_significance`/`mark_lollipop`/`mark_dumbbell`/`mark_forest` 无 `position`/`rasterize`（内层 Mark 各自处理）；关系类 `mark_sankey`/`mark_chord`/`mark_treemap`/`mark_network` 无 `position`/`rasterize`（布局拥有放置权；sankey 原先接受的死参 `position` 已删除，treemap 的 raster 三件套已按 §3.3b 原则 3 移除）；统计 Mark `mark_corr` 无 `mapping`/`data`/`position`（自算相关性矩阵）；`mark_network` 用专用双数据源签名（`edges`/`encode_edges`）。带具名参数的 mark：`mark_step(direction=)`、`mark_rug(sides=, length=)`、`mark_curve(curvature=, angle=, arrow=)`、`mark_text(repel=)`/`mark_label(repel=)`、`mark_bin2d(bins=, binwidth=)`、`mark_contour(filled=, bins=, breaks=)`、`mark_ecdf(n=)`、`mark_qq(distribution=)`/`mark_qq_line(distribution=, line.p=, fullrange=)`、`mark_errorbar(stat=, level=, ci_method=, seed=, width=, orientation=, caps=)`、`mark_ribbon(stat=, level=, ci_method=, seed=, alpha=)`。关系四 sugar 共有 `show_labels = TRUE`，`mark_network` 另有 `edge_shape = c("straight","curved")`；`mark_rule` 静态色参数为美式 `color=`（旧拼写 `colour=` 经 `...` 透传仍兼容）；`mark_rule` 亦支持数据段模式（`data=` 或全局映射含 x/xend/y/yend 时逐行画段）
+- **签名特例**（按 §3.3b 三层体系）：复合 Mark `mark_significance`/`mark_lollipop`/`mark_dumbbell`/`mark_forest` 无 `position`/`rasterize`（内层 Mark 各自处理）；关系类 `mark_sankey`/`mark_chord`/`mark_treemap`/`mark_network` 无 `position`/`rasterize`（布局拥有放置权；sankey 原先接受的死参 `position` 已删除，treemap 的 raster 三件套已按 §3.3b 原则 3 移除）；统计 Mark `mark_corr` 无 `mapping`/`data`/`position`（自算相关性矩阵）；`mark_network` 用专用双数据源签名（`edges`/`encode_edges`）。带具名参数的 mark：`mark_step(direction=)`、`mark_rug(sides=, length=)`、`mark_curve(curvature=, angle=, arrow=)`、`mark_text(repel=)`/`mark_label(repel=)`、`mark_bin2d(bins=, binwidth=)`、`mark_contour(filled=, bins=, breaks=)`、`mark_ecdf(n=)`、`mark_qq(distribution=)`/`mark_qq_line(distribution=, line.p=, fullrange=)`、`mark_errorbar(stat=, level=, ci_method=, seed=, width=, orientation=, caps=)`、`mark_ribbon(stat=, level=, ci_method=, seed=, alpha=, width=)`、`mark_image(size=, clip=, interpolate=)`、`mark_encircle(shape=, expand=, radius=, alpha=)`。关系四 sugar 共有 `show_labels = TRUE`，`mark_network` 另有 `edge_shape = c("straight","curved")`；`mark_rule` 静态色参数为美式 `color=`（旧拼写 `colour=` 经 `...` 透传仍兼容）；`mark_rule` 亦支持数据段模式（`data=` 或全局映射含 x/xend/y/yend 时逐行画段）
 - **`add_ggplot` 逃生舱**：`add_ggplot(plot, ggplot2对象)` 直转底层 gg（annotate/guides/labs/
   自定义层皆可达），返回 `plotit`/`plotit_composite` 使管道延续（替代已删除的 S3
   `+.plotit`/`+.plotit_composite` 重载，语义对标 tidyplots `add()`）；动词 API 仍是规范路径
@@ -1234,12 +1236,10 @@ parse(file = "test.R")
 > 用户已裁决 5 项决策（design/10 §4）。**本节仅登记目标态与指针，实施前 §3 现行约定不变**；
 > 工程排期见 `.agent/plan.md`，实施完成后相应条目并入 §3 并从本节移除。
 
-### 14.1 新增导出（原 4 个；mark_ribbon 已于阶段 3-1 落地移除，余 3 个，均过三闸门，justification 见 design/03、06）
+### 14.1 新增导出（原 4 个；mark_ribbon/mark_image/mark_encircle 已于阶段 3 落地移除，余 `compose_annot` 1 个，均过三闸门，justification 见 design/03、06）
 
 | 函数 | 层 | 一句话 | 详细设计 |
 |---|---|---|---|
-| `mark_image` | 基础 | 图像散点（src/x/y，自研 rasterGrob geom；锚点 B7） | design/03 §3 |
-| `mark_encircle` | 复合 | 分组圈注（hull/ellipse 包络 + expand/radius） | design/03 §4 |
 | `compose_annot` | 组合 | 任意侧附着条带（复杂热图旗舰配方使能器；D4） | design/06 §4 |
 
 ### 14.2 主要扩参（全部进扩展契约层）

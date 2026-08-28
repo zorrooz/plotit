@@ -1324,6 +1324,14 @@ S7::method(mark_corr, plotit_class) <- function(
 #'   `"row"`, `"column"`, or `"none"`.
 #' @param scale z-score normalisation: `"none"` (default), `"row"`, or
 #'   `"column"`.
+#' @param show_numbers Print the value of each cell inside the tile
+#'   (default `FALSE`); implemented as a `mark_text` overlay.
+#' @param number_format Format string for the cell numbers
+#'   (default `"%.2f"`).
+#' @param number_color Cell number colour; `NULL` (default) applies
+#'   auto-contrast (white on dark cells, ink on light cells).
+#' @param na_color Fill colour for `NA` cells (default `"grey85"`; the
+#'   tidyheatmaps `color_na` counterpart).
 #' @param ... Other arguments passed to [ggplot2::geom_tile()].
 #' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
 #' @param rasterize_dpi DPI for rasterization (default 300).
@@ -1425,16 +1433,33 @@ S7::method(mark_heatmap, plotit_class) <- function(
   )
   plot <- ._derived_fill(plot, trans = "identity", na.value = na_color)
   if (isTRUE(show_numbers)) {
-    if (is.null(number_color)) {
-      number_color <- ._MARK_STYLE$ink
-    }
     df$label <- sprintf(number_format, df$value)
-    num_mapping <- encode(x = Var2, y = Var1, label = label)
+    if (is.null(number_color)) {
+      # Auto-contrast: viridis runs dark (low) to light (high), so cells
+      # below the scale midpoint read in white, the rest in ink.
+      zmin <- min(mat, na.rm = TRUE)
+      zmax <- max(mat, na.rm = TRUE)
+      mid <- zmin + (zmax - zmin) / 2
+      # AsIs: the literal colours must bypass the discrete colour scale
+      df$label_col <- I(ifelse(is.na(df$value) | df$value >= mid,
+        ._MARK_STYLE$ink, "white"
+      ))
+      num_mapping <- encode(
+        x = Var2, y = Var1, label = label,
+        colour = label_col
+      )
+    } else {
+      num_mapping <- encode(x = Var2, y = Var1, label = label)
+    }
+    number_extra <- rlang::list2(...)
+    if (!is.null(number_color)) {
+      number_extra$colour <- number_color
+    }
     plot <- ._impl_with(plot, num_mapping, df,
       position = NULL, ggplot2::geom_text,
       rasterize, rasterize_dpi, rasterize_dev,
       auto_dodge = FALSE, bind_aes = NULL, mark_name = NULL,
-      extra = rlang::list2(colour = number_color)
+      extra = number_extra
     )
   }
   # Synthetic Var1/Var2 titles carry no meaning; the axis labels do.
@@ -1499,9 +1524,10 @@ S7::method(mark_heatmap, plotit_class) <- function(
 #' @noRd
 #' @keywords internal
 ._validate_stat_entity <- function(stat, level, ci_method, seed) {
-  stat <- match.arg(stat, c(
-    "identity", "mean_sem", "mean_sd", "mean_range", "mean_ci95"
-  ))
+  stat_choices <- c("identity", "mean_sem", "mean_sd", "mean_range", "mean_ci95")
+  if (length(stat) != 1 || !stat %in% stat_choices) {
+    ._abort_arg_enum("stat", stat_choices, got = stat)
+  }
   if (length(level) != 1 || is.na(level) || level <= 0 || level >= 1) {
     ._abort_arg_range("level", "in (0, 1)", got = level)
   }
@@ -1666,6 +1692,9 @@ S7::method(mark_errorbar, plotit_class) <- function(
 #' @param alpha Band fill opacity; `NULL` (default) uses the statistical
 #'   token `alpha_ci` (0.25), tuned so stacked evidence stays readable
 #'   behind points and lines.
+#' @param width On a discrete x axis, the band occupies this share of each
+#'   category slot (default 0.9); a statistical entity becomes one
+#'   slot-width rectangle band per group, filled by the grouping channel.
 #' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
 #' @param rasterize_dpi DPI for rasterization (default 300).
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
@@ -1699,6 +1728,7 @@ mark_ribbon <- S7::new_generic(
   function(plot, mapping = NULL, data = NULL, position = NULL, ...,
            stat = "identity", level = 0.95,
            ci_method = c("normal", "boot"), seed = NULL, alpha = NULL,
+           width = 0.9,
            rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
     S7::S7_dispatch()
   }
@@ -1709,6 +1739,7 @@ S7::method(mark_ribbon, plotit_class) <- function(
   plot, mapping = NULL, data = NULL, position = NULL, ...,
   stat = "identity", level = 0.95,
   ci_method = c("normal", "boot"), seed = NULL, alpha = NULL,
+  width = 0.9,
   rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
 ) {
   ci_method <- match.arg(ci_method)
@@ -1718,6 +1749,67 @@ S7::method(mark_ribbon, plotit_class) <- function(
     alpha <- ._MARK_STYLE$alpha_ci
   }
   params$alpha <- alpha
+
+  # Discrete axis + statistical entity: stat_summary collapses each ribbon
+  # group to a single point (no band).  Aggregate here instead and emit one
+  # slot-width rectangle band per cell, filled by the grouping channel.
+  if (!identical(stat, "identity")) {
+    d0 <- data %||% plot@gg$data
+    xv <- rlang::eval_tidy(mapping$x %||% plot@gg$mapping$x, d0)
+    if (is.factor(xv) || is.character(xv)) {
+      yv <- rlang::eval_tidy(mapping$y %||% plot@gg$mapping$y, d0)
+      gexpr <- mapping$colour %||% mapping$fill %||%
+        plot@gg$mapping$colour %||% plot@gg$mapping$fill
+      gv <- if (!is.null(gexpr)) {
+        rlang::eval_tidy(gexpr, d0)
+      } else {
+        "all"
+      }
+      gv <- rep(as.character(gv), length.out = length(xv))
+      xv <- factor(xv)
+      fun_data <- switch(stat,
+        mean_sem = ._fun_data_mean_sem,
+        mean_sd = ._fun_data_mean_sd,
+        mean_range = ._fun_data_mean_range,
+        mean_ci95 = function(x, ...) {
+          ._fun_data_mean_ci(
+            x,
+            level = level, ci_method = ci_method, seed = seed
+          )
+        }
+      )
+      keep <- !is.na(xv) & !is.na(yv)
+      cell <- paste(xv, gv, sep = "\r")
+      band <- do.call(rbind, lapply(split(which(keep), cell[keep]), function(ii) {
+        fd <- fun_data(yv[ii])
+        data.frame(
+          x = xv[ii][1],
+          ymid = (fd$ymin + fd$ymax) / 2,
+          h = fd$ymax - fd$ymin,
+          grp = gv[ii][1]
+        )
+      }))
+      band$grp <- factor(band$grp)
+      # A tile at the discrete position with the slot width is the native
+      # discrete-scale band (a ribbon cannot span a discrete axis).
+      band_mapping <- encode(x = x, y = ymid, fill = grp, height = h)
+      if (length(unique(band$grp)) > 1) {
+        band_mapping$group <- rlang::sym("grp")
+      }
+      params$inherit.aes <- FALSE # the band carries its own data
+      params$width <- width
+      params$colour <- params$colour %||% NA
+      params$linewidth <- 0
+      params$show.legend <- FALSE # the grouping legend lives on the marks
+      return(._impl_with(plot, band_mapping, band, position,
+        ggplot2::geom_tile,
+        rasterize, rasterize_dpi, rasterize_dev,
+        auto_dodge = FALSE, bind_aes = NULL, mark_name = "mark_ribbon",
+        extra = params
+      ))
+    }
+  }
+
   if (!identical(stat, "identity")) {
     params$stat <- "summary"
     params$fun.data <- switch(stat,
@@ -2083,6 +2175,7 @@ S7::method(mark_dumbbell, plotit_class) <- function(
 #' @param mapping Optional aesthetics: `x`, `y` plus an optional discrete
 #'   channel (`colour`/`fill`/`group`) giving one envelope per level
 #' @param data Optional data for this layer
+#' @param position Position adjustment.
 #' @param shape `"hull"` (convex hull) or `"ellipse"` (t-based data
 #'   ellipse, `stat_ellipse` engine at 0.95 level)
 #' @param expand Proportional outward dilation of the envelope (default
@@ -2162,23 +2255,28 @@ S7::method(mark_encircle, plotit_class) <- function(
   y <- y[ok]
   g <- g[ok]
 
+  # Uniform outward margin: expand shares of the hull diameter move the
+  # boundary outward everywhere, so extreme points keep clearance (the
+  # naive proportional dilation leaves them on the boundary).
   dilate <- function(pts) {
     if (expand == 0) {
       return(pts)
     }
-    centroid <- c(mean(pts$x), mean(pts$y))
-    pts$x <- centroid[1] + (pts$x - centroid[1]) * (1 + expand)
-    pts$y <- centroid[2] + (pts$y - centroid[2]) * (1 + expand)
+    cxy <- c(mean(pts$x), mean(pts$y))
+    d <- sqrt((pts$x - cxy[1])^2 + (pts$y - cxy[2])^2)
+    m <- expand * 2 * max(d)
+    k <- (d + m) / d
+    pts$x <- cxy[1] + (pts$x - cxy[1]) * k
+    pts$y <- cxy[2] + (pts$y - cxy[2]) * k
     pts
   }
   round_corners <- function(pts) {
     rounds <- max(0L, round(radius / 0.05))
     for (i in seq_len(rounds)) {
       n <- nrow(pts)
-      idx1 <- seq_len(n)
-      idx2 <- c(n, seq_len(n - 1))
-      qx <- (pts$x[idx1] + pts$x[idx2]) / 2
-      qy <- (pts$y[idx1] + pts$y[idx2]) / 2
+      idx2 <- c(seq_len(n - 1), 1L)
+      qx <- (pts$x + pts$x[idx2]) / 2 # midpoint of each edge v[i] -> v[i+1]
+      qy <- (pts$y + pts$y[idx2]) / 2
       pts <- data.frame(x = as.vector(rbind(pts$x, qx)), y = as.vector(rbind(pts$y, qy)))
     }
     pts

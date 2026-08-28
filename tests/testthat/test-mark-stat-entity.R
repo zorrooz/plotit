@@ -146,10 +146,12 @@ test_that("[BDD] spaghetti + mean/sem overlay renders end to end", {
 test_that("[BDD] layout_force keeps nodes inside the 10 percent canvas margin", {
   set.seed(1)
   edges <- data.frame(
-    source = sample(LETTERS[1:30], 60, replace = TRUE),
-    target = sample(LETTERS[1:30], 60, replace = TRUE)
+    source = sample(LETTERS, 60, replace = TRUE),
+    target = sample(LETTERS, 60, replace = TRUE)
   )
-  edges <- edges[edges$source != edges$target, ]
+  valid <- !is.na(edges$source) & !is.na(edges$target) &
+    edges$source != edges$target
+  edges <- edges[valid, ]
   g <- as_graph(edges) |> layout_force(seed = 1)
   expect_gte(min(g$nodes$x), 0.05 - 1e-9)
   expect_lte(max(g$nodes$x), 0.95 + 1e-9)

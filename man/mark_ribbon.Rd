@@ -15,6 +15,7 @@ mark_ribbon(
   ci_method = c("normal", "boot"),
   seed = NULL,
   alpha = NULL,
+  width = 0.9,
   rasterize = FALSE,
   rasterize_dpi = 300,
   rasterize_dev = "cairo"
@@ -48,6 +49,10 @@ entity.}
 \item{alpha}{Band fill opacity; \code{NULL} (default) uses the statistical
 token \code{alpha_ci} (0.25), tuned so stacked evidence stays readable
 behind points and lines.}
+
+\item{width}{On a discrete x axis, the band occupies this share of each
+category slot (default 0.9); a statistical entity becomes one
+slot-width rectangle band per group, filled by the grouping channel.}
 
 \item{rasterize}{If \code{TRUE}, rasterize via \code{ggrastr::rasterise()}.}
 

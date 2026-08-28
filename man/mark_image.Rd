@@ -11,7 +11,7 @@ mark_image(
   position = NULL,
   ...,
   size = 0.05,
-  clip = c("rectangle", "circle"),
+  clip = "rectangle",
   interpolate = TRUE,
   rasterize = FALSE,
   rasterize_dpi = 300,
@@ -59,7 +59,9 @@ as a fraction of the panel and the aspect ratio is preserved
 }
 \details{
 Rows with \code{NA} or empty \code{src} are dropped.  Images are decoded once per
-source and cached for the session.
+source and cached for the session.  Like any glyph, an image that would
+extend past the data range is clipped by the panel: boundary placements
+should widen the scale limits (e.g. \code{scale_x(limits = c(0, 4))}).
 }
 \examples{
 \dontshow{if (requireNamespace("png", quietly = TRUE)) withAutoprint(\{ # examplesIf}

@@ -88,16 +88,38 @@ NULL
     )
   }
   if (identical(clip, "circle")) {
-    grid::grobTree(
-      grob,
-      vp = grid::viewport(
-        x = x, y = y, width = grid::unit(1.05 * size * max(1, 1 / aspect), "npc"),
-        height = grid::unit(1.05 * size * max(1, aspect), "npc"),
-        clip = "circle"
-      )
+    grid::rasterGrob(._circle_mask(raster),
+      x = x, y = y,
+      height = if (aspect >= 1) grid::unit(size, "npc") else NULL,
+      width = if (aspect >= 1) NULL else grid::unit(size, "npc"),
+      interpolate = interpolate
     )
   } else {
     grob
+  }
+}
+
+# Multiply an alpha channel into the raster so pixels outside the inscribed
+# circle become transparent (device-independent circular clipping).
+#' Apply a circular alpha mask to a raster array.
+#' @noRd
+#' @keywords internal
+._circle_mask <- function(raster) {
+  dims <- dim(raster)
+  h <- dims[1]
+  w <- dims[2]
+  y <- (seq_len(h) - (h + 1) / 2) / h
+  x <- (seq_len(w) - (w + 1) / 2) / w
+  d <- sqrt(outer(y^2, rep(1, w)) + outer(rep(1, h), x^2))
+  mask <- d <= 0.5
+  if (dims[3] == 4) {
+    raster[, , 4] <- raster[, , 4] * mask
+    raster
+  } else {
+    out <- array(NA_real_, dim = c(h, w, 4))
+    out[, , 1:3] <- raster
+    out[, , 4] <- mask
+    out
   }
 }
 
@@ -158,7 +180,9 @@ GeomPlotitImage <- ggplot2::ggproto(
 #' (`clip = "circle"` crops to a disc).
 #'
 #' Rows with `NA` or empty `src` are dropped.  Images are decoded once per
-#' source and cached for the session.
+#' source and cached for the session.  Like any glyph, an image that would
+#' extend past the data range is clipped by the panel: boundary placements
+#' should widen the scale limits (e.g. `scale_x(limits = c(0, 4))`).
 #'
 #' @param plot A plotit object
 #' @param mapping Optional aesthetics: `x`, `y`, `src`
@@ -192,7 +216,7 @@ GeomPlotitImage <- ggplot2::ggproto(
 mark_image <- S7::new_generic(
   "mark_image", "plot",
   function(plot, mapping = NULL, data = NULL, position = NULL, ...,
-           size = 0.05, clip = c("rectangle", "circle"),
+           size = 0.05, clip = "rectangle",
            interpolate = TRUE,
            rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
     S7::S7_dispatch()
@@ -202,10 +226,13 @@ mark_image <- S7::new_generic(
 #' @export
 S7::method(mark_image, plotit_class) <- function(
   plot, mapping = NULL, data = NULL, position = NULL, ...,
-  size = 0.05, clip = c("rectangle", "circle"), interpolate = TRUE,
+  size = 0.05, clip = "rectangle", interpolate = TRUE,
   rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
 ) {
-  clip <- match.arg(clip)
+  clip_choices <- c("rectangle", "circle")
+  if (length(clip) != 1 || is.na(clip) || !clip %in% clip_choices) {
+    ._abort_arg_enum("clip", clip_choices, got = clip)
+  }
   if (!is.numeric(size) || length(size) != 1 || is.na(size) || size <= 0 || size > 1) {
     ._abort_arg_range("size", "in (0, 1] (panel fraction)", got = size)
   }

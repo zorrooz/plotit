@@ -45,8 +45,11 @@ test_that("[BDD] mark_encircle matches its documented expansion pipeline", {
   pts <- data.frame(x = enc$x[h], y = enc$y[h])
   cx <- mean(pts$x)
   cy <- mean(pts$y)
-  pts$x <- cx + (pts$x - cx) * (1 + expand)
-  pts$y <- cy + (pts$y - cy) * (1 + expand)
+  d <- sqrt((pts$x - cx)^2 + (pts$y - cy)^2)
+  m <- expand * 2 * max(d) # uniform margin share of the hull diameter
+  k <- (d + m) / d
+  pts$x <- cx + (pts$x - cx) * k
+  pts$y <- cy + (pts$y - cy) * k
   pipeline <- plotit(enc, encode(x = x, y = y)) |>
     mark_polygon(
       fill = "#4E79A7", colour = "grey70", alpha = 0.18,
