@@ -44,7 +44,7 @@
 
 | 层级 | 稳定性 | 内容 |
 |------|--------|------|
-| 核心契约 | 1.0 后主版本稳定 | 函数名（`plotit`、`encode`、`mark_*`、`scale_*`、`label_*`、`compose_*`、`style`、`export`）、返回类型 `plotit` 支持管道、`plotit()` 的 `data` 和 `mapping` 参数；mark 的 `data` 参数接受 data.frame / `~table` 公式（兼容扩展） |
+| 核心契约 | 1.0 后主版本稳定 | 函数名（`plotit`、`encode`、`mark_*`、`scale_*`、`label_*`、`compose_*`、`style`、`export`、`add_ggplot`）、返回类型 `plotit` 支持管道、`plotit()` 的 `data` 和 `mapping` 参数；mark 的 `data` 参数接受 data.frame / `~table` 公式（兼容扩展） |
 | 扩展契约 | 2.0 可调整 | `scale_*` 的 `trans` 合法值集合（可增加不删除）、`label_*` 参数协议（`text`/`hide`/`reset`）、`project_*`/`split_*` 参数签名、关系数据体系（`as_graph()`、`layout_*`、`plotit_graph`、`@graph` 槽） |
 | 可迭代 | 不破坏上述两层 | 默认主题参数、启发式算法、默认调色板、内部工具函数实现 |
 
@@ -188,7 +188,7 @@ Vega-Lite 和 AntV G2 采用不同策略处理统计/复合 Mark，plotit 取两
 | 引擎 | 基础 Mark 数量 | 复合/统计 Mark 策略 | 典型复合 Mark |
 |---|---|---|---|
 | **Vega-Lite** | 11 原语 (`area`/`bar`/`line`/`point`/`rect`/`rule`/`text`/`tick`/`circle`/`square`/`geoshape`) | 3 个复合 Mark 宏观展开为多层原语 | `boxplot`(5 层)、`errorbar`(2 层)、`errorband`(2 层) |
-| **AntV G2 5.0** | 24 基础 (corelib) | 3 层库体系：基础→统计(3)→复合(10) | `boxplot`/`gauge`/`liquid`(plotlib) + `sankey`/`treemap`/`chord`/`forceGraph` 等(graphlib) |
+| **AntV G2 5.0** | 24 基础 (corelib) | 六库注册（5.4.8 源码实测）：core 24 / graph 7 / plot 4 / geo 2 / lite 1 = 34 mark 类；复合经 CompositeMarkComponent 展开为子 mark 数组 | `boxplot`/`gauge`/`liquid`(plotlib) + `sankey`/`treemap`/`chord`/`forceGraph` 等(graphlib) |
 | **plotit** | 40 已实现（18 基础 + 10 统计 + 12 复合含关系） | **三层体系**：基础 Mark → 统计 Mark → 复合 Mark（语法糖）+ 关系类 | 见下表 |
 
 G2 的每个复合 Mark 内部展开为 2-5 个基础 Mark 的组合，这与 plotit "组合优先"原则一致。参考两方经验，plotit 新增两类：
@@ -396,7 +396,10 @@ plotit(data, mapping = encode(), autofit = FALSE,
 - `rasterize` 需 `ggrastr`
 - 内部通过 `._mark_impl()` 共享逻辑：resolve position、构建 geom、条件栅格化
 - **签名特例**（按 §3.3b 三层体系）：复合 Mark `mark_significance`/`mark_lollipop`/`mark_dumbbell`/`mark_forest` 无 `position`/`rasterize`（内层 Mark 各自处理）；关系类 `mark_sankey`/`mark_chord`/`mark_treemap`/`mark_network` 无 `position`/`rasterize`（布局拥有放置权；sankey 原先接受的死参 `position` 已删除，treemap 的 raster 三件套已按 §3.3b 原则 3 移除）；统计 Mark `mark_corr` 无 `mapping`/`data`/`position`（自算相关性矩阵）；`mark_network` 用专用双数据源签名（`edges`/`encode_edges`）。带具名参数的 mark：`mark_step(direction=)`、`mark_rug(sides=, length=)`、`mark_curve(curvature=, angle=, arrow=)`、`mark_text(repel=)`/`mark_label(repel=)`、`mark_bin2d(bins=, binwidth=)`、`mark_contour(filled=, bins=, breaks=)`、`mark_ecdf(n=)`、`mark_qq(distribution=)`/`mark_qq_line(distribution=, line.p=, fullrange=)`、`mark_errorbar(width=, orientation=, caps=)`。关系四 sugar 共有 `show_labels = TRUE`，`mark_network` 另有 `edge_shape = c("straight","curved")`；`mark_rule` 静态色参数为美式 `color=`（旧拼写 `colour=` 经 `...` 透传仍兼容）；`mark_rule` 亦支持数据段模式（`data=` 或全局映射含 x/xend/y/yend 时逐行画段）
-- **`+` 逃生舱**：`plotit + ggplot2对象` 经 S3 `+.plotit`/`+.plotit_composite` 直转底层 gg（annotate/guides/labs/自定义层皆可达）；动词 API 仍是规范路径（`+ scale_*()` 会绕过 managed 注册表），composite 上遵循 patchwork 语义
+- **`add_ggplot` 逃生舱**：`add_ggplot(plot, ggplot2对象)` 直转底层 gg（annotate/guides/labs/
+  自定义层皆可达），返回 `plotit`/`plotit_composite` 使管道延续（替代已删除的 S3
+  `+.plotit`/`+.plotit_composite` 重载，语义对标 tidyplots `add()`）；动词 API 仍是规范路径
+  （`+ scale_*()` 会绕过 managed 注册表）
 
 #### 3.3.3a `make_mark()` / `make_theme()` — 用户可扩展工厂
 
@@ -529,7 +532,7 @@ style_dark <- make_theme("style_dark",
 | `scale_color`/`scale_fill` | `NULL` | 自动检测（离散→`discrete`，连续→`identity`） |
 | `scale_size`/`scale_alpha` | `NULL` | 同上 |
 | `scale_shape`/`scale_linetype` | `"discrete"` | — |
-| `scale_radius` | `"identity"` | 同上；discrete/binned 定向报错引导 `scale_size`（VL scaleRadius 对齐，泡图面积诚实编码） |
+| `scale_radius` | **defunct**（1.0 起） | 半径编码归 `scale_size` 域（一动词一语义）；调用即定向报错引导 `scale_size(range=)` 或 `ggplot2::scale_radius` |
 
 **`trans` 合法矩阵**：
 
@@ -614,7 +617,7 @@ data |> as_graph() |> plotit() |>
 - **收编格式**：边表（canonical）、matrix/xtabs（M[row,col] → source=row）、hclust/dendrogram（节点携带 height）、层次表（`id`+`parent` 列，value 存于节点）、tbl_graph。键统一转 character；`nodes` 缺省时按首次出现序隐式生成。
 - **已知局限**：图数据 + `split_*` 的边过滤语义未定义，v1 不支持。
 
-规划中（延期评估）：`layout_pack`（packcircles 未入依赖）。关系类渲染器已 100% 收敛至 ggplot2 原语（circlize/ggsankey/ggraph 全部退役）。
+规划中：`layout_pack`（自研 place 算法；G2 graphlib 一等收录构成新证据，重构设计基线复核为 **P2 解除延期**——见 `.agent/design/07` §6）。关系类渲染器已 100% 收敛至 ggplot2 原语（circlize/ggsankey/ggraph 全部退役）。
 
 #### 3.3.5 `project_*` — 坐标系
 
@@ -635,7 +638,7 @@ data |> as_graph() |> plotit() |>
 
 `"none"` 模式已知局限：非原生 guide，轴线颜色/线宽/字体从 `._parallel_theme_props()` 提取当前主题 `axis.*` 元素，不保证 100% 像素一致。推荐优先使用 `"std"` 或 `"global"`。
 
-`project_map` 默认 `coord_sf()`，传 `projection` 时切换 `coord_map()`（需 mapproj）。`project_polar` 径向模式（`inner_radius>0` 或 `r_axis_inside=TRUE`）需 ggplot2 ≥ 3.5.0。
+`project_map` 默认 `coord_sf()`，传 `projection` 时切换 `coord_map()`（需 mapproj）。`project_polar` 径向模式（`inner_radius>0` 或 `r_axis_inside=TRUE`）需 ggplot2 ≥ 3.5.0（`coord_radial`）。**拼写注记（勘误 F-3）**：4.x 规范拼写为点式 `r.axis.inside`/`rotate.angle`/`inner.radius`，下划线版已 deprecated，`direction` 由 `reverse` 取代——`project_polar` 透传层对齐设计见 `.agent/design/05` §2。
 
 #### 3.3.6 `split_*` — 分面
 
@@ -707,7 +710,7 @@ data |> as_graph() |> plotit() |>
 
 **关键约定**：
 
-- **WYSIWYG**：`autofit=FALSE` 时构造期把 meta 尺寸烘焙为 `theme(panel.widths=, panel.heights=)`（ggplot2 ≥3.5，旧版优雅降级）。meta 尺寸描述**整个面板区域**：单图 1×1 网格烘焙单值；`split_*` 分面后经 `._split_rebake_size()` 按新网格重烘焙（每格 = 声明值 ÷ 列/行数），`._build_fixed_gtable()` 同规则分摊——多面板导出保持声明总足迹。任意渲染路径面板物理尺寸恒定；`export()` 的 gtable 测量与之数值一致。
+- **WYSIWYG**：`autofit=FALSE` 时构造期把 meta 尺寸烘焙为 `theme(panel.widths=, panel.heights=)`（ggplot2 **4.0.0+** 能力，#5338；3.5.x 无此主题元素，旧版"优雅降级"表述系勘误）。meta 尺寸描述**整个面板区域**：单图 1×1 网格烘焙单值；`split_*` 分面后经 `._split_rebake_size()` 按新网格重烘焙（每格 = 声明值 ÷ 列/行数），`._build_fixed_gtable()` 同规则分摊——多面板导出保持声明总足迹。任意渲染路径面板物理尺寸恒定；`export()` 的 gtable 测量与之数值一致。
 - **纵横比优先于固定面板**（aspect-true outranks WYSIWYG）：绝对烘焙尺寸会拉伸 CoordFixed 坐标系（圆变椭圆）。两处对称修复——`_prepare_render()` 检测到冲突时剥离烘焙尺寸（knitr/pkgdown 路径）；`._build_fixed_gtable()` 按 `coordinates$aspect()` 信箱式缩放面板（print/export 路径）。多面板自由刻度取首面板范围（已文档化近似）。
 - **组合图默认尺寸**：patchworkGrob 的 `1null` 单位在视口外不解析，直接测量得到垃圾值。`._composite_default_size()` 从子图 meta 面板尺寸 + 布局类型（grid/marginal/inset）+ 固定 chrome 余量（1.6in）计算默认画布，print/export 共用。
 - **剥离**：组合图组装前 `._reset_sizing()` 先调 `._strip_panel_size()`（公开 API `+ theme(panel.widths=NULL)` 重置，不直改 `gg$theme`——ggplot2 ≥4.0 theme 为 S7 对象，list 子集赋值会校验失败）。
@@ -831,7 +834,7 @@ export(p, "output.pdf", dpi = 300)
 属于 §1.4 可迭代范围，具体参数可随版本调整。全部默认视觉决策集中于 `R/theme.R` 单一源头模块（§3.3.11），改一处全局生效。
 
 - **主题**：学术简洁风（对标 tidyplots `theme_tidyplot` 配方并适配 plotit 画布）——基于 `theme_minimal`，白色纸面 + 纯黑 ink 发丝轴线/刻度线（linewidth 0.25），无网格线，背景全透明，层级分明字号（title rel(1.15) plain 左对齐 / subtitle rel(0.95) 灰 / axis.title rel(0.95) / axis.text rel(0.85) 灰 / legend rel(0.85)，legend.key 3.5mm）。极坐标系自动关闭轴线/刻度线/轴文本。平行坐标系：`std`/`global` 模式共享原生 y 轴，`none` 模式每列渲染主题匹配轴线。
-- **WYSIWYG 所见即所得**：`plotit()` 构造时把 meta 面板尺寸经 ggplot2 ≥3.5 的 `theme(panel.widths=, panel.heights=)` 烘焙进 `@gg`——IDE 设备、knitr、pkgdown、ggsave 任意渲染路径下面板物理尺寸恒定，内容比例与导出完全一致（实测 6×6/9×7/14×10 英寸设备上面板恒等于声明值）。meta 尺寸描述整个面板区域：`split_*` 分面后按网格重烘焙分摊（`._split_rebake_size()`），多面板导出保持声明总足迹。组合图组装前由 `._reset_sizing()` 剥离该约束交由 patchwork 布局。**纵横比优先**：固定纵横比坐标系（CoordFixed）下烘焙尺寸让位——渲染前剥离（`._prepare_render`）或信箱式缩放（`._build_fixed_gtable`），圆不因面板形状变椭圆。
+- **WYSIWYG 所见即所得**：`plotit()` 构造时把 meta 面板尺寸经 ggplot2 **4.0.0+** 的 `theme(panel.widths=, panel.heights=)`（#5338；"≥3.5"表述系勘误，3.5.x 无此能力）烘焙进 `@gg`——IDE 设备、knitr、pkgdown、ggsave 任意渲染路径下面板物理尺寸恒定，内容比例与导出完全一致（实测 6×6/9×7/14×10 英寸设备上面板恒等于声明值）。meta 尺寸描述整个面板区域：`split_*` 分面后按网格重烘焙分摊（`._split_rebake_size()`），多面板导出保持声明总足迹。组合图组装前由 `._reset_sizing()` 剥离该约束交由 patchwork 布局。**纵横比优先**：固定纵横比坐标系（CoordFixed）下烘焙尺寸让位——渲染前剥离（`._prepare_render`）或信箱式缩放（`._build_fixed_gtable`），圆不因面板形状变椭圆。
 - **调色板**：无映射时默认 Tableau 蓝 `#4E79A7`（同时 `colour`+`fill`，图例隐藏）。有映射时自动挂载策划色板，**全包唯一决策点** `._default_colour_scale()`：**恒等/分组通道（类别列）→ friendly**（Okabe-Ito 色盲安全六色，黄位加深为 `#F5C710`：`#0072B2 #56B4E9 #009E73 #F5C710 #E69F00 #D55E00`；>6 档锚点插值，<6 档均匀取样），**量级通道（数值列）→ viridis 顺序色板**。三条挂载路径共享同一规则：构造期全局映射、图层映射（`._mark_impl` 自动挂载 + managed 注册表防覆盖用户 scale）、Mark 派生通道。用户之后链式 `scale_*()` 即替换（后执行者胜）；`encode(colour = I(...))` AsIs 常量走 identity 不被劫持；hue 色相轮退居可选方案 `range="hue"`。
 - **Mark 统一默认样式**：全部 mark 的样式字面量集中于 `R/mark_style.R`（详见 §3.3.3c）——品牌色 primary `#4E79A7` / secondary `#E15759`；中性灰阶 ink(grey30)/soft(grey50)/faint(grey70)；线宽阶梯 lw_data(0.9) > lw_thin(0.5) > lw_border(0.25)；注释字号 txt_note(3.2)；半透明填充 alpha_fill(0.6)、连接带 alpha_link(0.5)。柱宽默认槽位的 0.7（slot=dodge 0.8，留出组间空气）。用户显式参数与已映射美学始终优先于默认。
 - **封闭统计 Mark 自动 viridis**：量级派生通道（corr `value` / hex `count` / density_2d(filled) `level`）语义为数值大小 → viridis 顺序色板；关系类语法糖的恒等派生通道（sankey 流带/节点、chord 弧段/缎带、treemap 叶块均默认 source identity，network 节点 colour）按列类型路由 friendly/viridis——与全局映射同一规则、同一色板。用户之后链式调用 `scale_*()` 即替换（后执行者胜）。
@@ -845,7 +848,7 @@ export(p, "output.pdf", dpi = 300)
 ## 7. 补充约定
 
 - **空数据与缺失值**：空 data.frame 由 ggplot2 决定。`NA` 由 ggplot2 默认静默移除。
-- **S7 槽位**：`plotit_labels`（title/subtitle/caption/x/y/legend/dirty）、`plotit_metadata`（autofit/width/height/dodge/unit/default_color/labels）、`plotit`（gg/meta）。
+- **S7 槽位**：`plotit_labels`（title/subtitle/caption/x/y/legend/dirty）、`plotit_metadata`（autofit/width/height/dodge/unit/default_color/labels）、`plotit`（gg/meta/graph——`@graph` 为可空 `plotit_graph` 槽，见 §3.3.4a）。
 - **打印与设备**：`print()` 交互模式通过 `grDevices::dev.new(noRStudioGD=TRUE)` 打开独立设备窗口保证面板尺寸物理呈现。`options(plotit.device)`：`"default"` / `"rstudio"` / `NULL`（禁用自动设备打开）。`export()` 从文件名推断设备。
 
 ---
@@ -876,7 +879,7 @@ export(p, "output.pdf", dpi = 300)
 | 阶段 | 名称 | 范围 | 状态 |
 |---|---|---|---|
 | 0 | 固本 | 架构清债 + 代码质量 | 🔄 进行中（单图侧 patchwork 剥离、`._sync_labels` 抽象、mark 工厂函数、@examples 均已 ✅；剩余：组合图 patchwork 剥离） |
-| 1-4 | mark 扩展 | 13 种新 mark（20 种规划 − 6 已实现 − 1 已移除组合） | ✅ 已完成（现 39 种，见 §3.2；2025-12 覆盖轮 +12） |
+| 1-4 | mark 扩展 | 13 种新 mark（20 种规划 − 6 已实现 − 1 已移除组合） | ✅ 已完成（现 40 种，见 §3.2；2025-12 覆盖轮 +12，矩阵热图轮 +1） |
 | 5 | 收尾 | 文档补齐、全量验证、发布准备 | ⬜ 未开始 |
 
 ---
@@ -992,14 +995,7 @@ export(p, "output.pdf", dpi = 300)
 
 ### 9.2a 组合收录（不新增 mark 的 recipe）
 
-以下视觉效果通过已有 mark + project 组合实现，不新增独立 mark：
-
-| 视觉效果 | 等价管道 | 说明 |
-|---|---|---|
-| 饼图/环形图/玫瑰图 | `mark_bar()` + `project_polar(inner_radius=...)` | 替代 VL `arc` / G2 `interval`(pie)。见 §3.2b 完整示例 |
-| 雷达图 | `mark_line()` + `project_polar()` | 多维数据对比，见 §3.2b |
-| 冰柱图/旭日图 | `mark_rect` / `mark_bar + project_polar()` + 层次树预处理 | 替代 G2 `tree`/`partition`。数据预处理方案见 §3.2b |
-| 一维 strip plot | `mark_point(position="jitter")` | 替代 VL `tick`。若有需求可后续添加 `mark_rug` 作为 theme 辅助 |
+组合 recipe 统一维护于 §3.2b（含等价管道与对标说明），本节不再单独列表，避免双处漂移。
 
 ---
 
@@ -1016,7 +1012,7 @@ export(p, "output.pdf", dpi = 300)
 
 **验收标准**：
 
-- [x] 20 种 mark 至少 15 个已实现（≥75% mark 覆盖率）——实际 39 种已达成
+- [x] 20 种 mark 至少 15 个已实现（≥75% mark 覆盖率）——实际 40 种已达成
 - [ ] `R CMD check` 4 平台（Linux/macOS/Windows + R-devel）零 ERROR 零 WARNING
 - [ ] `lintr::lint_package()` 零 lint 问题
 - [ ] pkgdown 网站完整渲染所有函数参考页
@@ -1029,10 +1025,10 @@ export(p, "output.pdf", dpi = 300)
 | 层级 | 函数族 | 1.0 目标 | 已实现 | 完成度 |
 |------|--------|----------|--------|--------|
 | 内层 | plotit + encode | 2 | 2 | 100% |
-| 内层 | mark_* | 20（目标 ≥15） | 27 | 135%（超目标） |
+| 内层 | mark_* | 20（目标 ≥15） | 40 | 200%（超目标） |
 | 内层 | scale_* + project_* + split_* + label_* + style+export | 22 | 22 | 100% |
 | 最外层 | compose_* | 3 | 3 | 100% |
-| **总计** | | **~49** | **54** | **110%** |
+| **总计** | | **~49** | **67** | **137%** |
 
 ### 9.5 1.0 检查清单
 
@@ -1212,3 +1208,59 @@ parse(file = "test.R")
 | 工作流触发失败 | 相关 | 用 act 本地模拟 |
 
 本地复现 CI 失败优先使用 `gh api` 获取真实日志（§12.5），不要在本地 Windows 直接运行 R CMD check——差异太多。
+
+---
+
+## 13. 终极目标 TODO（记录，非本轮完成项）
+
+> 来源：发布级重构主任务 §2。**所有 mark 与 layout 算法全部自实现**，严格对标各领域 SOTA，
+> 接近 1:1 高质量复现。本轮硬约束已满足：关系类图表（network/tree/dendrogram/sankey/chord/
+> treemap 及其新样式）全部自研，零外部布局依赖（beeswarm 为既有豁免）。
+
+- [ ] 逐个 mark 评估底层渲染算法自研（当前标准/统计 mark 以 ggplot2 原生 geom 为底层，
+      关系类已全自研；自研推进顺序按需求榜：bar/line/point 族 → 统计族 → 复合族）
+- [ ] 对标基准：Vega / Vega-Lite、AntV G2 5.0、Observable Plot、D3 v7、ECharts 5、
+      tidyplots / tidyheatmaps（引用见 `.agent/research/`）
+- [ ] 质量验收：视觉 1:1 比对（识图 review 轮，P5）+ ggplot_build 数值回归断言（H3）
+- [ ] 完成判定：覆盖矩阵（`.agent/research/10-coverage-matrix.md`）全维度可表达 + 无引用决策清零
+
+---
+
+## 14. 发布级重构 API 设计基线（目标态，未实施）
+
+> 来源：阶段 0 调研（`.agent/research/`）→ 系统性回顾 + API 设计套件（`.agent/design/`，v1）。
+> 用户已裁决 5 项决策（design/10 §4）。**本节仅登记目标态与指针，实施前 §3 现行约定不变**；
+> 工程排期见 `.agent/plan.md`，实施完成后相应条目并入 §3 并从本节移除。
+
+### 14.1 新增导出（4 个，均过三闸门，justification 见 design/03、06）
+
+| 函数 | 层 | 一句话 | 详细设计 |
+|---|---|---|---|
+| `mark_image` | 基础 | 图像散点（src/x/y，自研 rasterGrob geom；锚点 B7） | design/03 §3 |
+| `mark_ribbon` | 统计 | 统计区间带（与 `mark_errorbar(stat=)` 同枚举；B-1） | design/03 §2 |
+| `mark_encircle` | 复合 | 分组圈注（hull/ellipse 包络 + expand/radius） | design/03 §4 |
+| `compose_annot` | 组合 | 任意侧附着条带（复杂热图旗舰配方使能器；D4） | design/06 §4 |
+
+### 14.2 主要扩参（全部进扩展契约层）
+
+- `mark_errorbar`/`mark_ribbon`：`stat`（identity/mean_sem/mean_sd/mean_range/mean_ci95）、`level`、`ci_method`（03§2）
+- `mark_heatmap`：`show_numbers`/`number_format`/`number_color`/`na_color`；`cluster` 扩型接受 hclust/list/字符向量四态（03§5.1、06§5）
+- `scale_color/fill`：`na_color`/`n_bins`/`mid`；palette 白名单扩至 20 方案（新增发散类 6 个，默认 `rdbu`；D-4 裁决本期封顶）（04§1–3）
+- `project_polar`：`start`/`end`/`reverse`，`direction` 进弃用周期（05§2）
+- `project_parallel`：`order`/`recenter`/`aggregate`（05§4）
+- `split_wrap`/`split_grid`：`dir` 八向码 / `axes` 透传（05§5）
+- `compose_grid`：`design`（字符串/数值向量列表）/`axis_titles`/三态尺寸（06§2）
+- `layout_tree`：`leaf_spacing`/`edge="elbow"`（07§2）
+- `export`：接受 plotit 列表 → 多页 PDF（08§3）
+
+### 14.3 已裁决的定位边界（并入非目标）
+
+- 仪表类 `mark_gauge`/`mark_liquid` **定位外**；`mark_venn` 维持 P3 二轮评审（D-5）。
+- 不自动计算统计检验 p 值：`mark_significance` 维持纯外观，预计算表经 `comparisons=` 喂入（D-1）。
+- mark_raster / layout_voronoi·delaunay：纯 R 自研、P2/P3 慢车道（D-2）。
+- NEWS.md 于阶段 7 随 1.0.0 统一补写（D-3）；palette 名录本期 20 方案封顶（D-4）。
+
+### 14.4 待核实项（实施前补验，design/01 §4 全表）
+
+observable10 色值（仅当追加色板）、`print.plotit_composite` S3 注册路径（U-9，bug 台账候选）、
+patchwork `guide_area` 用法、ggridges 可行性等——逐项见 design/01 §4。

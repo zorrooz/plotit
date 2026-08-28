@@ -17,6 +17,6 @@
 ^\.quarto$
 ^\.reasonix$
 ^\.agents$
-^\.qoder$
+^\.agent$
 ^plotit_.*[.]tar[.]gz$
 ^plotit[.]Rcheck$
