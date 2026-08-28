@@ -4,7 +4,12 @@
 \alias{layout_tree}
 \title{Tree layout}
 \usage{
-layout_tree(plot, direction = c("down", "up", "left", "right"))
+layout_tree(
+  plot,
+  direction = c("down", "up", "left", "right"),
+  leaf_spacing = c("count", "equal"),
+  edge = c("straight", "elbow")
+)
 }
 \arguments{
 \item{plot}{A \code{plotit} object holding graph data (created via
@@ -12,6 +17,14 @@ layout_tree(plot, direction = c("down", "up", "left", "right"))
 
 \item{direction}{Direction the tree grows: \code{"down"} (root on top),
 \code{"up"}, \code{"right"}, or \code{"left"}.}
+
+\item{leaf_spacing}{Leaf placement: \code{"count"} packs leaves one unit
+apart in merge-side order (d3 tidy-tree); \code{"equal"} normalises leaves
+onto \verb{[0, 1]} so leaf slots align with split-facet panels.}
+
+\item{edge}{Edge shape: \code{"straight"} (direct parent-child segments) or
+\code{"elbow"} (right-angle bend via a midpoint row pair; each edge becomes
+two rows in the edges table so \code{\link[=mark_rule]{mark_rule()}} renders the polyline).}
 }
 \value{
 A modified \code{plotit} object (pipeline form), or a new
@@ -31,6 +44,12 @@ h <- data.frame(
 as_graph(h) |>
   plotit() |>
   layout_tree(direction = "down") |>
+  mark_rule(data = ~edges) |>
+  mark_point(data = ~nodes)
+
+as_graph(h) |>
+  plotit() |>
+  layout_tree(direction = "right", edge = "elbow") |>
   mark_rule(data = ~edges) |>
   mark_point(data = ~nodes)
 }

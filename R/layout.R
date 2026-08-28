@@ -269,8 +269,12 @@ NULL
 
 #' @noRd
 #' @keywords internal
-._layout_engine_tree <- function(g, direction = c("down", "up", "left", "right")) {
+._layout_engine_tree <- function(g, direction = c("down", "up", "left", "right"),
+                                 leaf_spacing = c("count", "equal"),
+                                 edge = c("straight", "elbow")) {
   direction <- match.arg(direction)
+  leaf_spacing <- match.arg(leaf_spacing)
+  edge <- match.arg(edge)
   t <- ._graph_topology(g)
   if (nrow(t$edges) == 0) {
     ._abort_hint(
@@ -289,9 +293,19 @@ NULL
   kids <- ._hierarchy_children(t)
   # Raw layout: x spreads leaves left-to-right, y is depth from the root
   # (root at 0).  Direction names describe where the tree grows; the root
-  # sits opposite.
+  # sits opposite.  leaf_spacing = "count" packs leaves one unit apart in
+  # traversal order (d3 tidy-tree); "equal" normalises them onto [0, 1]
+  # so leaf slots align with split-facet panels.
   xx <- unname(._hierarchy_leaf_x(kids, roots, t$nodes$id)[t$nodes$id])
   hh <- unname(._hierarchy_depths(kids, roots, t$nodes$id)[t$nodes$id])
+  if (leaf_spacing == "equal") {
+    n_leaves <- sum(!(t$nodes$id %in% names(kids)))
+    if (n_leaves > 1) {
+      xx <- (xx - 1) / (n_leaves - 1)
+    } else {
+      xx <- xx * 0
+    }
+  }
   if (direction == "down") {
     t$nodes$x <- xx
     t$nodes$y <- -hh
@@ -305,7 +319,31 @@ NULL
     t$nodes$x <- -hh
     t$nodes$y <- xx
   }
-  t$edges <- ._map_edge_coords(t$nodes, t$edges)
+  if (edge == "elbow") {
+    # Right-angle connection: one bend per edge.  For vertically growing
+    # trees the elbow sits at (child x, parent y); for horizontal growth at
+    # (parent x, child y).  Two rows per edge render with mark_rule.
+    px <- t$nodes$x[match(t$edges$source, t$nodes$id)]
+    py <- t$nodes$y[match(t$edges$source, t$nodes$id)]
+    cx <- t$nodes$x[match(t$edges$target, t$nodes$id)]
+    cy <- t$nodes$y[match(t$edges$target, t$nodes$id)]
+    ex <- if (direction %in% c("down", "up")) cx else px
+    ey <- if (direction %in% c("down", "up")) py else cy
+    legs <- rbind(
+      data.frame(
+        source = t$edges$source, target = paste0(t$edges$target, "*"),
+        x = px, y = py, xend = ex, yend = ey
+      ),
+      data.frame(
+        source = paste0(t$edges$source, "*"), target = t$edges$target,
+        x = ex, y = ey, xend = cx, yend = cy
+      )
+    )
+    rownames(legs) <- NULL
+    t$edges <- legs
+  } else {
+    t$edges <- ._map_edge_coords(t$nodes, t$edges)
+  }
   ._new_graph_from_parts(t, directed = TRUE)
 }
 
@@ -1043,6 +1081,12 @@ layout_circle <- S7::new_generic(
 #'   [as_graph()] + [plotit()]), or a bare `plotit_graph`.
 #' @param direction Direction the tree grows: `"down"` (root on top),
 #'   `"up"`, `"right"`, or `"left"`.
+#' @param leaf_spacing Leaf placement: `"count"` packs leaves one unit
+#'   apart in merge-side order (d3 tidy-tree); `"equal"` normalises leaves
+#'   onto `[0, 1]` so leaf slots align with split-facet panels.
+#' @param edge Edge shape: `"straight"` (direct parent-child segments) or
+#'   `"elbow"` (right-angle bend via a midpoint row pair; each edge becomes
+#'   two rows in the edges table so [mark_rule()] renders the polyline).
 #' @return A modified `plotit` object (pipeline form), or a new
 #'   `plotit_graph` when called on raw graph data.
 #' @examples
@@ -1055,10 +1099,18 @@ layout_circle <- S7::new_generic(
 #'   layout_tree(direction = "down") |>
 #'   mark_rule(data = ~edges) |>
 #'   mark_point(data = ~nodes)
+#'
+#' as_graph(h) |>
+#'   plotit() |>
+#'   layout_tree(direction = "right", edge = "elbow") |>
+#'   mark_rule(data = ~edges) |>
+#'   mark_point(data = ~nodes)
 #' @export
 layout_tree <- S7::new_generic(
   "layout_tree", "plot",
-  function(plot, direction = c("down", "up", "left", "right")) {
+  function(plot, direction = c("down", "up", "left", "right"),
+           leaf_spacing = c("count", "equal"),
+           edge = c("straight", "elbow")) {
     S7::S7_dispatch()
   }
 )
