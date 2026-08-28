@@ -705,7 +705,7 @@ data |> as_graph() |> plotit() |>
 | `._theme_default(base_size, base_family)` | 学术简洁主题构建器（style.R 仅保留用户泛型，构建体已迁出） |
 | `._attach_default_colour_scale(p, data, mapping)` | 构造期自动挂载策划色板：映射的离散 colour/fill→friendly、连续→viridis；AsIs 常量与解析失败静默跳过 |
 | `._default_colour_scale(aes, data, var)` | **全包唯一色板决策点**：类别列→friendly 定性、数值列→viridis 顺序；构造期/图层/派生通道三条路径共用 |
-| `._apply_panel_size(gg, w, h, unit, grid)` / `._strip_panel_size(gg)` / `._panel_sizing_supported()` / `._panel_grid_dims(gg)` | WYSIWYG 烘焙/剥离/能力探测/面板网格探测 |
+| `._apply_panel_size(gg, w, h, unit, grid)` / `._strip_panel_size(gg)` / `._panel_grid_dims(gg)` | WYSIWYG 烘焙/剥离/面板网格探测（ggplot2 底线 4.0.0 后能力探测函数 `._panel_sizing_supported()` 已移除，恒真门槛为死代码） |
 | `._gg_aspect_conflict(gg)` | 检测固定纵横比坐标系（CoordFixed）与烘焙面板尺寸的冲突 |
 
 **关键约定**：

@@ -181,6 +181,10 @@ plotit <- function(
 #' verb API (`mark_*`, `scale_*`, `label_*`, `style`) for reproducible,
 #' well-validated plots.
 #'
+#' ggplot2 4.0's [ggplot2::stat_manual()] slots in here as a custom
+#' data-transformation layer without a dedicated plotit verb:
+#' `add_ggplot(p, ggplot2::stat_manual(fun = function(d) ...))`.
+#'
 #' @param plot A `plotit` object (or a `plotit_composite`).
 #' @param component Any object ggplot2's `+` accepts (layer, scale, coord,
 #'   facet, theme, labs, or a ggplot2 object).

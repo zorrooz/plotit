@@ -22,12 +22,16 @@ NULL
 #'
 #' @param plot A plotit object.
 #' @param ... Unnamed arguments are faceting variables (e.g. `Species`);
-#'   named arguments (`labeller`, `strip.position`, `dir`, `drop`, ...)
+#'   named arguments (`labeller`, `strip.position`, `drop`, ...)
 #'   are passed through to [ggplot2::facet_wrap()].
 #' @param nrow Number of rows in the facet grid (optional).
 #' @param ncol Number of columns in the facet grid (optional).
 #' @param scales Should scales be fixed ("fixed"), free ("free"), or free in
 #'   one dimension ("free_x", "free_y")?
+#' @param dir Facet fill direction code passed to [ggplot2::facet_wrap()]:
+#'   ggplot2 4.0 supports the eight-direction codes `"lt"`, `"tl"`, `"lb"`,
+#'   `"bl"`, `"rt"`, `"tr"`, `"rb"`, `"br"` (first letter = first-panel
+#'   corner, second letter = fill direction). `NULL` = ggplot2 default.
 #' @return A modified `plotit` object.
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
@@ -37,7 +41,8 @@ NULL
 split_wrap <- S7::new_generic(
   "split_wrap",
   "plot",
-  function(plot, ..., nrow = NULL, ncol = NULL, scales = "fixed") {
+  function(plot, ..., nrow = NULL, ncol = NULL, scales = "fixed",
+           dir = NULL) {
     S7::S7_dispatch()
   }
 )
@@ -67,7 +72,8 @@ S7::method(split_wrap, plotit_class) <- function(
   ...,
   nrow = NULL,
   ncol = NULL,
-  scales = "fixed"
+  scales = "fixed",
+  dir = NULL
 ) {
   split <- ._split_facet_dots(...)
   # A named `facets=` in `...` would collide with the constructed formal at
@@ -85,6 +91,11 @@ S7::method(split_wrap, plotit_class) <- function(
     list(nrow = nrow, ncol = ncol, scales = scales),
     split$passthrough
   )
+  # facet_wrap() rejects dir = NULL (its own default is "h"), so only
+  # forward the argument when the user actually set it.
+  if (!is.null(dir)) {
+    args$dir <- dir
+  }
   plot@gg <- plot@gg + do.call(ggplot2::facet_wrap, args)
   ._split_rebake_size(plot)
 }
@@ -100,6 +111,9 @@ S7::method(split_wrap, plotit_class) <- function(
 #'   one dimension ("free_x", "free_y")?
 #' @param space Should the space be fixed ("fixed"), free ("free"), or free in
 #'   one dimension ("free_x", "free_y")?
+#' @param axes Axis repetition passed to [ggplot2::facet_grid()]:
+#'   `"all"`/`"all_x"`/`"all_y"` repeat axes on every panel (ggplot2 >= 3.5).
+#'   `NULL` = axes on the outer edges only.
 #' @return A modified `plotit` object.
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
@@ -110,7 +124,7 @@ split_grid <- S7::new_generic(
   "split_grid",
   "plot",
   function(plot, ..., rows = NULL, cols = NULL,
-           scales = "fixed", space = "fixed") {
+           scales = "fixed", space = "fixed", axes = NULL) {
     S7::S7_dispatch()
   }
 )
@@ -122,7 +136,8 @@ S7::method(split_grid, plotit_class) <- function(
   rows = NULL,
   cols = NULL,
   scales = "fixed",
-  space = "fixed"
+  space = "fixed",
+  axes = NULL
 ) {
   split <- ._split_facet_dots(...)
 
@@ -137,6 +152,11 @@ S7::method(split_grid, plotit_class) <- function(
     list(rows = rows, cols = cols, scales = scales, space = space),
     split$passthrough
   )
+  # facet_grid() rejects axes = NULL (its own default is "margins"), so only
+  # forward the argument when the user actually set it.
+  if (!is.null(axes)) {
+    args$axes <- axes
+  }
   plot@gg <- plot@gg + do.call(ggplot2::facet_grid, args)
   ._split_rebake_size(plot)
 }

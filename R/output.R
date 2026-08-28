@@ -173,16 +173,59 @@ knit_print.plotit_composite <- function(x, ...) {
 }
 
 # ---- export ----
+# Shared per-plot export preparation: theme fallback + lazy labels, then
+# either the plain gg (autofit) or a fixed gtable (WYSIWYG) plus that page's
+# default size in inches (measured for gtables, package default for autofit).
+# Composites are flattened to a single patchworkGrob so one page = one draw
+# (a bare patchwork paginates per sub-plot under grid.draw).  Used by both
+# the single-plot and multipage export paths.
+#' Prepare one plotit object for export.
+#' @noRd
+#' @keywords internal
+._export_prepare_page <- function(plot) {
+  if (S7::S7_inherits(plot, plotit_composite)) {
+    gg <- ._apply_annotations(plot)
+    size_in <- ._composite_default_size(plot)
+    return(list(
+      page = patchwork::patchworkGrob(gg),
+      width = size_in$width,
+      height = size_in$height
+    ))
+  }
+  plot <- ._ensure_theme(plot)
+  plot <- ._sync_labels(plot)
+  if (isTRUE(plot@meta@autofit)) {
+    def_size <- ._default_panel_size()
+    list(
+      page = plot@gg,
+      width = def_size$width,
+      height = def_size$height
+    )
+  } else {
+    gt <- ._build_fixed_gtable(plot@gg, plot@meta@width, plot@meta@height, plot@meta@unit)
+    measured <- ._measure_inches(gt)
+    list(page = gt, width = measured$width, height = measured$height)
+  }
+}
+
 #' Export a plotit object to a file
 #'
-#' @param plot A plotit object.
+#' Exports a single plot, a composite, or a list of plots as a multi-page
+#' PDF (each list element becomes one page, in order).
+#'
+#' @param plot A plotit object, a `plotit_composite`, or a list of
+#'   `plotit`/`plotit_composite` objects. A list is exported as a multi-page
+#'   PDF and therefore requires a `.pdf` filename (or `device = "pdf"`):
+#'   single-page devices would silently keep only the last page.
 #' @param filename Output filename (extension determines device, e.g., ".pdf").
-#' @param width Output width (if NULL, uses meta then package default).
-#' @param height Output height (if NULL, uses meta then package default).
+#' @param width Output width (if NULL, uses meta then package default; for a
+#'   list, applied to every page).
+#' @param height Output height (if NULL, uses meta then package default; for a
+#'   list, applied to every page).
 #' @param dpi Resolution for raster formats (default 300).
 #' @param device Graphics device to use (if NULL, auto-detected from filename).
 #' @param ... Additional arguments passed to `ggplot2::ggsave()`.
-#' @return Invisibly, the original `plotit` object.
+#' @return Invisibly, the original `plot` argument.
 #' @examples
 #' p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
 #' export(p, tempfile(fileext = ".png"), dpi = 72)
@@ -215,34 +258,100 @@ S7::method(export, plotit_class) <- function(
 ) {
   meta_unit <- plot@meta@unit %||% getOption("plotit.default_unit", "in")
 
-  # Theme fallback + lazy labels before measuring / exporting (same
-  # preparation as print, minus the aspect strip -- the fixed gtable
-  # letterboxes CoordFixed panels on its own).
-  plot <- ._ensure_theme(plot)
-  plot <- ._sync_labels(plot)
+  prep <- ._export_prepare_page(plot)
+  final_width <- if (is.null(width)) prep$width else ._unit_to_inches(width, meta_unit)
+  final_height <- if (is.null(height)) prep$height else ._unit_to_inches(height, meta_unit)
 
-  if (isTRUE(plot@meta@autofit)) {
-    final_plot <- plot@gg
-    def_size <- ._default_panel_size()
-    final_width <- if (is.null(width)) {
-      def_size$width
-    } else {
-      ._unit_to_inches(width, meta_unit)
-    }
-    final_height <- if (is.null(height)) {
-      def_size$height
-    } else {
-      ._unit_to_inches(height, meta_unit)
-    }
-  } else {
-    gt <- ._build_fixed_gtable(plot@gg, plot@meta@width, plot@meta@height, plot@meta@unit)
-    measured <- ._measure_inches(gt)
-    final_plot <- gt
-    final_width <- if (is.null(width)) measured$width else ._unit_to_inches(width, meta_unit)
-    final_height <- if (is.null(height)) measured$height else ._unit_to_inches(height, meta_unit)
+  ._ggsave_inches(filename, prep$page, final_width, final_height, dpi, device, ...)
+
+  invisible(plot)
+}
+
+# Multipage list export is pdf-only: ggplot2 4.0 ggsave(list) draws every
+# element onto the single opened device, so only auto-paginating devices
+# produce real multi-page output; raster/vector single-page devices silently
+# keep only the last page (see .agent/decisions.md DEC-1).  WYSIWYG pages are
+# fixed gtables, which do not paginate through ggsave's list path, so the
+# device is opened here and pages are separated with grid.newpage().
+#' Whether a device argument yields true multi-page output.
+#' @noRd
+#' @keywords internal
+._multipage_device_ok <- function(filename, device) {
+  if (is.null(device)) {
+    ext <- tolower(tools::file_ext(filename))
+    return(identical(ext, "pdf"))
+  }
+  if (is.function(device)) {
+    return(isTRUE(identical(device, grDevices::pdf)))
+  }
+  identical(tolower(as.character(device)[1]), "pdf")
+}
+
+#' @export
+S7::method(export, S7::class_list) <- function(
+  plot,
+  filename,
+  width = NULL,
+  height = NULL,
+  dpi = 300,
+  device = NULL,
+  ...
+) {
+  if (length(plot) == 0) {
+    cli::cli_abort(
+      "{.arg plot} must contain at least one plot for multipage export."
+    )
+  }
+  is_plot <- vapply(plot, function(p) S7::S7_inherits(p, plotit_class), logical(1))
+  if (!all(is_plot)) {
+    cli::cli_abort(c(
+      "Multipage export requires a list of plotit or plotit_composite objects.",
+      "x" = "Element{?s} {.val {which(!is_plot)}} {?is/are} not plotit object{?s}.",
+      "i" = "Build each page through the plotit() |> mark_*() pipeline first."
+    ))
+  }
+  if (!._multipage_device_ok(filename, device)) {
+    cli::cli_abort(c(
+      "Multipage export requires a {.fn pdf} device.",
+      "x" = "Single-page devices would silently keep only the last page of the list.",
+      "i" = "Use a {.val .pdf} filename or pass {.code device = \"pdf\"}."
+    ))
   }
 
-  ._ggsave_inches(filename, final_plot, final_width, final_height, dpi, device, ...)
+  meta_unit <- NULL
+  for (p in plot) {
+    if (S7::S7_inherits(p, plotit_class) && !S7::S7_inherits(p, plotit_composite)) {
+      meta_unit <- p@meta@unit
+      break
+    }
+  }
+  meta_unit <- meta_unit %||% getOption("plotit.default_unit", "in")
+
+  pages <- lapply(plot, ._export_prepare_page)
+  final_width <- if (is.null(width)) {
+    max(vapply(pages, function(pg) pg$width, numeric(1)))
+  } else {
+    ._unit_to_inches(width, meta_unit)
+  }
+  final_height <- if (is.null(height)) {
+    max(vapply(pages, function(pg) pg$height, numeric(1)))
+  } else {
+    ._unit_to_inches(height, meta_unit)
+  }
+
+  old_dev <- grDevices::dev.cur()
+  grDevices::pdf(
+    filename, width = final_width, height = final_height,
+    bg = "white", onefile = TRUE, ...
+  )
+  on.exit(utils::capture.output({
+    grDevices::dev.off()
+    if (old_dev > 1) grDevices::dev.set(old_dev)
+  }))
+  for (pg in pages) {
+    grid::grid.newpage()
+    grid::grid.draw(pg$page)
+  }
 
   invisible(plot)
 }

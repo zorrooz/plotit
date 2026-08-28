@@ -108,3 +108,24 @@ test_that("[BDD] split_grid passes labeller through", {
     )
   expect_s3_class(p, "plotit::plotit")
 })
+
+# ---- ggplot2 4.x passthrough adoption (D-20 / 08S5.2) ----
+test_that("[BDD] split_wrap dir accepts 8-direction codes", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |>
+    split_wrap(Species, ncol = 3, dir = "br")
+  built <- ggplot2::ggplot_build(p@gg)
+  expect_equal(nrow(built$layout$layout), 3)
+  # "br" = start in the bottom-right corner, fill leftward: the first
+  # facet lands in the rightmost column (default "lt" puts it leftmost)
+  expect_equal(built$layout$layout$COL[1], 3)
+})
+
+test_that("[BDD] split_grid axes repeats axes on every panel", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |>
+    split_grid(rows = ggplot2::vars(Species), axes = "all_x")
+  expect_s3_class(p, "plotit::plotit")
+  built <- ggplot2::ggplot_build(p@gg)
+  expect_equal(nrow(built$layout$layout), 3)
+})

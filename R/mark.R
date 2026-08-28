@@ -525,8 +525,13 @@ S7::method(mark_text, plotit_class) <- function(
 #' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
 #' @param rasterize_dpi DPI for rasterization (default 300).
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
-#' @param ... Other arguments passed to `geom_violin`
+#' @param ... Other arguments passed to `geom_violin`. Since ggplot2 4.0 the
+#'   quantile lines live on the stat: `quantiles =` selects the quantiles
+#'   drawn and `quantile.colour`/`quantile.linetype`/`quantile.linewidth`
+#'   style them (`quantile.linetype = 0` hides them by default).
 #' @return Modified plotit object
+#' @references
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/general/shape}{density (violin)}
 #' @examples
 #' plotit(iris, encode(x = Species, y = Sepal.Length)) |>
 #'   mark_violin(quantiles = 0.5, quantile.linetype = "dashed")
@@ -678,7 +683,12 @@ S7::method(mark_rect, plotit_class) <- function(
 #' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
 #' @param rasterize_dpi DPI for rasterization (default 300).
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
-#' @param ... Other arguments passed to the underlying geom
+#' @param ... Other arguments passed to the underlying geom. ggplot2 4.0
+#'   also accepts `layout=` on any layer, which controls how the layer is
+#'   placed across `split_*` facet panels: `NULL` (default) matches layer
+#'   rows to panels by the facet variable, `"fixed"` repeats the layer on
+#'   every panel (a unified reference line), and an integer pins it to a
+#'   single panel, e.g. `mark_rule(yintercept = 0, layout = "fixed")`.
 #' @return Modified plotit object
 #' @references
 #' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/rule.html}{Rule}
@@ -2482,7 +2492,11 @@ S7::method(mark_ecdf, plotit_class) <- function(
 #' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
 #' @param rasterize_dpi DPI for rasterization (default 300).
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
-#' @param ... Other arguments passed to `geom_label` or `geom_label_repel`
+#' @param ... Other arguments passed to `geom_label` or `geom_label_repel`.
+#'   Since ggplot2 4.0 the box outline is styled with the `linewidth` aesthetic
+#'   (the old `label.size` argument is deprecated): use
+#'   `mark_label(linewidth = 0.4)`. `border.colour`/`text.colour` style the
+#'   box and text independently.
 #' @return Modified plotit object
 #' @references
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/text}{Text} (`badge` state)

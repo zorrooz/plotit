@@ -67,13 +67,8 @@ S7::method(project_cartesian, plotit_class) <- function(
         expand = expand, clip = clip, ...
       )
   } else if (!is.null(coord_trans)) {
-    trans_fun <- if (utils::packageVersion("ggplot2") >= "3.5.0") {
-      ggplot2::coord_transform
-    } else {
-      ggplot2::coord_trans
-    }
     plot@gg <- plot@gg +
-      trans_fun(
+      ggplot2::coord_transform(
         x = coord_trans, xlim = xlim, ylim = ylim,
         expand = expand, clip = clip, ...
       )
@@ -93,16 +88,14 @@ S7::method(project_cartesian, plotit_class) <- function(
 #'
 #' Maps one axis to angle and the other to radius.  Default (full circle,
 #' zero inner radius) uses `coord_polar()`.  Set `inner_radius > 0` or
-#' `r_axis_inside = TRUE` to switch to the radial variant (requires
-#' ggplot2 >= 3.5.0).
+#' `r_axis_inside = TRUE` to switch to the radial variant.
 #'
 #' @param plot A plotit object.
 #' @param theta Variable mapped to angle: `"x"` or `"y"`.
 #' @param start Starting angle in radians (0 = 12 o'clock).
 #' @param direction `1` = clockwise, `-1` = anti-clockwise.
 #' @param inner_radius Inner radius as a fraction of the panel (0-1).
-#'   `0` = polar (full circle). `>0` = radial (hollow centre, needs
-#'   ggplot2 >= 3.5.0).
+#'   `0` = polar (full circle). `>0` = radial (hollow centre).
 #' @param r_axis_inside If `TRUE`, place the radial axis inside the panel
 #'   (radial mode only).
 #' @param clip Should drawing be clipped? `"on"` or `"off"`.
@@ -137,20 +130,23 @@ S7::method(project_polar, plotit_class) <- function(
   if (bad_r) {
     cli::cli_abort("{.arg inner_radius} must be a single non-negative number.")
   }
-  use_radial <- inner_radius > 0 || isTRUE(r_axis_inside)
-  if (use_radial && utils::packageVersion("ggplot2") < "3.5.0") {
+  bad_dir <- !is.numeric(direction) || length(direction) != 1 || is.na(direction) || !direction %in% c(1, -1)
+  if (bad_dir) {
     cli::cli_abort(c(
-      "Radial coordinates (inner_radius > 0 or r_axis_inside = TRUE) require ggplot2 >= 3.5.0.",
-      "i" = "You have ggplot2 {utils::packageVersion('ggplot2')}."
+      "{.arg direction} must be {.val {1}} (clockwise) or {.val {-1}} (anti-clockwise).",
+      "x" = "You supplied {.val {direction}}."
     ))
   }
+  use_radial <- inner_radius > 0 || isTRUE(r_axis_inside)
   if (use_radial) {
     args <- list(
       theta = theta, start = start,
       r.axis.inside = r_axis_inside, inner.radius = inner_radius, clip = clip
     )
-    # coord_radial supports direction parameter since ggplot2 3.5.0
-    if (direction != 1) args$direction <- direction
+    # coord_radial deprecated `direction` (ggplot2 4.0.0) in favour of
+    # `reverse = "theta"`; translate internally so radial mode stays
+    # warning-free under the pinned ggplot2 >= 4.0.0 base.
+    if (direction == -1) args$reverse <- "theta"
     plot@gg <- plot@gg + do.call(ggplot2::coord_radial, c(args, list(...)))
   } else {
     plot@gg <- plot@gg +
@@ -286,13 +282,14 @@ project_parallel <- S7::new_generic(
 #' @noRd
 #' @keywords internal
 ._pp_draw_axes <- function(plot, col_info, tp) {
-  # Suppress native y-axis
+  # Suppress the native y-axis via the ggplot2 4.0 theme_sub_* shortcut
+  # (expands to axis.line.y / axis.ticks.y / axis.text.y / axis.title.y).
   plot@gg <- plot@gg +
-    ggplot2::theme(
-      axis.line.y  = ggplot2::element_blank(),
-      axis.ticks.y = ggplot2::element_blank(),
-      axis.text.y  = ggplot2::element_blank(),
-      axis.title.y = ggplot2::element_blank()
+    ggplot2::theme_sub_axis_y(
+      line = ggplot2::element_blank(),
+      ticks = ggplot2::element_blank(),
+      text = ggplot2::element_blank(),
+      title = ggplot2::element_blank()
     )
 
   # Axis lines

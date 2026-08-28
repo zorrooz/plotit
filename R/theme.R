@@ -210,17 +210,10 @@ NULL
 
 # ---- WYSIWYG absolute panel sizing ----
 # Bake the meta panel dimensions into the ggplot object itself via the
-# ggplot2 >= 3.5 theme elements panel.widths / panel.heights.  Every render
-# path (IDE device, knitr, pkgdown examples, ggsave) then draws the panel at
-# exactly the declared physical size, so on-screen previews and exports share
-# identical content proportions.
-#' Whether the installed ggplot2 supports absolute panel sizing.
-#' @noRd
-#' @keywords internal
-._panel_sizing_supported <- function() {
-  utils::packageVersion("ggplot2") >= "3.5.0"
-}
-
+# ggplot2 >= 4.0 theme elements panel.widths / panel.heights (#5338).  Every
+# render path (IDE device, knitr, pkgdown examples, ggsave) then draws the
+# panel at exactly the declared physical size, so on-screen previews and
+# exports share identical content proportions.
 #' Bake fixed panel dimensions into a ggplot object.
 #'
 #' `grid` gives the panel-grid dimensions (cols, rows) the declared size is
@@ -230,9 +223,6 @@ NULL
 #' @keywords internal
 ._apply_panel_size <- function(gg, width, height, unit = "in",
                                grid = c(1, 1)) {
-  if (!._panel_sizing_supported()) {
-    return(gg)
-  }
   if (is.null(width) || is.null(height)) {
     return(gg)
   }

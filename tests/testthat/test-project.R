@@ -124,7 +124,6 @@ test_that("project_polar basic (non-radial test in radial section)", {
 
 
 test_that("project_polar inner_radius > 0 switches to radial", {
-  skip_if(utils::packageVersion("ggplot2") < "3.5.0")
   p <- plotit(mtcars, encode(x = factor(cyl))) |>
     mark_bar() |>
     project_polar(inner_radius = 0.3)
@@ -132,11 +131,27 @@ test_that("project_polar inner_radius > 0 switches to radial", {
 })
 
 test_that("project_polar r_axis_inside + inner_radius", {
-  skip_if(utils::packageVersion("ggplot2") < "3.5.0")
   p <- plotit(mtcars, encode(x = factor(cyl))) |>
     mark_bar() |>
     project_polar(r_axis_inside = TRUE, inner_radius = 0.3)
   expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("project_polar radial direction=-1 renders without deprecation warning", {
+  # [BDD] ggplot2 4.0 deprecated coord_radial(direction=); the translation to
+  # reverse="theta" must keep radial mode warning-free.
+  p <- plotit(mtcars, encode(x = factor(cyl))) |>
+    mark_bar() |>
+    project_polar(inner_radius = 0.3, direction = -1)
+  expect_no_warning(b <- ggplot2::ggplot_build(p@gg))
+  expect_s3_class(b, "ggplot_built")
+})
+
+test_that("project_polar rejects invalid direction", {
+  p <- plotit(mtcars, encode(x = factor(cyl))) |>
+    mark_bar()
+  expect_error(project_polar(p, direction = 2), "clockwise")
+  expect_error(project_polar(p, direction = "x"), "clockwise")
 })
 
 # ---- edge cases & warnings ----
@@ -333,7 +348,6 @@ test_that("[BDD] project_polar renders polar coordinates", {
 })
 
 test_that("[BDD] project_polar with inner_radius activates radial coord", {
-  skip_if(utils::packageVersion("ggplot2") < "3.5.0")
   p <- plotit(mtcars, encode(x = factor(cyl))) |>
     mark_bar() |>
     project_polar(inner_radius = 0.3)
