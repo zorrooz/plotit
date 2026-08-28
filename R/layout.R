@@ -231,7 +231,7 @@ NULL
   coords <- ._fr_coords(n, from, to, weights[keep], iterations)
   # Rescale into [0.05, 0.95]^2, aspect preserved: the layout owns a 10%
   # canvas margin so node radii and labels stay inside the panel
-  # (B5, design/03 §5.4).
+  # (B5, design/03 <U+00A7>5.4).
   xr <- range(coords$x)
   yr <- range(coords$y)
   span <- max(diff(xr), diff(yr), 1e-9)

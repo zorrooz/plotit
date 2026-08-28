@@ -4,13 +4,13 @@
 #' @include mark.R
 NULL
 
-# ---- mark_image (D-02, design/03 §3) ----
+# ---- mark_image (D-02, design/03 <U+00A7>3) ----
 # Self-built image-scatter geom (Observable Plot `Image` mark, G2 `image`):
 # positions a raster image per (x, y) row.  Sources are local file paths
 # (png/jpeg), http(s) URLs, or pre-read raster arrays (e.g. from magick).
 # Rendering is a thin wrapper over grid::rasterGrob; image reading is cached
 # per source string for the session.  No ggimage dependency (judged
-# unsuitable in research/01 §8.1-3): raster decoding uses the optional
+# unsuitable in research/01 <U+00A7>8.1-3): raster decoding uses the optional
 # lightweight `png` / `jpeg` packages, arrays pass straight through.
 
 # Session-level image cache keyed by source string; raster arrays bypass it.
@@ -43,7 +43,8 @@ NULL
       ._require_pkg("png", "Reading {.fn png} images")
       png::readPNG(path)
     },
-    jpg = , jpeg = {
+    jpg = ,
+    jpeg = {
       ._require_pkg("jpeg", "Reading {.fn jpeg} images")
       jpeg::readJPEG(path)
     },
@@ -75,12 +76,14 @@ NULL
   # aspect ratio when only one dimension is set).
   if (aspect >= 1) {
     grob <- grid::rasterGrob(
-      raster, x = x, y = y, height = grid::unit(size, "npc"),
+      raster,
+      x = x, y = y, height = grid::unit(size, "npc"),
       interpolate = interpolate
     )
   } else {
     grob <- grid::rasterGrob(
-      raster, x = x, y = y, width = grid::unit(size, "npc"),
+      raster,
+      x = x, y = y, width = grid::unit(size, "npc"),
       interpolate = interpolate
     )
   }
@@ -116,7 +119,8 @@ GeomPlotitImage <- ggplot2::ggproto(
         return(grid::nullGrob())
       }
       ._image_grob(
-        raster, coords$x[i], coords$y[i], size = size, clip = clip,
+        raster, coords$x[i], coords$y[i],
+        size = size, clip = clip,
         interpolate = interpolate
       )
     })
@@ -202,8 +206,7 @@ S7::method(mark_image, plotit_class) <- function(
   rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
 ) {
   clip <- match.arg(clip)
-  if (!is.numeric(size) || length(size) != 1 || is.na(size) ||
-      size <= 0 || size > 1) {
+  if (!is.numeric(size) || length(size) != 1 || is.na(size) || size <= 0 || size > 1) {
     ._abort_arg_range("size", "in (0, 1] (panel fraction)", got = size)
   }
   ._impl_with(plot, mapping, data, position, ._geom_plotit_image,

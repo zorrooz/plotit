@@ -1,5 +1,5 @@
 # ============================================================
-# mark_image (D-02, design/03 §3) -- BDD tests
+# mark_image (D-02, design/03 <U+00A7>3) -- BDD tests
 # AGENTS.md 4.8
 # ============================================================
 library(plotit)
@@ -30,8 +30,9 @@ test_that("[BDD] mark_image drops rows with NA or empty src", {
   )
   p <- plotit(df, encode(x = x, y = y, src = src)) |> mark_image()
   b <- ggplot2::ggplot_build(p@gg)
-  # build keeps rows; the draw layer drops the two bad ones
-  expect_no_error(ggplot2::ggplot_gtable(b))
+  # build keeps rows; the draw layer drops the two bad ones (the row-removal
+  # warning is the expected signal, hence suppressed here)
+  expect_no_error(suppressWarnings(ggplot2::ggplot_gtable(b)))
 })
 
 test_that("[BDD] mark_image accepts raster arrays without extra packages", {

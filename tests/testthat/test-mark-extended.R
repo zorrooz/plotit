@@ -608,3 +608,77 @@ test_that("[BDD] mark_text repel seed=1 is reproducible", {
   expect_identical(d1$x, d2$x)
   expect_identical(d1$y, d2$y)
 })
+
+# ---- [BDD] mark_heatmap recipe parameters (D-14, design/03 <U+00A7>5.1) ----
+test_that("[BDD] mark_heatmap show_numbers adds a text overlay layer", {
+  mat <- matrix(c(1, 2, 3, 4, 5, 6),
+    nrow = 2,
+    dimnames = list(c("r1", "r2"), c("c1", "c2", "c3"))
+  )
+  p <- plotit(mat, encode()) |> mark_heatmap(show_numbers = TRUE)
+  b <- ggplot2::ggplot_build(p@gg)
+  expect_equal(length(b$data), 2) # tiles + numbers
+  expect_setequal(b$data[[2]]$label, sprintf("%.2f", c(1, 2, 3, 4, 5, 6)))
+  # custom format and colour reach the layer
+  p2 <- plotit(mat, encode()) |>
+    mark_heatmap(
+      show_numbers = TRUE, number_format = "%.0f",
+      number_color = "red"
+    )
+  b2 <- ggplot2::ggplot_build(p2@gg)
+  expect_setequal(b2$data[[2]]$label, c("1", "2", "3", "4", "5", "6"))
+  expect_identical(unique(b2$data[[2]]$colour), "red")
+})
+
+test_that("[BDD] mark_heatmap na_color reaches the fill scale", {
+  mat <- matrix(c(1, NA, 3, 4),
+    nrow = 2,
+    dimnames = list(c("r1", "r2"), c("c1", "c2"))
+  )
+  p <- plotit(mat, encode()) |> mark_heatmap(na_color = "grey90")
+  b <- ggplot2::ggplot_build(p@gg)
+  expect_true("grey90" %in% b$data[[1]]$fill)
+})
+
+test_that("[BDD] mark_heatmap cluster accepts hclust objects and lists", {
+  mat <- matrix(c(9, 1, 8, 2, 1, 9, 2, 8),
+    nrow = 4,
+    dimnames = list(paste0("g", 1:4), paste0("s", 1:2))
+  )
+  h <- stats::hclust(stats::dist(mat))
+  # Row order follows the hclust order exactly: read it back through the
+  # show_numbers overlay (built y is the scaled coordinate, so the row
+  # identity travels via the number labels).
+  p <- plotit(mat, encode()) |>
+    mark_heatmap(cluster = h, show_numbers = TRUE, number_format = "%.0f")
+  b <- ggplot2::ggplot_build(p@gg)
+  top_row_labels <- b$data[[2]]$label[b$data[[2]]$y == min(b$data[[2]]$y)]
+  expect_identical(
+    as.numeric(top_row_labels),
+    as.numeric(mat[h$labels[h$order][1], ])
+  )
+  # list(row =, col =) form
+  p2 <- plotit(mat, encode()) |>
+    mark_heatmap(
+      cluster = list(row = h, col = NULL),
+      show_numbers = TRUE, number_format = "%.0f"
+    )
+  b2 <- ggplot2::ggplot_build(p2@gg)
+  top_row_labels2 <- b2$data[[2]]$label[b2$data[[2]]$y == min(b2$data[[2]]$y)]
+  expect_identical(
+    as.numeric(top_row_labels2),
+    as.numeric(mat[h$labels[h$order][1], ])
+  )
+  # mismatched labels abort with a targeted message
+  h_bad <- h
+  h_bad$labels <- paste0("x", seq_along(h$labels))
+  expect_error(
+    plotit(mat, encode()) |> mark_heatmap(cluster = h_bad),
+    "labels do not match"
+  )
+  # non-enum / non-engine input aborts
+  expect_error(
+    plotit(mat, encode()) |> mark_heatmap(cluster = 42),
+    "must be one of"
+  )
+})

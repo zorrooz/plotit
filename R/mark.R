@@ -82,7 +82,7 @@ NULL
     rasterize_dev = rasterize_dev
   )
   # Canvas chrome from the convention registry (D-06): the single decision
-  # point shared with the relational sugars (._MARK_CHROME, design/03 §6).
+  # point shared with the relational sugars (._MARK_CHROME, design/03 <U+00A7>6).
   if (length(mark_name) == 1L) {
     plot <- ._apply_chrome(plot, mark_name)
   }
@@ -131,8 +131,8 @@ NULL
 #' Attach a managed default fill scale for a derived channel.
 #' @noRd
 #' @keywords internal
-._derived_fill <- function(plot, trans, range = "viridis") {
-  suppressMessages(scale_fill(plot, trans = trans, range = range))
+._derived_fill <- function(plot, trans, range = "viridis", ...) {
+  suppressMessages(scale_fill(plot, trans = trans, range = range, ...))
 }
 
 # ---- closed statistical-mark fill ownership ----
@@ -1236,6 +1236,7 @@ S7::method(mark_corr, plotit_class) <- function(
     mat <- data
     if (is.null(rownames(mat))) rownames(mat) <- as.character(seq_len(nrow(mat)))
     if (is.null(colnames(mat))) colnames(mat) <- as.character(seq_len(ncol(mat)))
+    if (is.null(colnames(mat))) colnames(mat) <- as.character(seq_len(ncol(mat)))
     return(mat)
   }
   if (!is.data.frame(data)) {
@@ -1342,7 +1343,9 @@ S7::method(mark_corr, plotit_class) <- function(
 mark_heatmap <- S7::new_generic(
   "mark_heatmap", "plot",
   function(plot, cluster = c("both", "row", "column", "none"),
-           scale = c("none", "row", "column"), ...,
+           scale = c("none", "row", "column"),
+           show_numbers = FALSE, number_format = "%.2f", number_color = NULL,
+           na_color = "grey85", ...,
            rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
     S7::S7_dispatch()
   }
@@ -1351,15 +1354,58 @@ mark_heatmap <- S7::new_generic(
 #' @export
 S7::method(mark_heatmap, plotit_class) <- function(
   plot, cluster = c("both", "row", "column", "none"),
-  scale = c("none", "row", "column"), ...,
+  scale = c("none", "row", "column"),
+  show_numbers = FALSE, number_format = "%.2f", number_color = NULL,
+  na_color = "grey85", ...,
   rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
 ) {
-  cluster <- match.arg(cluster)
   scale <- match.arg(scale)
+  # cluster accepts the character modes or a pre-computed engine: an hclust
+  # object (row order) or list(row =, col =) with hclust/NULL entries -- the
+  # D4 flagship recipe feeds the same hclust to mark_heatmap(cluster = h)
+  # and as_graph(h) |> layout_dendrogram(), so the leaf order agrees by
+  # construction (design/03 <U+00A7>5.1).
   plot <- ._clear_default_color(plot)
   mat <- ._heatmap_to_matrix(plot@gg$data, plot@gg$mapping)
   mat <- ._heatmap_scale(mat, scale)
-  ord <- ._heatmap_cluster(mat, cluster)
+  ord <- list(row = rownames(mat), col = colnames(mat))
+  if (is.character(cluster)) {
+    mode <- match.arg(cluster)
+    if (mode %in% c("row", "both") && nrow(mat) > 2) {
+      ord$row <- rownames(mat)[stats::hclust(stats::dist(mat))$order]
+    }
+    if (mode %in% c("column", "both") && ncol(mat) > 2) {
+      ord$col <- colnames(mat)[stats::hclust(stats::dist(t(mat)))$order]
+    }
+  } else {
+    if (inherits(cluster, "hclust")) {
+      spec <- list(row = cluster, col = NULL)
+    } else if (is.list(cluster)) {
+      spec <- list(row = cluster$row, col = cluster$col)
+    } else {
+      ._abort_arg_enum(
+        "cluster",
+        c("both", "row", "column", "none", "hclust object", "list(row=, col=)"),
+        got = deparse(substitute(cluster))[1],
+        hint = "Give the mode string, an hclust for the rows, or list(row =, col =)."
+      )
+    }
+    for (axis in c("row", "col")) {
+      h <- spec[[axis]]
+      if (is.null(h)) {
+        next
+      }
+      labels <- if (axis == "row") rownames(mat) else colnames(mat)
+      if (!setequal(h$labels, labels)) {
+        axis_name <- if (axis == "row") "row names" else "column names"
+        cli::cli_abort(c(
+          "{.arg cluster} labels do not match the matrix {axis_name}.",
+          "i" = "Cluster the same matrix you pass to {.fn mark_heatmap}."
+        ))
+      }
+      ord[[axis]] <- h$labels[h$order]
+    }
+  }
   mat <- mat[ord$row, ord$col, drop = FALSE]
   df <- expand.grid(
     Var2 = factor(ord$col, levels = ord$col),
@@ -1377,13 +1423,27 @@ S7::method(mark_heatmap, plotit_class) <- function(
     auto_dodge = FALSE, bind_aes = NULL, mark_name = "mark_heatmap",
     extra = rlang::list2(...)
   )
-  plot <- ._derived_fill(plot, trans = "identity")
+  plot <- ._derived_fill(plot, trans = "identity", na.value = na_color)
+  if (isTRUE(show_numbers)) {
+    if (is.null(number_color)) {
+      number_color <- ._MARK_STYLE$ink
+    }
+    df$label <- sprintf(number_format, df$value)
+    num_mapping <- encode(x = Var2, y = Var1, label = label)
+    plot <- ._impl_with(plot, num_mapping, df,
+      position = NULL, ggplot2::geom_text,
+      rasterize, rasterize_dpi, rasterize_dev,
+      auto_dodge = FALSE, bind_aes = NULL, mark_name = NULL,
+      extra = rlang::list2(colour = number_color)
+    )
+  }
   # Synthetic Var1/Var2 titles carry no meaning; the axis labels do.
   plot@gg <- plot@gg + ggplot2::theme(axis.title = ggplot2::element_blank())
   plot
 }
 
-# ---- statistical entity fun-data (D-01, design/03 §2) ----
+
+# ---- statistical entity fun-data (D-01, design/03 <U+00A7>2) ----
 # fun.data contracts for ggplot2::stat_summary: input is the value vector of
 # the central aesthetic, output is a data.frame with `y`, `ymin`, `ymax`
 # (ggplot2's orientation machinery maps these to xmin/xmax for horizontal
@@ -1451,8 +1511,9 @@ S7::method(mark_heatmap, plotit_class) <- function(
       "Pass a fixed integer, e.g. {.code seed = 1}."
     )
   }
-  if (!identical(stat, "identity") && !identical(stat, "mean_ci95") &&
-      !is.null(seed)) {
+  seed_irrelevant <- !identical(stat, "identity") &&
+    !identical(stat, "mean_ci95")
+  if (seed_irrelevant && !is.null(seed)) {
     ._warn_ignored("seed", "only {.code ci_method = \"boot\"} resamples")
   }
   stat
@@ -1561,7 +1622,8 @@ S7::method(mark_errorbar, plotit_class) <- function(
       mean_range = ._fun_data_mean_range,
       mean_ci95 = function(x, ...) {
         ._fun_data_mean_ci(
-          x, level = level, ci_method = ci_method, seed = seed
+          x,
+          level = level, ci_method = ci_method, seed = seed
         )
       }
     )
@@ -1664,7 +1726,8 @@ S7::method(mark_ribbon, plotit_class) <- function(
       mean_range = ._fun_data_mean_range,
       mean_ci95 = function(x, ...) {
         ._fun_data_mean_ci(
-          x, level = level, ci_method = ci_method, seed = seed
+          x,
+          level = level, ci_method = ci_method, seed = seed
         )
       }
     )
@@ -2065,12 +2128,10 @@ S7::method(mark_encircle, plotit_class) <- function(
   rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
 ) {
   shape <- match.arg(shape)
-  if (!is.numeric(expand) || length(expand) != 1 || is.na(expand) ||
-      expand < 0) {
+  if (!is.numeric(expand) || length(expand) != 1 || is.na(expand) || expand < 0) {
     ._abort_arg_range("expand", "a single non-negative number", got = expand)
   }
-  if (!is.numeric(radius) || length(radius) != 1 || is.na(radius) ||
-      radius < 0) {
+  if (!is.numeric(radius) || length(radius) != 1 || is.na(radius) || radius < 0) {
     ._abort_arg_range("radius", "a single non-negative number", got = radius)
   }
   if (is.null(alpha)) {

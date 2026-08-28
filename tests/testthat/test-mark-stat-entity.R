@@ -1,5 +1,5 @@
 # ============================================================
-# Statistical entity matrix (D-01, design/03 §2) -- BDD tests
+# Statistical entity matrix (D-01, design/03 <U+00A7>2) -- BDD tests
 # mark_errorbar(stat=) + mark_ribbon
 # AGENTS.md 4.8
 # ============================================================
@@ -51,17 +51,20 @@ test_that("[BDD] mark_errorbar stat=mean_ci95 asserts exact t half-width", {
 })
 
 test_that("[BDD] mark_errorbar stat=mean_ci95 level=0.9 widens vs narrows", {
-  p95 <- grab_interval(plotit(stat_df, encode(x = group, y = y)) |>
-    mark_errorbar(stat = "mean_ci95"))
-  p90 <- grab_interval(plotit(stat_df, encode(x = group, y = y)) |>
-    mark_errorbar(stat = "mean_ci95", level = 0.9))
+  p95p <- plotit(stat_df, encode(x = group, y = y)) |>
+    mark_errorbar(stat = "mean_ci95")
+  p95 <- grab_interval(p95p)
+  p90p <- plotit(stat_df, encode(x = group, y = y)) |>
+    mark_errorbar(stat = "mean_ci95", level = 0.9)
+  p90 <- grab_interval(p90p)
   expect_gt(p95$ymax - p95$ymin, p90$ymax - p90$ymin)
 })
 
 test_that("[BDD] mark_errorbar boot path is reproducible with seed=1", {
   mk <- function() {
-    grab_interval(plotit(stat_df, encode(x = group, y = y)) |>
-      mark_errorbar(stat = "mean_ci95", ci_method = "boot", seed = 1))
+    pp <- plotit(stat_df, encode(x = group, y = y)) |>
+      mark_errorbar(stat = "mean_ci95", ci_method = "boot", seed = 1)
+    grab_interval(pp)
   }
   b1 <- mk()
   b2 <- mk()
@@ -115,14 +118,14 @@ test_that("[BDD] mark_ribbon default alpha uses the alpha_ci token", {
   band <- data.frame(x = 1:3, ymin = 1:3, ymax = 2:4)
   p <- plotit(band, encode(x = x, ymin = ymin, ymax = ymax)) |>
     mark_ribbon()
-  expect_equal(p@gg$layers[[1]]$stat_params$alpha %||% p@gg$layers[[1]]$aes_params$alpha,
-    0.25)
+  layer_alpha <- function(pp) {
+    pp@gg$layers[[1]]$stat_params$alpha %||%
+      pp@gg$layers[[1]]$aes_params$alpha
+  }
+  expect_equal(layer_alpha(p), 0.25)
   p2 <- plotit(band, encode(x = x, ymin = ymin, ymax = ymax)) |>
     mark_ribbon(alpha = 0.5)
-  expect_equal(
-    p2@gg$layers[[1]]$stat_params$alpha %||% p2@gg$layers[[1]]$aes_params$alpha,
-    0.5
-  )
+  expect_equal(layer_alpha(p2), 0.5)
 })
 
 test_that("[BDD] spaghetti + mean/sem overlay renders end to end", {
@@ -139,7 +142,7 @@ test_that("[BDD] spaghetti + mean/sem overlay renders end to end", {
   expect_equal(length(b$data), 3)
 })
 
-# ---- B5: force-layout canvas margin (design/03 §5.4) ----
+# ---- B5: force-layout canvas margin (design/03 <U+00A7>5.4) ----
 test_that("[BDD] layout_force keeps nodes inside the 10 percent canvas margin", {
   set.seed(1)
   edges <- data.frame(
@@ -154,7 +157,7 @@ test_that("[BDD] layout_force keeps nodes inside the 10 percent canvas margin", 
   expect_lte(max(g$nodes$y), 0.95 + 1e-9)
 })
 
-# ---- B3: polygon default fill is the brand primary (design/03 §5.3) ----
+# ---- B3: polygon default fill is the brand primary (design/03 <U+00A7>5.3) ----
 test_that("[BDD] mark_polygon without fill mapping wears the brand primary", {
   tri <- data.frame(x = c(0, 1, 0.5), y = c(0, 0, 1))
   p <- plotit(tri, encode(x = x, y = y)) |> mark_polygon()

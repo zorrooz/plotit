@@ -1,5 +1,5 @@
 # ============================================================
-# mark_encircle (D-09, design/03 §4) -- BDD tests
+# mark_encircle (D-09, design/03 <U+00A7>4) -- BDD tests
 # AGENTS.md 4.8
 # ============================================================
 library(plotit)
@@ -48,8 +48,10 @@ test_that("[BDD] mark_encircle matches its documented expansion pipeline", {
   pts$x <- cx + (pts$x - cx) * (1 + expand)
   pts$y <- cy + (pts$y - cy) * (1 + expand)
   pipeline <- plotit(enc, encode(x = x, y = y)) |>
-    mark_polygon(fill = "#4E79A7", colour = "grey70", alpha = 0.18,
-                 data = pts, mapping = encode(x = x, y = y))
+    mark_polygon(
+      fill = "#4E79A7", colour = "grey70", alpha = 0.18,
+      data = pts, mapping = encode(x = x, y = y)
+    )
   d_sugar <- ggplot2::ggplot_build(sugar@gg)$data[[1]]
   d_pipe <- ggplot2::ggplot_build(pipeline@gg)$data[[1]]
   # same vertex set (order kept): x/y coordinates point-identical

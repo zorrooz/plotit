@@ -173,7 +173,7 @@ test_that("[BDD] explicit width overrides the bar default", {
 # ---- closed-cell heatmap chrome (tile / corr) ----
 
 test_that("[BDD] rect keeps light axes with panel-flush tiles (D-06)", {
-  # Design/03 §6.2 (I-1 ruling): long-table tile marks keep light axes --
+  # Design/03 <U+00A7>6.2 (I-1 ruling): long-table tile marks keep light axes --
   # G2 Cell and OP calendars show them -- while tiles stay panel-flush.
   df <- data.frame(
     x = rep(LETTERS[1:3], 3), y = rep(1:3, each = 3), z = 1:9

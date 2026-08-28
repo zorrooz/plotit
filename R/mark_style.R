@@ -230,7 +230,7 @@ NULL
   gg
 }
 
-# ---- chrome convention registry (D-06, design/03 §6) ----
+# ---- chrome convention registry (D-06, design/03 <U+00A7>6) ----
 # One decision point for per-mark canvas conventions, consulted by the
 # shared mark path (_mark_impl) and the relational sugars (_rel_canvas):
 #
