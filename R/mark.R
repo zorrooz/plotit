@@ -2010,6 +2010,187 @@ S7::method(mark_dumbbell, plotit_class) <- function(
   plot
 }
 
+# ---- mark_encircle ----
+#' Group annotation envelope layer
+#'
+#' Draws a smooth envelope around the clusters of a scatter plot, one per
+#' group: the annotation sibling of [mark_point()] (ggforce's
+#' `geom_mark_hull` / `geom_mark_ellipse` in simplified, dependency-free
+#' form).  This is a **syntax-sugar composite mark**.
+#'
+#' Equivalent expansion:
+#' \preformatted{
+#'   shape = "hull"    is  grDevices::chull() vertices per group, dilated
+#'                     outward by `expand`, rounded by `radius`, then
+#'                     mark_polygon(fill = primary, colour = faint)
+#'   shape = "ellipse" is  ggplot2::stat_ellipse() per group, dilated the
+#'                     same way, then mark_polygon()
+#' }
+#'
+#' ggforce's label and arrow decorations are not part of this layer;
+#' annotate groups with [mark_text()] / [mark_label()] instead.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional aesthetics: `x`, `y` plus an optional discrete
+#'   channel (`colour`/`fill`/`group`) giving one envelope per level
+#' @param data Optional data for this layer
+#' @param shape `"hull"` (convex hull) or `"ellipse"` (t-based data
+#'   ellipse, `stat_ellipse` engine at 0.95 level)
+#' @param expand Proportional outward dilation of the envelope (default
+#'   0.05 = 5% of each vertex's distance from the envelope centroid;
+#'   approximates ggforce's npc expansion).  `0` keeps the raw hull.
+#' @param radius Corner-rounding strength (default 0.05): one Chaikin
+#'   round per 0.05 smooths the hull corners; `0` keeps sharp corners.
+#'   Simplified counterpart of ggforce's `concavity`.
+#' @param alpha Envelope fill opacity; `NULL` (default) uses the
+#'   annotation token `alpha_annot` (0.18).
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to the underlying `geom_polygon`
+#'   (`fill`, `colour`, `linewidth` default to the primary token, the
+#'   faint neutral, and the thin stroke).
+#' @return Modified plotit object
+#' @references
+#' ggforce: \href{https://ggforce.data-imaginist.com/reference/geom_mark_hull.html}{geom_mark_hull} /
+#' \href{https://ggforce.data-imaginist.com/reference/geom_mark_ellipse.html}{geom_mark_ellipse}
+#'
+#' R: \code{grDevices::chull()} (convex hull) / ggplot2 \code{stat_ellipse()}
+#' @examples
+#' plotit(iris, encode(x = Petal.Length, y = Petal.Width, colour = Species)) |>
+#'   mark_point() |>
+#'   mark_encircle(shape = "ellipse")
+#' @export
+mark_encircle <- S7::new_generic(
+  "mark_encircle", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           shape = c("hull", "ellipse"), expand = 0.05, radius = 0.05,
+           alpha = NULL,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_encircle, plotit_class) <- function(
+  plot, mapping = NULL, data = NULL, position = NULL, ...,
+  shape = c("hull", "ellipse"), expand = 0.05, radius = 0.05,
+  alpha = NULL,
+  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+) {
+  shape <- match.arg(shape)
+  if (!is.numeric(expand) || length(expand) != 1 || is.na(expand) ||
+      expand < 0) {
+    ._abort_arg_range("expand", "a single non-negative number", got = expand)
+  }
+  if (!is.numeric(radius) || length(radius) != 1 || is.na(radius) ||
+      radius < 0) {
+    ._abort_arg_range("radius", "a single non-negative number", got = radius)
+  }
+  if (is.null(alpha)) {
+    alpha <- ._MARK_STYLE$alpha_annot
+  }
+
+  data <- data %||% plot@gg$data
+  mapping <- mapping %||% plot@gg$mapping
+  if (is.null(mapping$x) || is.null(mapping$y)) {
+    ._abort_hint(
+      "{.fn mark_encircle} requires the {.val x} and {.val y} aesthetics.",
+      "Use {.code encode(x = ..., y = ...)} in {.fn plotit} or a layer {.arg mapping}."
+    )
+  }
+  x <- rlang::eval_tidy(mapping$x, data)
+  y <- rlang::eval_tidy(mapping$y, data)
+  group_expr <- mapping$group %||% mapping$colour %||% mapping$fill
+  g <- if (!is.null(group_expr)) {
+    rlang::eval_tidy(group_expr, data)
+  } else {
+    "all"
+  }
+  # A constant channel (e.g. the injected default_color AsIs constant)
+  # evaluates to length 1; recycle it so every point is grouped the same.
+  g <- rep(as.character(g), length.out = length(x))
+  ok <- !is.na(x) & !is.na(y) & !is.na(g)
+  x <- x[ok]
+  y <- y[ok]
+  g <- g[ok]
+
+  dilate <- function(pts) {
+    if (expand == 0) {
+      return(pts)
+    }
+    centroid <- c(mean(pts$x), mean(pts$y))
+    pts$x <- centroid[1] + (pts$x - centroid[1]) * (1 + expand)
+    pts$y <- centroid[2] + (pts$y - centroid[2]) * (1 + expand)
+    pts
+  }
+  round_corners <- function(pts) {
+    rounds <- max(0L, round(radius / 0.05))
+    for (i in seq_len(rounds)) {
+      n <- nrow(pts)
+      idx1 <- seq_len(n)
+      idx2 <- c(n, seq_len(n - 1))
+      qx <- (pts$x[idx1] + pts$x[idx2]) / 2
+      qy <- (pts$y[idx1] + pts$y[idx2]) / 2
+      pts <- data.frame(x = as.vector(rbind(pts$x, qx)), y = as.vector(rbind(pts$y, qy)))
+    }
+    pts
+  }
+
+  levels <- unique(g)
+  polys <- lapply(levels, function(lv) {
+    idx <- g == lv
+    if (sum(idx) < 3) {
+      return(NULL)
+    }
+    if (shape == "hull") {
+      h <- grDevices::chull(x[idx], y[idx])
+      pts <- data.frame(x = x[idx][h], y = y[idx][h])
+    } else {
+      built <- ggplot2::ggplot_build(
+        ggplot2::ggplot(
+          data.frame(x = x[idx], y = y[idx]),
+          ggplot2::aes(x = x, y = y)
+        ) +
+          ggplot2::stat_ellipse()
+      )
+      pts <- built$data[[1]][c("x", "y")]
+    }
+    pts <- dilate(pts)
+    pts <- round_corners(pts)
+    pts$grp <- lv
+    pts
+  })
+  poly_df <- do.call(rbind, polys)
+  if (is.null(poly_df) || nrow(poly_df) == 0) {
+    cli::cli_abort(c(
+      "{.fn mark_encircle} needs at least 3 non-missing points per group.",
+      "i" = "Envelopes are undefined for smaller clusters."
+    ))
+  }
+
+  params <- rlang::list2(...)
+  if (is.null(params$fill)) {
+    params$fill <- ._MARK_STYLE$primary
+  }
+  if (is.null(params$colour)) {
+    params$colour <- ._MARK_STYLE$faint
+  }
+  if (is.null(params$linewidth)) {
+    params$linewidth <- ._MARK_STYLE$lw_thin
+  }
+  params$alpha <- alpha
+  layer_mapping <- ggplot2::aes(x = x, y = y, fill = .data$grp)
+  if (length(levels) > 1) {
+    layer_mapping$group <- rlang::sym("grp")
+  }
+  ._impl_with(plot, layer_mapping, poly_df, position, ggplot2::geom_polygon,
+    rasterize, rasterize_dpi, rasterize_dev,
+    auto_dodge = FALSE, bind_aes = NULL, mark_name = "mark_encircle",
+    extra = params
+  )
+}
+
 # ---- mark_beeswarm ----
 #' Beeswarm plot layer
 #'
@@ -2929,7 +3110,7 @@ S7::method(mark_forest, plotit_class) <- function(
   "mark_ribbon",
   # Composite / annotation
   "mark_errorbar", "mark_significance", "mark_lollipop", "mark_dumbbell",
-  "mark_beeswarm", "mark_forest", "mark_label",
+  "mark_beeswarm", "mark_forest", "mark_label", "mark_encircle",
   # Relational sugars
   "mark_sankey", "mark_treemap", "mark_network", "mark_chord"
 )
