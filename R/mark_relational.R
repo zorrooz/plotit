@@ -72,7 +72,8 @@ NULL
 #' ring labels visible on chord diagrams).
 #' @noRd
 #' @keywords internal
-._rel_canvas <- function(plot, fixed = FALSE, clip = "on") {
+._rel_canvas <- function(plot, fixed = FALSE, clip = "on",
+                         mark_name = "mark_sankey") {
   if (fixed) {
     plot@gg <- plot@gg + ggplot2::coord_fixed(clip = clip)
   } else if (!identical(clip, "on")) {
@@ -80,7 +81,11 @@ NULL
     # clip="off", so edge-strip labels are not cut by the panel boundary.
     plot@gg <- plot@gg + ggplot2::coord_cartesian(clip = clip)
   }
-  ._theme_blank_axes(plot)
+  # Axis chrome comes from the shared registry (D-06): relational sugars
+  # register axis = "blank" there, so this is the same decision point the
+  # standard marks use.
+  plot <- ._apply_chrome(plot, mark_name)
+  plot
 }
 
 # Canonicalize an edges table for the flow sugars (mark_sankey /
@@ -318,7 +323,7 @@ S7::method(mark_sankey, plotit_class) <- function(
   # Coordinate-free diagram: no axes around the layout canvas.  clip="off"
   # so the node-id labels (centred on the edge strips at x=0 / x=1) are not
   # cut by the panel boundary -- matches the chord sugar's outer labels.
-  ._rel_canvas(plot, clip = "off")
+  ._rel_canvas(plot, clip = "off", mark_name = "mark_treemap")
 }
 
 # ---- mark_treemap ----
@@ -419,7 +424,7 @@ S7::method(mark_treemap, plotit_class) <- function(
   plot <- ._rel_label_layer(plot, ~leaves, has_fill, show_labels)
 
   # Coordinate-free diagram: no axes around the canvas.
-  ._rel_canvas(plot)
+  ._rel_canvas(plot, mark_name = "mark_sankey")
 }
 
 # ---- mark_network ----
@@ -699,7 +704,7 @@ S7::method(mark_network, plotit_class) <- function(
 
   # Coordinate-free canvas with a true aspect ratio so the layout geometry
   # is not stretched by the panel shape.
-  ._rel_canvas(plot, fixed = TRUE)
+  ._rel_canvas(plot, fixed = TRUE, mark_name = "mark_network")
 }
 
 # ---- mark_chord ----
@@ -816,5 +821,5 @@ S7::method(mark_chord, plotit_class) <- function(
 
   # True circles need a fixed aspect ratio; clip off so the outer labels
   # at radius > 1 are not cropped.  No axes around the canvas.
-  ._rel_canvas(plot, fixed = TRUE, clip = "off")
+  ._rel_canvas(plot, fixed = TRUE, clip = "off", mark_name = "mark_chord")
 }

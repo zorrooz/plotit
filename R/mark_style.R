@@ -229,6 +229,90 @@ NULL
   gg
 }
 
+# ---- chrome convention registry (D-06, design/03 §6) ----
+# One decision point for per-mark canvas conventions, consulted by the
+# shared mark path (_mark_impl) and the relational sugars (_rel_canvas):
+#
+#   axis   "keep"  native axes (geometry / distribution / trend marks)
+#          "blank" coordinate-free canvas (no axis furniture at all)
+#          "cell"  closed-cell chrome: no axis line/ticks, category text
+#                  kept, panel flush (expand = 0)
+#   legend "auto"  follow the mapping (default); "none" force-hidden
+#   expand "default" ggplot2 expansion; "zero" tiles flush to the panel
+#
+# Marks absent from the table default to keep/auto/default, so make_mark()
+# customs keep zero behavior difference (AGENTS.md 3.3.3c).
+._MARK_CHROME <- list(
+  # Geometry / distribution / trend: native axes
+  mark_point = list(axis = "keep"),
+  mark_line = list(axis = "keep"),
+  mark_step = list(axis = "keep"),
+  mark_path = list(axis = "keep"),
+  mark_area = list(axis = "keep"),
+  mark_bar = list(axis = "keep"),
+  mark_histogram = list(axis = "keep"),
+  mark_density = list(axis = "keep"),
+  mark_boxplot = list(axis = "keep"),
+  mark_violin = list(axis = "keep"),
+  mark_beeswarm = list(axis = "keep"),
+  mark_count = list(axis = "keep"),
+  mark_rug = list(axis = "keep"),
+  mark_spoke = list(axis = "keep"),
+  mark_curve = list(axis = "keep"),
+  mark_label = list(axis = "keep"),
+  mark_text = list(axis = "keep"),
+  mark_smooth = list(axis = "keep"),
+  mark_ecdf = list(axis = "keep"),
+  mark_qq = list(axis = "keep"),
+  mark_qq_line = list(axis = "keep"),
+  mark_errorbar = list(axis = "keep"),
+  mark_ribbon = list(axis = "keep"),
+  mark_lollipop = list(axis = "keep"),
+  mark_dumbbell = list(axis = "keep"),
+  mark_forest = list(axis = "keep"),
+  mark_significance = list(axis = "keep"),
+  mark_encircle = list(axis = "keep"),
+  mark_image = list(axis = "keep"),
+  # Long-table tile marks keep light axes (G2 Cell / OP calendar); tiles
+  # themselves span the full data range so rect stays panel-flush.
+  mark_rect = list(axis = "keep", expand = "zero"),
+  mark_bin2d = list(axis = "keep"),
+  mark_hex = list(axis = "keep"),
+  # Matrix-input marks: closed-cell chrome, category labels carry the story
+  mark_heatmap = list(axis = "cell"),
+  mark_corr = list(axis = "cell"),
+  # Geographic: the projection draws its own graticule
+  mark_map = list(axis = "blank"),
+  # Relational sugars own their canvas
+  mark_sankey = list(axis = "blank"),
+  mark_treemap = list(axis = "blank"),
+  mark_network = list(axis = "blank"),
+  mark_chord = list(axis = "blank")
+)
+
+#' Apply a mark's registered canvas chrome.
+#' @noRd
+#' @keywords internal
+._apply_chrome <- function(plot, mark_name) {
+  chrome <- ._MARK_CHROME[[mark_name]] %||% list(axis = "keep")
+  axis <- chrome$axis %||% "keep"
+  if (identical(axis, "blank")) {
+    plot <- ._theme_blank_axes(plot)
+  } else if (identical(axis, "cell")) {
+    plot@gg <- ._gg_cell_chrome(plot@gg, keep_text = TRUE, zero_expand = TRUE)
+  }
+  if (identical(chrome$expand, "zero") && !identical(axis, "cell")) {
+    coords <- plot@gg$coordinates
+    if (is.null(coords) || identical(class(coords)[1], "CoordCartesian")) {
+      plot@gg <- plot@gg + ggplot2::coord_cartesian(expand = FALSE)
+    }
+  }
+  if (identical(chrome$legend, "none")) {
+    plot@gg <- plot@gg + ggplot2::guides(colour = "none", fill = "none")
+  }
+  plot
+}
+
 #' Closed-cell heatmap chrome (tiles flush to the panel, fonts kept).
 #' @noRd
 #' @keywords internal

@@ -81,26 +81,10 @@ NULL
     rasterize = rasterize, rasterize_dpi = rasterize_dpi,
     rasterize_dev = rasterize_dev
   )
-  # Closed-cell heatmap chrome (AGENTS.md 6, cell-chrome rule): corr /
-  # heatmap / rect tiles span the full data range, so axis lines/ticks
-  # double the grid the cells already draw and expansion padding would
-  # detach cells from the panel edge.  bin2d/hex binnings blank all axis
-  # furniture (the count field carries the meaning) while keeping the
-  # default padding so edge bins stay whole (see ._gg_cell_chrome).
-  cell_chrome <- if (length(mark_name) == 1L) {
-    switch(mark_name,
-      mark_rect = list(keep_text = TRUE, zero_expand = TRUE),
-      mark_corr = list(keep_text = TRUE, zero_expand = TRUE),
-      mark_heatmap = list(keep_text = TRUE, zero_expand = TRUE),
-      mark_bin2d = list(keep_text = FALSE, zero_expand = FALSE),
-      mark_hex = list(keep_text = FALSE, zero_expand = FALSE),
-      NULL
-    )
-  } else {
-    NULL
-  }
-  if (!is.null(cell_chrome)) {
-    plot@gg <- do.call(._gg_cell_chrome, c(list(plot@gg), cell_chrome))
+  # Canvas chrome from the convention registry (D-06): the single decision
+  # point shared with the relational sugars (._MARK_CHROME, design/03 §6).
+  if (length(mark_name) == 1L) {
+    plot <- ._apply_chrome(plot, mark_name)
   }
   plot
 }
@@ -620,10 +604,12 @@ S7::method(mark_map, plotit_class) <- function(
     plot <- ._clear_default_color(plot, mapping)
   }
   geom <- ggplot2::geom_sf(mapping = mapping, data = data, ...)
-  ._add_geom(plot, geom,
+  plot <- ._add_geom(plot, geom,
     rasterize = rasterize, rasterize_dpi = rasterize_dpi,
     rasterize_dev = rasterize_dev
   )
+  # Geographic canvas: the projection draws its own graticule (D-06)
+  plot <- ._apply_chrome(plot, "mark_map")
 }
 
 # ---- mark_rect ----

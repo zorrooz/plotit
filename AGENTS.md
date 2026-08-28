@@ -707,6 +707,7 @@ data |> as_graph() |> plotit() |>
 | `._attach_default_colour_scale(p, data, mapping)` | 构造期自动挂载策划色板：映射的离散 colour/fill→friendly、连续→viridis；AsIs 常量与解析失败静默跳过 |
 | `._default_colour_scale(aes, data, var)` | **全包唯一色板决策点**：类别列→friendly 定性、数值列→viridis 顺序；构造期/图层/派生通道三条路径共用 |
 | `._apply_panel_size(gg, w, h, unit, grid)` / `._strip_panel_size(gg)` / `._panel_grid_dims(gg)` | WYSIWYG 烘焙/剥离/面板网格探测（ggplot2 底线 4.0.0 后能力探测函数 `._panel_sizing_supported()` 已移除，恒真门槛为死代码） |
+| `._MARK_CHROME` / `._apply_chrome(plot, mark_name)` | 逐 mark 画布惯例注册表与单一决策点（D-06）：axis keep/blank/cell、legend auto/none、expand default/zero；`_mark_impl` 与 `._rel_canvas` 共用 |
 | `._gg_aspect_conflict(gg)` | 检测固定纵横比坐标系（CoordFixed）与烘焙面板尺寸的冲突 |
 
 **关键约定**：
@@ -839,7 +840,7 @@ export(p, "output.pdf", dpi = 300)
 - **调色板**：无映射时默认 Tableau 蓝 `#4E79A7`（同时 `colour`+`fill`，图例隐藏）。有映射时自动挂载策划色板，**全包唯一决策点** `._default_colour_scale()`：**恒等/分组通道（类别列）→ friendly**（Okabe-Ito 色盲安全六色，黄位加深为 `#F5C710`：`#0072B2 #56B4E9 #009E73 #F5C710 #E69F00 #D55E00`；>6 档锚点插值，<6 档均匀取样），**量级通道（数值列）→ viridis 顺序色板**。三条挂载路径共享同一规则：构造期全局映射、图层映射（`._mark_impl` 自动挂载 + managed 注册表防覆盖用户 scale）、Mark 派生通道。用户之后链式 `scale_*()` 即替换（后执行者胜）；`encode(colour = I(...))` AsIs 常量走 identity 不被劫持；hue 色相轮退居可选方案 `range="hue"`。
 - **Mark 统一默认样式**：全部 mark 的样式字面量集中于 `R/mark_style.R`（详见 §3.3.3c）——品牌色 primary `#4E79A7` / secondary `#E15759`；中性灰阶 ink(grey30)/soft(grey50)/faint(grey70)；线宽阶梯 lw_data(0.9) > lw_thin(0.5) > lw_border(0.25)；注释字号 txt_note(3.2)；半透明填充 alpha_fill(0.6)、连接带 alpha_link(0.5)。柱宽默认槽位的 0.7（slot=dodge 0.8，留出组间空气）。用户显式参数与已映射美学始终优先于默认。
 - **封闭统计 Mark 自动 viridis**：量级派生通道（corr `value` / hex `count` / density_2d(filled) `level`）语义为数值大小 → viridis 顺序色板；关系类语法糖的恒等派生通道（sankey 流带/节点、chord 弧段/缎带、treemap 叶块均默认 source identity，network 节点 colour）按列类型路由 friendly/viridis——与全局映射同一规则、同一色板。用户之后链式调用 `scale_*()` 即替换（后执行者胜）。
-- **域驱动画布 chrome**：graph 数据 ⇒ 坐标自由画布（构造期即关闭全部轴元素，语法糖与显式管道同貌）；封闭单元格 mark（`mark_rect`/`mark_corr`）⇒ cell-chrome（无轴线/刻度 + 零 expand，类别文本保留，corr 另去合成轴标题 Var1/Var2）；用户显式 `project_*()` 始终优先。
+- **域驱动画布 chrome（D-06，`._MARK_CHROME` 注册表单一决策点）**：几何/分布/趋势 mark 与长表 tile 型（`mark_rect` 轻轴 + 面板贴合 / `mark_bin2d` / `mark_hex`）⇒ keep 原生轴（I-1 裁决：G2 Cell 与 OP 日历均保留轴）；矩阵输入型（`mark_heatmap`/`mark_corr`）⇒ cell（无轴线/刻度 + 零 expand，类别文本保留，corr 另去合成轴标题 Var1/Var2）；地理 `mark_map` ⇒ blank（经纬由 projection 提供）；关系 sugar ⇒ blank（坐标自由画布）。用户显式 `project_*()`/`style()` 始终优先；不在表中的 mark（含 make_mark 自定义）默认 keep，零行为差异。
 - **默认轴标题清理**：`factor()`/`as.factor()`/`ordered()`/`as.character()` 包裹的映射在构造期解包为纯列名（`encode(x=factor(cyl))` → 轴标题 "cyl"）；其余表达式保持 ggplot2 deparse 行为。
 - **图例**：右侧，无边框透明背景，紧凑 key 尺寸。
 - **尺寸**：自适应关闭时默认紧凑学术面板 5×3.5 英寸（总足迹 ≈6.6in 装进标准设备），导出 300 dpi。组合图默认画布 = 子图 meta 面板 × 布局维度 + 1.6in chrome 余量（禁止测量 patchworkGrob）。
