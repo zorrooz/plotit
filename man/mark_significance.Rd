@@ -70,3 +70,7 @@ plotit(df, encode(x = group, y = value)) |>
   mark_bar() |>
   mark_significance(comp, y_position = c(9, 6))
 }
+\references{
+Vega-Lite: \code{layer} composition of rule + text annotation layers; no native
+significance mark
+}

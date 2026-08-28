@@ -42,3 +42,8 @@ Adds a scatter plot layer.
 \examples{
 plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
 }
+\references{
+Vega-Lite: \href{https://vega.github.io/vega-lite/docs/point.html}{Point}
+
+AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/point}{Point} (corelib)
+}

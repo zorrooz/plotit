@@ -62,3 +62,6 @@ df <- data.frame(
 plotit(df, encode(x = cat, y = before, yend = after)) |>
   mark_dumbbell()
 }
+\references{
+AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/link}{Link} (corelib)
+}

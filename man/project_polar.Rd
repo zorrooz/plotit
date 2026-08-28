@@ -25,8 +25,7 @@ project_polar(
 \item{direction}{\code{1} = clockwise, \code{-1} = anti-clockwise.}
 
 \item{inner_radius}{Inner radius as a fraction of the panel (0-1).
-\code{0} = polar (full circle). \verb{>0} = radial (hollow centre, needs
-ggplot2 >= 3.5.0).}
+\code{0} = polar (full circle). \verb{>0} = radial (hollow centre).}
 
 \item{r_axis_inside}{If \code{TRUE}, place the radial axis inside the panel
 (radial mode only).}
@@ -41,8 +40,7 @@ Modified plotit object.
 \description{
 Maps one axis to angle and the other to radius.  Default (full circle,
 zero inner radius) uses \code{coord_polar()}.  Set \code{inner_radius > 0} or
-\code{r_axis_inside = TRUE} to switch to the radial variant (requires
-ggplot2 >= 3.5.0).
+\code{r_axis_inside = TRUE} to switch to the radial variant.
 }
 \examples{
 plotit(mtcars, encode(x = factor(cyl))) |>

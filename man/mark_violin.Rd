@@ -24,7 +24,10 @@ mark_violin(
 
 \item{position}{Position adjustment.}
 
-\item{...}{Other arguments passed to \code{geom_violin}}
+\item{...}{Other arguments passed to \code{geom_violin}. Since ggplot2 4.0 the
+quantile lines live on the stat: \verb{quantiles =} selects the quantiles
+drawn and \code{quantile.colour}/\code{quantile.linetype}/\code{quantile.linewidth}
+style them (\code{quantile.linetype = 0} hides them by default).}
 
 \item{rasterize}{If \code{TRUE}, rasterize via \code{ggrastr::rasterise()}.}
 
@@ -42,4 +45,7 @@ at each position.
 \examples{
 plotit(iris, encode(x = Species, y = Sepal.Length)) |>
   mark_violin(quantiles = 0.5, quantile.linetype = "dashed")
+}
+\references{
+AntV G2: \href{https://g2.antv.antgroup.com/en/api/general/shape}{density (violin)}
 }

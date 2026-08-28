@@ -581,3 +581,29 @@ test_that("mark_rule segment mode does not warn about injected fill", {
     mark_rule()
   expect_no_warning(.built(p))
 })
+
+# ---- [BDD] mark_text / mark_label repel passthrough (D-15) ----
+test_that("[BDD] mark_text repel max.overlaps=Inf keeps every label", {
+  agg <- data.frame(
+    x = rep(1:2, 15), y = rep(1:15, each = 2), lab = paste0("L", 1:30)
+  )
+  p <- plotit(agg, encode(x = x, y = y, label = lab)) |>
+    mark_text(repel = TRUE, max.overlaps = Inf)
+  b <- .built(p)
+  expect_equal(nrow(b$data[[1]]), 30)
+})
+
+test_that("[BDD] mark_text repel seed=1 is reproducible", {
+  skip_if_not_installed("ggrepel")
+  agg <- data.frame(
+    x = rep(1:2, 15), y = rep(1:15, each = 2), lab = paste0("L", 1:30)
+  )
+  mk <- function() {
+    .built(plotit(agg, encode(x = x, y = y, label = lab)) |>
+             mark_text(repel = TRUE, seed = 1, max.overlaps = Inf))$data[[1]]
+  }
+  d1 <- mk()
+  d2 <- mk()
+  expect_identical(d1$x, d2$x)
+  expect_identical(d1$y, d2$y)
+})

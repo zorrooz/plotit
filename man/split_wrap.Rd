@@ -4,13 +4,13 @@
 \alias{split_wrap}
 \title{Generic for wrapping facets}
 \usage{
-split_wrap(plot, ..., nrow = NULL, ncol = NULL, scales = "fixed")
+split_wrap(plot, ..., nrow = NULL, ncol = NULL, scales = "fixed", dir = NULL)
 }
 \arguments{
 \item{plot}{A plotit object.}
 
 \item{...}{Unnamed arguments are faceting variables (e.g. \code{Species});
-named arguments (\code{labeller}, \code{strip.position}, \code{dir}, \code{drop}, ...)
+named arguments (\code{labeller}, \code{strip.position}, \code{drop}, ...)
 are passed through to \code{\link[ggplot2:facet_wrap]{ggplot2::facet_wrap()}}.}
 
 \item{nrow}{Number of rows in the facet grid (optional).}
@@ -19,6 +19,11 @@ are passed through to \code{\link[ggplot2:facet_wrap]{ggplot2::facet_wrap()}}.}
 
 \item{scales}{Should scales be fixed ("fixed"), free ("free"), or free in
 one dimension ("free_x", "free_y")?}
+
+\item{dir}{Facet fill direction code passed to \code{\link[ggplot2:facet_wrap]{ggplot2::facet_wrap()}}:
+ggplot2 4.0 supports the eight-direction codes \code{"lt"}, \code{"tl"}, \code{"lb"},
+\code{"bl"}, \code{"rt"}, \code{"tr"}, \code{"rb"}, \code{"br"} (first letter = first-panel
+corner, second letter = fill direction). \code{NULL} = ggplot2 default.}
 }
 \value{
 A modified \code{plotit} object.

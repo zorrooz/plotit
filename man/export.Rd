@@ -15,13 +15,18 @@ export(
 )
 }
 \arguments{
-\item{plot}{A plotit object.}
+\item{plot}{A plotit object, a \code{plotit_composite}, or a list of
+\code{plotit}/\code{plotit_composite} objects. A list is exported as a multi-page
+PDF and therefore requires a \code{.pdf} filename (or \code{device = "pdf"}):
+single-page devices would silently keep only the last page.}
 
 \item{filename}{Output filename (extension determines device, e.g., ".pdf").}
 
-\item{width}{Output width (if NULL, uses meta then package default).}
+\item{width}{Output width (if NULL, uses meta then package default; for a
+list, applied to every page).}
 
-\item{height}{Output height (if NULL, uses meta then package default).}
+\item{height}{Output height (if NULL, uses meta then package default; for a
+list, applied to every page).}
 
 \item{dpi}{Resolution for raster formats (default 300).}
 
@@ -30,10 +35,11 @@ export(
 \item{...}{Additional arguments passed to \code{ggplot2::ggsave()}.}
 }
 \value{
-Invisibly, the original \code{plotit} object.
+Invisibly, the original \code{plot} argument.
 }
 \description{
-Export a plotit object to a file
+Exports a single plot, a composite, or a list of plots as a multi-page
+PDF (each list element becomes one page, in order).
 }
 \examples{
 p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()

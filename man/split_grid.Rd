@@ -10,7 +10,8 @@ split_grid(
   rows = NULL,
   cols = NULL,
   scales = "fixed",
-  space = "fixed"
+  space = "fixed",
+  axes = NULL
 )
 }
 \arguments{
@@ -27,6 +28,10 @@ one dimension ("free_x", "free_y")?}
 
 \item{space}{Should the space be fixed ("fixed"), free ("free"), or free in
 one dimension ("free_x", "free_y")?}
+
+\item{axes}{Axis repetition passed to \code{\link[ggplot2:facet_grid]{ggplot2::facet_grid()}}:
+\code{"all"}/\code{"all_x"}/\code{"all_y"} repeat axes on every panel (ggplot2 >= 3.5).
+\code{NULL} = axes on the outer edges only.}
 }
 \value{
 A modified \code{plotit} object.

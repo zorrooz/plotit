@@ -41,3 +41,9 @@ Adds a box-and-whisker distribution layer.
 \examples{
 plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot()
 }
+\references{
+R: \code{stats::quantile()} (five-number summary behind the boxplot stat)
+Vega-Lite: \href{https://vega.github.io/vega-lite/docs/boxplot.html}{Boxplot} (composite mark)
+
+AntV G2: boxplot (corelib)
+}

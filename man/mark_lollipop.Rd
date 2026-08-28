@@ -53,3 +53,7 @@ df <- data.frame(cat = LETTERS[1:5], val = c(3, 7, 2, 9, 5))
 plotit(df, encode(x = cat, y = val)) |>
   mark_lollipop(point_size = 4, stem_color = "grey70")
 }
+\references{
+AntV G2: \code{interval} + \code{point} layer composition (corelib); no native
+lollipop mark
+}

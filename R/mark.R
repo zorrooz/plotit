@@ -279,6 +279,10 @@ NULL
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_point`
 #' @return Modified plotit object
+#' @references
+#' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/point.html}{Point}
+#'
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/point}{Point} (corelib)
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
 #' @export
@@ -334,6 +338,10 @@ mark_point <- ._make_mark_generic("mark_point")
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_line`
 #' @return Modified plotit object
+#' @references
+#' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/line.html}{Line}
+#'
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/line}{Line} (corelib)
 #' @examples
 #' plotit(ggplot2::economics, encode(x = date, y = unemploy)) |> mark_line()
 #' @export
@@ -354,6 +362,11 @@ mark_line <- ._make_mark_generic("mark_line")
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_boxplot`
 #' @return Modified plotit object
+#' @references
+#' R: \code{stats::quantile()} (five-number summary behind the boxplot stat)
+#' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/boxplot.html}{Boxplot} (composite mark)
+#'
+#' AntV G2: boxplot (corelib)
 #' @examples
 #' plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot()
 #' @export
@@ -374,6 +387,9 @@ mark_boxplot <- ._make_mark_generic("mark_boxplot")
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_histogram`
 #' @return Modified plotit object
+#' @references
+#' R: \code{graphics::hist()} (binning semantics; realised by ggplot2's stat_bin)
+#' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/bar.html}{Bar} with `bin` transform
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width)) |> mark_histogram()
 #' @export
@@ -394,6 +410,9 @@ mark_histogram <- ._make_mark_generic("mark_histogram")
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_density`
 #' @return Modified plotit object
+#' @references
+#' R: \code{stats::density()} (kernel density estimate)
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/density}{Density} (corelib)
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width)) |> mark_density()
 #' @export
@@ -477,8 +496,22 @@ S7::method(mark_area, plotit_class) <- function(
 #' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
 #' @param rasterize_dpi DPI for rasterization (default 300).
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
-#' @param ... Other arguments passed to `geom_text` or `geom_text_repel`
+#' @param ... Other arguments passed to `geom_text` or `geom_text_repel`.
+#'   With `repel = TRUE` the frequently used \pkg{ggrepel} passthrough
+#'   parameters are (defaults from the ggrepel docs):
+#'   `max.overlaps` (plural! labels overlapping more than this many others
+#'   are dropped; default `getOption("ggrepel.max.overlaps", 10)`;
+#'   `Inf` keeps every label), `min.segment.length = 0.5` (leader-line
+#'   threshold, `0` draws all), `force = 1`, `force_pull = 1`,
+#'   `direction = "both"`, `seed = NA` (set a number for reproducible
+#'   placement), `nudge_x = 0`, `nudge_y = 0`, `point.padding = 1e-6`,
+#'   `box.padding = 0.25`, `max.time = 0.5`, `max.iter = 10000`,
+#'   `xlim = c(NA, NA)`, `ylim = c(NA, NA)`.
 #' @return Modified plotit object
+#' @references
+#' Observable Plot: `Plot.text`
+#'
+#' ggrepel: \href{https://ggrepel.slowkow.com/reference/geom_text_repel.html}{geom_text_repel}
 #' @examples
 #' plotit(mtcars, encode(x = wt, y = mpg, label = rownames(mtcars))) |>
 #'   mark_text(size = 3)
@@ -1474,6 +1507,9 @@ S7::method(mark_errorbar, plotit_class) <- function(
 #' @param ... Additional arguments passed to the label annotation
 #'   (`ggplot2::annotate("text", ...)`).
 #' @return Modified plotit object
+#' @references
+#' Vega-Lite: `layer` composition of rule + text annotation layers; no native
+#' significance mark
 #' @examples
 #' df <- data.frame(group = c("A", "B", "C"), value = c(5, 8, 4))
 #' comp <- data.frame(
@@ -1615,6 +1651,9 @@ S7::method(mark_significance, plotit_class) <- function(
 #' @param ref Baseline value for the stems (default 0).
 #' @param ... Other arguments passed to `mark_point()`
 #' @return Modified plotit object
+#' @references
+#' AntV G2: `interval` + `point` layer composition (corelib); no native
+#' lollipop mark
 #' @examples
 #' df <- data.frame(cat = LETTERS[1:5], val = c(3, 7, 2, 9, 5))
 #' plotit(df, encode(x = cat, y = val)) |>
@@ -1684,6 +1723,8 @@ S7::method(mark_lollipop, plotit_class) <- function(
 #' @param line_width Width for the connecting line (default 0.9).
 #' @param ... Other arguments passed to `mark_point()` calls
 #' @return Modified plotit object
+#' @references
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/link}{Link} (corelib)
 #' @examples
 #' df <- data.frame(
 #'   cat = LETTERS[1:5], before = c(3, 5, 2, 8, 4),
@@ -1821,6 +1862,10 @@ S7::method(mark_beeswarm, plotit_class) <- function(
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_bar` or `geom_col`
 #' @return Modified plotit object
+#' @references
+#' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/bar.html}{Bar}
+#'
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/interval}{Interval} (corelib)
 #' @examples
 #' plotit(mtcars, encode(x = factor(cyl))) |> mark_bar()
 #' @export
@@ -2505,9 +2550,13 @@ S7::method(mark_ecdf, plotit_class) <- function(
 #' @param rasterize_dpi DPI for rasterization (default 300).
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_label` or `geom_label_repel`.
-#'   Since ggplot2 4.0 the box outline is styled with the `linewidth` aesthetic
-#'   (the old `label.size` argument is deprecated): use
-#'   `mark_label(linewidth = 0.4)`. `border.colour`/`text.colour` style the
+#'   With `repel = TRUE` the \pkg{ggrepel} passthrough parameters are the
+#'   same as [mark_text()] (see its `@param ...` for the full list with
+#'   defaults); `geom_label_repel` additionally styles the box with
+#'   `label.padding = 0.25`, `label.r = 0.15`, `label.size = 0.25`.
+#'   Without repel, ggplot2 4.0 styles the box with the `linewidth`
+#'   aesthetic (the old `label.size` argument is deprecated): use
+#'   `mark_label(linewidth = 0.4)`; `border.colour`/`text.colour` style the
 #'   box and text independently.
 #' @return Modified plotit object
 #' @references
