@@ -30,6 +30,7 @@ NULL
   mark_text = c("x", "y"),
   mark_area = c("x", "y", "ymin", "ymax"),
   mark_ribbon = c("x", "y", "ymin", "ymax"),
+  mark_image = c("x", "y", "src"),
   mark_density = c("x", "y"),
   mark_histogram = c("x", "y"),
   mark_boxplot = c("x", "y"),

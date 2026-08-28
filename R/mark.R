@@ -2917,6 +2917,7 @@ S7::method(mark_forest, plotit_class) <- function(
   "mark_point", "mark_line", "mark_area", "mark_bar", "mark_rect",
   "mark_polygon", "mark_text", "mark_rule", "mark_path",
   "mark_step", "mark_rug", "mark_spoke", "mark_curve",
+  "mark_image",
   # Distributions
   "mark_histogram", "mark_density", "mark_boxplot", "mark_violin",
   "mark_ecdf",
