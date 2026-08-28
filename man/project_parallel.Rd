@@ -6,9 +6,13 @@
 \usage{
 project_parallel(
   plot,
-  columns,
+  columns = NULL,
   group = NULL,
   scale = c("std", "global", "none"),
+  order = NULL,
+  recenter = NULL,
+  aggregate = c("none", "mean", "median"),
+  axis_labels = TRUE,
   alpha = 0.5,
   size = 1,
   ...

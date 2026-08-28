@@ -1248,7 +1248,6 @@ parse(file = "test.R")
 - `mark_heatmap`：`show_numbers`/`number_format`/`number_color`/`na_color`；`cluster` 扩型接受 hclust/list/字符向量四态（03§5.1、06§5）
 - `scale_color/fill`：`na_color`/`n_bins`/`mid`；palette 白名单扩至 20 方案（新增发散类 6 个，默认 `rdbu`；D-4 裁决本期封顶）（04§1–3）
 - `project_polar`：`start`/`end`/`reverse`，`direction` 进弃用周期（05§2）
-- `project_parallel`：`order`/`recenter`/`aggregate`（05§4）
 - `split_wrap`/`split_grid`：`dir` 八向码 / `axes` 透传（05§5）
 - `compose_grid`：`design`（字符串/数值向量列表）/`axis_titles`/三态尺寸（06§2）
 - `layout_tree`：`leaf_spacing`/`edge="elbow"`（07§2）

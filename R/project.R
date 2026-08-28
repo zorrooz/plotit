@@ -184,6 +184,18 @@ S7::method(project_polar, plotit_class) <- function(
 #' @param scale `"std"` (default): min-max normalise each column to 0-1.
 #'   `"global"`: min-max normalise across all columns to 0-1.
 #'   `"none"`: no normalisation, each column keeps its own range.
+#' @param order Axis order: character subset of `columns`; axes render in
+#'   the given order and omitted columns drop. `NULL` (default) keeps the
+#'   `columns` order.
+#' @param recenter Reference axis for a difference-from-reference view: a
+#'   column name; every polyline is re-expressed as its difference from
+#'   that axis (normalised space), so the reference becomes a straight
+#'   zero baseline. `NULL` disables.
+#' @param aggregate Group overlay: `"none"` (default), or `"mean"` /
+#'   `"median"` to draw one thick aggregate line per group behind the
+#'   individual polylines (requires `group`).
+#' @param axis_labels Draw the per-axis tick labels (default `TRUE`);
+#'   `FALSE` blanks them for a clean silhouette view.
 #' @param alpha,size Passed to `geom_line()` / `geom_point()`.
 #' @param ... Passed to `geom_line()`.
 #' @return Modified plotit object.
@@ -194,7 +206,11 @@ S7::method(project_polar, plotit_class) <- function(
 project_parallel <- S7::new_generic(
   "project_parallel",
   "plot",
-  function(plot, columns, group = NULL, scale = c("std", "global", "none"),
+  function(plot, columns = NULL, group = NULL,
+           scale = c("std", "global", "none"),
+           order = NULL, recenter = NULL,
+           aggregate = c("none", "mean", "median"),
+           axis_labels = TRUE,
            alpha = 0.5, size = 1, ...) {
     S7::S7_dispatch()
   }
@@ -368,14 +384,19 @@ project_parallel <- S7::new_generic(
 #' @export
 S7::method(project_parallel, plotit_class) <- function(
   plot,
-  columns,
+  columns = NULL,
   group = NULL,
   scale = c("std", "global", "none"),
+  order = NULL,
+  recenter = NULL,
+  aggregate = c("none", "mean", "median"),
+  axis_labels = TRUE,
   alpha = 0.5,
   size = 1,
   ...
 ) {
   scale <- match.arg(scale)
+  aggregate <- match.arg(aggregate)
   data <- plot@gg$data
 
   if (is.null(data) || nrow(data) == 0) {
@@ -383,6 +404,18 @@ S7::method(project_parallel, plotit_class) <- function(
       "No data found in the plot.",
       "Call {.fn plotit} with a non-empty data frame first."
     )
+  }
+
+  # Default axes: every numeric column, in data order.
+  if (is.null(columns)) {
+    numeric_cols <- names(data)[vapply(data, is.numeric, logical(1))]
+    if (length(numeric_cols) < 2) {
+      ._abort_hint(
+        "{.fn project_parallel} needs at least two numeric columns.",
+        "Pass {.arg columns} explicitly or supply a wider data frame."
+      )
+    }
+    columns <- numeric_cols
   }
 
   if (length(columns) == 0) {
@@ -397,6 +430,32 @@ S7::method(project_parallel, plotit_class) <- function(
     ._abort_hint(
       sprintf("Column(s) not found in data: {.val %s}.", paste0("c(", deparse(missing_cols), ")")),
       sprintf("Available columns: {.val %s}.", paste0("c(", deparse(names(data)), ")"))
+    )
+  }
+
+  # Axis order re-export (D-13): `order` must name a subset of `columns`;
+  # axes render in the given order, omitted columns drop.
+  if (!is.null(order)) {
+    bad_order <- setdiff(order, columns)
+    if (length(bad_order) > 0 || length(order) == 0) {
+      ._abort_hint(
+        sprintf(
+          "{.arg order} must be a subset of {.arg columns}: {.val %s}.",
+          paste0("c(", deparse(columns), ")")
+        ),
+        sprintf("Unknown name(s): {.val %s}.", paste0("c(", deparse(bad_order), ")"))
+      )
+    }
+    columns <- order
+  }
+
+  recenter_bad <- !is.null(recenter) &&
+    (!is.character(recenter) || length(recenter) != 1 ||
+       !recenter %in% columns)
+  if (recenter_bad) {
+    ._abort_hint(
+      "{.arg recenter} must name one of the parallel axes.",
+      sprintf("Legal values: {.val %s}.", paste0("c(", deparse(columns), ")"))
     )
   }
 
@@ -455,6 +514,16 @@ S7::method(project_parallel, plotit_class) <- function(
         long[[val_col]][rows] <- 0.5
       }
     }
+  }
+
+  # Recenter (D-13): difference from the reference axis, computed in the
+  # normalised space -- the reference column becomes a straight zero
+  # baseline (VL "calculate difference from average", static form).
+  if (!is.null(recenter)) {
+    base_vals <- long[[val_col]][long[[var_col]] == recenter]
+    ids_base <- long[[id_col]][long[[var_col]] == recenter]
+    long[[val_col]] <- long[[val_col]] -
+      base_vals[match(long[[id_col]], ids_base)]
   }
 
   aes_args <- list(
@@ -527,6 +596,27 @@ S7::method(project_parallel, plotit_class) <- function(
     ggplot2::geom_line(data = long, mapping = pc_mapping, alpha = alpha, ...) +
     ggplot2::geom_point(data = long, mapping = pc_mapping, size = size)
 
+  # Group aggregate overlay (D-13): one thick line per group (mean or
+  # median of the individual polylines), same colour scale as the
+  # individual lines.
+  if (!is.null(group) && aggregate != "none") {
+    agg_fun <- if (aggregate == "mean") mean else stats::median
+    agg_vals <- tapply(long[[val_col]], list(long[[var_col]], long[[group]]), agg_fun)
+    grid <- expand.grid(
+      var = dimnames(agg_vals)[[1]],
+      grp = dimnames(agg_vals)[[2]]
+    )
+    grid$val <- as.numeric(agg_vals[cbind(grid$var, grid$grp)])
+    agg_mapping <- ggplot2::aes(
+      x = .data$var, y = .data$val, group = .data$grp, colour = .data$grp
+    )
+    plot@gg <- plot@gg +
+      ggplot2::geom_line(
+        data = grid, mapping = agg_mapping,
+        linewidth = 1.6, lineend = "round"
+      )
+  }
+
   # ---- Common scales (both modes) ----
   y_limits <- range(
     vapply(col_info, `[[`, numeric(1), "ymax"),
@@ -545,7 +635,8 @@ S7::method(project_parallel, plotit_class) <- function(
     ggplot2::theme(
       axis.line.x  = ggplot2::element_blank(),
       axis.ticks.x = ggplot2::element_blank(),
-      axis.title   = ggplot2::element_blank()
+      axis.title   = ggplot2::element_blank(),
+      axis.text.x  = if (!axis_labels) ggplot2::element_blank() else NULL
     )
 
   # ---- Per-column mode (scale = "none") draws manual per-column axes;
@@ -553,7 +644,7 @@ S7::method(project_parallel, plotit_class) <- function(
   # ---- y-axis guide already provides ticks and labels.
   if (!shared_scale) {
     tp <- ._parallel_theme_props(plot@gg$theme)
-    plot <- ._pp_draw_axes(plot, col_info, tp)
+    plot <- ._pp_draw_axes(plot, col_info, tp, axis_labels = axis_labels)
   }
 
   plot
