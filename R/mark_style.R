@@ -1,7 +1,7 @@
 #' @include class.R
 NULL
 
-# ---- Unified mark style system (AGENTS.md §6) ----
+# ---- Unified mark style system (AGENTS.md <U+00A7>6) ----
 #
 # Single source of truth for every style literal used by mark_* so that all
 # marks share one visual language out of the box.
@@ -12,7 +12,7 @@ NULL
 #
 # Precedence: explicit user parameter > mapped aesthetic (layer or global,
 # including the AsIs constants injected by plotit()) > mark default.
-# Tokens are iterables per AGENTS.md §1.4 (default-aesthetics tier).
+# Tokens are iterables per AGENTS.md <U+00A7>1.4 (default-aesthetics tier).
 
 ._MARK_STYLE <- list(
   # Brand palette (Tableau 10 subset)
@@ -198,7 +198,7 @@ NULL
 
 # Closed-cell / heatmap marks (corr, heatmap, rect tiles, bin2d, hex) span
 # their own canvas: the cells or bins draw the structure, so axis furniture
-# is redundant and gets blanked per the AGENTS.md §6 convention table.  Two
+# is redundant and gets blanked per the AGENTS.md <U+00A7>6 convention table.  Two
 # knobs: keep_text (category labels of corr/rect/heatmap rows and columns
 # carry meaning; bin2d/hex count fields blank everything) and zero_expand
 # (cells flush to the panel edge for tile marks; bin2d/hex keep the default

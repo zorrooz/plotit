@@ -42,3 +42,4 @@ Rplots*.pdf
 docs/
 skills-lock.json
 .agent/
+plotit.Rcheck/

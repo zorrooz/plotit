@@ -39,7 +39,7 @@ Modified plotit object
 \description{
 Adds a filled area layer.  With \code{y} mapped this is a classic
 (optionally stacked) area chart via \code{geom_area}; with \code{ymin}/\code{ymax}
-mapped instead it becomes an interval band via \code{geom_ribbon} —
+mapped instead it becomes an interval band via \code{geom_ribbon} <U+2014>
 confidence bands, min/max envelopes, or any "area between two
 curves" view (Vega-Lite's \code{area} covers both, as does G2).
 }

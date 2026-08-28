@@ -43,7 +43,7 @@ Modified plotit object; \verb{@graph} holds the laid-out tables.
 \description{
 Creates a chord diagram showing pairwise relationships between groups.
 Equivalent to the pipeline \code{as_graph() |> layout_chord() |> mark_polygon(data = ~ribbons) |> mark_polygon(data = ~arcs)} -- see
-§3.3.4a.  Accepts an \strong{edges table} with \code{source}, \code{target}, and
+<U+00A7>3.3.4a.  Accepts an \strong{edges table} with \code{source}, \code{target}, and
 optionally \code{value} columns (either mapped via structural aesthetics or
 present as literal columns); sector arcs and bezier bands come from the
 built-in circular layout (deterministic, dependency-free).  The fill

@@ -95,10 +95,13 @@ test_that("[BDD] panel size respects contract within +/-1%", {
 # markers ("/Type /Page", "/Count N") are stored uncompressed, so a byte scan
 # is reliable for the N-pages assertion (cross-checked against /Count).
 pdf_page_count <- function(path) {
+  # Byte-exact scan (grepRaw): locale-independent, unlike regex over
+  # rawToChar output, which silently fails to match under the C locale
+  # that R CMD check uses.
   raw <- readBin(path, what = "raw", n = file.size(path))
-  raw[raw == as.raw(0)] <- as.raw(32)
-  txt <- rawToChar(raw)
-  length(gregexpr("/Type /Page[^s]", txt)[[1]])
+  page_and_tree <- length(grepRaw("/Type /Page", raw, fixed = TRUE, all = TRUE))
+  tree <- length(grepRaw("/Type /Pages", raw, fixed = TRUE, all = TRUE))
+  page_and_tree - tree
 }
 
 test_that("[BDD] export(list) writes one PDF page per plot", {

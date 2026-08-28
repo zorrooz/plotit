@@ -599,8 +599,9 @@ test_that("[BDD] mark_text repel seed=1 is reproducible", {
     x = rep(1:2, 15), y = rep(1:15, each = 2), lab = paste0("L", 1:30)
   )
   mk <- function() {
-    .built(plotit(agg, encode(x = x, y = y, label = lab)) |>
-             mark_text(repel = TRUE, seed = 1, max.overlaps = Inf))$data[[1]]
+    p <- plotit(agg, encode(x = x, y = y, label = lab)) |>
+      mark_text(repel = TRUE, seed = 1, max.overlaps = Inf)
+    .built(p)$data[[1]]
   }
   d1 <- mk()
   d2 <- mk()

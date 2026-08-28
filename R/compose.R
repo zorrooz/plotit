@@ -40,7 +40,7 @@ NULL
 }
 
 # Sync lazy labels on a sub-plot before extraction so label_* settings
-# survive composition (AGENTS.md §1.2).  Composites are skipped: their
+# survive composition (AGENTS.md <U+00A7>1.2).  Composites are skipped: their
 # labels live in annotations, not meta@labels.
 #' Sync lazy labels on a sub-plot before composition.
 #' @noRd

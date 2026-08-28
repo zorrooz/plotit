@@ -424,7 +424,7 @@ mark_density <- ._make_mark_generic("mark_density")
 #'
 #' Adds a filled area layer.  With `y` mapped this is a classic
 #' (optionally stacked) area chart via `geom_area`; with `ymin`/`ymax`
-#' mapped instead it becomes an interval band via `geom_ribbon` —
+#' mapped instead it becomes an interval band via `geom_ribbon` <U+2014>
 #' confidence bands, min/max envelopes, or any "area between two
 #' curves" view (Vega-Lite's `area` covers both, as does G2).
 #'
@@ -687,10 +687,10 @@ S7::method(mark_rect, plotit_class) <- function(
 #' Adds one or more reference lines or segments to a plot. Dispatches
 #' to the appropriate ggplot2 geom based on the parameters supplied:
 #'
-#' - `xintercept` → [ggplot2::geom_vline]
-#' - `yintercept` → [ggplot2::geom_hline]
-#' - `slope` + `intercept` → [ggplot2::geom_abline]
-#' - `x`/`xend`/`y`/`yend` → [ggplot2::geom_segment]
+#' - `xintercept` <U+2192> [ggplot2::geom_vline]
+#' - `yintercept` <U+2192> [ggplot2::geom_hline]
+#' - `slope` + `intercept` <U+2192> [ggplot2::geom_abline]
+#' - `x`/`xend`/`y`/`yend` <U+2192> [ggplot2::geom_segment]
 #'
 #' Dispatch priority: vline/hline > abline > segment.
 #'
@@ -1214,7 +1214,7 @@ S7::method(mark_corr, plotit_class) <- function(
   df <- ._transform_corr(raw_data, method = method, reorder = reorder)
   mapping <- encode(x = Var1, y = Var2, fill = value)
   # The correlation value channel is mark-owned (magnitude -> sequential
-  # viridis, AGENTS.md §6); pre-register it as managed so the layer-level
+  # viridis, AGENTS.md <U+00A7>6); pre-register it as managed so the layer-level
   # auto-attach does not double-fire.
   plot <- ._colour_managed_add(plot, "fill")
   plot <- ._impl_with(plot, mapping, df,

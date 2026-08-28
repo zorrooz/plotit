@@ -8,7 +8,7 @@ NULL
 #   hide  = TRUE     -> remove element from layout (element_blank())
 #   reset = TRUE     -> restore variable name (axis/legend) or remove (title/subtitle/caption)
 #   text + reset     -> mutually exclusive; error if both are set
-# Priority: reset > hide > text — checked in exactly that order so a
+# Priority: reset > hide > text <U+2014> checked in exactly that order so a
 # reset+hide call restores rather than blanks (matching the documented
 # contract; an explicit reset always wins over an older intent).
 
@@ -144,7 +144,7 @@ NULL
   plot
 }
 
-# Table mapping dirty slot → (theme element, labs name).
+# Table mapping dirty slot <U+2192> (theme element, labs name).
 ._LABEL_SYNC_MAP <- list(
   title    = list(theme = "plot.title", labs = "title"),
   subtitle = list(theme = "plot.subtitle", labs = "subtitle"),

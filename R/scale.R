@@ -113,25 +113,28 @@ NULL
       ),
       hue = ._cf(aes, ggplot2::scale_colour_discrete, ggplot2::scale_fill_discrete)(direction = dir, ...),
       ._abort_arg_enum(
-        "scheme", c("viridis", "brewer", "grey", "friendly", "hue"), got = scheme,
+        "scheme", c("viridis", "brewer", "grey", "friendly", "hue"),
+        got = scheme,
         hint = "The {.val grey} scheme is discrete-only; use it with {.code trans = 'discrete'}."
       )
     )
   } else if (binned) {
     switch(scheme,
       viridis = ._cf(aes, ggplot2::scale_colour_viridis_b, ggplot2::scale_fill_viridis_b)(direction = dir, ...),
-      brewer  = ._cf(aes, ggplot2::scale_colour_fermenter, ggplot2::scale_fill_fermenter)(direction = dir, ...),
+      brewer = ._cf(aes, ggplot2::scale_colour_fermenter, ggplot2::scale_fill_fermenter)(direction = dir, ...),
       ._abort_arg_enum(
-        "scheme", c("viridis", "brewer"), got = scheme,
+        "scheme", c("viridis", "brewer"),
+        got = scheme,
         hint = "Binned scales support {.val viridis} and {.val brewer} only."
       )
     )
   } else {
     switch(scheme,
       viridis = ._cf(aes, ggplot2::scale_colour_viridis_c, ggplot2::scale_fill_viridis_c)(direction = dir, ...),
-      brewer  = ._cf(aes, ggplot2::scale_colour_distiller, ggplot2::scale_fill_distiller)(direction = dir, ...),
+      brewer = ._cf(aes, ggplot2::scale_colour_distiller, ggplot2::scale_fill_distiller)(direction = dir, ...),
       ._abort_arg_enum(
-        "scheme", c("viridis", "brewer"), got = scheme,
+        "scheme", c("viridis", "brewer"),
+        got = scheme,
         hint = "Continuous scales support {.val viridis} and {.val brewer} only."
       )
     )

@@ -144,7 +144,7 @@ NULL
   ))
 }
 
-# ---- error / warning message constructors (SM7, design/08 §6) ----
+# ---- error / warning message constructors (SM7, design/08 <U+00A7>6) ----
 #
 # Three-part contract (AGENTS 4.5): problem -> got/cause -> remedy with the
 # legal values.  These constructors keep the recurring validation shapes

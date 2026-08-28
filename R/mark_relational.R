@@ -211,7 +211,7 @@ NULL
 #' Creates a Sankey diagram showing directed flows between nodes.
 #' Equivalent to the pipeline
 #' `as_graph() |> layout_sankey() |> mark_polygon(data = ~ribbons) |>
-#' mark_rect(data = ~nodes)` -- see §3.3.4a.  Accepts an **edges table**
+#' mark_rect(data = ~nodes)` -- see <U+00A7>3.3.4a.  Accepts an **edges table**
 #' with `source`, `target`, and optionally `value` columns (either mapped
 #' via structural aesthetics or present as literal columns); node and
 #' ribbon geometry come from the built-in layered layout (deterministic,
@@ -708,7 +708,7 @@ S7::method(mark_network, plotit_class) <- function(
 #' Creates a chord diagram showing pairwise relationships between groups.
 #' Equivalent to the pipeline `as_graph() |> layout_chord() |>
 #' mark_polygon(data = ~ribbons) |> mark_polygon(data = ~arcs)` -- see
-#' §3.3.4a.  Accepts an **edges table** with `source`, `target`, and
+#' <U+00A7>3.3.4a.  Accepts an **edges table** with `source`, `target`, and
 #' optionally `value` columns (either mapped via structural aesthetics or
 #' present as literal columns); sector arcs and bezier bands come from the
 #' built-in circular layout (deterministic, dependency-free).  The fill

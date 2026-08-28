@@ -14,7 +14,7 @@ Never returns; aborts with migration guidance.
 }
 \description{
 \code{scale_radius()} is \strong{defunct} as of plotit 1.0. Radius/size encoding is
-the \code{\link[ggplot2:scale_size]{ggplot2::scale_size()}} domain.
+the \code{\link[=scale_size]{scale_size()}} domain.
 }
 \details{
 For bubble charts whose area should encode magnitude:

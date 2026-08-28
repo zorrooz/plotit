@@ -80,10 +80,10 @@ to the appropriate ggplot2 geom based on the parameters supplied:
 }
 \details{
 \itemize{
-\item \code{xintercept} → \link[ggplot2:geom_abline]{ggplot2::geom_vline}
-\item \code{yintercept} → \link[ggplot2:geom_abline]{ggplot2::geom_hline}
-\item \code{slope} + \code{intercept} → \link[ggplot2:geom_abline]{ggplot2::geom_abline}
-\item \code{x}/\code{xend}/\code{y}/\code{yend} → \link[ggplot2:geom_segment]{ggplot2::geom_segment}
+\item \code{xintercept} <U+2192> \link[ggplot2:geom_abline]{ggplot2::geom_vline}
+\item \code{yintercept} <U+2192> \link[ggplot2:geom_abline]{ggplot2::geom_hline}
+\item \code{slope} + \code{intercept} <U+2192> \link[ggplot2:geom_abline]{ggplot2::geom_abline}
+\item \code{x}/\code{xend}/\code{y}/\code{yend} <U+2192> \link[ggplot2:geom_segment]{ggplot2::geom_segment}
 }
 
 Dispatch priority: vline/hline > abline > segment.

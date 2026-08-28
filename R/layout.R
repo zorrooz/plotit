@@ -206,7 +206,8 @@ NULL
   weights <- suppressWarnings(as.numeric(dots$weights %||% rep(1, nrow(t$edges))))
   if (length(weights) != nrow(t$edges) || anyNA(weights) || any(weights < 0)) {
     ._abort_arg_range(
-      "weights", "finite non-negative values, one per edge", got = weights
+      "weights", "finite non-negative values, one per edge",
+      got = weights
     )
   }
 

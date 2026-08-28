@@ -50,7 +50,7 @@ S7::method(format, plotit_composite) <- function(x, ...) ""
 # ---- pkgdown_print ----
 # pkgdown evaluates @examples via evaluate::evaluate(), which calls
 # pkgdown_print(value) as the output_handler `value` callback.  S7 objects
-# hit pkgdown_print.default() → print.S7_object() → str.S7_object(), which
+# hit pkgdown_print.default() <U+2192> print.S7_object() <U+2192> str.S7_object(), which
 # dumps the full ggproto tree.  Intercept with S3 methods that render the
 # plot to the device so evaluate records it, then return invisible to
 # suppress the text dump.
@@ -115,8 +115,8 @@ pkgdown_print.plotit_composite <- function(x, visible = TRUE) {
 #' plotit() prepends the unqualified class "plotit", so ordinary print()
 #' dispatch lands on the S3 print.plotit below; the S7 method only fires
 #' for explicit S7 dispatch (e.g. S7 objects held under the namespaced
-#' class alone).  Both route through here so interactive device sizing —
-#' the documented WYSIWYG behavior (AGENTS.md 7) — is never silently lost
+#' class alone).  Both route through here so interactive device sizing <U+2014>
+#' the documented WYSIWYG behavior (AGENTS.md 7) <U+2014> is never silently lost
 #' on whichever path dispatch takes.
 #' @noRd
 #' @keywords internal
@@ -138,7 +138,7 @@ S7::method(print, plotit_class) <- function(x, ...) {
   ._print_plotit_impl(x)
 }
 
-# S3 print method — the live dispatch path for plotit objects (class is
+# S3 print method <U+2014> the live dispatch path for plotit objects (class is
 # prepended unqualified in plotit()); also what knitr/vignettes reach.
 #' @export
 print.plotit <- function(x, ...) {
@@ -342,7 +342,8 @@ S7::method(export, S7::class_list) <- function(
 
   old_dev <- grDevices::dev.cur()
   grDevices::pdf(
-    filename, width = final_width, height = final_height,
+    filename,
+    width = final_width, height = final_height,
     bg = "white", onefile = TRUE, ...
   )
   on.exit(utils::capture.output({
