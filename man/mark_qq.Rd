@@ -60,5 +60,5 @@ plotit(df, encode(x = value)) |>
   mark_qq_line(distribution = "exp")
 }
 \references{
-Observable Plot: \href{https://observablehq.com/plot/plots/qq}{Plot.qq}
+R: \code{stats::qqnorm()} / \code{stats::qqplot()}
 }

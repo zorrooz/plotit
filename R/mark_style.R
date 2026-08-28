@@ -77,6 +77,13 @@ NULL
     linetype = "dashed",
     colour = ._MARK_STYLE$soft
   ),
+  # Polygons without an explicit fill inherit the brand primary (the
+  # default_color mechanism only covers the no-mapping case; a pure
+  # `colour` grouping otherwise leaves fill at ggplot2's dark grey).
+  mark_polygon = list(
+    linewidth = 0,
+    fill = ._MARK_STYLE$primary
+  ),
   # Boxplots: slim boxes with generous slot spacing and hairline strokes,
   # calibrated against tidyplots' add_boxplot (box_width 0.6 / lw 0.25 /
   # tiny outliers).  Slot width is the global dodge (0.8), so a 0.5-wide
@@ -189,23 +196,40 @@ NULL
   plot
 }
 
-# Closed-cell marks (tile heatmaps: mark_rect / mark_corr) span the full
-# data range with no meaningful axis furniture: cells should touch the panel
-# edges (zero expansion) and axis lines/ticks would double the grid the tiles
-# already draw.  Category text stays visible.  Only applies when the plot
-# still uses the default cartesian coordinate system -- an explicit
-# project_*() call by the user always wins.
-#' Apply closed-cell heatmap chrome to a ggplot object.
+# Closed-cell / heatmap marks (corr, heatmap, rect tiles, bin2d, hex) span
+# their own canvas: the cells or bins draw the structure, so axis furniture
+# is redundant and gets blanked per the AGENTS.md §6 convention table.  Two
+# knobs: keep_text (category labels of corr/rect/heatmap rows and columns
+# carry meaning; bin2d/hex count fields blank everything) and zero_expand
+# (cells flush to the panel edge for tile marks; bin2d/hex keep the default
+# padding so edge bins stay whole).  Only applies while the plot still uses
+# the default cartesian coordinate system -- an explicit project_*() call
+# by the user always wins.
+#' Apply cell-mark axis chrome (B2 convention table).
 #' @noRd
 #' @keywords internal
-._gg_tile_chrome <- function(gg) {
-  gg <- gg + ggplot2::theme(
+._gg_cell_chrome <- function(gg, keep_text = TRUE, zero_expand = TRUE) {
+  args <- list(
     axis.line = ggplot2::element_blank(),
     axis.ticks = ggplot2::element_blank()
   )
-  coords <- gg$coordinates
-  if (is.null(coords) || identical(class(coords)[1], "CoordCartesian")) {
-    gg <- gg + ggplot2::coord_cartesian(expand = FALSE)
+  if (!keep_text) {
+    args$axis.text <- ggplot2::element_blank()
+    args$axis.title <- ggplot2::element_blank()
+  }
+  gg <- gg + do.call(ggplot2::theme, args)
+  if (!is.null(zero_expand) && zero_expand) {
+    coords <- gg$coordinates
+    if (is.null(coords) || identical(class(coords)[1], "CoordCartesian")) {
+      gg <- gg + ggplot2::coord_cartesian(expand = FALSE)
+    }
   }
   gg
+}
+
+#' Closed-cell heatmap chrome (tiles flush to the panel, fonts kept).
+#' @noRd
+#' @keywords internal
+._gg_tile_chrome <- function(gg) {
+  ._gg_cell_chrome(gg, keep_text = TRUE, zero_expand = TRUE)
 }

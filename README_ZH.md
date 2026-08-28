@@ -194,13 +194,16 @@ edges |>
 |:---|:---|
 | `scale_color()` | 颜色 |
 | `scale_fill()` | 填充 |
-| `scale_size()` | 大小 |
-| `scale_radius()` | 半径（气泡面积诚实编码） |
+| `scale_size()` | 大小 / 半径（气泡编码） |
 | `scale_alpha()` | 透明度 |
 | `scale_shape()` | 形状 |
 | `scale_linetype()` | 线型 |
 | `scale_x()` | x 轴 |
 | `scale_y()` | y 轴 |
+
+`scale_radius()` 自 1.0 起 **defunct** —— 半径编码归 `scale_size()` 域
+（`scale_size(range = ...)`）；如需面积诚实半径映射，直接用
+`ggplot2::scale_radius`。
 
 ### `label_*` — 文本标签
 

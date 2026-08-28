@@ -71,7 +71,7 @@ reference:
   contents:
   - plotit
   - encode
-  - "+.plotit"
+  - add_ggplot
 - title: Geometric Layers
   desc: Add visual marks to your plot.
   contents:

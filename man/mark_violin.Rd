@@ -41,5 +41,5 @@ at each position.
 }
 \examples{
 plotit(iris, encode(x = Species, y = Sepal.Length)) |>
-  mark_violin(draw_quantiles = 0.5)
+  mark_violin(quantiles = 0.5, quantile.linetype = "dashed")
 }

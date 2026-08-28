@@ -196,8 +196,8 @@ sm |>
 ggplot2::midwest |>
   plotit(encode(x = popdensity, y = percprof, size = poptotal, colour = category)) |>
   mark_point(alpha = 0.6) |>
-  scale_radius(range = c(1, 9)) |>
-  label_title("scale_radius(): area grows with value^2")
+  scale_size(range = c(1, 9)) |>
+  label_title("scale_size(): the size domain drives bubble encoding")
 ```
 
 ## Maps

@@ -53,6 +53,7 @@ Aids the eye in seeing patterns in the presence of overplotting.
 plotit(mtcars, encode(x = wt, y = mpg)) |> mark_smooth()
 }
 \references{
+R: \code{stats::loess()} / \code{stats::lm()} (default smoothing methods)
 Vega-Lite: achieved via \code{layer(point) + layer(line) + transform(regression)}
 
 AntV G2: achieved via transform pipeline

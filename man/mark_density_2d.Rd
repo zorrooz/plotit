@@ -52,5 +52,6 @@ plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
   mark_density_2d()
 }
 \references{
+R: \code{MASS::kde2d()} (2D kernel density estimate)
 AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/density}{Density} (corelib, contour mode)
 }

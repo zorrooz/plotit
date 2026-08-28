@@ -81,11 +81,26 @@ NULL
     rasterize = rasterize, rasterize_dpi = rasterize_dpi,
     rasterize_dev = rasterize_dev
   )
-  # Closed-cell heatmap chrome: tiles span the full data range, so axis
-  # lines/ticks double the grid the cells already draw and expansion padding
-  # would detach cells from the panel edge (AGENTS.md 6, cell-chrome rule).
-  if (!is.null(mark_name) && mark_name %in% c("mark_rect", "mark_corr", "mark_heatmap")) {
-    plot@gg <- ._gg_tile_chrome(plot@gg)
+  # Closed-cell heatmap chrome (AGENTS.md 6, cell-chrome rule): corr /
+  # heatmap / rect tiles span the full data range, so axis lines/ticks
+  # double the grid the cells already draw and expansion padding would
+  # detach cells from the panel edge.  bin2d/hex binnings blank all axis
+  # furniture (the count field carries the meaning) while keeping the
+  # default padding so edge bins stay whole (see ._gg_cell_chrome).
+  cell_chrome <- if (length(mark_name) == 1L) {
+    switch(mark_name,
+      mark_rect = list(keep_text = TRUE, zero_expand = TRUE),
+      mark_corr = list(keep_text = TRUE, zero_expand = TRUE),
+      mark_heatmap = list(keep_text = TRUE, zero_expand = TRUE),
+      mark_bin2d = list(keep_text = FALSE, zero_expand = FALSE),
+      mark_hex = list(keep_text = FALSE, zero_expand = FALSE),
+      NULL
+    )
+  } else {
+    NULL
+  }
+  if (!is.null(cell_chrome)) {
+    plot@gg <- do.call(._gg_cell_chrome, c(list(plot@gg), cell_chrome))
   }
   plot
 }
@@ -514,7 +529,7 @@ S7::method(mark_text, plotit_class) <- function(
 #' @return Modified plotit object
 #' @examples
 #' plotit(iris, encode(x = Species, y = Sepal.Length)) |>
-#'   mark_violin(draw_quantiles = 0.5)
+#'   mark_violin(quantiles = 0.5, quantile.linetype = "dashed")
 #' @export
 mark_violin <- ._make_mark_generic("mark_violin")
 ._register_mark_method(mark_violin, ggplot2::geom_violin)
@@ -899,6 +914,7 @@ mark_polygon <- ._make_mark_generic("mark_polygon")
 #' @param ... Other arguments passed to `geom_smooth`
 #' @return Modified plotit object
 #' @references
+#' R: \code{stats::loess()} / \code{stats::lm()} (default smoothing methods)
 #' Vega-Lite: achieved via \code{layer(point) + layer(line) + transform(regression)}
 #'
 #' AntV G2: achieved via transform pipeline
@@ -1008,6 +1024,7 @@ S7::method(mark_hex, plotit_class) <- function(
 #' @param ... Other arguments passed to the underlying geom
 #' @return Modified plotit object
 #' @references
+#' R: \code{MASS::kde2d()} (2D kernel density estimate)
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/density}{Density} (corelib, contour mode)
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
@@ -1115,6 +1132,7 @@ S7::method(mark_density_2d, plotit_class) <- function(
 #' @param ... Other arguments passed to `geom_tile`
 #' @return Modified plotit object
 #' @references
+#' R: \code{stats::cor()} (pairwise correlation matrix)
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/cell}{Cell} (correlation matrix expression)
 #' @examples
 #' plotit(mtcars, encode()) |> mark_corr()
@@ -1272,6 +1290,7 @@ S7::method(mark_corr, plotit_class) <- function(
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @return Modified plotit object.
 #' @references
+#' R: \code{stats::hclust()} / \code{stats::dist()} (row/column clustering)
 #' tidyheatmaps: \href{https://jbengler.github.io/tidyheatmaps/}{Heatmaps from Tidy Data}
 #' @examples
 #' mat <- matrix(rnorm(30),
@@ -1731,6 +1750,7 @@ S7::method(mark_dumbbell, plotit_class) <- function(
 #' @param ... Other arguments passed to `geom_beeswarm`
 #' @return Modified plotit object
 #' @references
+#' R: \code{ggbeeswarm::geom_beeswarm()} (collision-avoidance rendering)
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/beeswarm}{Beeswarm} (corelib)
 #' @examplesIf(requireNamespace("ggbeeswarm", quietly = TRUE))
 #' plotit(iris, encode(x = Species, y = Sepal.Length)) |>
@@ -2047,7 +2067,7 @@ S7::method(mark_curve, plotit_class) <- function(
 #'
 #' Draws each unique point once, sized by the number of observations at
 #' that location (`stat_sum`).  The standard answer to overplotting in
-#' scatter plots of discrete or binned data; pair with [scale_radius()]
+#' scatter plots of discrete or binned data; pair with [scale_size()]
 #' for an area-proportional legend.
 #'
 #' @param plot A plotit object
@@ -2163,6 +2183,7 @@ S7::method(mark_bin2d, plotit_class) <- function(
 #' statistical mark; the band scale defaults to discrete viridis and can be
 #' replaced by chaining [scale_fill()] afterwards.
 #' @references
+#' R: \code{grDevices::contourLines()} (contour extraction)
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/contour}{Contour}
 #'
 #' Observable Plot: `Plot.contour`
@@ -2232,7 +2253,7 @@ S7::method(mark_contour, plotit_class) <- function(
 #' @param ... Other arguments passed to `geom_qq` (e.g. `dparams`)
 #' @return Modified plotit object
 #' @references
-#' Observable Plot: \href{https://observablehq.com/plot/plots/qq}{Plot.qq}
+#' R: \code{stats::qqnorm()} / \code{stats::qqplot()}
 #' @examples
 #' ecdf_data <- data.frame(eruptions = faithful$eruptions)
 #' plotit(ecdf_data, encode(x = eruptions)) |>
@@ -2342,6 +2363,8 @@ S7::method(mark_qq, plotit_class) <- function(
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_qq_line`
 #' @return Modified plotit object
+#' @references
+#' R: \code{stats::qqline()} (quartile-pair reference line)
 #' @examples
 #' ecdf_data <- data.frame(eruptions = faithful$eruptions)
 #' plotit(ecdf_data, encode(x = eruptions)) |>
@@ -2399,7 +2422,8 @@ S7::method(mark_qq_line, plotit_class) <- function(
 #' @param ... Other arguments passed to the underlying step layer
 #' @return Modified plotit object
 #' @references
-#' Observable Plot: \href{https://observablehq.com/plot/marks/ecdf}{Plot.ecdf}
+#' R: \code{stats::ecdf()} (empirical cumulative distribution)
+#' Observable Plot: `Plot.ecdf`
 #'
 #' Vega-Lite: `line`/`step` with cumulative `window` transform
 #' @examples

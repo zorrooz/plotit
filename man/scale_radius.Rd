@@ -2,57 +2,28 @@
 % Please edit documentation in R/scale.R
 \name{scale_radius}
 \alias{scale_radius}
-\title{Radius scale (area-proportional bubble size)}
+\title{Radius scale (defunct)}
 \usage{
-scale_radius(
-  plot,
-  name = ggplot2::waiver(),
-  trans = "identity",
-  limits = NULL,
-  range = NULL,
-  breaks = NULL,
-  labels = NULL,
-  ...
-)
+scale_radius(...)
 }
 \arguments{
-\item{plot}{A plotit object.}
-
-\item{name}{Scale title (legend name).}
-
-\item{trans}{Scale transformation. Default \code{"identity"}. Allowed:
-\code{"identity"}, \code{"log"}, \code{"log10"}, \code{"log2"}, \code{"sqrt"}, \code{"reverse"}.
-Discrete/binned routes are rejected with guidance toward
-\code{\link[=scale_size]{scale_size()}}.}
-
-\item{limits}{Data domain.}
-
-\item{range}{Output radius range as \code{c(min, max)}. \code{NULL} = default
-\code{c(1, 6)}.}
-
-\item{breaks}{Legend key positions.}
-
-\item{labels}{Legend key labels.}
-
-\item{...}{Passed to the underlying ggplot2 scale function.}
+\item{...}{Ignored. Present only for drop-in detection.}
 }
 \value{
-A modified plotit object.
+Never returns; aborts with migration guidance.
 }
 \description{
-Maps the data value to the circle \strong{radius}, so perceived bubble area
-grows quadratically with the value -- the correct encoding for magnitude
-comparisons (Vega-Lite's \code{scaleRadius}).  Where \code{\link[=scale_size]{scale_size()}} maps to
-ggplot2's area-like size unit linearly, \code{scale_radius()} emphasizes
-relative magnitudes.
+\code{scale_radius()} is \strong{defunct} as of plotit 1.0. Radius/size encoding is
+the \code{\link[=scale_size]{scale_size()}} domain.
 }
-\examples{
-plotit(
-  ggplot2::midwest,
-  encode(x = popdensity, y = percollege, size = poptotal)
-) |>
-  mark_point(alpha = 0.5) |>
-  scale_radius(range = c(1, 10))
+\details{
+For bubble charts whose area should encode magnitude:
+\itemize{
+\item \code{scale_size(range = c(1, 6))} maps linearly to ggplot2's area-like
+size unit (the size domain default), or
+\item \code{ggplot2::scale_radius(...)} maps to the circle radius directly
+(area-proportional emphasis, Vega-Lite's \code{scaleRadius} semantics).
+}
 }
 \references{
 Vega-Lite: \href{https://vega.github.io/vega-lite/docs/radius.html}{Radius}

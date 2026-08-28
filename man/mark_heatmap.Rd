@@ -55,5 +55,6 @@ plotit(mat, encode()) |> mark_heatmap()
 plotit(mat, encode()) |> mark_heatmap(cluster = "both", scale = "row")
 }
 \references{
+R: \code{stats::hclust()} / \code{stats::dist()} (row/column clustering)
 tidyheatmaps: \href{https://jbengler.github.io/tidyheatmaps/}{Heatmaps from Tidy Data}
 }

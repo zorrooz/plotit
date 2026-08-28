@@ -67,6 +67,7 @@ plotit(df, encode(x = x, y = y, z = z)) |>
   mark_contour(filled = TRUE, bins = 10)
 }
 \references{
+R: \code{grDevices::contourLines()} (contour extraction)
 AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/contour}{Contour}
 
 Observable Plot: \code{Plot.contour}

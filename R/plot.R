@@ -164,41 +164,49 @@ plotit <- function(
 }
 
 # ---- ggplot2 escape hatch ----
-# `plotit + <ggplot2 object>` forwards to the underlying ggplot, giving
-# advanced users the full ggplot2 vocabulary (annotate, guides, labs,
-# custom layers, facets) without dropping the plotit wrapper.  The verb
-# API stays the recommended path: direct `+ scale_*()` bypasses the
-# package's managed colour registry, and `+` on a `plotit_composite`
-# follows patchwork semantics (applies to the last sub-panel).
-# Implemented as a plain S3 method on the Ops group generic: it is the
-# only form that persists into the installed package's NAMESPACE
-# (S7::method assignment registers at build time only).
-#' Add a ggplot2 component to a plotit object
+# `add_ggplot(plot, component)` forwards a ggplot2 component (annotate,
+# guides, labs, theme elements, custom layers, facets) to the underlying
+# ggplot, giving advanced users the full ggplot2 vocabulary without
+# dropping the plotit wrapper.  The verb API stays the recommended path:
+# direct `+ scale_*()` usage bypasses the package's managed colour registry.
+# Replaces the former S3 `+.plotit` / `+.plotit_composite` overloads so the
+# escape hatch has one explicit, discoverable entry point (tidyplots'
+# `add()` plays the same role in that package).
+#' Add a ggplot2 component to a plot
 #'
-#' Escape hatch for advanced ggplot2 usage: `p + ggplot2::annotate(...)`,
-#' `p + ggplot2::guides(...)`, `p + ggplot2::labs(...)` etc. modify the
-#' underlying ggplot and return the `plotit` object so the pipeline
-#' continues.  Prefer the verb API (`mark_*`, `scale_*`, `label_*`,
-#' `style`) for reproducible, well-validated plots.
+#' Escape hatch for advanced ggplot2 usage: `add_ggplot(p,
+#' ggplot2::annotate(...))`, `add_ggplot(p, ggplot2::guides(...))`,
+#' `add_ggplot(p, ggplot2::labs(...))` etc. modify the underlying ggplot
+#' and return the `plotit` object so the pipeline continues.  Prefer the
+#' verb API (`mark_*`, `scale_*`, `label_*`, `style`) for reproducible,
+#' well-validated plots.
 #'
-#' @param e1 A `plotit` object.
-#' @param e2 Any object ggplot2's `+` accepts (layer, scale, coord, facet,
-#'   theme, labs, or a ggplot2 object).
-#' @return A modified `plotit` object.
+#' @param plot A `plotit` object (or a `plotit_composite`).
+#' @param component Any object ggplot2's `+` accepts (layer, scale, coord,
+#'   facet, theme, labs, or a ggplot2 object).
+#' @return A modified `plotit` (or `plotit_composite`) object.
 #' @examples
-#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
-#'   mark_point() +
-#'   ggplot2::annotate("text", x = 2.5, y = 7.9, label = "high", size = 3)
+#' p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+#'   mark_point() |>
+#'   add_ggplot(ggplot2::annotate("text", x = 2.5, y = 7.9, label = "high", size = 3))
 #' @export
-`+.plotit` <- function(e1, e2) {
-  e1@gg <- e1@gg + e2
-  e1
+add_ggplot <- S7::new_generic(
+  "add_ggplot", "plot",
+  function(plot, component) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(add_ggplot, plotit_class) <- function(plot, component) {
+  plot@gg <- plot@gg + component
+  plot
 }
 
 #' @export
-`+.plotit_composite` <- function(e1, e2) {
+S7::method(add_ggplot, plotit_composite) <- function(plot, component) {
   # patchwork owns `+` for composite gg objects (applies to the last
   # sub-panel; use style() to reach every panel).
-  e1@gg <- e1@gg + e2
-  e1
+  plot@gg <- plot@gg + component
+  plot
 }

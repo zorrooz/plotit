@@ -297,46 +297,47 @@ test_that("mark_errorbar horizontal maps y position with xmin/xmax", {
   expect_equal(nrow(b$data[[1]]), 2)
 })
 
-# ---- scale_radius ----
-test_that("[BDD] scale_radius maps value to circle radius", {
+# ---- scale_radius (defunct, A2) ----
+test_that("scale_radius is defunct with directed migration guidance", {
+  p <- plotit(
+    ggplot2::midwest,
+    encode(x = popdensity, y = percollege, size = poptotal)
+  ) |> mark_point()
+  expect_error(scale_radius(p, range = c(1, 10)), "defunct")
+  expect_error(scale_radius(p), "scale_size")
+})
+
+test_that("scale_size covers the former radius role (bubble encoding)", {
   p <- plotit(
     ggplot2::midwest,
     encode(x = popdensity, y = percollege, size = poptotal)
   ) |>
     mark_point() |>
-    scale_radius(range = c(1, 10))
+    scale_size(range = c(1, 10))
   b <- .built(p)
   rng <- range(b$data[[1]]$size)
   expect_equal(round(rng[1], 4), 1)
   expect_equal(round(rng[2], 4), 10)
 })
 
-test_that("scale_radius rejects discrete routing with guidance", {
-  p <- plotit(
-    ggplot2::midwest,
-    encode(x = popdensity, y = percollege, size = category)
-  ) |> mark_point()
-  expect_error(scale_radius(p, trans = "discrete"), "scale_size")
-})
-
-# ---- + escape hatch ----
-test_that("[BDD] plotit + ggplot2 object keeps the plotit wrapper", {
+# ---- ggplot2 escape hatch: add_ggplot ----
+test_that("[BDD] add_ggplot keeps the plotit wrapper", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
-  p2 <- p + ggplot2::annotate("text", x = 3, y = 7.9, label = "hi", size = 3)
+  p2 <- p |> add_ggplot(ggplot2::annotate("text", x = 3, y = 7.9, label = "hi", size = 3))
   expect_s3_class(p2, "plotit::plotit")
   expect_length(p2@gg$layers, 2)
 })
 
-test_that("plotit + theme renders with the theme", {
+test_that("add_ggplot renders theme components", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
-  p2 <- p + ggplot2::theme_minimal(base_size = 11)
+  p2 <- p |> add_ggplot(ggplot2::theme_minimal(base_size = 11))
   b <- .built(p2)
   expect_equal(b$plot$theme$text$size, 11)
 })
 
-test_that("+ works on composites (patchwork semantics)", {
+test_that("add_ggplot works on composites (patchwork semantics)", {
   p1 <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
-  c1 <- compose_grid(p1, p1) + patchwork::plot_annotation(title = "T")
+  c1 <- compose_grid(p1, p1) |> add_ggplot(patchwork::plot_annotation(title = "T"))
   expect_s3_class(c1, "plotit::plotit_composite")
 })
 
@@ -359,7 +360,10 @@ test_that("new marks reject plotit_composite", {
   expect_error(mark_step(cmp), "not supported")
   expect_error(mark_curve(cmp), "not supported")
   expect_error(mark_forest(cmp), "not supported")
-  expect_error(scale_radius(cmp), "not supported")
+  # scale_radius is defunct since 1.0 (radius belongs to scale_size's
+  # domain), so it aborts with migration guidance before any composite
+  # dispatch is reached.
+  expect_error(scale_radius(cmp), "defunct")
 })
 
 # ---- draw-time smoke tests ----

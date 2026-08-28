@@ -198,13 +198,16 @@ edges |>
 |:---|:---|
 | `scale_color()` | colour |
 | `scale_fill()` | fill |
-| `scale_size()` | size |
-| `scale_radius()` | radius (area-honest bubbles) |
+| `scale_size()` | size / radius (bubble encoding) |
 | `scale_alpha()` | alpha |
 | `scale_shape()` | shape |
 | `scale_linetype()` | linetype |
 | `scale_x()` | x-axis |
 | `scale_y()` | y-axis |
+
+`scale_radius()` is **defunct** since 1.0 — radius encoding is the
+`scale_size()` domain (`scale_size(range = ...)`); area-honest radius
+mapping stays available via `ggplot2::scale_radius`.
 
 ### `label_*` — Text labels
 
