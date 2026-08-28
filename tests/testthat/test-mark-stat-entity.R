@@ -138,3 +138,26 @@ test_that("[BDD] spaghetti + mean/sem overlay renders end to end", {
   b <- ggplot2::ggplot_build(p@gg)
   expect_equal(length(b$data), 3)
 })
+
+# ---- B5: force-layout canvas margin (design/03 §5.4) ----
+test_that("[BDD] layout_force keeps nodes inside the 10 percent canvas margin", {
+  set.seed(1)
+  edges <- data.frame(
+    source = sample(LETTERS[1:30], 60, replace = TRUE),
+    target = sample(LETTERS[1:30], 60, replace = TRUE)
+  )
+  edges <- edges[edges$source != edges$target, ]
+  g <- as_graph(edges) |> layout_force(seed = 1)
+  expect_gte(min(g$nodes$x), 0.05 - 1e-9)
+  expect_lte(max(g$nodes$x), 0.95 + 1e-9)
+  expect_gte(min(g$nodes$y), 0.05 - 1e-9)
+  expect_lte(max(g$nodes$y), 0.95 + 1e-9)
+})
+
+# ---- B3: polygon default fill is the brand primary (design/03 §5.3) ----
+test_that("[BDD] mark_polygon without fill mapping wears the brand primary", {
+  tri <- data.frame(x = c(0, 1, 0.5), y = c(0, 0, 1))
+  p <- plotit(tri, encode(x = x, y = y)) |> mark_polygon()
+  b <- ggplot2::ggplot_build(p@gg)
+  expect_identical(unique(b$data[[1]]$fill), "#4E79A7")
+})

@@ -229,12 +229,14 @@ NULL
   }
 
   coords <- ._fr_coords(n, from, to, weights[keep], iterations)
-  # Rescale to the unit box, centred at the origin, aspect preserved.
+  # Rescale into [0.05, 0.95]^2, aspect preserved: the layout owns a 10%
+  # canvas margin so node radii and labels stay inside the panel
+  # (B5, design/03 §5.4).
   xr <- range(coords$x)
   yr <- range(coords$y)
   span <- max(diff(xr), diff(yr), 1e-9)
-  t$nodes$x <- (coords$x - mean(xr)) / span
-  t$nodes$y <- (coords$y - mean(yr)) / span
+  t$nodes$x <- 0.5 + 0.9 * (coords$x - mean(xr)) / span
+  t$nodes$y <- 0.5 + 0.9 * (coords$y - mean(yr)) / span
   t$edges <- ._map_edge_coords(t$nodes, t$edges)
   ._new_graph_from_parts(t, directed)
 }

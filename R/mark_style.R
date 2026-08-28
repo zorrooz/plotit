@@ -33,6 +33,7 @@ NULL
   alpha_link = 0.5, # sankey flows, chord bands
   alpha_ci = 0.25, # statistical confidence ribbons
   alpha_annot = 0.18, # encircle annotation envelopes
+  annot_step = 0.06, # significance bracket stacking step (y-span share)
   # Composite point heads
   point_head = 3 # lollipop heads, dumbbell endpoints
 )

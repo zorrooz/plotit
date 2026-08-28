@@ -476,7 +476,11 @@ test_that("layout_force preserves the caller's RNG stream", {
 test_that("layout_force output stays finite inside the unit box", {
   g <- layout_force(mk_graph(), seed = 3, iterations = 200)
   expect_true(all(is.finite(g$nodes$x)) && all(is.finite(g$nodes$y)))
-  expect_true(all(abs(g$nodes$x) <= 0.51) && all(abs(g$nodes$y) <= 0.51))
+  # B5 (design/03 §5.4): coordinates land in the [0.05, 0.95]^2 canvas
+  expect_gte(min(g$nodes$x), 0.05 - 1e-9)
+  expect_lte(max(g$nodes$x), 0.95 + 1e-9)
+  expect_gte(min(g$nodes$y), 0.05 - 1e-9)
+  expect_lte(max(g$nodes$y), 0.95 + 1e-9)
 })
 
 test_that("layout_force weights change attraction and validate input", {
