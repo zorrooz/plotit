@@ -1,5 +1,5 @@
 # ============================================================
-# layout_tree style parameters (D-16, design/07 §2) -- BDD tests
+# layout_tree style parameters (D-16, design/07 <U+00A7>2) -- BDD tests
 # AGENTS.md 4.8
 # ============================================================
 library(plotit)

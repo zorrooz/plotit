@@ -297,7 +297,7 @@ project_parallel <- S7::new_generic(
 #' Uses geom_segment and geom_text with theme-matched styling.
 #' @noRd
 #' @keywords internal
-._pp_draw_axes <- function(plot, col_info, tp) {
+._pp_draw_axes <- function(plot, col_info, tp, axis_labels = TRUE) {
   # Suppress the native y-axis via the ggplot2 4.0 theme_sub_* shortcut
   # (expands to axis.line.y / axis.ticks.y / axis.text.y / axis.title.y).
   plot@gg <- plot@gg +
@@ -350,18 +350,22 @@ project_parallel <- S7::new_generic(
       )
   }
 
-  # Labels (positioned with extra gap beyond tick end)
-  df_lab <- do.call(rbind, lapply(col_info, function(ci) {
-    n <- length(ci$breaks)
-    if (n == 0) {
-      return(NULL)
-    }
-    data.frame(
-      x = rep(ci$pos - tlen - tp$label_gap, n), y = ci$breaks,
-      label = sprintf(ci$fmt, ci$breaks), hjust = rep(1, n),
-      stringsAsFactors = FALSE
-    )
-  }))
+  # Labels (positioned with extra gap beyond tick end); skipped when the
+  # caller disabled axis labels
+  df_lab <- NULL
+  if (axis_labels) {
+    df_lab <- do.call(rbind, lapply(col_info, function(ci) {
+      n <- length(ci$breaks)
+      if (n == 0) {
+        return(NULL)
+      }
+      data.frame(
+        x = rep(ci$pos - tlen - tp$label_gap, n), y = ci$breaks,
+        label = sprintf(ci$fmt, ci$breaks), hjust = rep(1, n),
+        stringsAsFactors = FALSE
+      )
+    }))
+  }
   if (!is.null(df_lab) && nrow(df_lab) > 0) {
     plot@gg <- plot@gg +
       ggplot2::geom_text(
@@ -449,10 +453,8 @@ S7::method(project_parallel, plotit_class) <- function(
     columns <- order
   }
 
-  recenter_bad <- !is.null(recenter) &&
-    (!is.character(recenter) || length(recenter) != 1 ||
-       !recenter %in% columns)
-  if (recenter_bad) {
+  recenter_ok <- is.character(recenter) && length(recenter) == 1 && recenter %in% columns
+  if (!is.null(recenter) && !recenter_ok) {
     ._abort_hint(
       "{.arg recenter} must name one of the parallel axes.",
       sprintf("Legal values: {.val %s}.", paste0("c(", deparse(columns), ")"))

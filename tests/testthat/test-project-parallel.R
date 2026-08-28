@@ -1,5 +1,5 @@
 # ============================================================
-# project_parallel redo (D-13, design/05 §4) -- BDD tests
+# project_parallel redo (D-13, design/05 <U+00A7>4) -- BDD tests
 # AGENTS.md 4.8
 # ============================================================
 library(plotit)
@@ -11,20 +11,25 @@ pp_df <- data.frame(
   grp = rep(c("X", "Y"), each = 2)
 )
 
+std_norm <- function(v) (v - min(v)) / (max(v) - min(v))
+
 test_that("[BDD] project_parallel defaults to the numeric columns", {
   p <- plotit(pp_df, encode()) |> project_parallel()
   b <- ggplot2::ggplot_build(p@gg)
-  # axis labels a/b/c in data order
-  labs <- as.character(b$layout$panel_scales$x$get_labels())
-  expect_identical(labs, c("a", "b", "c"))
+  d <- b$data[[1]]
+  # first axis carries column a std-normalised, second carries b
+  expect_equal(sort(d$y[d$x == 1]), sort(std_norm(pp_df$a)), tolerance = 1e-8)
+  expect_equal(sort(d$y[d$x == 2]), sort(std_norm(pp_df$b)), tolerance = 1e-8)
 })
 
 test_that("[BDD] project_parallel order reorders and drops axes", {
   p <- plotit(pp_df, encode()) |>
     project_parallel(columns = c("a", "b", "c"), order = c("c", "a"))
   b <- ggplot2::ggplot_build(p@gg)
-  labs <- as.character(b$layout$panel_scales$x$get_labels())
-  expect_identical(labs, c("c", "a"))
+  d <- b$data[[1]]
+  # axis 1 is now column c, axis 2 is column a; column b dropped
+  expect_equal(sort(d$y[d$x == 1]), sort(std_norm(pp_df$c)), tolerance = 1e-8)
+  expect_equal(sort(d$y[d$x == 2]), sort(std_norm(pp_df$a)), tolerance = 1e-8)
   expect_error(
     plotit(pp_df, encode()) |> project_parallel(order = c("nope")),
     "must be a subset"
@@ -45,16 +50,20 @@ test_that("[BDD] project_parallel recenter flattens the reference axis to zero",
 
 test_that("[BDD] project_parallel aggregate draws one thick line per group", {
   p <- plotit(pp_df, encode()) |>
-    project_parallel(columns = c("a", "b"), group = "grp",
-                     aggregate = "mean")
+    project_parallel(
+      columns = c("a", "b"), group = "grp",
+      aggregate = "mean"
+    )
   b <- ggplot2::ggplot_build(p@gg)
   expect_gte(length(b$data), 3) # individual lines + points + aggregate
   agg <- b$data[[3]]
   expect_equal(length(unique(agg$group)), 2) # one aggregate line per group
   # median form runs
   p2 <- plotit(pp_df, encode()) |>
-    project_parallel(columns = c("a", "b"), group = "grp",
-                     aggregate = "median")
+    project_parallel(
+      columns = c("a", "b"), group = "grp",
+      aggregate = "median"
+    )
   expect_no_error(ggplot2::ggplot_build(p2@gg))
 })
 
@@ -68,8 +77,10 @@ test_that("[BDD] project_parallel axis_labels=FALSE blanks the labels", {
 test_that("[BDD] project_parallel three modes x aggregate smoke", {
   for (sc in c("std", "global", "none")) {
     p <- plotit(pp_df, encode()) |>
-      project_parallel(columns = c("a", "b", "c"), scale = sc,
-                       group = "grp", aggregate = "mean")
+      project_parallel(
+        columns = c("a", "b", "c"), scale = sc,
+        group = "grp", aggregate = "mean"
+      )
     expect_no_error(ggplot2::ggplot_build(p@gg))
   }
 })

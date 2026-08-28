@@ -7,8 +7,8 @@
 layout_tree(
   plot,
   direction = c("down", "up", "left", "right"),
-  leaf_spacing = c("count", "equal"),
-  edge = c("straight", "elbow")
+  leaf_spacing = "count",
+  edge = "straight"
 )
 }
 \arguments{

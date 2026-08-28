@@ -29,12 +29,14 @@ hier <- data.frame(
 hcl <- stats::hclust(stats::dist(USArrests[sample(seq_len(15), 8), ]))
 
 test_that("[C1] layout_force draws through mark_network and the explicit pipeline", {
-  # sugar form
-  p1 <- plotit(tree_edges, encode()) |>
+  # sugar form: the plot data is the node table
+  nodes <- data.frame(name = sort(unique(c(flow_edges$source, flow_edges$target))))
+  p1 <- plotit(nodes, encode(label = name)) |>
     mark_network(edges = flow_edges, seed = 1)
   smoke_rows(p1)
   # explicit pipeline
-  p2 <- as_graph(flow_edges) |> plotit() |>
+  p2 <- as_graph(flow_edges) |>
+    plotit() |>
     layout_force(seed = 1) |>
     mark_point(data = ~nodes) |>
     mark_rule(data = ~edges, color = "grey70")
@@ -42,10 +44,12 @@ test_that("[C1] layout_force draws through mark_network and the explicit pipelin
 })
 
 test_that("[C1] layout_circle draws through mark_network and the explicit pipeline", {
-  p1 <- as_graph(flow_edges) |> plotit() |>
+  nodes <- data.frame(name = sort(unique(c(flow_edges$source, flow_edges$target))))
+  p1 <- plotit(nodes, encode(label = name)) |>
     mark_network(edges = flow_edges, layout = "circle")
   smoke_rows(p1)
-  p2 <- as_graph(flow_edges) |> plotit() |>
+  p2 <- as_graph(flow_edges) |>
+    plotit() |>
     layout_circle() |>
     mark_point(data = ~nodes) |>
     mark_rule(data = ~edges, color = "grey70")
@@ -54,7 +58,8 @@ test_that("[C1] layout_circle draws through mark_network and the explicit pipeli
 
 test_that("[C1] layout_tree draws through the explicit pipeline (both edge shapes)", {
   for (ed in c("straight", "elbow")) {
-    p <- as_graph(tree_edges) |> plotit() |>
+    p <- as_graph(tree_edges) |>
+      plotit() |>
       layout_tree(direction = "down", edge = ed) |>
       mark_rule(data = ~edges) |>
       mark_point(data = ~nodes)
@@ -63,7 +68,8 @@ test_that("[C1] layout_tree draws through the explicit pipeline (both edge shape
 })
 
 test_that("[C1] layout_dendrogram draws through the explicit pipeline", {
-  p <- as_graph(hcl) |> plotit() |>
+  p <- as_graph(hcl) |>
+    plotit() |>
     layout_dendrogram(direction = "down") |>
     mark_rule(data = ~edges) |>
     mark_point(data = ~nodes)
@@ -76,7 +82,8 @@ test_that("[C1] layout_chord draws through mark_chord and the explicit pipeline"
   )) |>
     mark_chord()
   smoke_rows(p1)
-  p2 <- as_graph(flow_edges) |> plotit() |>
+  p2 <- as_graph(flow_edges) |>
+    plotit() |>
     layout_chord() |>
     mark_polygon(data = ~ribbons, alpha = 0.5) |>
     mark_polygon(data = ~arcs)
@@ -89,7 +96,8 @@ test_that("[C1] layout_sankey draws through mark_sankey and the explicit pipelin
   )) |>
     mark_sankey()
   smoke_rows(p1)
-  p2 <- as_graph(flow_edges) |> plotit() |>
+  p2 <- as_graph(flow_edges) |>
+    plotit() |>
     layout_sankey() |>
     mark_polygon(data = ~ribbons, alpha = 0.5) |>
     mark_rect(data = ~nodes)
@@ -99,7 +107,8 @@ test_that("[C1] layout_sankey draws through mark_sankey and the explicit pipelin
 test_that("[C1] layout_treemap draws through mark_treemap and the explicit pipeline", {
   p1 <- plotit(hier, encode(fill = id)) |> mark_treemap()
   smoke_rows(p1)
-  p2 <- as_graph(hier) |> plotit() |>
+  p2 <- as_graph(hier) |>
+    plotit() |>
     layout_treemap() |>
     mark_rect(data = ~leaves)
   smoke_rows(p2)

@@ -273,8 +273,14 @@ NULL
                                  leaf_spacing = c("count", "equal"),
                                  edge = c("straight", "elbow")) {
   direction <- match.arg(direction)
-  leaf_spacing <- match.arg(leaf_spacing)
-  edge <- match.arg(edge)
+  spacing_choices <- c("count", "equal")
+  if (length(leaf_spacing) != 1 || !leaf_spacing %in% spacing_choices) {
+    ._abort_arg_enum("leaf_spacing", spacing_choices, got = leaf_spacing)
+  }
+  edge_choices <- c("straight", "elbow")
+  if (length(edge) != 1 || !edge %in% edge_choices) {
+    ._abort_arg_enum("edge", edge_choices, got = edge)
+  }
   t <- ._graph_topology(g)
   if (nrow(t$edges) == 0) {
     ._abort_hint(
@@ -1109,8 +1115,7 @@ layout_circle <- S7::new_generic(
 layout_tree <- S7::new_generic(
   "layout_tree", "plot",
   function(plot, direction = c("down", "up", "left", "right"),
-           leaf_spacing = c("count", "equal"),
-           edge = c("straight", "elbow")) {
+           leaf_spacing = "count", edge = "straight") {
     S7::S7_dispatch()
   }
 )
