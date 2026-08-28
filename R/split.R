@@ -143,7 +143,7 @@ S7::method(split_grid, plotit_class) <- function(
 
   if (length(split$facets) > 0) {
     if (!is.null(rows)) {
-      cli::cli_warn("Both {.code ...} and {.code rows} provided; {.code ...} will be used.")
+      ._warn_precedence("...", "rows")
     }
     rows <- ggplot2::vars(!!!split$facets)
   }

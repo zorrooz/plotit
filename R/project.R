@@ -128,7 +128,7 @@ S7::method(project_polar, plotit_class) <- function(
 ) {
   bad_r <- !is.numeric(inner_radius) || length(inner_radius) != 1 || is.na(inner_radius) || inner_radius < 0
   if (bad_r) {
-    cli::cli_abort("{.arg inner_radius} must be a single non-negative number.")
+    ._abort_arg_range("inner_radius", "a single non-negative number", got = inner_radius)
   }
   bad_dir <- !is.numeric(direction) || length(direction) != 1 || is.na(direction) || !direction %in% c(1, -1)
   if (bad_dir) {
@@ -379,24 +379,39 @@ S7::method(project_parallel, plotit_class) <- function(
   data <- plot@gg$data
 
   if (is.null(data) || nrow(data) == 0) {
-    cli::cli_abort("No data found in plot. Call plotit() with a non-empty data frame.")
+    ._abort_hint(
+      "No data found in the plot.",
+      "Call {.fn plotit} with a non-empty data frame first."
+    )
   }
 
   if (length(columns) == 0) {
-    cli::cli_abort("{.arg columns} must contain at least one column name.")
+    ._abort_hint(
+      "{.arg columns} must contain at least one column name.",
+      "Pass numeric column names from the plot data, e.g. {.code columns = c('a', 'b')}."
+    )
   }
 
   missing_cols <- setdiff(columns, names(data))
   if (length(missing_cols) > 0) {
-    cli::cli_abort("Column(s) not found in data: {.val {missing_cols}}.")
+    ._abort_hint(
+      sprintf("Column(s) not found in data: {.val %s}.", paste0("c(", deparse(missing_cols), ")")),
+      sprintf("Available columns: {.val %s}.", paste0("c(", deparse(names(data)), ")"))
+    )
   }
 
   if (!is.null(group)) {
     if (!(group %in% names(data))) {
-      cli::cli_abort("{.arg group} column {.val {group}} not found in data.")
+      ._abort_hint(
+        sprintf("{.arg group} column {.val %s} not found in data.", group),
+        sprintf("Available columns: {.val %s}.", paste0("c(", deparse(names(data)), ")"))
+      )
     }
     if (group %in% columns) {
-      cli::cli_abort("{.arg group} column {.val {group}} is also in {.arg columns}. Use a different grouping variable.")
+      ._abort_hint(
+        sprintf("{.arg group} column {.val %s} is also in {.arg columns}.", group),
+        "Use a different grouping variable outside {.arg columns}."
+      )
     }
   }
 

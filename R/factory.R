@@ -28,22 +28,24 @@ NULL
 #' @export
 make_mark <- function(name, geom_fun) {
   if (!is.character(name) || length(name) != 1) {
-    cli::cli_abort("{.arg name} must be a single string.")
+    ._abort_arg_range("name", "a single string", got = name)
   }
   if (!is.function(geom_fun)) {
-    cli::cli_abort("{.arg geom_fun} must be a geom function.")
+    ._abort_arg_range("geom_fun", "a geom function")
   }
   if (!grepl("^mark_", name)) {
-    cli::cli_warn(
-      "{.arg name} should start with 'mark_', got {.val {name}}."
-    )
+    cli::cli_warn(c(
+      "{.arg name} should start with 'mark_'.",
+      "x" = "Got {.val {name}}.",
+      "i" = "The mark_ prefix keeps custom marks callable through the shared mark path."
+    ))
   }
   # Re-registering silently replaces the previous binding; say so.
   if (exists(name, envir = parent.frame(), inherits = FALSE)) {
-    cli::cli_warn(
-      "{.val {name}} already exists in the calling environment and will be \\
-       replaced."
-    )
+    cli::cli_warn(c(
+      "{.val {name}} already exists in the calling environment.",
+      "i" = "It will be replaced; assign a different name first to keep the old function."
+    ))
   }
 
   generic <- ._make_mark_generic(name)

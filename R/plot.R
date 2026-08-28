@@ -47,26 +47,29 @@ plotit <- function(
     ))
   }
   if (graph_input && !missing(default_color) && !is.null(default_color)) {
-    cli::cli_warn(
-      "{.arg default_color} is ignored for {.cls plotit_graph} data."
-    )
+    cli::cli_warn(c(
+      "{.arg default_color} is ignored for {.cls plotit_graph} data.",
+      "i" = "Graph marks take their colour from the mapped aesthetic or scale_*()."
+    ))
   }
 
   if (!autofit && (is.null(width) || is.null(height))) {
-    cli::cli_abort(
-      "When {.code autofit = FALSE}, both {.arg width} and {.arg height} must be provided."
+    ._abort_hint(
+      "When {.code autofit = FALSE}, both {.arg width} and {.arg height} must be provided.",
+      "Pass both dimensions or set {.code autofit = TRUE}."
     )
   }
 
   valid_units <- c("in", "cm", "mm")
   if (!(size_unit %in% valid_units)) {
-    cli::cli_abort("{.arg size_unit} must be one of {.val {valid_units}}.")
+    ._abort_arg_enum("size_unit", valid_units, got = size_unit)
   }
 
   if (autofit && (!missing(width) || !missing(height))) {
-    cli::cli_warn(
-      "{.arg autofit} is {.val TRUE}; {.arg width} and {.arg height} will be ignored."
-    )
+    cli::cli_warn(c(
+      "{.arg autofit} is {.val TRUE}; {.arg width} and {.arg height} have no effect.",
+      "i" = "They are ignored; remove them or set {.code autofit = FALSE} for explicit sizing."
+    ))
   }
 
   if (graph_input) {

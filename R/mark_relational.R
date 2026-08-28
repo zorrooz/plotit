@@ -101,7 +101,10 @@ NULL
 #' @keywords internal
 ._rel_canon_edges <- function(edges_df, mapping) {
   if (!is.data.frame(edges_df)) {
-    cli::cli_abort("{.arg data} must be an edges data frame.")
+    ._abort_hint(
+      "{.arg data} must be an edges data frame.",
+      "Use literal {.col source}/{.col target} columns or structural mapping."
+    )
   }
   has_struct <- !is.null(mapping$source) && !is.null(mapping$target)
   has_lit <- all(c("source", "target") %in% names(edges_df))
@@ -126,7 +129,10 @@ NULL
     ))
   }
   if (anyNA(src) || anyNA(tgt)) {
-    cli::cli_abort("Edge endpoints must not contain {.val NA}.")
+    ._abort_hint(
+      "Edge endpoints must not contain {.val NA}.",
+      "Drop or complete those rows before building the edges table."
+    )
   }
   val <- NULL
   if (has_struct) {
@@ -135,8 +141,9 @@ NULL
         rlang::eval_tidy(mapping$value, edges_df)
       ))
       if (anyNA(val)) {
-        cli::cli_abort(
-          "Column {.val {val_nm}} used as {.arg value} must be numeric."
+        ._abort_hint(
+          sprintf("Column {.val %s} used as {.arg value} must be numeric.", val_nm),
+          "Convert the column to numeric or map a different one as {.arg value}."
         )
       }
     }
@@ -521,8 +528,9 @@ S7::method(mark_network, plotit_class) <- function(
 
   nodes <- plot@gg$data
   if (is.null(nodes) || !is.data.frame(nodes)) {
-    cli::cli_abort(
-      "{.fn mark_network} expects a data.frame of nodes as plot data."
+    ._abort_hint(
+      "{.fn mark_network} expects a data.frame of nodes as plot data.",
+      "Build it via {.code as_graph(edges) |> plotit() |> layout_*()}."
     )
   }
   node_id_col <- names(nodes)[1]
@@ -592,9 +600,9 @@ S7::method(mark_network, plotit_class) <- function(
       has_xy <- all(c("x", "y") %in% names(nodes)) &&
         is.numeric(nodes$x) && is.numeric(nodes$y)
       if (!has_xy) {
-        cli::cli_abort(
-          'layout = "manual" requires numeric {.col x}/{.col y} columns \\
-           on the nodes table.'
+        ._abort_hint(
+          'layout = "manual" requires numeric {.col x}/{.col y} columns on the nodes table.',
+          'Provide them on the nodes data frame or use {.code layout = "force"}.'
         )
       }
       # Keep the user's coordinates verbatim -- no topology stripping here.
@@ -619,9 +627,10 @@ S7::method(mark_network, plotit_class) <- function(
       c("source", "target", "value", allowed)
     )
     if (length(unsupported) > 0) {
-      cli::cli_warn(
-        "Unsupported edge channels ignored: {.val {unsupported}}."
-      )
+      cli::cli_warn(c(
+        sprintf("Unsupported edge channels ignored: {.val %s}.", paste0("c(", deparse(unsupported), ")")),
+        "i" = "Network edges support {.val colour}/{.val width}/{.val alpha} via {.arg encode_edges}."
+      ))
     }
   }
   dots <- rlang::list2(...)

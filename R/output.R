@@ -298,8 +298,9 @@ S7::method(export, S7::class_list) <- function(
   ...
 ) {
   if (length(plot) == 0) {
-    cli::cli_abort(
-      "{.arg plot} must contain at least one plot for multipage export."
+    ._abort_hint(
+      "{.arg plot} must contain at least one plot for multipage export.",
+      "Pass one or more plots: {.code export(list(p1, p2), 'pages.pdf')}."
     )
   }
   is_plot <- vapply(plot, function(p) S7::S7_inherits(p, plotit_class), logical(1))

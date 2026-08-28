@@ -111,9 +111,9 @@ NULL
     }
   }
   if (!all(visited[ids])) {
-    cli::cli_abort(
-      "Tree layout found unreachable nodes: edges must point parent -> \\
-       child and must not contain cycles."
+    ._abort_hint(
+      "Tree layout found unreachable nodes.",
+      "Edges must point parent -> child and must not contain cycles."
     )
   }
   depth
@@ -184,11 +184,14 @@ NULL
   directed <- isTRUE(attr(g, "directed"))
   n <- nrow(t$nodes)
   if (n == 0) {
-    cli::cli_abort("Force layout requires at least one node.")
+    ._abort_hint(
+      "Force layout requires at least one node.",
+      "Start from an edge table with at least one row."
+    )
   }
   iterations <- floor(iterations)
   if (iterations < 1) {
-    cli::cli_abort("{.arg iterations} must be >= 1.")
+    ._abort_arg_range("iterations", ">= 1", got = iterations)
   }
 
   dots <- rlang::list2(...)
@@ -202,7 +205,9 @@ NULL
   }
   weights <- suppressWarnings(as.numeric(dots$weights %||% rep(1, nrow(t$edges))))
   if (length(weights) != nrow(t$edges) || anyNA(weights) || any(weights < 0)) {
-    cli::cli_abort("{.arg weights} must be finite non-negative values, one per edge.")
+    ._abort_arg_range(
+      "weights", "finite non-negative values, one per edge", got = weights
+    )
   }
 
   # Self-loops carry no attraction in an undirected relaxation.
@@ -241,7 +246,10 @@ NULL
   order_by <- match.arg(order_by)
   n <- nrow(t$nodes)
   if (n == 0) {
-    cli::cli_abort("Circle layout requires at least one node.")
+    ._abort_hint(
+      "Circle layout requires at least one node.",
+      "Start from an edge table with at least one row."
+    )
   }
   if (order_by == "degree") {
     deg <- table(c(t$edges$source, t$edges$target))
@@ -262,7 +270,10 @@ NULL
   direction <- match.arg(direction)
   t <- ._graph_topology(g)
   if (nrow(t$edges) == 0) {
-    cli::cli_abort("Tree layout requires at least one edge.")
+    ._abort_hint(
+      "Tree layout requires at least one edge.",
+      "Start from an edge table with at least one row."
+    )
   }
   roots <- ._hierarchy_roots(t)
   if (length(roots) == 0) {
@@ -312,8 +323,9 @@ NULL
   kids <- ._hierarchy_children(t)
   roots <- ._hierarchy_roots(t)
   if (length(roots) == 0) {
-    cli::cli_abort(
-      "{.fn layout_dendrogram} found no root: edges must point parent -> child."
+    ._abort_hint(
+      "{.fn layout_dendrogram} found no root: edges must point parent -> child.",
+      "The graph contains a cycle; remove it before laying out."
     )
   }
 
@@ -348,22 +360,30 @@ NULL
                                    curvature = 0.5, n_points = 50,
                                    max_sweeps = 4L) {
   if (node_width <= 0 || node_width >= 0.5) {
-    cli::cli_abort("{.arg node_width} must be in {.val {(0, 0.5)}}.")
+    ._abort_arg_range("node_width", "in (0, 0.5)", got = node_width)
   }
   if (padding < 0 || padding >= 1) {
-    cli::cli_abort("{.arg padding} must be in {.val {[0, 1)}}.")
+    ._abort_arg_range("padding", "in [0, 1)", got = padding)
   }
   n_points <- floor(n_points)
-  if (n_points < 2) cli::cli_abort("{.arg n_points} must be >= 2.")
+  if (n_points < 2) {
+    ._abort_arg_range("n_points", ">= 2", got = n_points)
+  }
 
   t <- ._graph_topology(g)
   nodes <- t$nodes
   edges <- t$edges
   if (nrow(edges) == 0) {
-    cli::cli_abort("{.fn layout_sankey} requires at least one edge.")
+    ._abort_hint(
+      "{.fn layout_sankey} requires at least one edge.",
+      "Start from an edge table with at least one row."
+    )
   }
   if (any(edges$source == edges$target)) {
-    cli::cli_abort("{.fn layout_sankey} does not support self-loops.")
+    ._abort_hint(
+      "{.fn layout_sankey} does not support self-loops.",
+      "Remove self-loop rows (source equal to target) or use {.fn mark_network}."
+    )
   }
 
   ids <- nodes$id
@@ -391,9 +411,10 @@ NULL
   if (!converged || anyNA(depth)) {
     # Non-convergence = depths kept climbing; residual NA = no seedable
     # source exists (every node is a target) -- both indicate a cycle.
-    cli::cli_abort(c(
-      "{.fn layout_sankey} requires an acyclic graph (DAG); a cycle was detected."
-    ))
+    ._abort_hint(
+      "{.fn layout_sankey} requires an acyclic graph (DAG); a cycle was detected.",
+      "Remove the cycle from the edge table, or use {.fn layout_force} for cyclic graphs."
+    )
   }
 
   # -- within-layer ordering: deterministic barycenter sweeps --
@@ -423,7 +444,10 @@ NULL
   # -- magnitudes and global vertical scale --
   val <- as.numeric(edges$value)
   if (any(!is.finite(val)) || any(val < 0)) {
-    cli::cli_abort("{.fn layout_sankey} requires finite non-negative edge {.col value}.")
+    ._abort_hint(
+      "{.fn layout_sankey} requires finite non-negative edge {.col value}.",
+      "Drop or repair {.val NA}/{.val NaN}/{.val Inf} and negative values."
+    )
   }
   # Positional alignment: tapply() only reports observed levels, so match()
   # (never name-based indexing on pmax results) fills absent endpoints.
@@ -589,15 +613,19 @@ NULL
   kids <- ._hierarchy_children(t)
   roots <- ._hierarchy_roots(t)
   if (length(roots) == 0) {
-    cli::cli_abort("{.fn layout_treemap} found no root: edges must point parent -> child.")
+    ._abort_hint(
+      "{.fn layout_treemap} found no root: edges must point parent -> child.",
+      "Ensure exactly one node has {.val NA} as its {.col parent}."
+    )
   }
   has_children <- names(kids)
   leaf_mask <- !(nodes$id %in% has_children)
   leaf_vals <- suppressWarnings(as.numeric(nodes$value))
   bad <- leaf_mask & (!is.finite(leaf_vals) | leaf_vals <= 0)
   if (any(bad)) {
-    cli::cli_abort(
-      "Leaves need positive finite {.col value}: {.val {nodes$id[bad]}}."
+    ._abort_hint(
+      sprintf("Leaves need positive finite {.col value}: {.val %s}.", paste0("c(", deparse(nodes$id[bad]), ")")),
+      "Assign each leaf a positive numeric {.col value}."
     )
   }
 
@@ -683,29 +711,34 @@ NULL
                                   curvature = 0.35,
                                   order_by = c("total", "appearance")) {
   if (inner_radius <= 0 || inner_radius >= 1) {
-    cli::cli_abort("{.arg inner_radius} must be in {.val {(0, 1)}}.")
+    ._abort_arg_range("inner_radius", "in (0, 1)", got = inner_radius)
   }
   if (pad_angle < 0 || pad_angle > pi / 4) {
-    cli::cli_abort(
-      "{.arg pad_angle} must be a small non-negative angle in radians."
+    ._abort_arg_range(
+      "pad_angle", "a small non-negative angle in radians [0, pi/4]",
+      got = pad_angle
     )
   }
   curvature <- min(max(curvature, 0), 0.95)
   n_points <- floor(n_points)
   if (n_points < 2) {
-    cli::cli_abort("{.arg n_points} must be >= 2.")
+    ._abort_arg_range("n_points", ">= 2", got = n_points)
   }
 
   t <- ._graph_topology(g)
   nodes <- t$nodes
   edges <- t$edges
   if (nrow(edges) == 0) {
-    cli::cli_abort("{.fn layout_chord} requires at least one edge.")
+    ._abort_hint(
+      "{.fn layout_chord} requires at least one edge.",
+      "Start from an edge table with at least one row."
+    )
   }
   val_raw <- suppressWarnings(as.numeric(edges$value))
   if (any(!is.finite(val_raw)) || any(val_raw < 0)) {
-    cli::cli_abort(
-      "{.fn layout_chord} requires finite non-negative edge {.col value}."
+    ._abort_hint(
+      "{.fn layout_chord} requires finite non-negative edge {.col value}.",
+      "Drop or repair {.val NA}/{.val NaN}/{.val Inf} and negative values."
     )
   }
 
@@ -733,7 +766,10 @@ NULL
     total_v[[agg$target[r]]] <- total_v[[agg$target[r]]] + agg$value[r]
   }
   if (sum(total_v) <= 0) {
-    cli::cli_abort("{.fn layout_chord} requires positive edge {.col value}.")
+    ._abort_hint(
+      "{.fn layout_chord} requires positive edge {.col value}.",
+      "All-zero weights leave no sector to draw; drop empty edges."
+    )
   }
 
   # Sector ordering: descending total (d3-chord style) or input appearance.
@@ -748,8 +784,9 @@ NULL
   # Angular budget: clockwise from 12 o'clock, fixed gap between sectors.
   usable <- 2 * pi - pad_angle * length(ids)
   if (usable <= 0) {
-    cli::cli_abort(
-      "{.arg pad_angle} is too large for {.val {length(ids)}} sectors."
+    ._abort_hint(
+      sprintf("{.arg pad_angle} is too large for {.val %s} sectors.", length(ids)),
+      "Reduce {.arg pad_angle} so sectors keep positive angular width."
     )
   }
   k_ang <- usable / sum(total_v)

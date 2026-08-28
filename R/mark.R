@@ -571,10 +571,9 @@ S7::method(mark_map, plotit_class) <- function(
 ) {
   ._require_pkg("sf", "{.fn mark_map}")
   if (!is.null(position)) {
-    cli::cli_warn(c(
-      "{.arg position} is ignored by {.fn mark_map}.",
-      "i" = "{.fn geom_sf} implements no position adjustments."
-    ))
+    ._warn_ignored(
+      "position", "{.fn geom_sf} implements no position adjustments."
+    )
   }
   layer_data <- data %||% plot@gg$data
   if (!inherits(layer_data, "sf")) {
@@ -1089,12 +1088,16 @@ S7::method(mark_density_2d, plotit_class) <- function(
                              reorder = TRUE) {
   method <- match.arg(method)
   if (!is.data.frame(data)) {
-    cli::cli_abort("{.arg data} must be a data.frame.")
+    ._abort_hint(
+      "{.arg data} must be a data.frame.",
+      "Correlation preprocessing works on tabular data with numeric columns."
+    )
   }
   num_cols <- vapply(data, is.numeric, logical(1))
   if (sum(num_cols) < 2) {
-    cli::cli_abort(
-      "Correlation preprocessing requires at least 2 numeric columns."
+    ._abort_hint(
+      "Correlation preprocessing requires at least 2 numeric columns.",
+      "Select a wider numeric frame or convert columns before plotting."
     )
   }
   # Pairwise complete observations so a single NA column does not
@@ -1106,9 +1109,10 @@ S7::method(mark_density_2d, plotit_class) <- function(
   ))
   if (reorder) {
     if (anyNA(mat)) {
-      cli::cli_warn(
-        "Correlation matrix contains NA (zero-variance column?); skipping reorder."
-      )
+      cli::cli_warn(c(
+        "Correlation matrix contains {.val NA}; skipping reorder.",
+        "i" = "A zero-variance column produces undefined correlations."
+      ))
     } else {
       ord <- stats::hclust(stats::as.dist(1 - abs(mat)))$order
       mat <- mat[ord, ord]
@@ -1166,7 +1170,10 @@ S7::method(mark_corr, plotit_class) <- function(
   plot <- ._clear_default_color(plot)
   raw_data <- plot@gg$data
   if (!is.data.frame(raw_data)) {
-    cli::cli_abort("{.fn mark_corr} requires tabular plot data.")
+    ._abort_hint(
+      "{.fn mark_corr} requires tabular plot data.",
+      "Call {.fn plotit} with a data.frame of numeric columns first."
+    )
   }
   # Sugar over the internal corr transform + tile layer.  Routed through
   # the shared mark path so the unified style defaults apply (white hairline
@@ -1234,7 +1241,10 @@ S7::method(mark_corr, plotit_class) <- function(
   # Wide numeric data.frame: columns -> heatmap columns, rows -> observations.
   num <- vapply(data, is.numeric, logical(1))
   if (sum(num) < 1) {
-    cli::cli_abort("{.fn mark_heatmap} found no numeric columns and no {.code x/y/fill} mapping.")
+    ._abort_hint(
+      "{.fn mark_heatmap} found no numeric columns and no {.code x/y/fill} mapping.",
+      "Pass a wide numeric frame or map {.code encode(x =, y =, fill =)}."
+    )
   }
   mat <- as.matrix(data[, num, drop = FALSE])
   if (is.null(rownames(mat))) rownames(mat) <- as.character(seq_len(nrow(mat)))
@@ -1490,14 +1500,16 @@ S7::method(mark_significance, plotit_class) <- function(
   text_size = ._MARK_STYLE$txt_note, tip_length = 0.02, ...
 ) {
   if (!is.data.frame(comparisons)) {
-    cli::cli_abort("{.arg comparisons} must be a data frame.")
+    ._abort_arg_range("comparisons", "a data.frame", got = deparse(substitute(comparisons)))
   }
   required <- c("group1", "group2", "label")
   missing_cols <- setdiff(required, names(comparisons))
   if (length(missing_cols) > 0) {
-    cli::cli_abort(
-      "{.arg comparisons} must have columns: {.val {required}}."
-    )
+    cli::cli_abort(c(
+      "{.arg comparisons} must have the columns {.val group1}, {.val group2}, {.val label}.",
+      "x" = sprintf("Missing: {.val %s}.", paste0("c(", deparse(missing_cols), ")")),
+      "i" = "One row per comparison; {.val label} carries the annotation text."
+    ))
   }
   # Extract data range only when needed for auto-computation (C3)
   d <- plot@gg$data

@@ -60,7 +60,7 @@ plotit_metadata <- S7::new_class(
     if (!is.null(unit)) {
       valid_units <- c("in", "cm", "mm")
       if (!(unit %in% valid_units)) {
-        cli::cli_abort("{.arg unit} must be one of {.val {valid_units}}.")
+        ._abort_arg_enum("unit", valid_units, got = unit)
       }
     }
     S7::new_object(

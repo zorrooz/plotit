@@ -17,8 +17,9 @@ NULL
   if (S7::S7_inherits(x, plotit_class)) {
     return(x@gg)
   }
-  cli::cli_abort(
-    "Each element must be a {.cls plotit} or {.cls plotit_composite} object."
+  ._abort_hint(
+    "Every element must be a {.cls plotit} or {.cls plotit_composite} object.",
+    "Build each panel through the {.code plotit() |> mark_*()} pipeline before composing."
   )
 }
 
@@ -83,7 +84,10 @@ NULL
 #' @keywords internal
 ._ggsave_inches <- function(filename, plot, width, height, dpi, device, ...) {
   if (is.null(filename) || identical(filename, "")) {
-    cli::cli_abort("{.arg filename} must be a non-empty file path.")
+    ._abort_hint(
+      "{.arg filename} must be a non-empty file path.",
+      "Pass an output path such as {.code 'figure.png'}."
+    )
   }
   ggplot2::ggsave(
     filename = filename,
@@ -299,8 +303,9 @@ compose_grid <- function(
 ) {
   plots <- list(...)
   if (length(plots) == 0) {
-    cli::cli_abort(
-      "At least one {.cls plotit} or {.cls plotit_composite} object is required."
+    ._abort_hint(
+      "At least one {.cls plotit} or {.cls plotit_composite} object is required.",
+      "Compose individual plots first, e.g. {.code compose_grid(p1, p2)}."
     )
   }
 
@@ -366,7 +371,10 @@ compose_inset <- function(
   ...
 ) {
   if (!S7::S7_inherits(base, plotit_class)) {
-    cli::cli_abort("{.arg base} must be a {.cls plotit} object.")
+    ._abort_hint(
+      "{.arg base} must be a {.cls plotit} object.",
+      "Build it through the {.code plotit() |> mark_*()} pipeline first."
+    )
   }
 
   base_gg <- ._prep_subplot_gg(base)
@@ -441,7 +449,10 @@ compose_marginal <- function(
   guides = "collect"
 ) {
   if (!S7::S7_inherits(main, plotit_class)) {
-    cli::cli_abort("{.arg main} must be a {.cls plotit} object.")
+    ._abort_hint(
+      "{.arg main} must be a {.cls plotit} object.",
+      "Build it through the {.code plotit() |> mark_*()} pipeline first."
+    )
   }
 
   main_gg <- ._prep_subplot_gg(main)

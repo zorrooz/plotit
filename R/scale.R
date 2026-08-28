@@ -112,19 +112,28 @@ NULL
         ...
       ),
       hue = ._cf(aes, ggplot2::scale_colour_discrete, ggplot2::scale_fill_discrete)(direction = dir, ...),
-      cli::cli_abort("Unknown colour scheme: {.val {scheme}}.")
+      ._abort_arg_enum(
+        "scheme", c("viridis", "brewer", "grey", "friendly", "hue"), got = scheme,
+        hint = "The {.val grey} scheme is discrete-only; use it with {.code trans = 'discrete'}."
+      )
     )
   } else if (binned) {
     switch(scheme,
       viridis = ._cf(aes, ggplot2::scale_colour_viridis_b, ggplot2::scale_fill_viridis_b)(direction = dir, ...),
       brewer  = ._cf(aes, ggplot2::scale_colour_fermenter, ggplot2::scale_fill_fermenter)(direction = dir, ...),
-      cli::cli_abort("Unknown colour scheme for binned: {.val {scheme}}.")
+      ._abort_arg_enum(
+        "scheme", c("viridis", "brewer"), got = scheme,
+        hint = "Binned scales support {.val viridis} and {.val brewer} only."
+      )
     )
   } else {
     switch(scheme,
       viridis = ._cf(aes, ggplot2::scale_colour_viridis_c, ggplot2::scale_fill_viridis_c)(direction = dir, ...),
       brewer  = ._cf(aes, ggplot2::scale_colour_distiller, ggplot2::scale_fill_distiller)(direction = dir, ...),
-      cli::cli_abort("Unknown colour scheme for continuous: {.val {scheme}}.")
+      ._abort_arg_enum(
+        "scheme", c("viridis", "brewer"), got = scheme,
+        hint = "Continuous scales support {.val viridis} and {.val brewer} only."
+      )
     )
   }
 }
@@ -294,7 +303,10 @@ NULL
       }
     }
   } else if (!is.null(range) && (discrete || binned)) {
-    cli::cli_warn("{.arg range} for discrete or binned x/y axes is not supported.")
+    cli::cli_warn(c(
+      "{.arg range} for discrete or binned x/y axes is not supported.",
+      "i" = "The x/y {.arg range} (visual proportion) applies to continuous scales only."
+    ))
   }
 
   scale_fun <- if (aes == "x") {
