@@ -68,6 +68,10 @@ navbar:
         href: articles/gallery-annotations.html
       - text: "Gallery: Annotation & Composition"
         href: articles/gallery-composing.html
+      - text: "Use Case: Bioinformatics"
+        href: articles/use-case-bioinformatics.html
+      - text: "Use Case: Publishing"
+        href: articles/use-case-publishing.html
       - text: "Design Philosophy"
         href: articles/philosophy.html
     news:
