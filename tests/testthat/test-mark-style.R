@@ -172,13 +172,29 @@ test_that("[BDD] explicit width overrides the bar default", {
 
 # ---- closed-cell heatmap chrome (tile / corr) ----
 
-test_that("[BDD] closed-cell marks drop axis furniture and expansion", {
+test_that("[BDD] rect keeps light axes with panel-flush tiles (D-06)", {
+  # Design/03 <U+00A7>6.2 (I-1 ruling): long-table tile marks keep light axes --
+  # G2 Cell and OP calendars show them -- while tiles stay panel-flush.
   df <- data.frame(
     x = rep(LETTERS[1:3], 3), y = rep(1:3, each = 3), z = 1:9
   )
   p <- df |>
     plotit(encode(x = x, y = y, fill = z)) |>
     mark_rect()
+  thm <- ggplot2::ggplot_build(p@gg)$plot$theme
+  expect_false(inherits(thm$axis.line, "element_blank")) # light axes stay
+  expect_false(inherits(thm$axis.ticks, "element_blank"))
+  expect_false(inherits(thm$axis.text, "element_blank")) # labels stay
+  expect_false(isTRUE(p@gg$coordinates$expand)) # cells touch panel edges
+})
+
+test_that("[BDD] heatmap keeps closed-cell chrome with category text", {
+  df <- data.frame(
+    x = rep(LETTERS[1:3], 3), y = rep(1:3, each = 3), z = 1:9
+  )
+  p <- df |>
+    plotit(encode(x = x, y = y, fill = z)) |>
+    mark_heatmap()
   thm <- ggplot2::ggplot_build(p@gg)$plot$theme
   expect_s3_class(thm$axis.line, "element_blank")
   expect_s3_class(thm$axis.ticks, "element_blank")

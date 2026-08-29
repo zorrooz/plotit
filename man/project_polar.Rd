@@ -8,10 +8,13 @@ project_polar(
   plot,
   theta = "x",
   start = 0,
+  end = NULL,
   direction = 1,
   inner_radius = 0,
   r_axis_inside = FALSE,
   clip = "on",
+  reverse = "none",
+  rotate_angle = FALSE,
   ...
 )
 }
@@ -22,16 +25,29 @@ project_polar(
 
 \item{start}{Starting angle in radians (0 = 12 o'clock).}
 
-\item{direction}{\code{1} = clockwise, \code{-1} = anti-clockwise.}
+\item{end}{Ending angle in radians (radial mode only).  \code{NULL} (default)
+= full circle; a finite value renders a partial arc (e.g. semicircle
+gauges via \verb{start = -pi / 2, end = pi / 2}).  Ignored with a warning
+in plain polar mode.}
+
+\item{direction}{\code{1} = clockwise, \code{-1} = anti-clockwise.
+\strong{Deprecated}: use \code{reverse = "theta"}.  \code{-1} still works but warns
+once per call (deprecation cycle, AGENTS.md 1.4).}
 
 \item{inner_radius}{Inner radius as a fraction of the panel (0-1).
-\code{0} = polar (full circle). \verb{>0} = radial (hollow centre, needs
-ggplot2 >= 3.5.0).}
+\code{0} = polar (full circle). \verb{>0} = radial (hollow centre).}
 
 \item{r_axis_inside}{If \code{TRUE}, place the radial axis inside the panel
 (radial mode only).}
 
 \item{clip}{Should drawing be clipped? \code{"on"} or \code{"off"}.}
+
+\item{reverse}{Reverse direction: \code{"none"} (default), \code{"theta"}
+(anti-clockwise, replaces \code{direction = -1}), \code{"r"} (radial axis) or
+\code{"thetar"} (both).  \code{"r"}/\code{"thetar"} are radial-mode only.}
+
+\item{rotate_angle}{Rotate angle aesthetics with the theta axis
+(radial mode only, ggplot2 \code{coord_radial(rotate.angle)}).}
 
 \item{...}{Passed to the underlying \code{coord_polar()} or \code{coord_radial()}.}
 }
@@ -41,8 +57,7 @@ Modified plotit object.
 \description{
 Maps one axis to angle and the other to radius.  Default (full circle,
 zero inner radius) uses \code{coord_polar()}.  Set \code{inner_radius > 0} or
-\code{r_axis_inside = TRUE} to switch to the radial variant (requires
-ggplot2 >= 3.5.0).
+\code{r_axis_inside = TRUE} to switch to the radial variant.
 }
 \examples{
 plotit(mtcars, encode(x = factor(cyl))) |>

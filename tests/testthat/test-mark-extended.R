@@ -297,46 +297,47 @@ test_that("mark_errorbar horizontal maps y position with xmin/xmax", {
   expect_equal(nrow(b$data[[1]]), 2)
 })
 
-# ---- scale_radius ----
-test_that("[BDD] scale_radius maps value to circle radius", {
+# ---- scale_radius (defunct, A2) ----
+test_that("scale_radius is defunct with directed migration guidance", {
+  p <- plotit(
+    ggplot2::midwest,
+    encode(x = popdensity, y = percollege, size = poptotal)
+  ) |> mark_point()
+  expect_error(scale_radius(p, range = c(1, 10)), "defunct")
+  expect_error(scale_radius(p), "scale_size")
+})
+
+test_that("scale_size covers the former radius role (bubble encoding)", {
   p <- plotit(
     ggplot2::midwest,
     encode(x = popdensity, y = percollege, size = poptotal)
   ) |>
     mark_point() |>
-    scale_radius(range = c(1, 10))
+    scale_size(range = c(1, 10))
   b <- .built(p)
   rng <- range(b$data[[1]]$size)
   expect_equal(round(rng[1], 4), 1)
   expect_equal(round(rng[2], 4), 10)
 })
 
-test_that("scale_radius rejects discrete routing with guidance", {
-  p <- plotit(
-    ggplot2::midwest,
-    encode(x = popdensity, y = percollege, size = category)
-  ) |> mark_point()
-  expect_error(scale_radius(p, trans = "discrete"), "scale_size")
-})
-
-# ---- + escape hatch ----
-test_that("[BDD] plotit + ggplot2 object keeps the plotit wrapper", {
+# ---- ggplot2 escape hatch: add_ggplot ----
+test_that("[BDD] add_ggplot keeps the plotit wrapper", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
-  p2 <- p + ggplot2::annotate("text", x = 3, y = 7.9, label = "hi", size = 3)
+  p2 <- p |> add_ggplot(ggplot2::annotate("text", x = 3, y = 7.9, label = "hi", size = 3))
   expect_s3_class(p2, "plotit::plotit")
   expect_length(p2@gg$layers, 2)
 })
 
-test_that("plotit + theme renders with the theme", {
+test_that("add_ggplot renders theme components", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
-  p2 <- p + ggplot2::theme_minimal(base_size = 11)
+  p2 <- p |> add_ggplot(ggplot2::theme_minimal(base_size = 11))
   b <- .built(p2)
   expect_equal(b$plot$theme$text$size, 11)
 })
 
-test_that("+ works on composites (patchwork semantics)", {
+test_that("add_ggplot works on composites (patchwork semantics)", {
   p1 <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
-  c1 <- compose_grid(p1, p1) + patchwork::plot_annotation(title = "T")
+  c1 <- compose_grid(p1, p1) |> add_ggplot(patchwork::plot_annotation(title = "T"))
   expect_s3_class(c1, "plotit::plotit_composite")
 })
 
@@ -359,7 +360,10 @@ test_that("new marks reject plotit_composite", {
   expect_error(mark_step(cmp), "not supported")
   expect_error(mark_curve(cmp), "not supported")
   expect_error(mark_forest(cmp), "not supported")
-  expect_error(scale_radius(cmp), "not supported")
+  # scale_radius is defunct since 1.0 (radius belongs to scale_size's
+  # domain), so it aborts with migration guidance before any composite
+  # dispatch is reached.
+  expect_error(scale_radius(cmp), "defunct")
 })
 
 # ---- draw-time smoke tests ----
@@ -576,4 +580,105 @@ test_that("mark_rule segment mode does not warn about injected fill", {
   p <- plotit(segs, encode(x = x, y = y, xend = xend, yend = yend)) |>
     mark_rule()
   expect_no_warning(.built(p))
+})
+
+# ---- [BDD] mark_text / mark_label repel passthrough (D-15) ----
+test_that("[BDD] mark_text repel max.overlaps=Inf keeps every label", {
+  agg <- data.frame(
+    x = rep(1:2, 15), y = rep(1:15, each = 2), lab = paste0("L", 1:30)
+  )
+  p <- plotit(agg, encode(x = x, y = y, label = lab)) |>
+    mark_text(repel = TRUE, max.overlaps = Inf)
+  b <- .built(p)
+  expect_equal(nrow(b$data[[1]]), 30)
+})
+
+test_that("[BDD] mark_text repel seed=1 is reproducible", {
+  skip_if_not_installed("ggrepel")
+  agg <- data.frame(
+    x = rep(1:2, 15), y = rep(1:15, each = 2), lab = paste0("L", 1:30)
+  )
+  mk <- function() {
+    p <- plotit(agg, encode(x = x, y = y, label = lab)) |>
+      mark_text(repel = TRUE, seed = 1, max.overlaps = Inf)
+    .built(p)$data[[1]]
+  }
+  d1 <- mk()
+  d2 <- mk()
+  expect_identical(d1$x, d2$x)
+  expect_identical(d1$y, d2$y)
+})
+
+# ---- [BDD] mark_heatmap recipe parameters (D-14, design/03 <U+00A7>5.1) ----
+test_that("[BDD] mark_heatmap show_numbers adds a text overlay layer", {
+  mat <- matrix(c(1, 2, 3, 4, 5, 6),
+    nrow = 2,
+    dimnames = list(c("r1", "r2"), c("c1", "c2", "c3"))
+  )
+  p <- plotit(mat, encode()) |> mark_heatmap(show_numbers = TRUE)
+  b <- ggplot2::ggplot_build(p@gg)
+  expect_equal(length(b$data), 2) # tiles + numbers
+  expect_setequal(b$data[[2]]$label, sprintf("%.2f", c(1, 2, 3, 4, 5, 6)))
+  # custom format and colour reach the layer
+  p2 <- plotit(mat, encode()) |>
+    mark_heatmap(
+      show_numbers = TRUE, number_format = "%.0f",
+      number_color = "red"
+    )
+  b2 <- ggplot2::ggplot_build(p2@gg)
+  expect_setequal(b2$data[[2]]$label, c("1", "2", "3", "4", "5", "6"))
+  expect_identical(unique(b2$data[[2]]$colour), "red")
+})
+
+test_that("[BDD] mark_heatmap na_color reaches the fill scale", {
+  mat <- matrix(c(1, NA, 3, 4),
+    nrow = 2,
+    dimnames = list(c("r1", "r2"), c("c1", "c2"))
+  )
+  p <- plotit(mat, encode()) |> mark_heatmap(na_color = "grey90")
+  b <- ggplot2::ggplot_build(p@gg)
+  expect_true("grey90" %in% b$data[[1]]$fill)
+})
+
+test_that("[BDD] mark_heatmap cluster accepts hclust objects and lists", {
+  mat <- matrix(c(9, 1, 8, 2, 1, 9, 2, 8),
+    nrow = 4,
+    dimnames = list(paste0("g", 1:4), paste0("s", 1:2))
+  )
+  h <- stats::hclust(stats::dist(mat))
+  # Row order follows the hclust order exactly: read it back through the
+  # show_numbers overlay (built y is the scaled coordinate, so the row
+  # identity travels via the number labels).
+  p <- plotit(mat, encode()) |>
+    mark_heatmap(cluster = h, show_numbers = TRUE, number_format = "%.0f")
+  b <- ggplot2::ggplot_build(p@gg)
+  top_row_labels <- b$data[[2]]$label[b$data[[2]]$y == min(b$data[[2]]$y)]
+  expect_identical(
+    as.numeric(top_row_labels),
+    as.numeric(mat[h$labels[h$order][1], ])
+  )
+  # list(row =, col =) form
+  p2 <- plotit(mat, encode()) |>
+    mark_heatmap(
+      cluster = list(row = h, col = NULL),
+      show_numbers = TRUE, number_format = "%.0f"
+    )
+  b2 <- ggplot2::ggplot_build(p2@gg)
+  top_row_labels2 <- b2$data[[2]]$label[b2$data[[2]]$y == min(b2$data[[2]]$y)]
+  expect_identical(
+    as.numeric(top_row_labels2),
+    as.numeric(mat[h$labels[h$order][1], ])
+  )
+  # mismatched labels abort with a targeted message
+  h_bad <- h
+  h_bad$labels <- paste0("x", seq_along(h$labels))
+  expect_error(
+    plotit(mat, encode()) |> mark_heatmap(cluster = h_bad),
+    "labels do not match"
+  )
+  # non-enum / non-engine input aborts
+  expect_error(
+    plotit(mat, encode()) |> mark_heatmap(cluster = 42),
+    "must be one of"
+  )
 })

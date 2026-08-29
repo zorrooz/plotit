@@ -42,3 +42,8 @@ mapped, or \code{geom_bar()} for count-based bars.
 \examples{
 plotit(mtcars, encode(x = factor(cyl))) |> mark_bar()
 }
+\references{
+Vega-Lite: \href{https://vega.github.io/vega-lite/docs/bar.html}{Bar}
+
+AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/interval}{Interval} (corelib)
+}

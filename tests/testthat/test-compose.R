@@ -400,3 +400,162 @@ test_that("[BDD] scale/project/split/label_axis on composite abort", {
   expect_error(c |> label_axis(text = "x", aes = "x"), "not supported for .plotit_composite")
   expect_error(c |> label_legend(text = "x"), "not supported for .plotit_composite")
 })
+
+# =====================================================================
+# stage 5: 5-1 D-03 -- compose_grid design / axis_titles
+# =====================================================================
+
+test_that("[BDD] compose_grid design text layout renders with empty cell", {
+  c <- compose_grid(.p1, .p2, .p3, .p4, design = "12#\n344")
+  f <- tempfile(fileext = ".png")
+  export(c, f, dpi = 72)
+  expect_true(file.exists(f))
+  unlink(f)
+})
+
+test_that("[BDD] compose_grid design list of area vectors renders", {
+  c <- compose_grid(.p1, .p2, .p3, design = list(c(1, 1, 2, 1), c(1, 2, 1, 3), c(2, 2, 2, 3)))
+  f <- tempfile(fileext = ".png")
+  export(c, f, dpi = 72)
+  expect_true(file.exists(f))
+  unlink(f)
+})
+
+test_that("compose_grid design wins over grid args with a warning", {
+  expect_warning(
+    c <- compose_grid(.p1, .p2, ncol = 2, design = "12"),
+    "takes precedence"
+  )
+  expect_equal(c@layout$design, "12")
+  expect_null(c@layout$ncol)
+})
+
+test_that("compose_grid invalid design entries abort with a hint", {
+  expect_error(
+    compose_grid(.p1, .p2, design = list(c(1, 1))),
+    "numeric vector c\\(top, left, bottom, right\\)"
+  )
+  expect_error(
+    compose_grid(.p1, .p2, design = matrix(1)),
+    "layout string or a list of area vectors"
+  )
+})
+
+test_that("[BDD] compose_grid axis_titles = collect renders", {
+  c <- compose_grid(.p1, .p2, axes = "collect", axis_titles = "collect")
+  f <- tempfile(fileext = ".png")
+  expect_no_error(export(c, f, dpi = 72))
+  unlink(f)
+})
+
+test_that("compose_grid design does not mutate subplot meta (SM5)", {
+  w <- .p1@meta@width
+  c <- compose_grid(.p1, .p2, design = "12")
+  expect_equal(.p1@meta@width, w)
+  expect_equal(c@layout$type, "grid")
+})
+
+# =====================================================================
+# stage 5: 5-2 D-04 -- compose_annot strips
+# =====================================================================
+
+.dend_strip <- function(h, direction = "up") {
+  as_graph(h) |>
+    plotit() |>
+    layout_dendrogram(direction = direction) |>
+    mark_rule(data = ~edges)
+}
+
+test_that("[BDD] compose_annot top dendrogram strip renders (D4 flagship core)", {
+  mat <- matrix(
+    c(9, 1, 8, 2, 1, 9, 2, 8, 5, 3, 7, 4),
+    nrow = 4,
+    dimnames = list(paste0("g", 1:4), paste0("s", 1:3))
+  )
+  h <- stats::hclust(stats::dist(mat))
+  hm <- plotit(mat, encode()) |> mark_heatmap(cluster = h)
+  p <- hm |> compose_annot(top = .dend_strip(h, "up"))
+  expect_s3_class(p, "plotit::plotit_composite")
+  expect_equal(p@layout$type, "annot")
+  expect_equal(p@layout$sides, "top")
+  expect_length(p@plots, 2)
+  f <- tempfile(fileext = ".png")
+  export(p, f, dpi = 72)
+  expect_true(file.exists(f))
+  unlink(f)
+})
+
+test_that("[BDD] compose_annot four sides + gap render", {
+  strip_v <- .dend_strip(stats::hclust(dist(iris[, 1:4])), "up")
+  strip_h <- .dend_strip(stats::hclust(dist(t(iris[, 1:4]))), "right")
+  c <- compose_grid(.p1, .p2)
+  p <- compose_annot(c, top = strip_v, right = strip_h, gap = 0.05)
+  f <- tempfile(fileext = ".png")
+  expect_no_error(export(p, f, dpi = 72))
+  unlink(f)
+})
+
+test_that("[BDD] compose_annot accepts explicit strip sizes (three states)", {
+  s1 <- .dend_strip(stats::hclust(dist(iris[, 1:4])), "up")
+  p1 <- .p1 |> compose_annot(top = s1, heights = grid::unit(0.6, "in"))
+  expect_s3_class(p1, "plotit::plotit_composite")
+  p2 <- .p1 |> compose_annot(top = s1, heights = c(1, 4))
+  expect_s3_class(p2, "plotit::plotit_composite")
+})
+
+test_that("compose_annot full-grid size mismatch aborts", {
+  s1 <- .dend_strip(stats::hclust(dist(iris[, 1:4])), "up")
+  expect_error(
+    .p1 |> compose_annot(top = s1, heights = c(1, 4, 9)),
+    "assembled grid has 2 rows"
+  )
+})
+
+test_that("compose_annot error paths abort with targeted hints", {
+  expect_error(compose_annot(.p1), "at least one strip")
+  expect_error(compose_annot(.p1, top = "nope"), "must be a")
+  expect_error(compose_annot("nope", top = .p1), "must be a")
+  expect_error(compose_annot(.p1, top = .p2, align = "diagonal"), "must be one of")
+})
+
+test_that("compose_annot on_top = TRUE warns and still renders beside", {
+  expect_warning(p <- compose_annot(.p1, top = .p2, on_top = TRUE), "reserved")
+  expect_s3_class(p, "plotit::plotit_composite")
+})
+
+test_that("[BDD] compose_marginal with a single side renders (regression)", {
+  main <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
+  top <- plotit(iris, encode(x = Sepal.Width)) |> mark_histogram()
+  c <- compose_marginal(main, top = top)
+  expect_equal(c@layout$type, "marginal")
+  f <- tempfile(fileext = ".png")
+  expect_no_error(export(c, f, dpi = 72))
+  unlink(f)
+  expect_error(compose_marginal(main), "at least one marginal")
+  expect_error(compose_marginal(main, top = top, align = "diagonal"), "must be one of")
+})
+
+# =====================================================================
+# stage 5: 5-3 D-05 -- flagship recipe prerequisites
+#   - compose_annot + dendrogram strips verified above (5-2 tests)
+#   - mark_heatmap cluster accepts a user hclust (single-axis; the
+#     design's list(row=, col=) four-state is NOT yet implemented --
+#     registered as a gap in plan.md card 5-3 / bug ledger)
+# =====================================================================
+
+test_that("[BDD] mark_heatmap accepts a user hclust for row clustering", {
+  set.seed(7)
+  cols <- paste0("v", 1:6)
+  g1 <- matrix(rnorm(60, mean = 1), nrow = 10, dimnames = list(paste0("a", 1:10), cols))
+  g2 <- matrix(rnorm(60, mean = 5), nrow = 10, dimnames = list(paste0("b", 1:10), cols))
+  mat <- rbind(g1, g2)
+  h_row <- stats::hclust(stats::dist(mat))
+  p <- plotit(mat, encode()) |> mark_heatmap(cluster = h_row)
+  b <- ggplot2::ggplot_build(p@gg)
+  expect_s3_class(b, "ggplot_built")
+  # Cluster string enum still validates its legal values.
+  expect_error(
+    plotit(mat, encode()) |> mark_heatmap(cluster = "sideways"),
+    "should be one of"
+  )
+})

@@ -8,6 +8,10 @@ mark_heatmap(
   plot,
   cluster = c("both", "row", "column", "none"),
   scale = c("none", "row", "column"),
+  show_numbers = FALSE,
+  number_format = "\%.2f",
+  number_color = NULL,
+  na_color = "grey85",
   ...,
   rasterize = FALSE,
   rasterize_dpi = 300,
@@ -22,6 +26,18 @@ mark_heatmap(
 
 \item{scale}{z-score normalisation: \code{"none"} (default), \code{"row"}, or
 \code{"column"}.}
+
+\item{show_numbers}{Print the value of each cell inside the tile
+(default \code{FALSE}); implemented as a \code{mark_text} overlay.}
+
+\item{number_format}{Format string for the cell numbers
+(default \code{"\%.2f"}).}
+
+\item{number_color}{Cell number colour; \code{NULL} (default) applies
+auto-contrast (white on dark cells, ink on light cells).}
+
+\item{na_color}{Fill colour for \code{NA} cells (default \code{"grey85"}; the
+tidyheatmaps \code{color_na} counterpart).}
 
 \item{...}{Other arguments passed to \code{\link[ggplot2:geom_tile]{ggplot2::geom_tile()}}.}
 
@@ -55,5 +71,6 @@ plotit(mat, encode()) |> mark_heatmap()
 plotit(mat, encode()) |> mark_heatmap(cluster = "both", scale = "row")
 }
 \references{
+R: \code{stats::hclust()} / \code{stats::dist()} (row/column clustering)
 tidyheatmaps: \href{https://jbengler.github.io/tidyheatmaps/}{Heatmaps from Tidy Data}
 }

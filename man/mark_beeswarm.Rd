@@ -52,5 +52,6 @@ plotit(iris, encode(x = Species, y = Sepal.Length)) |>
 \dontshow{\}) # examplesIf}
 }
 \references{
+R: \code{ggbeeswarm::geom_beeswarm()} (collision-avoidance rendering)
 AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/beeswarm}{Beeswarm} (corelib)
 }

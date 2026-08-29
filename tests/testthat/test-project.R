@@ -124,7 +124,6 @@ test_that("project_polar basic (non-radial test in radial section)", {
 
 
 test_that("project_polar inner_radius > 0 switches to radial", {
-  skip_if(utils::packageVersion("ggplot2") < "3.5.0")
   p <- plotit(mtcars, encode(x = factor(cyl))) |>
     mark_bar() |>
     project_polar(inner_radius = 0.3)
@@ -132,11 +131,71 @@ test_that("project_polar inner_radius > 0 switches to radial", {
 })
 
 test_that("project_polar r_axis_inside + inner_radius", {
-  skip_if(utils::packageVersion("ggplot2") < "3.5.0")
   p <- plotit(mtcars, encode(x = factor(cyl))) |>
     mark_bar() |>
     project_polar(r_axis_inside = TRUE, inner_radius = 0.3)
   expect_s3_class(p, "plotit::plotit")
+})
+
+test_that("project_polar radial reverse=theta renders without any warning", {
+  # [BDD] ggplot2 4.0 deprecated coord_radial(direction=); the canonical
+  # plotit path is reverse="theta" (design 05 §2) and must stay warning-free.
+  p <- plotit(mtcars, encode(x = factor(cyl))) |>
+    mark_bar() |>
+    project_polar(inner_radius = 0.3, reverse = "theta")
+  expect_no_warning(b <- ggplot2::ggplot_build(p@gg))
+  expect_s3_class(b, "ggplot_built")
+})
+
+test_that("project_polar direction=-1 warns deprecation and still renders", {
+  # Deprecation cycle (AGENTS.md 1.4): `direction` warns once and maps to
+  # reverse = "theta" until it is removed in a future minor release.
+  p <- plotit(mtcars, encode(x = factor(cyl))) |>
+    mark_bar()
+  expect_warning(
+    p2 <- project_polar(p, inner_radius = 0.3, direction = -1),
+    "deprecated"
+  )
+  expect_no_warning(b <- ggplot2::ggplot_build(p2@gg))
+  expect_s3_class(b, "ggplot_built")
+})
+
+test_that("project_polar rejects invalid direction", {
+  p <- plotit(mtcars, encode(x = factor(cyl))) |>
+    mark_bar()
+  expect_error(project_polar(p, direction = 2), "clockwise")
+  expect_error(project_polar(p, direction = "x"), "clockwise")
+})
+
+test_that("[BDD] project_polar end renders a partial arc (radial mode)", {
+  p <- plotit(mtcars, encode(x = factor(cyl))) |>
+    mark_bar() |>
+    project_polar(start = -pi / 2, end = pi / 2, inner_radius = 0.4)
+  expect_no_warning(b <- ggplot2::ggplot_build(p@gg))
+  expect_s3_class(b, "ggplot_built")
+})
+
+test_that("project_polar end in plain polar mode warns and is ignored", {
+  p <- plotit(mtcars, encode(x = factor(cyl))) |>
+    mark_bar()
+  expect_warning(
+    project_polar(p, end = pi),
+    "requires radial mode"
+  )
+})
+
+test_that("project_polar reverse enum and mode constraints", {
+  p <- plotit(mtcars, encode(x = factor(cyl))) |>
+    mark_bar()
+  expect_error(project_polar(p, reverse = "diagonal"), "must be one of")
+  expect_error(
+    project_polar(p, reverse = "r"),
+    "needs radial mode"
+  )
+  expect_error(
+    project_polar(p, reverse = "thetar"),
+    "needs radial mode"
+  )
 })
 
 # ---- edge cases & warnings ----
@@ -333,7 +392,6 @@ test_that("[BDD] project_polar renders polar coordinates", {
 })
 
 test_that("[BDD] project_polar with inner_radius activates radial coord", {
-  skip_if(utils::packageVersion("ggplot2") < "3.5.0")
   p <- plotit(mtcars, encode(x = factor(cyl))) |>
     mark_bar() |>
     project_polar(inner_radius = 0.3)

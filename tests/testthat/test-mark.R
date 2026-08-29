@@ -229,7 +229,7 @@ test_that("mark_text passes extra params via dots", {
 # ---- mark_violin ----
 test_that("[BDD] mark_violin adds violin layer", {
   p <- plotit(iris, encode(x = Species, y = Sepal.Length)) |>
-    mark_violin(draw_quantiles = 0.5)
+    mark_violin(quantiles = 0.5, quantile.linetype = "dashed")
   expect_s3_class(p, "plotit::plotit")
   expect_length(.built(p)$data, 1)
 })

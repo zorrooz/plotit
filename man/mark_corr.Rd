@@ -45,5 +45,6 @@ The value fill scale defaults to viridis (colour-blind safe); chain
 plotit(mtcars, encode()) |> mark_corr()
 }
 \references{
+R: \code{stats::cor()} (pairwise correlation matrix)
 AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/cell}{Cell} (correlation matrix expression)
 }

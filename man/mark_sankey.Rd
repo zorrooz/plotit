@@ -41,7 +41,7 @@ Modified plotit object; \verb{@graph} holds the laid-out tables.
 \description{
 Creates a Sankey diagram showing directed flows between nodes.
 Equivalent to the pipeline
-\code{as_graph() |> layout_sankey() |> mark_polygon(data = ~ribbons) |> mark_rect(data = ~nodes)} -- see §3.3.4a.  Accepts an \strong{edges table}
+\code{as_graph() |> layout_sankey() |> mark_polygon(data = ~ribbons) |> mark_rect(data = ~nodes)} -- see <U+00A7>3.3.4a.  Accepts an \strong{edges table}
 with \code{source}, \code{target}, and optionally \code{value} columns (either mapped
 via structural aesthetics or present as literal columns); node and
 ribbon geometry come from the built-in layered layout (deterministic,

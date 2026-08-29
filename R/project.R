@@ -67,13 +67,8 @@ S7::method(project_cartesian, plotit_class) <- function(
         expand = expand, clip = clip, ...
       )
   } else if (!is.null(coord_trans)) {
-    trans_fun <- if (utils::packageVersion("ggplot2") >= "3.5.0") {
-      ggplot2::coord_transform
-    } else {
-      ggplot2::coord_trans
-    }
     plot@gg <- plot@gg +
-      trans_fun(
+      ggplot2::coord_transform(
         x = coord_trans, xlim = xlim, ylim = ylim,
         expand = expand, clip = clip, ...
       )
@@ -93,19 +88,28 @@ S7::method(project_cartesian, plotit_class) <- function(
 #'
 #' Maps one axis to angle and the other to radius.  Default (full circle,
 #' zero inner radius) uses `coord_polar()`.  Set `inner_radius > 0` or
-#' `r_axis_inside = TRUE` to switch to the radial variant (requires
-#' ggplot2 >= 3.5.0).
+#' `r_axis_inside = TRUE` to switch to the radial variant.
 #'
 #' @param plot A plotit object.
 #' @param theta Variable mapped to angle: `"x"` or `"y"`.
 #' @param start Starting angle in radians (0 = 12 o'clock).
+#' @param end Ending angle in radians (radial mode only).  `NULL` (default)
+#'   = full circle; a finite value renders a partial arc (e.g. semicircle
+#'   gauges via `start = -pi / 2, end = pi / 2`).  Ignored with a warning
+#'   in plain polar mode.
 #' @param direction `1` = clockwise, `-1` = anti-clockwise.
+#'   **Deprecated**: use `reverse = "theta"`.  `-1` still works but warns
+#'   once per call (deprecation cycle, AGENTS.md 1.4).
 #' @param inner_radius Inner radius as a fraction of the panel (0-1).
-#'   `0` = polar (full circle). `>0` = radial (hollow centre, needs
-#'   ggplot2 >= 3.5.0).
+#'   `0` = polar (full circle). `>0` = radial (hollow centre).
 #' @param r_axis_inside If `TRUE`, place the radial axis inside the panel
 #'   (radial mode only).
 #' @param clip Should drawing be clipped? `"on"` or `"off"`.
+#' @param reverse Reverse direction: `"none"` (default), `"theta"`
+#'   (anti-clockwise, replaces `direction = -1`), `"r"` (radial axis) or
+#'   `"thetar"` (both).  `"r"`/`"thetar"` are radial-mode only.
+#' @param rotate_angle Rotate angle aesthetics with the theta axis
+#'   (radial mode only, ggplot2 `coord_radial(rotate.angle)`).
 #' @param ... Passed to the underlying `coord_polar()` or `coord_radial()`.
 #' @return Modified plotit object.
 #' @examples
@@ -116,8 +120,9 @@ S7::method(project_cartesian, plotit_class) <- function(
 project_polar <- S7::new_generic(
   "project_polar",
   "plot",
-  function(plot, theta = "x", start = 0, direction = 1,
-           inner_radius = 0, r_axis_inside = FALSE, clip = "on", ...) {
+  function(plot, theta = "x", start = 0, end = NULL, direction = 1,
+           inner_radius = 0, r_axis_inside = FALSE, clip = "on",
+           reverse = "none", rotate_angle = FALSE, ...) {
     S7::S7_dispatch()
   }
 )
@@ -127,36 +132,86 @@ S7::method(project_polar, plotit_class) <- function(
   plot,
   theta = "x",
   start = 0,
+  end = NULL,
   direction = 1,
   inner_radius = 0,
   r_axis_inside = FALSE,
   clip = "on",
+  reverse = "none",
+  rotate_angle = FALSE,
   ...
 ) {
   bad_r <- !is.numeric(inner_radius) || length(inner_radius) != 1 || is.na(inner_radius) || inner_radius < 0
   if (bad_r) {
-    cli::cli_abort("{.arg inner_radius} must be a single non-negative number.")
+    ._abort_arg_range("inner_radius", "a single non-negative number", got = inner_radius)
   }
-  use_radial <- inner_radius > 0 || isTRUE(r_axis_inside)
-  if (use_radial && utils::packageVersion("ggplot2") < "3.5.0") {
+  reverse_choices <- c("none", "theta", "r", "thetar")
+  if (length(reverse) != 1 || !reverse %in% reverse_choices) {
+    ._abort_arg_enum("reverse", reverse_choices, got = reverse)
+  }
+  bad_dir <- !is.numeric(direction) || length(direction) != 1 || is.na(direction) || !direction %in% c(1, -1)
+  if (bad_dir) {
     cli::cli_abort(c(
-      "Radial coordinates (inner_radius > 0 or r_axis_inside = TRUE) require ggplot2 >= 3.5.0.",
-      "i" = "You have ggplot2 {utils::packageVersion('ggplot2')}."
+      "{.arg direction} must be {.val {1}} (clockwise) or {.val {-1}} (anti-clockwise).",
+      "x" = "You supplied {.val {direction}}."
     ))
   }
+  bad_end <- !is.null(end) && (!is.numeric(end) || length(end) != 1 || is.na(end))
+  if (bad_end) {
+    ._abort_arg_range("end", "a single number or NULL", got = end)
+  }
+  if (!is.logical(rotate_angle) || length(rotate_angle) != 1 || is.na(rotate_angle)) {
+    ._abort_arg_range("rotate_angle", "TRUE or FALSE", got = rotate_angle)
+  }
+
+  use_radial <- inner_radius > 0 || isTRUE(r_axis_inside)
+
+  # Deprecation cycle for `direction` (ggplot2 4.0 deprecated it in favour
+  # of coord_radial(reverse); AGENTS.md 1.4 allows warn -> defunct).
+  if (reverse == "none" && direction == -1) {
+    cli::cli_warn(c(
+      "{.arg direction} is deprecated; use {.code reverse = \"theta\"}.",
+      "i" = "{.arg direction} will be removed in a future minor release."
+    ))
+    reverse <- "theta"
+  } else if (reverse != "none" && direction == -1) {
+    cli::cli_warn(c(
+      "Both {.arg reverse} and {.arg direction} supplied: {.arg reverse} wins.",
+      "i" = "{.arg direction} is deprecated; drop it and keep {.arg reverse}."
+    ))
+  }
+
   if (use_radial) {
     args <- list(
       theta = theta, start = start,
-      r.axis.inside = r_axis_inside, inner.radius = inner_radius, clip = clip
+      r.axis.inside = r_axis_inside, inner.radius = inner_radius, clip = clip,
+      reverse = reverse, rotate.angle = rotate_angle
     )
-    # coord_radial supports direction parameter since ggplot2 3.5.0
-    if (direction != 1) args$direction <- direction
+    if (!is.null(end)) {
+      args$end <- end
+    }
     plot@gg <- plot@gg + do.call(ggplot2::coord_radial, c(args, list(...)))
   } else {
+    # Plain coord_polar has no end / r-reversal semantics.
+    if (!is.null(end)) {
+      cli::cli_warn(c(
+        "{.arg end} requires radial mode ({.code inner_radius > 0} or {.code r_axis_inside = TRUE}); it is ignored here.",
+        "i" = "Switch to radial mode for partial arcs."
+      ))
+    }
+    if (reverse %in% c("r", "thetar")) {
+      ._abort_hint(
+        sprintf(
+          "{.arg reverse} = {.val %s} needs radial mode ({.code inner_radius > 0} or {.code r_axis_inside = TRUE}).",
+          reverse
+        ),
+        "Plain {.fn coord_polar} supports only {.val none} and {.val theta}."
+      )
+    }
     plot@gg <- plot@gg +
       ggplot2::coord_polar(
         theta = theta, start = start,
-        direction = direction, clip = clip, ...
+        direction = if (reverse == "theta") -1 else 1, clip = clip, ...
       )
   }
   # Blank axes only in polar mode (shared helper, R/mark_style.R).
@@ -188,6 +243,18 @@ S7::method(project_polar, plotit_class) <- function(
 #' @param scale `"std"` (default): min-max normalise each column to 0-1.
 #'   `"global"`: min-max normalise across all columns to 0-1.
 #'   `"none"`: no normalisation, each column keeps its own range.
+#' @param order Axis order: character subset of `columns`; axes render in
+#'   the given order and omitted columns drop. `NULL` (default) keeps the
+#'   `columns` order.
+#' @param recenter Reference axis for a difference-from-reference view: a
+#'   column name; every polyline is re-expressed as its difference from
+#'   that axis (normalised space), so the reference becomes a straight
+#'   zero baseline. `NULL` disables.
+#' @param aggregate Group overlay: `"none"` (default), or `"mean"` /
+#'   `"median"` to draw one thick aggregate line per group behind the
+#'   individual polylines (requires `group`).
+#' @param axis_labels Draw the per-axis tick labels (default `TRUE`);
+#'   `FALSE` blanks them for a clean silhouette view.
 #' @param alpha,size Passed to `geom_line()` / `geom_point()`.
 #' @param ... Passed to `geom_line()`.
 #' @return Modified plotit object.
@@ -198,7 +265,11 @@ S7::method(project_polar, plotit_class) <- function(
 project_parallel <- S7::new_generic(
   "project_parallel",
   "plot",
-  function(plot, columns, group = NULL, scale = c("std", "global", "none"),
+  function(plot, columns = NULL, group = NULL,
+           scale = c("std", "global", "none"),
+           order = NULL, recenter = NULL,
+           aggregate = c("none", "mean", "median"),
+           axis_labels = TRUE,
            alpha = 0.5, size = 1, ...) {
     S7::S7_dispatch()
   }
@@ -285,14 +356,15 @@ project_parallel <- S7::new_generic(
 #' Uses geom_segment and geom_text with theme-matched styling.
 #' @noRd
 #' @keywords internal
-._pp_draw_axes <- function(plot, col_info, tp) {
-  # Suppress native y-axis
+._pp_draw_axes <- function(plot, col_info, tp, axis_labels = TRUE) {
+  # Suppress the native y-axis via the ggplot2 4.0 theme_sub_* shortcut
+  # (expands to axis.line.y / axis.ticks.y / axis.text.y / axis.title.y).
   plot@gg <- plot@gg +
-    ggplot2::theme(
-      axis.line.y  = ggplot2::element_blank(),
-      axis.ticks.y = ggplot2::element_blank(),
-      axis.text.y  = ggplot2::element_blank(),
-      axis.title.y = ggplot2::element_blank()
+    ggplot2::theme_sub_axis_y(
+      line = ggplot2::element_blank(),
+      ticks = ggplot2::element_blank(),
+      text = ggplot2::element_blank(),
+      title = ggplot2::element_blank()
     )
 
   # Axis lines
@@ -337,18 +409,22 @@ project_parallel <- S7::new_generic(
       )
   }
 
-  # Labels (positioned with extra gap beyond tick end)
-  df_lab <- do.call(rbind, lapply(col_info, function(ci) {
-    n <- length(ci$breaks)
-    if (n == 0) {
-      return(NULL)
-    }
-    data.frame(
-      x = rep(ci$pos - tlen - tp$label_gap, n), y = ci$breaks,
-      label = sprintf(ci$fmt, ci$breaks), hjust = rep(1, n),
-      stringsAsFactors = FALSE
-    )
-  }))
+  # Labels (positioned with extra gap beyond tick end); skipped when the
+  # caller disabled axis labels
+  df_lab <- NULL
+  if (axis_labels) {
+    df_lab <- do.call(rbind, lapply(col_info, function(ci) {
+      n <- length(ci$breaks)
+      if (n == 0) {
+        return(NULL)
+      }
+      data.frame(
+        x = rep(ci$pos - tlen - tp$label_gap, n), y = ci$breaks,
+        label = sprintf(ci$fmt, ci$breaks), hjust = rep(1, n),
+        stringsAsFactors = FALSE
+      )
+    }))
+  }
   if (!is.null(df_lab) && nrow(df_lab) > 0) {
     plot@gg <- plot@gg +
       ggplot2::geom_text(
@@ -371,35 +447,91 @@ project_parallel <- S7::new_generic(
 #' @export
 S7::method(project_parallel, plotit_class) <- function(
   plot,
-  columns,
+  columns = NULL,
   group = NULL,
   scale = c("std", "global", "none"),
+  order = NULL,
+  recenter = NULL,
+  aggregate = c("none", "mean", "median"),
+  axis_labels = TRUE,
   alpha = 0.5,
   size = 1,
   ...
 ) {
   scale <- match.arg(scale)
+  aggregate <- match.arg(aggregate)
   data <- plot@gg$data
 
   if (is.null(data) || nrow(data) == 0) {
-    cli::cli_abort("No data found in plot. Call plotit() with a non-empty data frame.")
+    ._abort_hint(
+      "No data found in the plot.",
+      "Call {.fn plotit} with a non-empty data frame first."
+    )
+  }
+
+  # Default axes: every numeric column, in data order.
+  if (is.null(columns)) {
+    numeric_cols <- names(data)[vapply(data, is.numeric, logical(1))]
+    if (length(numeric_cols) < 2) {
+      ._abort_hint(
+        "{.fn project_parallel} needs at least two numeric columns.",
+        "Pass {.arg columns} explicitly or supply a wider data frame."
+      )
+    }
+    columns <- numeric_cols
   }
 
   if (length(columns) == 0) {
-    cli::cli_abort("{.arg columns} must contain at least one column name.")
+    ._abort_hint(
+      "{.arg columns} must contain at least one column name.",
+      "Pass numeric column names from the plot data, e.g. {.code columns = c('a', 'b')}."
+    )
   }
 
   missing_cols <- setdiff(columns, names(data))
   if (length(missing_cols) > 0) {
-    cli::cli_abort("Column(s) not found in data: {.val {missing_cols}}.")
+    ._abort_hint(
+      sprintf("Column(s) not found in data: {.val %s}.", paste0("c(", deparse(missing_cols), ")")),
+      sprintf("Available columns: {.val %s}.", paste0("c(", deparse(names(data)), ")"))
+    )
+  }
+
+  # Axis order re-export (D-13): `order` must name a subset of `columns`;
+  # axes render in the given order, omitted columns drop.
+  if (!is.null(order)) {
+    bad_order <- setdiff(order, columns)
+    if (length(bad_order) > 0 || length(order) == 0) {
+      ._abort_hint(
+        sprintf(
+          "{.arg order} must be a subset of {.arg columns}: {.val %s}.",
+          paste0("c(", deparse(columns), ")")
+        ),
+        sprintf("Unknown name(s): {.val %s}.", paste0("c(", deparse(bad_order), ")"))
+      )
+    }
+    columns <- order
+  }
+
+  recenter_ok <- is.character(recenter) && length(recenter) == 1 && recenter %in% columns
+  if (!is.null(recenter) && !recenter_ok) {
+    ._abort_hint(
+      "{.arg recenter} must name one of the parallel axes.",
+      sprintf("Legal values: {.val %s}.", paste0("c(", deparse(columns), ")"))
+    )
   }
 
   if (!is.null(group)) {
     if (!(group %in% names(data))) {
-      cli::cli_abort("{.arg group} column {.val {group}} not found in data.")
+      ._abort_hint(
+        sprintf("{.arg group} column {.val %s} not found in data.", group),
+        sprintf("Available columns: {.val %s}.", paste0("c(", deparse(names(data)), ")"))
+      )
     }
     if (group %in% columns) {
-      cli::cli_abort("{.arg group} column {.val {group}} is also in {.arg columns}. Use a different grouping variable.")
+      ._abort_hint(
+        sprintf("{.arg group} column {.val %s} is also in {.arg columns}.", group),
+        "Use a different grouping variable outside {.arg columns}."
+      )
     }
   }
 
@@ -443,6 +575,16 @@ S7::method(project_parallel, plotit_class) <- function(
         long[[val_col]][rows] <- 0.5
       }
     }
+  }
+
+  # Recenter (D-13): difference from the reference axis, computed in the
+  # normalised space -- the reference column becomes a straight zero
+  # baseline (VL "calculate difference from average", static form).
+  if (!is.null(recenter)) {
+    base_vals <- long[[val_col]][long[[var_col]] == recenter]
+    ids_base <- long[[id_col]][long[[var_col]] == recenter]
+    long[[val_col]] <- long[[val_col]] -
+      base_vals[match(long[[id_col]], ids_base)]
   }
 
   aes_args <- list(
@@ -515,6 +657,27 @@ S7::method(project_parallel, plotit_class) <- function(
     ggplot2::geom_line(data = long, mapping = pc_mapping, alpha = alpha, ...) +
     ggplot2::geom_point(data = long, mapping = pc_mapping, size = size)
 
+  # Group aggregate overlay (D-13): one thick line per group (mean or
+  # median of the individual polylines), same colour scale as the
+  # individual lines.
+  if (!is.null(group) && aggregate != "none") {
+    agg_fun <- if (aggregate == "mean") mean else stats::median
+    agg_vals <- tapply(long[[val_col]], list(long[[var_col]], long[[group]]), agg_fun)
+    grid <- expand.grid(
+      var = dimnames(agg_vals)[[1]],
+      grp = dimnames(agg_vals)[[2]]
+    )
+    grid$val <- as.numeric(agg_vals[cbind(grid$var, grid$grp)])
+    agg_mapping <- ggplot2::aes(
+      x = .data$var, y = .data$val, group = .data$grp, colour = .data$grp
+    )
+    plot@gg <- plot@gg +
+      ggplot2::geom_line(
+        data = grid, mapping = agg_mapping,
+        linewidth = 1.6, lineend = "round"
+      )
+  }
+
   # ---- Common scales (both modes) ----
   y_limits <- range(
     vapply(col_info, `[[`, numeric(1), "ymax"),
@@ -533,7 +696,8 @@ S7::method(project_parallel, plotit_class) <- function(
     ggplot2::theme(
       axis.line.x  = ggplot2::element_blank(),
       axis.ticks.x = ggplot2::element_blank(),
-      axis.title   = ggplot2::element_blank()
+      axis.title   = ggplot2::element_blank(),
+      axis.text.x  = if (!axis_labels) ggplot2::element_blank() else NULL
     )
 
   # ---- Per-column mode (scale = "none") draws manual per-column axes;
@@ -541,7 +705,7 @@ S7::method(project_parallel, plotit_class) <- function(
   # ---- y-axis guide already provides ticks and labels.
   if (!shared_scale) {
     tp <- ._parallel_theme_props(plot@gg$theme)
-    plot <- ._pp_draw_axes(plot, col_info, tp)
+    plot <- ._pp_draw_axes(plot, col_info, tp, axis_labels = axis_labels)
   }
 
   plot

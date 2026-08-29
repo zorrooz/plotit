@@ -25,7 +25,17 @@ mark_text(
 
 \item{position}{Position adjustment.}
 
-\item{...}{Other arguments passed to \code{geom_text} or \code{geom_text_repel}}
+\item{...}{Other arguments passed to \code{geom_text} or \code{geom_text_repel}.
+With \code{repel = TRUE} the frequently used \pkg{ggrepel} passthrough
+parameters are (defaults from the ggrepel docs):
+\code{max.overlaps} (plural! labels overlapping more than this many others
+are dropped; default \code{getOption("ggrepel.max.overlaps", 10)};
+\code{Inf} keeps every label), \code{min.segment.length = 0.5} (leader-line
+threshold, \code{0} draws all), \code{force = 1}, \code{force_pull = 1},
+\code{direction = "both"}, \code{seed = NA} (set a number for reproducible
+placement), \code{nudge_x = 0}, \code{nudge_y = 0}, \code{point.padding = 1e-6},
+\code{box.padding = 0.25}, \code{max.time = 0.5}, \code{max.iter = 10000},
+\code{xlim = c(NA, NA)}, \code{ylim = c(NA, NA)}.}
 
 \item{repel}{If \code{TRUE}, use \code{ggrepel::geom_text_repel} instead of
 \code{geom_text}. Requires the \pkg{ggrepel} package.}
@@ -47,4 +57,9 @@ avoidance, install the optional \pkg{ggrepel} package and set
 \examples{
 plotit(mtcars, encode(x = wt, y = mpg, label = rownames(mtcars))) |>
   mark_text(size = 3)
+}
+\references{
+Observable Plot: \code{Plot.text}
+
+ggrepel: \href{https://ggrepel.slowkow.com/reference/geom_text_repel.html}{geom_text_repel}
 }

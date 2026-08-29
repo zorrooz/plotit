@@ -12,6 +12,9 @@ scale_color(
   range = NULL,
   breaks = NULL,
   labels = NULL,
+  na_color = NULL,
+  n_bins = NULL,
+  mid = NULL,
   ...
 )
 }
@@ -35,6 +38,17 @@ For continuous: only \code{"viridis"}, \code{"brewer"}.}
 \item{breaks}{Legend key positions.}
 
 \item{labels}{Legend key labels.}
+
+\item{na_color}{Colour used for \code{NA} values (passed to \code{na.value}).
+\code{NULL} = ggplot2 default.}
+
+\item{n_bins}{Bin a continuous scale into this many legend steps
+(\code{guide_coloursteps}; shorthand for \code{trans = "binned"}).  \code{NULL} =
+continuous.}
+
+\item{mid}{Centre of a diverging colour scale (e.g. \code{0} for correlation
+matrices).  Requires a continuous scale and a diverging scheme in
+\code{range} (\code{"rdbu"} default); mutually exclusive with \code{n_bins}.}
 
 \item{...}{Passed to the underlying ggplot2 scale function.}
 }

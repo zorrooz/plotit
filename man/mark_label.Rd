@@ -25,7 +25,15 @@ mark_label(
 
 \item{position}{Position adjustment.}
 
-\item{...}{Other arguments passed to \code{geom_label} or \code{geom_label_repel}}
+\item{...}{Other arguments passed to \code{geom_label} or \code{geom_label_repel}.
+With \code{repel = TRUE} the \pkg{ggrepel} passthrough parameters are the
+same as \code{\link[=mark_text]{mark_text()}} (see its \verb{@param ...} for the full list with
+defaults); \code{geom_label_repel} additionally styles the box with
+\code{label.padding = 0.25}, \code{label.r = 0.15}, \code{label.size = 0.25}.
+Without repel, ggplot2 4.0 styles the box with the \code{linewidth}
+aesthetic (the old \code{label.size} argument is deprecated): use
+\code{mark_label(linewidth = 0.4)}; \code{border.colour}/\code{text.colour} style the
+box and text independently.}
 
 \item{repel}{If \code{TRUE}, use \code{ggrepel::geom_label_repel} instead of
 \code{geom_label}. Requires the \pkg{ggrepel} package.}

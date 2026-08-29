@@ -8,7 +8,7 @@ NULL
 #   hide  = TRUE     -> remove element from layout (element_blank())
 #   reset = TRUE     -> restore variable name (axis/legend) or remove (title/subtitle/caption)
 #   text + reset     -> mutually exclusive; error if both are set
-# Priority: reset > hide > text — checked in exactly that order so a
+# Priority: reset > hide > text <U+2014> checked in exactly that order so a
 # reset+hide call restores rather than blanks (matching the documented
 # contract; an explicit reset always wins over an older intent).
 
@@ -144,7 +144,7 @@ NULL
   plot
 }
 
-# Table mapping dirty slot → (theme element, labs name).
+# Table mapping dirty slot <U+2192> (theme element, labs name).
 ._LABEL_SYNC_MAP <- list(
   title    = list(theme = "plot.title", labs = "title"),
   subtitle = list(theme = "plot.subtitle", labs = "subtitle"),
@@ -297,10 +297,13 @@ label_axis <- S7::new_generic(
 S7::method(label_axis, plotit_class) <- function(plot, text = NULL, aes = NULL,
                                                  hide = FALSE, reset = FALSE, ...) {
   if (is.null(aes)) {
-    cli::cli_abort("{.arg aes} must be specified: {.code aes = \"x\"} or {.code aes = \"y\"}.")
+    ._abort_hint(
+      "{.arg aes} must be specified.",
+      "Use {.code aes = \"x\"} for the x-axis title or {.code aes = \"y\"} for the y-axis title."
+    )
   }
   if (!(aes %in% c("x", "y"))) {
-    cli::cli_abort("{.arg aes} must be one of {.val c('x', 'y')}, not {.val {aes}}.")
+    ._abort_arg_enum("aes", c("x", "y"), got = aes)
   }
   # Same three-parameter protocol as title/subtitle/caption; the axis slot
   # names in meta@labels match the aes argument.
@@ -353,7 +356,10 @@ S7::method(label_legend, plotit_class) <- function(plot, text = NULL, aes = NULL
   } else {
     aes_all <- ._collect_aes_names(plot@gg, ._LEGEND_AES)
     if (!(aes %in% aes_all)) {
-      cli::cli_warn("Aesthetic {.val {aes}} is not present in the plot mapping.")
+      cli::cli_warn(c(
+        sprintf("Aesthetic {.val %s} is not present in the plot mapping.", aes),
+        "i" = "The intent is stored and will apply once the aesthetic is mapped."
+      ))
     } else {
       plot@meta@labels@legend[[aes]] <- intent
       plot@meta@labels@dirty[["legend"]] <- TRUE

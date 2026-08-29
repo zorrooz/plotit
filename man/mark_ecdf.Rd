@@ -57,7 +57,8 @@ plotit(df, encode(x = value, colour = part)) |>
   mark_ecdf()
 }
 \references{
-Observable Plot: \href{https://observablehq.com/plot/marks/ecdf}{Plot.ecdf}
+R: \code{stats::ecdf()} (empirical cumulative distribution)
+Observable Plot: \code{Plot.ecdf}
 
 Vega-Lite: \code{line}/\code{step} with cumulative \code{window} transform
 }

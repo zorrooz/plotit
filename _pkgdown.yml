@@ -21,7 +21,7 @@ title: plotit
 subtitle: Declarative Plotting with ggplot2
 
 development:
-  mode: auto
+  mode: release
 
 navbar:
   structure:
@@ -46,18 +46,36 @@ navbar:
       - text: Relational Charts
         href: articles/relational.html
       - text: "---"
-      - text: "Gallery: Groups"
-        href: articles/gallery-groups.html
+      - text: "Gallery: Comparisons"
+        href: articles/gallery-comparisons.html
       - text: "Gallery: Distributions"
         href: articles/gallery-distributions.html
       - text: "Gallery: Relationships"
         href: articles/gallery-relationships.html
       - text: "Gallery: Time & Coordinates"
         href: articles/gallery-coordinates.html
+      - text: "Gallery: Trends"
+        href: articles/gallery-trends.html
+      - text: "Gallery: Matrix"
+        href: articles/gallery-matrix.html
+      - text: "Gallery: Proportions"
+        href: articles/gallery-proportions.html
+      - text: "Gallery: Geo"
+        href: articles/gallery-geo.html
       - text: "Gallery: Relational"
         href: articles/gallery-relational.html
+      - text: "Gallery: Annotations"
+        href: articles/gallery-annotations.html
       - text: "Gallery: Annotation & Composition"
         href: articles/gallery-composing.html
+      - text: "Use Case: Bioinformatics"
+        href: articles/use-case-bioinformatics.html
+      - text: "Use Case: Publishing"
+        href: articles/use-case-publishing.html
+      - text: "Transform Recipes"
+        href: articles/transform-recipes.html
+      - text: "Design Philosophy"
+        href: articles/philosophy.html
     news:
       text: News
       href: news/index.html
@@ -71,7 +89,7 @@ reference:
   contents:
   - plotit
   - encode
-  - "+.plotit"
+  - add_ggplot
 - title: Geometric Layers
   desc: Add visual marks to your plot.
   contents:

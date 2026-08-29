@@ -16,7 +16,8 @@ plotit(
 )
 }
 \arguments{
-\item{data}{A data frame.}
+\item{data}{A data frame, a matrix (coerced with \code{as.data.frame()}),
+or a \code{plotit_graph} (relational pipeline; see \code{\link[=as_graph]{as_graph()}}).}
 
 \item{mapping}{An object created by \code{\link[=encode]{encode()}}.}
 

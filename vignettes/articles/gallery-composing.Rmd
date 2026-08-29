@@ -251,3 +251,34 @@ ggplot2::mpg |>
   style_warm() |>
   label_title("make_theme() presets")
 ```
+
+## Flagship: annotated clustered heatmap (compose_annot, stage 5)
+
+The tidyheatmaps-style complex heatmap is a **composition**, not a new
+mark: one hclust object drives both the heatmap row order and the
+dendrogram strip, so tree tips align with heatmap rows by construction.
+
+```{r}
+set.seed(7)
+cols <- paste0("v", 1:6)
+g1 <- matrix(rnorm(60, mean = 1), nrow = 10, dimnames = list(paste0("a", 1:10), cols))
+g2 <- matrix(rnorm(60, mean = 5), nrow = 10, dimnames = list(paste0("b", 1:10), cols))
+mat <- rbind(g1, g2)
+h <- stats::hclust(stats::dist(mat))
+
+hm <- mat |>
+  plotit(encode()) |>
+  mark_heatmap(cluster = h) |>
+  scale_fill(range = "rdylbu", n_bins = 15, na_color = "grey85")
+
+tree <- as_graph(h) |>
+  plotit() |>
+  layout_dendrogram(direction = "up") |>
+  mark_rule(data = ~edges)
+
+hm |> compose_annot(top = tree)
+```
+
+Gap spacers between strips and the base are available via `gap =`; the
+same engine backs `compose_marginal()` (top + right strips with shared
+axes and hidden redundant axis labels).

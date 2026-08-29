@@ -72,7 +72,8 @@ NULL
 #' ring labels visible on chord diagrams).
 #' @noRd
 #' @keywords internal
-._rel_canvas <- function(plot, fixed = FALSE, clip = "on") {
+._rel_canvas <- function(plot, fixed = FALSE, clip = "on",
+                         mark_name = "mark_sankey") {
   if (fixed) {
     plot@gg <- plot@gg + ggplot2::coord_fixed(clip = clip)
   } else if (!identical(clip, "on")) {
@@ -80,7 +81,11 @@ NULL
     # clip="off", so edge-strip labels are not cut by the panel boundary.
     plot@gg <- plot@gg + ggplot2::coord_cartesian(clip = clip)
   }
-  ._theme_blank_axes(plot)
+  # Axis chrome comes from the shared registry (D-06): relational sugars
+  # register axis = "blank" there, so this is the same decision point the
+  # standard marks use.
+  plot <- ._apply_chrome(plot, mark_name)
+  plot
 }
 
 # Canonicalize an edges table for the flow sugars (mark_sankey /
@@ -101,7 +106,10 @@ NULL
 #' @keywords internal
 ._rel_canon_edges <- function(edges_df, mapping) {
   if (!is.data.frame(edges_df)) {
-    cli::cli_abort("{.arg data} must be an edges data frame.")
+    ._abort_hint(
+      "{.arg data} must be an edges data frame.",
+      "Use literal {.col source}/{.col target} columns or structural mapping."
+    )
   }
   has_struct <- !is.null(mapping$source) && !is.null(mapping$target)
   has_lit <- all(c("source", "target") %in% names(edges_df))
@@ -126,7 +134,10 @@ NULL
     ))
   }
   if (anyNA(src) || anyNA(tgt)) {
-    cli::cli_abort("Edge endpoints must not contain {.val NA}.")
+    ._abort_hint(
+      "Edge endpoints must not contain {.val NA}.",
+      "Drop or complete those rows before building the edges table."
+    )
   }
   val <- NULL
   if (has_struct) {
@@ -135,8 +146,9 @@ NULL
         rlang::eval_tidy(mapping$value, edges_df)
       ))
       if (anyNA(val)) {
-        cli::cli_abort(
-          "Column {.val {val_nm}} used as {.arg value} must be numeric."
+        ._abort_hint(
+          sprintf("Column {.val %s} used as {.arg value} must be numeric.", val_nm),
+          "Convert the column to numeric or map a different one as {.arg value}."
         )
       }
     }
@@ -204,7 +216,7 @@ NULL
 #' Creates a Sankey diagram showing directed flows between nodes.
 #' Equivalent to the pipeline
 #' `as_graph() |> layout_sankey() |> mark_polygon(data = ~ribbons) |>
-#' mark_rect(data = ~nodes)` -- see §3.3.4a.  Accepts an **edges table**
+#' mark_rect(data = ~nodes)` -- see <U+00A7>3.3.4a.  Accepts an **edges table**
 #' with `source`, `target`, and optionally `value` columns (either mapped
 #' via structural aesthetics or present as literal columns); node and
 #' ribbon geometry come from the built-in layered layout (deterministic,
@@ -311,7 +323,7 @@ S7::method(mark_sankey, plotit_class) <- function(
   # Coordinate-free diagram: no axes around the layout canvas.  clip="off"
   # so the node-id labels (centred on the edge strips at x=0 / x=1) are not
   # cut by the panel boundary -- matches the chord sugar's outer labels.
-  ._rel_canvas(plot, clip = "off")
+  ._rel_canvas(plot, clip = "off", mark_name = "mark_treemap")
 }
 
 # ---- mark_treemap ----
@@ -412,7 +424,7 @@ S7::method(mark_treemap, plotit_class) <- function(
   plot <- ._rel_label_layer(plot, ~leaves, has_fill, show_labels)
 
   # Coordinate-free diagram: no axes around the canvas.
-  ._rel_canvas(plot)
+  ._rel_canvas(plot, mark_name = "mark_sankey")
 }
 
 # ---- mark_network ----
@@ -521,8 +533,9 @@ S7::method(mark_network, plotit_class) <- function(
 
   nodes <- plot@gg$data
   if (is.null(nodes) || !is.data.frame(nodes)) {
-    cli::cli_abort(
-      "{.fn mark_network} expects a data.frame of nodes as plot data."
+    ._abort_hint(
+      "{.fn mark_network} expects a data.frame of nodes as plot data.",
+      "Build it via {.code as_graph(edges) |> plotit() |> layout_*()}."
     )
   }
   node_id_col <- names(nodes)[1]
@@ -592,9 +605,9 @@ S7::method(mark_network, plotit_class) <- function(
       has_xy <- all(c("x", "y") %in% names(nodes)) &&
         is.numeric(nodes$x) && is.numeric(nodes$y)
       if (!has_xy) {
-        cli::cli_abort(
-          'layout = "manual" requires numeric {.col x}/{.col y} columns \\
-           on the nodes table.'
+        ._abort_hint(
+          'layout = "manual" requires numeric {.col x}/{.col y} columns on the nodes table.',
+          'Provide them on the nodes data frame or use {.code layout = "force"}.'
         )
       }
       # Keep the user's coordinates verbatim -- no topology stripping here.
@@ -619,9 +632,10 @@ S7::method(mark_network, plotit_class) <- function(
       c("source", "target", "value", allowed)
     )
     if (length(unsupported) > 0) {
-      cli::cli_warn(
-        "Unsupported edge channels ignored: {.val {unsupported}}."
-      )
+      cli::cli_warn(c(
+        sprintf("Unsupported edge channels ignored: {.val %s}.", paste0("c(", deparse(unsupported), ")")),
+        "i" = "Network edges support {.val colour}/{.val width}/{.val alpha} via {.arg encode_edges}."
+      ))
     }
   }
   dots <- rlang::list2(...)
@@ -690,7 +704,7 @@ S7::method(mark_network, plotit_class) <- function(
 
   # Coordinate-free canvas with a true aspect ratio so the layout geometry
   # is not stretched by the panel shape.
-  ._rel_canvas(plot, fixed = TRUE)
+  ._rel_canvas(plot, fixed = TRUE, mark_name = "mark_network")
 }
 
 # ---- mark_chord ----
@@ -699,7 +713,7 @@ S7::method(mark_network, plotit_class) <- function(
 #' Creates a chord diagram showing pairwise relationships between groups.
 #' Equivalent to the pipeline `as_graph() |> layout_chord() |>
 #' mark_polygon(data = ~ribbons) |> mark_polygon(data = ~arcs)` -- see
-#' §3.3.4a.  Accepts an **edges table** with `source`, `target`, and
+#' <U+00A7>3.3.4a.  Accepts an **edges table** with `source`, `target`, and
 #' optionally `value` columns (either mapped via structural aesthetics or
 #' present as literal columns); sector arcs and bezier bands come from the
 #' built-in circular layout (deterministic, dependency-free).  The fill
@@ -807,5 +821,5 @@ S7::method(mark_chord, plotit_class) <- function(
 
   # True circles need a fixed aspect ratio; clip off so the outer labels
   # at radius > 1 are not cropped.  No axes around the canvas.
-  ._rel_canvas(plot, fixed = TRUE, clip = "off")
+  ._rel_canvas(plot, fixed = TRUE, clip = "off", mark_name = "mark_chord")
 }

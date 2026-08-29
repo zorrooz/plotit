@@ -58,7 +58,12 @@ spelling \code{colour} is still accepted through \code{...}.}
 
 \item{linewidth}{Line width in mm (default 0.5).}
 
-\item{...}{Other arguments passed to the underlying geom}
+\item{...}{Other arguments passed to the underlying geom. ggplot2 4.0
+also accepts \verb{layout=} on any layer, which controls how the layer is
+placed across \verb{split_*} facet panels: \code{NULL} (default) matches layer
+rows to panels by the facet variable, \code{"fixed"} repeats the layer on
+every panel (a unified reference line), and an integer pins it to a
+single panel, e.g. \code{mark_rule(yintercept = 0, layout = "fixed")}.}
 
 \item{rasterize}{If \code{TRUE}, rasterize via \code{ggrastr::rasterise()}.}
 
@@ -75,10 +80,10 @@ to the appropriate ggplot2 geom based on the parameters supplied:
 }
 \details{
 \itemize{
-\item \code{xintercept} → \link[ggplot2:geom_abline]{ggplot2::geom_vline}
-\item \code{yintercept} → \link[ggplot2:geom_abline]{ggplot2::geom_hline}
-\item \code{slope} + \code{intercept} → \link[ggplot2:geom_abline]{ggplot2::geom_abline}
-\item \code{x}/\code{xend}/\code{y}/\code{yend} → \link[ggplot2:geom_segment]{ggplot2::geom_segment}
+\item \code{xintercept} <U+2192> \link[ggplot2:geom_abline]{ggplot2::geom_vline}
+\item \code{yintercept} <U+2192> \link[ggplot2:geom_abline]{ggplot2::geom_hline}
+\item \code{slope} + \code{intercept} <U+2192> \link[ggplot2:geom_abline]{ggplot2::geom_abline}
+\item \code{x}/\code{xend}/\code{y}/\code{yend} <U+2192> \link[ggplot2:geom_segment]{ggplot2::geom_segment}
 }
 
 Dispatch priority: vline/hline > abline > segment.

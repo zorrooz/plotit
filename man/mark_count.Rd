@@ -38,7 +38,7 @@ Modified plotit object
 \description{
 Draws each unique point once, sized by the number of observations at
 that location (\code{stat_sum}).  The standard answer to overplotting in
-scatter plots of discrete or binned data; pair with \code{\link[=scale_radius]{scale_radius()}}
+scatter plots of discrete or binned data; pair with \code{\link[=scale_size]{scale_size()}}
 for an area-proportional legend.
 }
 \examples{

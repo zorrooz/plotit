@@ -6,11 +6,12 @@
 \usage{
 compose_marginal(
   main,
-  top,
-  right,
+  top = NULL,
+  right = NULL,
   widths = c(4, 1),
   heights = c(1, 4),
-  guides = "collect"
+  guides = "collect",
+  align = "panel"
 )
 }
 \arguments{
@@ -25,13 +26,20 @@ Same conventions as \code{top}.  Call \code{project_cartesian(flip = TRUE)} on
 this plot before passing it so the y-axis aligns with the scatter.}
 
 \item{widths}{Relative column widths for the main and right-marginal
-panels.  Default \code{c(4, 1)} = right marginal is 1/5 of total width.}
+panels (applies when \code{right} is supplied).
+Default \code{c(4, 1)} = right marginal is 1/5 of total width.}
 
 \item{heights}{Relative row heights for the top-marginal and main
-panels.  Default \code{c(1, 4)} = top marginal is 1/5 of total height.}
+panels (applies when \code{top} is supplied).
+Default \code{c(1, 4)} = top marginal is 1/5 of total height.}
 
 \item{guides}{\code{"collect"} (default) to merge legends across all panels,
 \code{"keep"} to keep them separate, \code{NULL} for patchwork auto-detect.}
+
+\item{align}{Alignment reference: \code{"panel"} (default, strips align to
+the base panel area).  \code{"plot"} requests full-area alignment; grid
+members always align on panel areas, so it currently falls back to
+\code{"panel"} (documented approximation).}
 }
 \value{
 A \code{plotit_composite} object.  Pipe to \code{label_title()},

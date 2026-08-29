@@ -41,4 +41,6 @@ Rplots*.pdf
 # pkgdown local build (deployed from CI to gh-pages branch)
 docs/
 skills-lock.json
-.qoder/
+.agent/
+plotit.Rcheck/
+plotit_*.tar.gz

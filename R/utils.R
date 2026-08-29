@@ -138,7 +138,91 @@ NULL
   if (requireNamespace(pkg, quietly = TRUE)) {
     return(invisible())
   }
-  cli::cli_abort("{reason}; install {.pkg {pkg}} to enable it.")
+  cli::cli_abort(c(
+    sprintf("%s requires the {.pkg %s} package.", reason, pkg),
+    "i" = sprintf("Install it with {.code install.packages(%s)}.", deparse(pkg))
+  ))
+}
+
+# ---- error / warning message constructors (SM7, design/08 <U+00A7>6) ----
+#
+# Three-part contract (AGENTS 4.5): problem -> got/cause -> remedy with the
+# legal values.  These constructors keep the recurring validation shapes
+# uniform so wording cannot drift apart between call sites.  `requirement`
+# and `hint` strings may carry cli markup; value bullets interpolate via
+# .envir so {.val {got}} renders exactly what the user passed.
+
+# Parameter violates a range / shape constraint:
+# ._abort_arg_range("inner_radius", "in (0, 1)", got = 1.5)
+#' Abort: parameter outside its required range or shape.
+#' @noRd
+#' @keywords internal
+._abort_arg_range <- function(name, requirement, got = NULL, hint = NULL) {
+  segs <- c(sprintf("{.arg %s} must be %s.", name, requirement))
+  if (!is.null(got)) {
+    segs <- c(segs, "x" = "Got {.val {got}}.")
+  }
+  if (!is.null(hint)) {
+    segs <- c(segs, "i" = hint)
+  }
+  cli::cli_abort(segs, .envir = list2env(
+    list(got = got),
+    parent = parent.frame()
+  ))
+}
+
+# Parameter is outside a closed enumeration; ALL legal values are listed:
+# ._abort_arg_enum("size_unit", c("in", "cm", "mm"), got = "pt")
+#' Abort: parameter outside a closed set of legal values.
+#' @noRd
+#' @keywords internal
+._abort_arg_enum <- function(name, allowed, got = NULL, hint = NULL) {
+  msg <- sprintf("{.arg %s} must be one of {.or {.val {allowed}}}.", name)
+  segs <- c(msg)
+  if (!is.null(got)) {
+    segs <- c(segs, "x" = "Got {.val {got}}.")
+  }
+  if (!is.null(hint)) {
+    segs <- c(segs, "i" = hint)
+  }
+  cli::cli_abort(segs, .envir = list2env(
+    list(allowed = allowed, got = got),
+    parent = parent.frame()
+  ))
+}
+
+# Validation failure with a single remedy bullet:
+# ._abort_hint("{.fn mark_corr} requires tabular plot data.", "i" = "...")
+#' Abort: problem statement plus one remedy bullet.
+#' @noRd
+#' @keywords internal
+._abort_hint <- function(problem, hint) {
+  cli::cli_abort(c(problem, "i" = hint))
+}
+
+# An argument has no effect in the current context:
+# ._warn_ignored("seed", "the {layout} layout is deterministic")
+#' Warn: argument is silently not applicable.
+#' @noRd
+#' @keywords internal
+._warn_ignored <- function(name, reason, hint = NULL) {
+  segs <- sprintf("{.arg %s} is ignored: %s.", name, reason)
+  if (!is.null(hint)) {
+    segs <- c(segs, "i" = hint)
+  }
+  cli::cli_warn(segs)
+}
+
+# Two inputs conflict; the first wins:
+# ._warn_precedence("...", "rows")
+#' Warn: two conflicting inputs, first takes precedence.
+#' @noRd
+#' @keywords internal
+._warn_precedence <- function(winner, loser) {
+  cli::cli_warn(c(
+    sprintf("Both `%s` and `%s` provided.", winner, loser),
+    "i" = sprintf("`%s` takes precedence; `%s` is ignored.", winner, loser)
+  ))
 }
 
 # ---- size units & default canvas ----
@@ -266,7 +350,10 @@ is_discrete <- function(data, var) {
       is.factor(col) || is.character(col) || is.logical(col)
     },
     error = function(e) {
-      cli::cli_warn("Cannot determine variable type: {e$message}")
+      cli::cli_warn(c(
+        sprintf("Cannot determine variable type: %s", e$message),
+        "i" = "Falling back to the continuous colour route."
+      ))
       FALSE
     }
   )

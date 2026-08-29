@@ -41,3 +41,8 @@ Adds a connected line or trend layer.
 \examples{
 plotit(ggplot2::economics, encode(x = date, y = unemploy)) |> mark_line()
 }
+\references{
+Vega-Lite: \href{https://vega.github.io/vega-lite/docs/line.html}{Line}
+
+AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/line}{Line} (corelib)
+}

@@ -29,6 +29,8 @@ NULL
   mark_polygon = c("x", "y"),
   mark_text = c("x", "y"),
   mark_area = c("x", "y", "ymin", "ymax"),
+  mark_ribbon = c("x", "y", "ymin", "ymax"),
+  mark_image = c("x", "y", "src"),
   mark_density = c("x", "y"),
   mark_histogram = c("x", "y"),
   mark_boxplot = c("x", "y"),
@@ -70,7 +72,7 @@ NULL
   if (is.character(e) && length(e) == 1 && !is.na(e)) {
     return(e)
   }
-  cli::cli_abort("{.arg {arg}} must be a single column name.")
+  ._abort_arg_range(arg, "a single column name")
 }
 
 # Shared column-name extractor for encode() quosures in the relational
@@ -87,15 +89,24 @@ NULL
 ._graph_from_edgelist <- function(edges, nodes, source_col, target_col, value_col,
                                   directed) {
   if (!source_col %in% names(edges)) {
-    cli::cli_abort("Edge table has no column {.val {source_col}}; pass {.arg source}.")
+    ._abort_hint(
+      sprintf("Edge table has no column {.val %s}.", source_col),
+      "Select it with {.arg source = ...}."
+    )
   }
   if (!target_col %in% names(edges)) {
-    cli::cli_abort("Edge table has no column {.val {target_col}}; pass {.arg target}.")
+    ._abort_hint(
+      sprintf("Edge table has no column {.val %s}.", target_col),
+      "Select it with {.arg target = ...}."
+    )
   }
   src <- edges[[source_col]]
   tgt <- edges[[target_col]]
   if (anyNA(src) || anyNA(tgt)) {
-    cli::cli_abort("Edge endpoints must not contain {.val NA}.")
+    ._abort_hint(
+      "Edge endpoints must not contain {.val NA}.",
+      "Drop or complete those rows before calling {.fn as_graph}."
+    )
   }
   src <- as.character(src)
   tgt <- as.character(tgt)
@@ -113,7 +124,10 @@ NULL
     raw <- edges[[val_col]]
     num <- suppressWarnings(as.numeric(raw))
     if (anyNA(num) || length(num) != nrow(edges)) {
-      cli::cli_abort("Column {.val {val_col}} used as {.arg value} must be numeric.")
+      ._abort_hint(
+        sprintf("Column {.val %s} used as {.arg value} must be numeric.", val_col),
+        "Convert the column to numeric or map a different one as {.arg value}."
+      )
     }
     num
   }
@@ -134,7 +148,10 @@ NULL
       )
     }
     if (anyNA(nodes$id) || anyDuplicated(nodes$id) > 0) {
-      cli::cli_abort("Node {.col id} values must be non-missing and unique.")
+      ._abort_hint(
+        "Node {.col id} values must be non-missing and unique.",
+        "Fix duplicates or {.val NA} entries in the {.arg nodes} table."
+      )
     }
     node_ids <- as.character(nodes$id)
     missing_ids <- setdiff(unique(c(src, tgt)), node_ids)
@@ -174,7 +191,10 @@ NULL
 ._graph_from_table <- function(tab, directed) {
   df <- as.data.frame(tab)
   if (length(dim(tab)) != 2 || ncol(df) != 3) {
-    cli::cli_abort("Contingency tables must have exactly two classifying dimensions.")
+    ._abort_hint(
+      "Contingency tables must have exactly two classifying dimensions.",
+      "Subset the table to two dimensions or convert it to an edge table."
+    )
   }
   out <- data.frame(
     source = as.character(df[[1]]),
@@ -240,18 +260,25 @@ NULL
 ._graph_from_hierarchy <- function(h, directed = TRUE) {
   ids <- as.character(h$id)
   if (anyNA(ids) || anyDuplicated(ids) > 0) {
-    cli::cli_abort("Hierarchy {.col id} values must be non-missing and unique.")
+    ._abort_hint(
+      "Hierarchy {.col id} values must be non-missing and unique.",
+      "Fix duplicate or {.val NA} entries in the {.col id} column."
+    )
   }
   root_mask <- is.na(h$parent)
   par <- as.character(h$parent)
   unknown <- setdiff(unique(par[!root_mask]), ids)
   if (length(unknown) > 0) {
-    cli::cli_abort(
-      "Hierarchy {.col parent} references unknown ids: {.val {unknown}}."
+    ._abort_hint(
+      sprintf("Hierarchy {.col parent} references unknown ids: {.val %s}.", paste0("c(", deparse(unknown), ")")),
+      "Add the missing nodes or fix the {.col parent} column."
     )
   }
   if (any(ids == par, na.rm = TRUE)) {
-    cli::cli_abort("Nodes cannot be their own {.col parent}.")
+    ._abort_hint(
+      "Nodes cannot be their own {.col parent}.",
+      "Self-referencing rows are not valid tree edges; remove them."
+    )
   }
   edges <- data.frame(
     source = par[!root_mask],
@@ -336,9 +363,8 @@ as_graph <- function(edges, nodes = NULL,
     is.data.frame(edges) && all(c("id", "parent") %in% names(edges))
   ))
   if (!missing(directed) && self_directed) {
-    cli::cli_warn(
-      "{.arg directed} is ignored for this input: the structure already \\
-       implies its own directionality."
+    ._warn_ignored(
+      "directed", "the structure already implies its own directionality"
     )
   }
 
@@ -400,13 +426,15 @@ as_graph <- function(edges, nodes = NULL,
     }
     rhs <- rlang::f_rhs(data)
     if (!rlang::is_symbol(rhs)) {
-      cli::cli_abort(
-        "{.code data = ~name}: right-hand side must be a bare table name."
+      ._abort_hint(
+        "{.code data = ~name}: the right-hand side must be a bare table name.",
+        "Reference one table, e.g. {.code data = ~nodes} or {.code data = ~edges}."
       )
     }
     if (!is.null(rlang::f_lhs(data))) {
-      cli::cli_abort(
-        "{.arg data} must be a one-sided formula, e.g. {.code data = ~nodes}."
+      ._abort_hint(
+        "{.arg data} must be a one-sided formula.",
+        "Reference a graph table, e.g. {.code data = ~nodes}."
       )
     }
     nm <- as.character(rhs)

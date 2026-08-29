@@ -1,7 +1,8 @@
 #' Initialize a plotit object
 #'
 #' @include class.R encode.R utils.R style.R
-#' @param data A data frame.
+#' @param data A data frame, a matrix (coerced with `as.data.frame()`),
+#'   or a `plotit_graph` (relational pipeline; see [as_graph()]).
 #' @param mapping An object created by [encode()].
 #' @param autofit Logical; if `TRUE`, plot dimensions are determined automatically.
 #' @param width,height Numeric; default width and height (ignored if `autofit = TRUE`).
@@ -47,26 +48,39 @@ plotit <- function(
     ))
   }
   if (graph_input && !missing(default_color) && !is.null(default_color)) {
-    cli::cli_warn(
-      "{.arg default_color} is ignored for {.cls plotit_graph} data."
-    )
+    cli::cli_warn(c(
+      "{.arg default_color} is ignored for {.cls plotit_graph} data.",
+      "i" = "Graph marks take their colour from the mapped aesthetic or scale_*()."
+    ))
   }
 
   if (!autofit && (is.null(width) || is.null(height))) {
-    cli::cli_abort(
-      "When {.code autofit = FALSE}, both {.arg width} and {.arg height} must be provided."
+    ._abort_hint(
+      "When {.code autofit = FALSE}, both {.arg width} and {.arg height} must be provided.",
+      "Pass both dimensions or set {.code autofit = TRUE}."
     )
   }
 
   valid_units <- c("in", "cm", "mm")
   if (!(size_unit %in% valid_units)) {
-    cli::cli_abort("{.arg size_unit} must be one of {.val {valid_units}}.")
+    ._abort_arg_enum("size_unit", valid_units, got = size_unit)
   }
 
   if (autofit && (!missing(width) || !missing(height))) {
-    cli::cli_warn(
-      "{.arg autofit} is {.val TRUE}; {.arg width} and {.arg height} will be ignored."
-    )
+    cli::cli_warn(c(
+      "{.arg autofit} is {.val TRUE}; {.arg width} and {.arg height} have no effect.",
+      "i" = "They are ignored; remove them or set {.code autofit = FALSE} for explicit sizing."
+    ))
+  }
+
+  # Matrix input: ggplot2 4.0's data validation requires uniquely named
+  # columns (`check_data_frame_like`), so plain matrices (with or without
+  # dimnames) error before any layer is built.  Coerce early on the plotit
+  # boundary so `plotit(matrix, encode(...))` just works; `as.data.frame()`
+  # keeps dimnames (column names, row names) when present and invents
+  # V1..Vk otherwise.
+  if (!graph_input && is.matrix(data)) {
+    data <- as.data.frame(data, stringsAsFactors = FALSE)
   }
 
   if (graph_input) {
@@ -164,41 +178,59 @@ plotit <- function(
 }
 
 # ---- ggplot2 escape hatch ----
-# `plotit + <ggplot2 object>` forwards to the underlying ggplot, giving
-# advanced users the full ggplot2 vocabulary (annotate, guides, labs,
-# custom layers, facets) without dropping the plotit wrapper.  The verb
-# API stays the recommended path: direct `+ scale_*()` bypasses the
-# package's managed colour registry, and `+` on a `plotit_composite`
-# follows patchwork semantics (applies to the last sub-panel).
-# Implemented as a plain S3 method on the Ops group generic: it is the
-# only form that persists into the installed package's NAMESPACE
-# (S7::method assignment registers at build time only).
-#' Add a ggplot2 component to a plotit object
+# `add_ggplot(plot, component)` forwards a ggplot2 component (annotate,
+# guides, labs, theme elements, custom layers, facets) to the underlying
+# ggplot, giving advanced users the full ggplot2 vocabulary without
+# dropping the plotit wrapper.  The verb API stays the recommended path:
+# direct `+ scale_*()` usage bypasses the package's managed colour registry.
+# Replaces the former S3 `+.plotit` / `+.plotit_composite` overloads so the
+# escape hatch has one explicit, discoverable entry point (tidyplots'
+# `add()` plays the same role in that package).
+#' Add a ggplot2 component to a plot
 #'
-#' Escape hatch for advanced ggplot2 usage: `p + ggplot2::annotate(...)`,
-#' `p + ggplot2::guides(...)`, `p + ggplot2::labs(...)` etc. modify the
-#' underlying ggplot and return the `plotit` object so the pipeline
-#' continues.  Prefer the verb API (`mark_*`, `scale_*`, `label_*`,
-#' `style`) for reproducible, well-validated plots.
+#' Escape hatch for advanced ggplot2 usage: `add_ggplot(p,
+#' ggplot2::annotate(...))`, `add_ggplot(p, ggplot2::guides(...))`,
+#' `add_ggplot(p, ggplot2::labs(...))` etc. modify the underlying ggplot
+#' and return the `plotit` object so the pipeline continues.  Prefer the
+#' verb API (`mark_*`, `scale_*`, `label_*`, `style`) for reproducible,
+#' well-validated plots.
 #'
-#' @param e1 A `plotit` object.
-#' @param e2 Any object ggplot2's `+` accepts (layer, scale, coord, facet,
-#'   theme, labs, or a ggplot2 object).
-#' @return A modified `plotit` object.
+#' @section Stability:
+#' Extension surface (contract tier: extensible). The signature is stable as
+#' documented; it is the supported replacement for the former S3 `+` operator
+#' on `plotit` objects, which is intentionally not defined so that ggplot2
+#' components are only added through this single explicit entry point.
+#'
+#' ggplot2 4.0's [ggplot2::stat_manual()] slots in here as a custom
+#' data-transformation layer without a dedicated plotit verb:
+#' `add_ggplot(p, ggplot2::stat_manual(fun = function(d) ...))`.
+#'
+#' @param plot A `plotit` object (or a `plotit_composite`).
+#' @param component Any object ggplot2's `+` accepts (layer, scale, coord,
+#'   facet, theme, labs, or a ggplot2 object).
+#' @return A modified `plotit` (or `plotit_composite`) object.
 #' @examples
-#' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
-#'   mark_point() +
-#'   ggplot2::annotate("text", x = 2.5, y = 7.9, label = "high", size = 3)
+#' p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+#'   mark_point() |>
+#'   add_ggplot(ggplot2::annotate("text", x = 2.5, y = 7.9, label = "high", size = 3))
 #' @export
-`+.plotit` <- function(e1, e2) {
-  e1@gg <- e1@gg + e2
-  e1
+add_ggplot <- S7::new_generic(
+  "add_ggplot", "plot",
+  function(plot, component) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(add_ggplot, plotit_class) <- function(plot, component) {
+  plot@gg <- plot@gg + component
+  plot
 }
 
 #' @export
-`+.plotit_composite` <- function(e1, e2) {
+S7::method(add_ggplot, plotit_composite) <- function(plot, component) {
   # patchwork owns `+` for composite gg objects (applies to the last
   # sub-panel; use style() to reach every panel).
-  e1@gg <- e1@gg + e2
-  e1
+  plot@gg <- plot@gg + component
+  plot
 }

@@ -41,3 +41,7 @@ Adds a histogram layer with automatic binning.
 \examples{
 plotit(iris, encode(x = Sepal.Width)) |> mark_histogram()
 }
+\references{
+R: \code{graphics::hist()} (binning semantics; realised by ggplot2's stat_bin)
+Vega-Lite: \href{https://vega.github.io/vega-lite/docs/bar.html}{Bar} with \code{bin} transform
+}

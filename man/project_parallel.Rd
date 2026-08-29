@@ -6,9 +6,13 @@
 \usage{
 project_parallel(
   plot,
-  columns,
+  columns = NULL,
   group = NULL,
   scale = c("std", "global", "none"),
+  order = NULL,
+  recenter = NULL,
+  aggregate = c("none", "mean", "median"),
+  axis_labels = TRUE,
   alpha = 0.5,
   size = 1,
   ...
@@ -25,6 +29,22 @@ Order matters: the first column is the leftmost axis.}
 \item{scale}{\code{"std"} (default): min-max normalise each column to 0-1.
 \code{"global"}: min-max normalise across all columns to 0-1.
 \code{"none"}: no normalisation, each column keeps its own range.}
+
+\item{order}{Axis order: character subset of \code{columns}; axes render in
+the given order and omitted columns drop. \code{NULL} (default) keeps the
+\code{columns} order.}
+
+\item{recenter}{Reference axis for a difference-from-reference view: a
+column name; every polyline is re-expressed as its difference from
+that axis (normalised space), so the reference becomes a straight
+zero baseline. \code{NULL} disables.}
+
+\item{aggregate}{Group overlay: \code{"none"} (default), or \code{"mean"} /
+\code{"median"} to draw one thick aggregate line per group behind the
+individual polylines (requires \code{group}).}
+
+\item{axis_labels}{Draw the per-axis tick labels (default \code{TRUE});
+\code{FALSE} blanks them for a clean silhouette view.}
 
 \item{alpha, size}{Passed to \code{geom_line()} / \code{geom_point()}.}
 

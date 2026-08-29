@@ -1,7 +1,7 @@
 #' @include class.R
 NULL
 
-# ---- Unified mark style system (AGENTS.md §6) ----
+# ---- Unified mark style system (AGENTS.md <U+00A7>6) ----
 #
 # Single source of truth for every style literal used by mark_* so that all
 # marks share one visual language out of the box.
@@ -12,7 +12,7 @@ NULL
 #
 # Precedence: explicit user parameter > mapped aesthetic (layer or global,
 # including the AsIs constants injected by plotit()) > mark default.
-# Tokens are iterables per AGENTS.md §1.4 (default-aesthetics tier).
+# Tokens are iterables per AGENTS.md <U+00A7>1.4 (default-aesthetics tier).
 
 ._MARK_STYLE <- list(
   # Brand palette (Tableau 10 subset)
@@ -31,6 +31,9 @@ NULL
   # Translucency for overlapping filled forms
   alpha_fill = 0.6, # density curves, violins
   alpha_link = 0.5, # sankey flows, chord bands
+  alpha_ci = 0.25, # statistical confidence ribbons
+  alpha_annot = 0.18, # encircle annotation envelopes
+  annot_step = 0.06, # significance bracket stacking step (y-span share)
   # Composite point heads
   point_head = 3 # lollipop heads, dumbbell endpoints
 )
@@ -76,6 +79,13 @@ NULL
     linewidth = ._MARK_STYLE$lw_thin,
     linetype = "dashed",
     colour = ._MARK_STYLE$soft
+  ),
+  # Polygons without an explicit fill inherit the brand primary (the
+  # default_color mechanism only covers the no-mapping case; a pure
+  # `colour` grouping otherwise leaves fill at ggplot2's dark grey).
+  mark_polygon = list(
+    linewidth = 0,
+    fill = ._MARK_STYLE$primary
   ),
   # Boxplots: slim boxes with generous slot spacing and hairline strokes,
   # calibrated against tidyplots' add_boxplot (box_width 0.6 / lw 0.25 /
@@ -189,23 +199,124 @@ NULL
   plot
 }
 
-# Closed-cell marks (tile heatmaps: mark_rect / mark_corr) span the full
-# data range with no meaningful axis furniture: cells should touch the panel
-# edges (zero expansion) and axis lines/ticks would double the grid the tiles
-# already draw.  Category text stays visible.  Only applies when the plot
-# still uses the default cartesian coordinate system -- an explicit
-# project_*() call by the user always wins.
-#' Apply closed-cell heatmap chrome to a ggplot object.
+# Closed-cell / heatmap marks (corr, heatmap, rect tiles, bin2d, hex) span
+# their own canvas: the cells or bins draw the structure, so axis furniture
+# is redundant and gets blanked per the AGENTS.md <U+00A7>6 convention table.  Two
+# knobs: keep_text (category labels of corr/rect/heatmap rows and columns
+# carry meaning; bin2d/hex count fields blank everything) and zero_expand
+# (cells flush to the panel edge for tile marks; bin2d/hex keep the default
+# padding so edge bins stay whole).  Only applies while the plot still uses
+# the default cartesian coordinate system -- an explicit project_*() call
+# by the user always wins.
+#' Apply cell-mark axis chrome (B2 convention table).
 #' @noRd
 #' @keywords internal
-._gg_tile_chrome <- function(gg) {
-  gg <- gg + ggplot2::theme(
+._gg_cell_chrome <- function(gg, keep_text = TRUE, zero_expand = TRUE) {
+  args <- list(
     axis.line = ggplot2::element_blank(),
     axis.ticks = ggplot2::element_blank()
   )
-  coords <- gg$coordinates
-  if (is.null(coords) || identical(class(coords)[1], "CoordCartesian")) {
-    gg <- gg + ggplot2::coord_cartesian(expand = FALSE)
+  if (!keep_text) {
+    args$axis.text <- ggplot2::element_blank()
+    args$axis.title <- ggplot2::element_blank()
+  }
+  gg <- gg + do.call(ggplot2::theme, args)
+  if (!is.null(zero_expand) && zero_expand) {
+    coords <- gg$coordinates
+    if (is.null(coords) || identical(class(coords)[1], "CoordCartesian")) {
+      gg <- gg + ggplot2::coord_cartesian(expand = FALSE)
+    }
   }
   gg
+}
+
+# ---- chrome convention registry (D-06, design/03 <U+00A7>6) ----
+# One decision point for per-mark canvas conventions, consulted by the
+# shared mark path (_mark_impl) and the relational sugars (_rel_canvas):
+#
+#   axis   "keep"  native axes (geometry / distribution / trend marks)
+#          "blank" coordinate-free canvas (no axis furniture at all)
+#          "cell"  closed-cell chrome: no axis line/ticks, category text
+#                  kept, panel flush (expand = 0)
+#   legend "auto"  follow the mapping (default); "none" force-hidden
+#   expand "default" ggplot2 expansion; "zero" tiles flush to the panel
+#
+# Marks absent from the table default to keep/auto/default, so make_mark()
+# customs keep zero behavior difference (AGENTS.md 3.3.3c).
+._MARK_CHROME <- list(
+  # Geometry / distribution / trend: native axes
+  mark_point = list(axis = "keep"),
+  mark_line = list(axis = "keep"),
+  mark_step = list(axis = "keep"),
+  mark_path = list(axis = "keep"),
+  mark_area = list(axis = "keep"),
+  mark_bar = list(axis = "keep"),
+  mark_histogram = list(axis = "keep"),
+  mark_density = list(axis = "keep"),
+  mark_boxplot = list(axis = "keep"),
+  mark_violin = list(axis = "keep"),
+  mark_beeswarm = list(axis = "keep"),
+  mark_count = list(axis = "keep"),
+  mark_rug = list(axis = "keep"),
+  mark_spoke = list(axis = "keep"),
+  mark_curve = list(axis = "keep"),
+  mark_label = list(axis = "keep"),
+  mark_text = list(axis = "keep"),
+  mark_smooth = list(axis = "keep"),
+  mark_ecdf = list(axis = "keep"),
+  mark_qq = list(axis = "keep"),
+  mark_qq_line = list(axis = "keep"),
+  mark_errorbar = list(axis = "keep"),
+  mark_ribbon = list(axis = "keep"),
+  mark_lollipop = list(axis = "keep"),
+  mark_dumbbell = list(axis = "keep"),
+  mark_forest = list(axis = "keep"),
+  mark_significance = list(axis = "keep"),
+  mark_encircle = list(axis = "keep"),
+  mark_image = list(axis = "keep"),
+  # Long-table tile marks keep light axes (G2 Cell / OP calendar); tiles
+  # themselves span the full data range so rect stays panel-flush.
+  mark_rect = list(axis = "keep", expand = "zero"),
+  mark_bin2d = list(axis = "keep"),
+  mark_hex = list(axis = "keep"),
+  # Matrix-input marks: closed-cell chrome, category labels carry the story
+  mark_heatmap = list(axis = "cell"),
+  mark_corr = list(axis = "cell"),
+  # Geographic: the projection draws its own graticule
+  mark_map = list(axis = "blank"),
+  # Relational sugars own their canvas
+  mark_sankey = list(axis = "blank"),
+  mark_treemap = list(axis = "blank"),
+  mark_network = list(axis = "blank"),
+  mark_chord = list(axis = "blank")
+)
+
+#' Apply a mark's registered canvas chrome.
+#' @noRd
+#' @keywords internal
+._apply_chrome <- function(plot, mark_name) {
+  chrome <- ._MARK_CHROME[[mark_name]] %||% list(axis = "keep")
+  axis <- chrome$axis %||% "keep"
+  if (identical(axis, "blank")) {
+    plot <- ._theme_blank_axes(plot)
+  } else if (identical(axis, "cell")) {
+    plot@gg <- ._gg_cell_chrome(plot@gg, keep_text = TRUE, zero_expand = TRUE)
+  }
+  if (identical(chrome$expand, "zero") && !identical(axis, "cell")) {
+    coords <- plot@gg$coordinates
+    if (is.null(coords) || identical(class(coords)[1], "CoordCartesian")) {
+      plot@gg <- plot@gg + ggplot2::coord_cartesian(expand = FALSE)
+    }
+  }
+  if (identical(chrome$legend, "none")) {
+    plot@gg <- plot@gg + ggplot2::guides(colour = "none", fill = "none")
+  }
+  plot
+}
+
+#' Closed-cell heatmap chrome (tiles flush to the panel, fonts kept).
+#' @noRd
+#' @keywords internal
+._gg_tile_chrome <- function(gg) {
+  ._gg_cell_chrome(gg, keep_text = TRUE, zero_expand = TRUE)
 }

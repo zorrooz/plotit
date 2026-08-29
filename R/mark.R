@@ -81,11 +81,10 @@ NULL
     rasterize = rasterize, rasterize_dpi = rasterize_dpi,
     rasterize_dev = rasterize_dev
   )
-  # Closed-cell heatmap chrome: tiles span the full data range, so axis
-  # lines/ticks double the grid the cells already draw and expansion padding
-  # would detach cells from the panel edge (AGENTS.md 6, cell-chrome rule).
-  if (!is.null(mark_name) && mark_name %in% c("mark_rect", "mark_corr", "mark_heatmap")) {
-    plot@gg <- ._gg_tile_chrome(plot@gg)
+  # Canvas chrome from the convention registry (D-06): the single decision
+  # point shared with the relational sugars (._MARK_CHROME, design/03 <U+00A7>6).
+  if (length(mark_name) == 1L) {
+    plot <- ._apply_chrome(plot, mark_name)
   }
   plot
 }
@@ -132,8 +131,8 @@ NULL
 #' Attach a managed default fill scale for a derived channel.
 #' @noRd
 #' @keywords internal
-._derived_fill <- function(plot, trans, range = "viridis") {
-  suppressMessages(scale_fill(plot, trans = trans, range = range))
+._derived_fill <- function(plot, trans, range = "viridis", ...) {
+  suppressMessages(scale_fill(plot, trans = trans, range = range, ...))
 }
 
 # ---- closed statistical-mark fill ownership ----
@@ -264,6 +263,10 @@ NULL
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_point`
 #' @return Modified plotit object
+#' @references
+#' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/point.html}{Point}
+#'
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/point}{Point} (corelib)
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
 #' @export
@@ -319,6 +322,10 @@ mark_point <- ._make_mark_generic("mark_point")
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_line`
 #' @return Modified plotit object
+#' @references
+#' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/line.html}{Line}
+#'
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/line}{Line} (corelib)
 #' @examples
 #' plotit(ggplot2::economics, encode(x = date, y = unemploy)) |> mark_line()
 #' @export
@@ -339,6 +346,11 @@ mark_line <- ._make_mark_generic("mark_line")
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_boxplot`
 #' @return Modified plotit object
+#' @references
+#' R: \code{stats::quantile()} (five-number summary behind the boxplot stat)
+#' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/boxplot.html}{Boxplot} (composite mark)
+#'
+#' AntV G2: boxplot (corelib)
 #' @examples
 #' plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot()
 #' @export
@@ -359,6 +371,9 @@ mark_boxplot <- ._make_mark_generic("mark_boxplot")
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_histogram`
 #' @return Modified plotit object
+#' @references
+#' R: \code{graphics::hist()} (binning semantics; realised by ggplot2's stat_bin)
+#' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/bar.html}{Bar} with `bin` transform
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width)) |> mark_histogram()
 #' @export
@@ -379,6 +394,9 @@ mark_histogram <- ._make_mark_generic("mark_histogram")
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_density`
 #' @return Modified plotit object
+#' @references
+#' R: \code{stats::density()} (kernel density estimate)
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/density}{Density} (corelib)
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width)) |> mark_density()
 #' @export
@@ -390,7 +408,7 @@ mark_density <- ._make_mark_generic("mark_density")
 #'
 #' Adds a filled area layer.  With `y` mapped this is a classic
 #' (optionally stacked) area chart via `geom_area`; with `ymin`/`ymax`
-#' mapped instead it becomes an interval band via `geom_ribbon` —
+#' mapped instead it becomes an interval band via `geom_ribbon` <U+2014>
 #' confidence bands, min/max envelopes, or any "area between two
 #' curves" view (Vega-Lite's `area` covers both, as does G2).
 #'
@@ -462,8 +480,22 @@ S7::method(mark_area, plotit_class) <- function(
 #' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
 #' @param rasterize_dpi DPI for rasterization (default 300).
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
-#' @param ... Other arguments passed to `geom_text` or `geom_text_repel`
+#' @param ... Other arguments passed to `geom_text` or `geom_text_repel`.
+#'   With `repel = TRUE` the frequently used \pkg{ggrepel} passthrough
+#'   parameters are (defaults from the ggrepel docs):
+#'   `max.overlaps` (plural! labels overlapping more than this many others
+#'   are dropped; default `getOption("ggrepel.max.overlaps", 10)`;
+#'   `Inf` keeps every label), `min.segment.length = 0.5` (leader-line
+#'   threshold, `0` draws all), `force = 1`, `force_pull = 1`,
+#'   `direction = "both"`, `seed = NA` (set a number for reproducible
+#'   placement), `nudge_x = 0`, `nudge_y = 0`, `point.padding = 1e-6`,
+#'   `box.padding = 0.25`, `max.time = 0.5`, `max.iter = 10000`,
+#'   `xlim = c(NA, NA)`, `ylim = c(NA, NA)`.
 #' @return Modified plotit object
+#' @references
+#' Observable Plot: `Plot.text`
+#'
+#' ggrepel: \href{https://ggrepel.slowkow.com/reference/geom_text_repel.html}{geom_text_repel}
 #' @examples
 #' plotit(mtcars, encode(x = wt, y = mpg, label = rownames(mtcars))) |>
 #'   mark_text(size = 3)
@@ -510,11 +542,16 @@ S7::method(mark_text, plotit_class) <- function(
 #' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
 #' @param rasterize_dpi DPI for rasterization (default 300).
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
-#' @param ... Other arguments passed to `geom_violin`
+#' @param ... Other arguments passed to `geom_violin`. Since ggplot2 4.0 the
+#'   quantile lines live on the stat: `quantiles =` selects the quantiles
+#'   drawn and `quantile.colour`/`quantile.linetype`/`quantile.linewidth`
+#'   style them (`quantile.linetype = 0` hides them by default).
 #' @return Modified plotit object
+#' @references
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/general/shape}{density (violin)}
 #' @examples
 #' plotit(iris, encode(x = Species, y = Sepal.Length)) |>
-#'   mark_violin(draw_quantiles = 0.5)
+#'   mark_violin(quantiles = 0.5, quantile.linetype = "dashed")
 #' @export
 mark_violin <- ._make_mark_generic("mark_violin")
 ._register_mark_method(mark_violin, ggplot2::geom_violin)
@@ -551,10 +588,9 @@ S7::method(mark_map, plotit_class) <- function(
 ) {
   ._require_pkg("sf", "{.fn mark_map}")
   if (!is.null(position)) {
-    cli::cli_warn(c(
-      "{.arg position} is ignored by {.fn mark_map}.",
-      "i" = "{.fn geom_sf} implements no position adjustments."
-    ))
+    ._warn_ignored(
+      "position", "{.fn geom_sf} implements no position adjustments."
+    )
   }
   layer_data <- data %||% plot@gg$data
   if (!inherits(layer_data, "sf")) {
@@ -568,10 +604,12 @@ S7::method(mark_map, plotit_class) <- function(
     plot <- ._clear_default_color(plot, mapping)
   }
   geom <- ggplot2::geom_sf(mapping = mapping, data = data, ...)
-  ._add_geom(plot, geom,
+  plot <- ._add_geom(plot, geom,
     rasterize = rasterize, rasterize_dpi = rasterize_dpi,
     rasterize_dev = rasterize_dev
   )
+  # Geographic canvas: the projection draws its own graticule (D-06)
+  plot <- ._apply_chrome(plot, "mark_map")
 }
 
 # ---- mark_rect ----
@@ -635,10 +673,10 @@ S7::method(mark_rect, plotit_class) <- function(
 #' Adds one or more reference lines or segments to a plot. Dispatches
 #' to the appropriate ggplot2 geom based on the parameters supplied:
 #'
-#' - `xintercept` → [ggplot2::geom_vline]
-#' - `yintercept` → [ggplot2::geom_hline]
-#' - `slope` + `intercept` → [ggplot2::geom_abline]
-#' - `x`/`xend`/`y`/`yend` → [ggplot2::geom_segment]
+#' - `xintercept` <U+2192> [ggplot2::geom_vline]
+#' - `yintercept` <U+2192> [ggplot2::geom_hline]
+#' - `slope` + `intercept` <U+2192> [ggplot2::geom_abline]
+#' - `x`/`xend`/`y`/`yend` <U+2192> [ggplot2::geom_segment]
 #'
 #' Dispatch priority: vline/hline > abline > segment.
 #'
@@ -663,7 +701,12 @@ S7::method(mark_rect, plotit_class) <- function(
 #' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
 #' @param rasterize_dpi DPI for rasterization (default 300).
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
-#' @param ... Other arguments passed to the underlying geom
+#' @param ... Other arguments passed to the underlying geom. ggplot2 4.0
+#'   also accepts `layout=` on any layer, which controls how the layer is
+#'   placed across `split_*` facet panels: `NULL` (default) matches layer
+#'   rows to panels by the facet variable, `"fixed"` repeats the layer on
+#'   every panel (a unified reference line), and an integer pins it to a
+#'   single panel, e.g. `mark_rule(yintercept = 0, layout = "fixed")`.
 #' @return Modified plotit object
 #' @references
 #' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/rule.html}{Rule}
@@ -899,6 +942,7 @@ mark_polygon <- ._make_mark_generic("mark_polygon")
 #' @param ... Other arguments passed to `geom_smooth`
 #' @return Modified plotit object
 #' @references
+#' R: \code{stats::loess()} / \code{stats::lm()} (default smoothing methods)
 #' Vega-Lite: achieved via \code{layer(point) + layer(line) + transform(regression)}
 #'
 #' AntV G2: achieved via transform pipeline
@@ -1008,6 +1052,7 @@ S7::method(mark_hex, plotit_class) <- function(
 #' @param ... Other arguments passed to the underlying geom
 #' @return Modified plotit object
 #' @references
+#' R: \code{MASS::kde2d()} (2D kernel density estimate)
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/density}{Density} (corelib, contour mode)
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
@@ -1062,12 +1107,16 @@ S7::method(mark_density_2d, plotit_class) <- function(
                              reorder = TRUE) {
   method <- match.arg(method)
   if (!is.data.frame(data)) {
-    cli::cli_abort("{.arg data} must be a data.frame.")
+    ._abort_hint(
+      "{.arg data} must be a data.frame.",
+      "Correlation preprocessing works on tabular data with numeric columns."
+    )
   }
   num_cols <- vapply(data, is.numeric, logical(1))
   if (sum(num_cols) < 2) {
-    cli::cli_abort(
-      "Correlation preprocessing requires at least 2 numeric columns."
+    ._abort_hint(
+      "Correlation preprocessing requires at least 2 numeric columns.",
+      "Select a wider numeric frame or convert columns before plotting."
     )
   }
   # Pairwise complete observations so a single NA column does not
@@ -1079,9 +1128,10 @@ S7::method(mark_density_2d, plotit_class) <- function(
   ))
   if (reorder) {
     if (anyNA(mat)) {
-      cli::cli_warn(
-        "Correlation matrix contains NA (zero-variance column?); skipping reorder."
-      )
+      cli::cli_warn(c(
+        "Correlation matrix contains {.val NA}; skipping reorder.",
+        "i" = "A zero-variance column produces undefined correlations."
+      ))
     } else {
       ord <- stats::hclust(stats::as.dist(1 - abs(mat)))$order
       mat <- mat[ord, ord]
@@ -1115,6 +1165,7 @@ S7::method(mark_density_2d, plotit_class) <- function(
 #' @param ... Other arguments passed to `geom_tile`
 #' @return Modified plotit object
 #' @references
+#' R: \code{stats::cor()} (pairwise correlation matrix)
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/cell}{Cell} (correlation matrix expression)
 #' @examples
 #' plotit(mtcars, encode()) |> mark_corr()
@@ -1138,7 +1189,10 @@ S7::method(mark_corr, plotit_class) <- function(
   plot <- ._clear_default_color(plot)
   raw_data <- plot@gg$data
   if (!is.data.frame(raw_data)) {
-    cli::cli_abort("{.fn mark_corr} requires tabular plot data.")
+    ._abort_hint(
+      "{.fn mark_corr} requires tabular plot data.",
+      "Call {.fn plotit} with a data.frame of numeric columns first."
+    )
   }
   # Sugar over the internal corr transform + tile layer.  Routed through
   # the shared mark path so the unified style defaults apply (white hairline
@@ -1146,7 +1200,7 @@ S7::method(mark_corr, plotit_class) <- function(
   df <- ._transform_corr(raw_data, method = method, reorder = reorder)
   mapping <- encode(x = Var1, y = Var2, fill = value)
   # The correlation value channel is mark-owned (magnitude -> sequential
-  # viridis, AGENTS.md §6); pre-register it as managed so the layer-level
+  # viridis, AGENTS.md <U+00A7>6); pre-register it as managed so the layer-level
   # auto-attach does not double-fire.
   plot <- ._colour_managed_add(plot, "fill")
   plot <- ._impl_with(plot, mapping, df,
@@ -1182,6 +1236,7 @@ S7::method(mark_corr, plotit_class) <- function(
     mat <- data
     if (is.null(rownames(mat))) rownames(mat) <- as.character(seq_len(nrow(mat)))
     if (is.null(colnames(mat))) colnames(mat) <- as.character(seq_len(ncol(mat)))
+    if (is.null(colnames(mat))) colnames(mat) <- as.character(seq_len(ncol(mat)))
     return(mat)
   }
   if (!is.data.frame(data)) {
@@ -1206,7 +1261,10 @@ S7::method(mark_corr, plotit_class) <- function(
   # Wide numeric data.frame: columns -> heatmap columns, rows -> observations.
   num <- vapply(data, is.numeric, logical(1))
   if (sum(num) < 1) {
-    cli::cli_abort("{.fn mark_heatmap} found no numeric columns and no {.code x/y/fill} mapping.")
+    ._abort_hint(
+      "{.fn mark_heatmap} found no numeric columns and no {.code x/y/fill} mapping.",
+      "Pass a wide numeric frame or map {.code encode(x =, y =, fill =)}."
+    )
   }
   mat <- as.matrix(data[, num, drop = FALSE])
   if (is.null(rownames(mat))) rownames(mat) <- as.character(seq_len(nrow(mat)))
@@ -1266,12 +1324,21 @@ S7::method(mark_corr, plotit_class) <- function(
 #'   `"row"`, `"column"`, or `"none"`.
 #' @param scale z-score normalisation: `"none"` (default), `"row"`, or
 #'   `"column"`.
+#' @param show_numbers Print the value of each cell inside the tile
+#'   (default `FALSE`); implemented as a `mark_text` overlay.
+#' @param number_format Format string for the cell numbers
+#'   (default `"%.2f"`).
+#' @param number_color Cell number colour; `NULL` (default) applies
+#'   auto-contrast (white on dark cells, ink on light cells).
+#' @param na_color Fill colour for `NA` cells (default `"grey85"`; the
+#'   tidyheatmaps `color_na` counterpart).
 #' @param ... Other arguments passed to [ggplot2::geom_tile()].
 #' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
 #' @param rasterize_dpi DPI for rasterization (default 300).
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @return Modified plotit object.
 #' @references
+#' R: \code{stats::hclust()} / \code{stats::dist()} (row/column clustering)
 #' tidyheatmaps: \href{https://jbengler.github.io/tidyheatmaps/}{Heatmaps from Tidy Data}
 #' @examples
 #' mat <- matrix(rnorm(30),
@@ -1284,7 +1351,9 @@ S7::method(mark_corr, plotit_class) <- function(
 mark_heatmap <- S7::new_generic(
   "mark_heatmap", "plot",
   function(plot, cluster = c("both", "row", "column", "none"),
-           scale = c("none", "row", "column"), ...,
+           scale = c("none", "row", "column"),
+           show_numbers = FALSE, number_format = "%.2f", number_color = NULL,
+           na_color = "grey85", ...,
            rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
     S7::S7_dispatch()
   }
@@ -1293,15 +1362,58 @@ mark_heatmap <- S7::new_generic(
 #' @export
 S7::method(mark_heatmap, plotit_class) <- function(
   plot, cluster = c("both", "row", "column", "none"),
-  scale = c("none", "row", "column"), ...,
+  scale = c("none", "row", "column"),
+  show_numbers = FALSE, number_format = "%.2f", number_color = NULL,
+  na_color = "grey85", ...,
   rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
 ) {
-  cluster <- match.arg(cluster)
   scale <- match.arg(scale)
+  # cluster accepts the character modes or a pre-computed engine: an hclust
+  # object (row order) or list(row =, col =) with hclust/NULL entries -- the
+  # D4 flagship recipe feeds the same hclust to mark_heatmap(cluster = h)
+  # and as_graph(h) |> layout_dendrogram(), so the leaf order agrees by
+  # construction (design/03 <U+00A7>5.1).
   plot <- ._clear_default_color(plot)
   mat <- ._heatmap_to_matrix(plot@gg$data, plot@gg$mapping)
   mat <- ._heatmap_scale(mat, scale)
-  ord <- ._heatmap_cluster(mat, cluster)
+  ord <- list(row = rownames(mat), col = colnames(mat))
+  if (is.character(cluster)) {
+    mode <- match.arg(cluster)
+    if (mode %in% c("row", "both") && nrow(mat) > 2) {
+      ord$row <- rownames(mat)[stats::hclust(stats::dist(mat))$order]
+    }
+    if (mode %in% c("column", "both") && ncol(mat) > 2) {
+      ord$col <- colnames(mat)[stats::hclust(stats::dist(t(mat)))$order]
+    }
+  } else {
+    if (inherits(cluster, "hclust")) {
+      spec <- list(row = cluster, col = NULL)
+    } else if (is.list(cluster)) {
+      spec <- list(row = cluster$row, col = cluster$col)
+    } else {
+      ._abort_arg_enum(
+        "cluster",
+        c("both", "row", "column", "none", "hclust object", "list(row=, col=)"),
+        got = deparse(substitute(cluster))[1],
+        hint = "Give the mode string, an hclust for the rows, or list(row =, col =)."
+      )
+    }
+    for (axis in c("row", "col")) {
+      h <- spec[[axis]]
+      if (is.null(h)) {
+        next
+      }
+      labels <- if (axis == "row") rownames(mat) else colnames(mat)
+      if (!setequal(h$labels, labels)) {
+        axis_name <- if (axis == "row") "row names" else "column names"
+        cli::cli_abort(c(
+          "{.arg cluster} labels do not match the matrix {axis_name}.",
+          "i" = "Cluster the same matrix you pass to {.fn mark_heatmap}."
+        ))
+      }
+      ord[[axis]] <- h$labels[h$order]
+    }
+  }
   mat <- mat[ord$row, ord$col, drop = FALSE]
   df <- expand.grid(
     Var2 = factor(ord$col, levels = ord$col),
@@ -1319,28 +1431,150 @@ S7::method(mark_heatmap, plotit_class) <- function(
     auto_dodge = FALSE, bind_aes = NULL, mark_name = "mark_heatmap",
     extra = rlang::list2(...)
   )
-  plot <- ._derived_fill(plot, trans = "identity")
+  plot <- ._derived_fill(plot, trans = "identity", na.value = na_color)
+  if (isTRUE(show_numbers)) {
+    df$label <- sprintf(number_format, df$value)
+    if (is.null(number_color)) {
+      # Auto-contrast: viridis runs dark (low) to light (high), so cells
+      # below the scale midpoint read in white, the rest in ink.
+      zmin <- min(mat, na.rm = TRUE)
+      zmax <- max(mat, na.rm = TRUE)
+      mid <- zmin + (zmax - zmin) / 2
+      # AsIs: the literal colours must bypass the discrete colour scale
+      df$label_col <- I(ifelse(is.na(df$value) | df$value >= mid,
+        ._MARK_STYLE$ink, "white"
+      ))
+      num_mapping <- encode(
+        x = Var2, y = Var1, label = label,
+        colour = label_col
+      )
+    } else {
+      num_mapping <- encode(x = Var2, y = Var1, label = label)
+    }
+    number_extra <- rlang::list2(...)
+    if (!is.null(number_color)) {
+      number_extra$colour <- number_color
+    }
+    plot <- ._impl_with(plot, num_mapping, df,
+      position = NULL, ggplot2::geom_text,
+      rasterize, rasterize_dpi, rasterize_dev,
+      auto_dodge = FALSE, bind_aes = NULL, mark_name = NULL,
+      extra = number_extra
+    )
+  }
   # Synthetic Var1/Var2 titles carry no meaning; the axis labels do.
   plot@gg <- plot@gg + ggplot2::theme(axis.title = ggplot2::element_blank())
   plot
 }
 
+
+# ---- statistical entity fun-data (D-01, design/03 <U+00A7>2) ----
+# fun.data contracts for ggplot2::stat_summary: input is the value vector of
+# the central aesthetic, output is a data.frame with `y`, `ymin`, `ymax`
+# (ggplot2's orientation machinery maps these to xmin/xmax for horizontal
+# orientation).  Pure R, zero new dependencies.  `mean_` names the CENTER;
+# the interval semantics follow Vega-Lite's `extent` enumeration
+# (sem <-> stderr, sd <-> stdev, ci95 <-> ci; range is tidyplots semantics).
+
+._fun_data_mean_sem <- function(x, ...) {
+  x <- x[!is.na(x)]
+  n <- length(x)
+  m <- mean(x)
+  se <- if (n > 1) stats::sd(x) / sqrt(n) else NA_real_
+  data.frame(y = m, ymin = m - se, ymax = m + se)
+}
+
+._fun_data_mean_sd <- function(x, ...) {
+  x <- x[!is.na(x)]
+  n <- length(x)
+  m <- mean(x)
+  s <- if (n > 1) stats::sd(x) else NA_real_
+  data.frame(y = m, ymin = m - s, ymax = m + s)
+}
+
+._fun_data_mean_range <- function(x, ...) {
+  x <- x[!is.na(x)]
+  data.frame(y = mean(x), ymin = min(x), ymax = max(x))
+}
+
+# Two-sided t interval at confidence `level`: mean +- qt((1+level)/2, n-1)*se.
+._fun_data_mean_ci <- function(x, level = 0.95, ci_method = "normal",
+                               seed = NULL, ...) {
+  x <- x[!is.na(x)]
+  n <- length(x)
+  m <- mean(x)
+  if (identical(ci_method, "boot")) {
+    if (!is.null(seed)) {
+      set.seed(seed)
+    }
+    boot_means <- replicate(1000, mean(sample(x, n, replace = TRUE)))
+    qs <- stats::quantile(
+      boot_means, c((1 - level) / 2, 1 - (1 - level) / 2)
+    )
+    return(data.frame(y = m, ymin = unname(qs[1]), ymax = unname(qs[2])))
+  }
+  se <- if (n > 1) stats::sd(x) / sqrt(n) else NA_real_
+  tcrit <- stats::qt((1 + level) / 2, df = n - 1)
+  data.frame(y = m, ymin = m - tcrit * se, ymax = m + tcrit * se)
+}
+
+# Shared validation for the statistical-entity parameters.  Returns the
+# cleaned stat string; aborts with targeted three-part messages otherwise.
+#' Validate statistical-entity parameters shared by errorbar and ribbon.
+#' @noRd
+#' @keywords internal
+._validate_stat_entity <- function(stat, level, ci_method, seed) {
+  stat_choices <- c("identity", "mean_sem", "mean_sd", "mean_range", "mean_ci95")
+  if (length(stat) != 1 || !stat %in% stat_choices) {
+    ._abort_arg_enum("stat", stat_choices, got = stat)
+  }
+  if (length(level) != 1 || is.na(level) || level <= 0 || level >= 1) {
+    ._abort_arg_range("level", "in (0, 1)", got = level)
+  }
+  if (identical(ci_method, "boot") && is.null(seed)) {
+    ._abort_hint(
+      "{.code ci_method = \"boot\"} requires a {.arg seed} for reproducible resampling.",
+      "Pass a fixed integer, e.g. {.code seed = 1}."
+    )
+  }
+  seed_irrelevant <- !identical(stat, "identity") &&
+    !identical(stat, "mean_ci95")
+  if (seed_irrelevant && !is.null(seed)) {
+    ._warn_ignored("seed", "only {.code ci_method = \"boot\"} resamples")
+  }
+  stat
+}
+
 # ---- mark_errorbar ----
 #' Error bar / interval layer
 #'
-#' Adds interval bars showing confidence intervals, standard errors,
-#' or other variability measures.
+#' Adds interval bars showing pre-computed intervals (`stat = "identity"`,
+#' the default: `ymin`/`ymax` come straight from the data) or statistical
+#' entities computed per group (`stat = "mean_sem"`, `"mean_sd"`,
+#' `"mean_range"`, `"mean_ci95"`): the interval is aggregated from the raw
+#' `y` values of each x group with no manual pre-computation.
+#'
 #' Vertical bars (default) map the position on `x` and the interval on
 #' `ymin`/`ymax`; horizontal bars map the position on `y` and the interval
 #' on `xmin`/`xmax` (G2's `rangeX`/`rangeY` semantics).  Set `caps = FALSE`
 #' for plain interval lines without end caps (Vega-Lite's `errorband`).
 #'
 #' @param plot A plotit object
-#' @param mapping Optional new aesthetics (must include the interval
-#'   columns for the chosen orientation: `ymin`/`ymax` vertical,
-#'   `xmin`/`xmax` horizontal)
+#' @param mapping Optional new aesthetics.  With `stat = "identity"` it must
+#'   include the interval columns for the chosen orientation (`ymin`/`ymax`
+#'   vertical, `xmin`/`xmax` horizontal); with a statistical entity it only
+#'   needs `x` (group) and `y` (value).
 #' @param data Optional data for this layer
 #' @param position Position adjustment.
+#' @param stat Statistical entity: `"identity"` (pre-computed intervals,
+#'   no implicit aggregation) or one of `"mean_sem"`, `"mean_sd"`,
+#'   `"mean_range"`, `"mean_ci95"` (per-group aggregation of `y`).
+#' @param level Confidence level for `stat = "mean_ci95"`, in `(0, 1)`
+#'   (default 0.95).
+#' @param ci_method `"normal"` (default, t-based normal approximation) or
+#'   `"boot"` (percentile bootstrap of the mean; requires `seed`).
+#' @param seed RNG seed for `ci_method = "boot"`; required for
+#'   reproducibility of the bootstrap.
 #' @param width Size of the error bar caps as a fraction of the resolution
 #'   of the data (default 0.5).  Ignored when `caps = FALSE`.
 #' @param orientation `"vertical"` (default) or `"horizontal"`.
@@ -1353,7 +1587,8 @@ S7::method(mark_heatmap, plotit_class) <- function(
 #' @return Modified plotit object
 #' @references
 #' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/errorbar.html}{Errorbar} /
-#' \href{https://vega.github.io/vega-lite/docs/errorband.html}{Errorband} (composite marks)
+#' \href{https://vega.github.io/vega-lite/docs/errorband.html}{Errorband}
+#' (`extent`: stderr <-> sem, stdev <-> sd, ci <-> ci95)
 #'
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/range}{Range}
 #' @examples
@@ -1362,6 +1597,10 @@ S7::method(mark_heatmap, plotit_class) <- function(
 #' )
 #' plotit(df, encode(x = x, y = y, ymin = ymin, ymax = ymax)) |>
 #'   mark_errorbar(width = 0.3)
+#'
+#' # statistical entity: mean +- sem aggregated per group from raw y
+#' plotit(iris, encode(x = Species, y = Sepal.Length)) |>
+#'   mark_errorbar(stat = "mean_sem")
 #'
 #' # horizontal interval (position on y, range on x)
 #' dfh <- data.frame(
@@ -1374,6 +1613,8 @@ S7::method(mark_heatmap, plotit_class) <- function(
 mark_errorbar <- S7::new_generic(
   "mark_errorbar", "plot",
   function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           stat = "identity", level = 0.95,
+           ci_method = c("normal", "boot"), seed = NULL,
            width = 0.5, orientation = c("vertical", "horizontal"),
            caps = TRUE,
            rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
@@ -1384,20 +1625,209 @@ mark_errorbar <- S7::new_generic(
 #' @export
 S7::method(mark_errorbar, plotit_class) <- function(
   plot, mapping = NULL, data = NULL, position = NULL, ...,
+  stat = "identity", level = 0.95,
+  ci_method = c("normal", "boot"), seed = NULL,
   width = 0.5, orientation = c("vertical", "horizontal"),
   caps = TRUE,
   rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
 ) {
   orientation <- match.arg(orientation)
+  ci_method <- match.arg(ci_method)
+  stat <- ._validate_stat_entity(stat, level, ci_method, seed)
   gg_orient <- if (orientation == "horizontal") "y" else "x"
   geom_fun <- if (isTRUE(caps)) ggplot2::geom_errorbar else ggplot2::geom_linerange
   params <- rlang::list2(...)
   params$orientation <- gg_orient
   # Cap width is an errorbar-only parameter; linerange has no caps.
   if (isTRUE(caps)) params$width <- width
+  if (!identical(stat, "identity")) {
+    params$stat <- "summary"
+    params$fun.data <- switch(stat,
+      mean_sem = ._fun_data_mean_sem,
+      mean_sd = ._fun_data_mean_sd,
+      mean_range = ._fun_data_mean_range,
+      mean_ci95 = function(x, ...) {
+        ._fun_data_mean_ci(
+          x,
+          level = level, ci_method = ci_method, seed = seed
+        )
+      }
+    )
+  }
   ._impl_with(plot, mapping, data, position, geom_fun,
     rasterize, rasterize_dpi, rasterize_dev,
     bind_aes = ._MARK_BIND_AES$mark_errorbar, mark_name = "mark_errorbar",
+    extra = params
+  )
+}
+
+# ---- mark_ribbon ----
+#' Statistical ribbon layer
+#'
+#' Draws an interval band.  This is a **syntax-sugar composite mark** over
+#' `geom_ribbon`:
+#'
+#' Equivalent expansion:
+#' \preformatted{
+#'   stat = "identity"  is  mark_area()'s interval routing (ymin/ymax from
+#'                      the data, no aggregation)
+#'   stat = "mean_sem"  is  stat_summary(fun.data = mean_sem, geom = "ribbon")
+#'                      (tidyplots add_sem_ribbon is the same shape)
+#' }
+#'
+#' @param plot A plotit object
+#' @param mapping Optional aesthetics: `x` plus `ymin`/`ymax` for
+#'   `stat = "identity"`, or `x` (group) + `y` (value) for a statistical
+#'   entity.
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param stat Statistical entity: `"identity"` (pre-computed band) or
+#'   `"mean_sem"` / `"mean_sd"` / `"mean_range"` / `"mean_ci95"`
+#'   (per-group aggregation of `y`; shares the engine with
+#'   [mark_errorbar()]).
+#' @param level Confidence level for `stat = "mean_ci95"`, in `(0, 1)`.
+#' @param ci_method `"normal"` (t-based approximation) or `"boot"`
+#'   (percentile bootstrap; requires `seed`).
+#' @param seed RNG seed for `ci_method = "boot"`.
+#' @param alpha Band fill opacity; `NULL` (default) uses the statistical
+#'   token `alpha_ci` (0.25), tuned so stacked evidence stays readable
+#'   behind points and lines.
+#' @param width On a discrete x axis, the band occupies this share of each
+#'   category slot (default 0.9); a statistical entity becomes one
+#'   slot-width rectangle band per group, filled by the grouping channel.
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to `geom_ribbon`
+#' @return Modified plotit object
+#' @references
+#' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/errorband.html}{Errorband}
+#' (`extent`: stderr <-> sem, stdev <-> sd, ci <-> ci95)
+#'
+#' tidyplots: `add_sem_ribbon()` / `add_ci95()` (same aggregation shapes)
+#' @examples
+#' fit <- stats::loess(mpg ~ wt, data = mtcars)
+#' band <- data.frame(
+#'   wt = mtcars$wt,
+#'   fit = stats::predict(fit),
+#'   se = stats::predict(fit, se = TRUE)$se.fit
+#' )
+#' band$lo <- band$fit - 1.96 * band$se
+#' band$hi <- band$fit + 1.96 * band$se
+#' plotit(band, encode(x = wt, ymin = lo, ymax = hi)) |>
+#'   mark_ribbon() |>
+#'   mark_line(mapping = encode(x = wt, y = fit))
+#'
+#' # statistical entity: mean +- sem per group from raw y
+#' plotit(iris, encode(x = Species, y = Sepal.Length)) |>
+#'   mark_ribbon(stat = "mean_sem") |>
+#'   mark_point(stat = "summary", fun = "mean")
+#' @export
+mark_ribbon <- S7::new_generic(
+  "mark_ribbon", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           stat = "identity", level = 0.95,
+           ci_method = c("normal", "boot"), seed = NULL, alpha = NULL,
+           width = 0.9,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_ribbon, plotit_class) <- function(
+  plot, mapping = NULL, data = NULL, position = NULL, ...,
+  stat = "identity", level = 0.95,
+  ci_method = c("normal", "boot"), seed = NULL, alpha = NULL,
+  width = 0.9,
+  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+) {
+  ci_method <- match.arg(ci_method)
+  stat <- ._validate_stat_entity(stat, level, ci_method, seed)
+  params <- rlang::list2(...)
+  if (is.null(alpha)) {
+    alpha <- ._MARK_STYLE$alpha_ci
+  }
+  params$alpha <- alpha
+
+  # Discrete axis + statistical entity: stat_summary collapses each ribbon
+  # group to a single point (no band).  Aggregate here instead and emit one
+  # slot-width rectangle band per cell, filled by the grouping channel.
+  if (!identical(stat, "identity")) {
+    d0 <- data %||% plot@gg$data
+    xv <- rlang::eval_tidy(mapping$x %||% plot@gg$mapping$x, d0)
+    if (is.factor(xv) || is.character(xv)) {
+      yv <- rlang::eval_tidy(mapping$y %||% plot@gg$mapping$y, d0)
+      gexpr <- mapping$colour %||% mapping$fill %||%
+        plot@gg$mapping$colour %||% plot@gg$mapping$fill
+      gv <- if (!is.null(gexpr)) {
+        rlang::eval_tidy(gexpr, d0)
+      } else {
+        "all"
+      }
+      gv <- rep(as.character(gv), length.out = length(xv))
+      xv <- factor(xv)
+      fun_data <- switch(stat,
+        mean_sem = ._fun_data_mean_sem,
+        mean_sd = ._fun_data_mean_sd,
+        mean_range = ._fun_data_mean_range,
+        mean_ci95 = function(x, ...) {
+          ._fun_data_mean_ci(
+            x,
+            level = level, ci_method = ci_method, seed = seed
+          )
+        }
+      )
+      keep <- !is.na(xv) & !is.na(yv)
+      cell <- paste(xv, gv, sep = "\r")
+      band <- do.call(rbind, lapply(split(which(keep), cell[keep]), function(ii) {
+        fd <- fun_data(yv[ii])
+        data.frame(
+          x = xv[ii][1],
+          ymid = (fd$ymin + fd$ymax) / 2,
+          h = fd$ymax - fd$ymin,
+          grp = gv[ii][1]
+        )
+      }))
+      band$grp <- factor(band$grp)
+      # A tile at the discrete position with the slot width is the native
+      # discrete-scale band (a ribbon cannot span a discrete axis).
+      band_mapping <- encode(x = x, y = ymid, fill = grp, height = h)
+      if (length(unique(band$grp)) > 1) {
+        band_mapping$group <- rlang::sym("grp")
+      }
+      params$inherit.aes <- FALSE # the band carries its own data
+      params$width <- width
+      params$colour <- params$colour %||% NA
+      params$linewidth <- 0
+      params$show.legend <- FALSE # the grouping legend lives on the marks
+      return(._impl_with(plot, band_mapping, band, position,
+        ggplot2::geom_tile,
+        rasterize, rasterize_dpi, rasterize_dev,
+        auto_dodge = FALSE, bind_aes = NULL, mark_name = "mark_ribbon",
+        extra = params
+      ))
+    }
+  }
+
+  if (!identical(stat, "identity")) {
+    params$stat <- "summary"
+    params$fun.data <- switch(stat,
+      mean_sem = ._fun_data_mean_sem,
+      mean_sd = ._fun_data_mean_sd,
+      mean_range = ._fun_data_mean_range,
+      mean_ci95 = function(x, ...) {
+        ._fun_data_mean_ci(
+          x,
+          level = level, ci_method = ci_method, seed = seed
+        )
+      }
+    )
+  }
+  ._impl_with(plot, mapping, data, position, ggplot2::geom_ribbon,
+    rasterize, rasterize_dpi, rasterize_dev,
+    auto_dodge = FALSE,
+    bind_aes = ._MARK_BIND_AES$mark_ribbon, mark_name = "mark_ribbon",
     extra = params
   )
 }
@@ -1435,6 +1865,9 @@ S7::method(mark_errorbar, plotit_class) <- function(
 #' @param ... Additional arguments passed to the label annotation
 #'   (`ggplot2::annotate("text", ...)`).
 #' @return Modified plotit object
+#' @references
+#' Vega-Lite: `layer` composition of rule + text annotation layers; no native
+#' significance mark
 #' @examples
 #' df <- data.frame(group = c("A", "B", "C"), value = c(5, 8, 4))
 #' comp <- data.frame(
@@ -1461,14 +1894,16 @@ S7::method(mark_significance, plotit_class) <- function(
   text_size = ._MARK_STYLE$txt_note, tip_length = 0.02, ...
 ) {
   if (!is.data.frame(comparisons)) {
-    cli::cli_abort("{.arg comparisons} must be a data frame.")
+    ._abort_arg_range("comparisons", "a data.frame", got = deparse(substitute(comparisons)))
   }
   required <- c("group1", "group2", "label")
   missing_cols <- setdiff(required, names(comparisons))
   if (length(missing_cols) > 0) {
-    cli::cli_abort(
-      "{.arg comparisons} must have columns: {.val {required}}."
-    )
+    cli::cli_abort(c(
+      "{.arg comparisons} must have the columns {.val group1}, {.val group2}, {.val label}.",
+      "x" = sprintf("Missing: {.val %s}.", paste0("c(", deparse(missing_cols), ")")),
+      "i" = "One row per comparison; {.val label} carries the annotation text."
+    ))
   }
   # Extract data range only when needed for auto-computation (C3)
   d <- plot@gg$data
@@ -1574,6 +2009,9 @@ S7::method(mark_significance, plotit_class) <- function(
 #' @param ref Baseline value for the stems (default 0).
 #' @param ... Other arguments passed to `mark_point()`
 #' @return Modified plotit object
+#' @references
+#' AntV G2: `interval` + `point` layer composition (corelib); no native
+#' lollipop mark
 #' @examples
 #' df <- data.frame(cat = LETTERS[1:5], val = c(3, 7, 2, 9, 5))
 #' plotit(df, encode(x = cat, y = val)) |>
@@ -1643,6 +2081,8 @@ S7::method(mark_lollipop, plotit_class) <- function(
 #' @param line_width Width for the connecting line (default 0.9).
 #' @param ... Other arguments passed to `mark_point()` calls
 #' @return Modified plotit object
+#' @references
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/link}{Link} (corelib)
 #' @examples
 #' df <- data.frame(
 #'   cat = LETTERS[1:5], before = c(3, 5, 2, 8, 4),
@@ -1711,6 +2151,191 @@ S7::method(mark_dumbbell, plotit_class) <- function(
   plot
 }
 
+# ---- mark_encircle ----
+#' Group annotation envelope layer
+#'
+#' Draws a smooth envelope around the clusters of a scatter plot, one per
+#' group: the annotation sibling of [mark_point()] (ggforce's
+#' `geom_mark_hull` / `geom_mark_ellipse` in simplified, dependency-free
+#' form).  This is a **syntax-sugar composite mark**.
+#'
+#' Equivalent expansion:
+#' \preformatted{
+#'   shape = "hull"    is  grDevices::chull() vertices per group, dilated
+#'                     outward by `expand`, rounded by `radius`, then
+#'                     mark_polygon(fill = primary, colour = faint)
+#'   shape = "ellipse" is  ggplot2::stat_ellipse() per group, dilated the
+#'                     same way, then mark_polygon()
+#' }
+#'
+#' ggforce's label and arrow decorations are not part of this layer;
+#' annotate groups with [mark_text()] / [mark_label()] instead.
+#'
+#' @param plot A plotit object
+#' @param mapping Optional aesthetics: `x`, `y` plus an optional discrete
+#'   channel (`colour`/`fill`/`group`) giving one envelope per level
+#' @param data Optional data for this layer
+#' @param position Position adjustment.
+#' @param shape `"hull"` (convex hull) or `"ellipse"` (t-based data
+#'   ellipse, `stat_ellipse` engine at 0.95 level)
+#' @param expand Proportional outward dilation of the envelope (default
+#'   0.05 = 5% of each vertex's distance from the envelope centroid;
+#'   approximates ggforce's npc expansion).  `0` keeps the raw hull.
+#' @param radius Corner-rounding strength (default 0.05): one Chaikin
+#'   round per 0.05 smooths the hull corners; `0` keeps sharp corners.
+#'   Simplified counterpart of ggforce's `concavity`.
+#' @param alpha Envelope fill opacity; `NULL` (default) uses the
+#'   annotation token `alpha_annot` (0.18).
+#' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
+#' @param rasterize_dpi DPI for rasterization (default 300).
+#' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
+#' @param ... Other arguments passed to the underlying `geom_polygon`
+#'   (`fill`, `colour`, `linewidth` default to the primary token, the
+#'   faint neutral, and the thin stroke).
+#' @return Modified plotit object
+#' @references
+#' ggforce: \href{https://ggforce.data-imaginist.com/reference/geom_mark_hull.html}{geom_mark_hull} /
+#' \href{https://ggforce.data-imaginist.com/reference/geom_mark_ellipse.html}{geom_mark_ellipse}
+#'
+#' R: \code{grDevices::chull()} (convex hull) / ggplot2 \code{stat_ellipse()}
+#' @examples
+#' plotit(iris, encode(x = Petal.Length, y = Petal.Width, colour = Species)) |>
+#'   mark_point() |>
+#'   mark_encircle(shape = "ellipse")
+#' @export
+mark_encircle <- S7::new_generic(
+  "mark_encircle", "plot",
+  function(plot, mapping = NULL, data = NULL, position = NULL, ...,
+           shape = c("hull", "ellipse"), expand = 0.05, radius = 0.05,
+           alpha = NULL,
+           rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+S7::method(mark_encircle, plotit_class) <- function(
+  plot, mapping = NULL, data = NULL, position = NULL, ...,
+  shape = c("hull", "ellipse"), expand = 0.05, radius = 0.05,
+  alpha = NULL,
+  rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
+) {
+  shape <- match.arg(shape)
+  if (!is.numeric(expand) || length(expand) != 1 || is.na(expand) || expand < 0) {
+    ._abort_arg_range("expand", "a single non-negative number", got = expand)
+  }
+  if (!is.numeric(radius) || length(radius) != 1 || is.na(radius) || radius < 0) {
+    ._abort_arg_range("radius", "a single non-negative number", got = radius)
+  }
+  if (is.null(alpha)) {
+    alpha <- ._MARK_STYLE$alpha_annot
+  }
+
+  data <- data %||% plot@gg$data
+  mapping <- mapping %||% plot@gg$mapping
+  if (is.null(mapping$x) || is.null(mapping$y)) {
+    ._abort_hint(
+      "{.fn mark_encircle} requires the {.val x} and {.val y} aesthetics.",
+      "Use {.code encode(x = ..., y = ...)} in {.fn plotit} or a layer {.arg mapping}."
+    )
+  }
+  x <- rlang::eval_tidy(mapping$x, data)
+  y <- rlang::eval_tidy(mapping$y, data)
+  group_expr <- mapping$group %||% mapping$colour %||% mapping$fill
+  g <- if (!is.null(group_expr)) {
+    rlang::eval_tidy(group_expr, data)
+  } else {
+    "all"
+  }
+  # A constant channel (e.g. the injected default_color AsIs constant)
+  # evaluates to length 1; recycle it so every point is grouped the same.
+  g <- rep(as.character(g), length.out = length(x))
+  ok <- !is.na(x) & !is.na(y) & !is.na(g)
+  x <- x[ok]
+  y <- y[ok]
+  g <- g[ok]
+
+  # Uniform outward margin: expand shares of the hull diameter move the
+  # boundary outward everywhere, so extreme points keep clearance (the
+  # naive proportional dilation leaves them on the boundary).
+  dilate <- function(pts) {
+    if (expand == 0) {
+      return(pts)
+    }
+    cxy <- c(mean(pts$x), mean(pts$y))
+    d <- sqrt((pts$x - cxy[1])^2 + (pts$y - cxy[2])^2)
+    m <- expand * 2 * max(d)
+    k <- (d + m) / d
+    pts$x <- cxy[1] + (pts$x - cxy[1]) * k
+    pts$y <- cxy[2] + (pts$y - cxy[2]) * k
+    pts
+  }
+  round_corners <- function(pts) {
+    rounds <- max(0L, round(radius / 0.05))
+    for (i in seq_len(rounds)) {
+      n <- nrow(pts)
+      idx2 <- c(seq_len(n - 1), 1L)
+      qx <- (pts$x + pts$x[idx2]) / 2 # midpoint of each edge v[i] -> v[i+1]
+      qy <- (pts$y + pts$y[idx2]) / 2
+      pts <- data.frame(x = as.vector(rbind(pts$x, qx)), y = as.vector(rbind(pts$y, qy)))
+    }
+    pts
+  }
+
+  levels <- unique(g)
+  polys <- lapply(levels, function(lv) {
+    idx <- g == lv
+    if (sum(idx) < 3) {
+      return(NULL)
+    }
+    if (shape == "hull") {
+      h <- grDevices::chull(x[idx], y[idx])
+      pts <- data.frame(x = x[idx][h], y = y[idx][h])
+    } else {
+      built <- ggplot2::ggplot_build(
+        ggplot2::ggplot(
+          data.frame(x = x[idx], y = y[idx]),
+          ggplot2::aes(x = x, y = y)
+        ) +
+          ggplot2::stat_ellipse()
+      )
+      pts <- built$data[[1]][c("x", "y")]
+    }
+    pts <- dilate(pts)
+    pts <- round_corners(pts)
+    pts$grp <- lv
+    pts
+  })
+  poly_df <- do.call(rbind, polys)
+  if (is.null(poly_df) || nrow(poly_df) == 0) {
+    cli::cli_abort(c(
+      "{.fn mark_encircle} needs at least 3 non-missing points per group.",
+      "i" = "Envelopes are undefined for smaller clusters."
+    ))
+  }
+
+  params <- rlang::list2(...)
+  if (is.null(params$fill)) {
+    params$fill <- ._MARK_STYLE$primary
+  }
+  if (is.null(params$colour)) {
+    params$colour <- ._MARK_STYLE$faint
+  }
+  if (is.null(params$linewidth)) {
+    params$linewidth <- ._MARK_STYLE$lw_thin
+  }
+  params$alpha <- alpha
+  layer_mapping <- ggplot2::aes(x = x, y = y, fill = .data$grp)
+  if (length(levels) > 1) {
+    layer_mapping$group <- rlang::sym("grp")
+  }
+  ._impl_with(plot, layer_mapping, poly_df, position, ggplot2::geom_polygon,
+    rasterize, rasterize_dpi, rasterize_dev,
+    auto_dodge = FALSE, bind_aes = NULL, mark_name = "mark_encircle",
+    extra = params
+  )
+}
+
 # ---- mark_beeswarm ----
 #' Beeswarm plot layer
 #'
@@ -1731,6 +2356,7 @@ S7::method(mark_dumbbell, plotit_class) <- function(
 #' @param ... Other arguments passed to `geom_beeswarm`
 #' @return Modified plotit object
 #' @references
+#' R: \code{ggbeeswarm::geom_beeswarm()} (collision-avoidance rendering)
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/beeswarm}{Beeswarm} (corelib)
 #' @examplesIf(requireNamespace("ggbeeswarm", quietly = TRUE))
 #' plotit(iris, encode(x = Species, y = Sepal.Length)) |>
@@ -1779,6 +2405,10 @@ S7::method(mark_beeswarm, plotit_class) <- function(
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_bar` or `geom_col`
 #' @return Modified plotit object
+#' @references
+#' Vega-Lite: \href{https://vega.github.io/vega-lite/docs/bar.html}{Bar}
+#'
+#' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/interval}{Interval} (corelib)
 #' @examples
 #' plotit(mtcars, encode(x = factor(cyl))) |> mark_bar()
 #' @export
@@ -2047,7 +2677,7 @@ S7::method(mark_curve, plotit_class) <- function(
 #'
 #' Draws each unique point once, sized by the number of observations at
 #' that location (`stat_sum`).  The standard answer to overplotting in
-#' scatter plots of discrete or binned data; pair with [scale_radius()]
+#' scatter plots of discrete or binned data; pair with [scale_size()]
 #' for an area-proportional legend.
 #'
 #' @param plot A plotit object
@@ -2163,6 +2793,7 @@ S7::method(mark_bin2d, plotit_class) <- function(
 #' statistical mark; the band scale defaults to discrete viridis and can be
 #' replaced by chaining [scale_fill()] afterwards.
 #' @references
+#' R: \code{grDevices::contourLines()} (contour extraction)
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/contour}{Contour}
 #'
 #' Observable Plot: `Plot.contour`
@@ -2232,7 +2863,7 @@ S7::method(mark_contour, plotit_class) <- function(
 #' @param ... Other arguments passed to `geom_qq` (e.g. `dparams`)
 #' @return Modified plotit object
 #' @references
-#' Observable Plot: \href{https://observablehq.com/plot/plots/qq}{Plot.qq}
+#' R: \code{stats::qqnorm()} / \code{stats::qqplot()}
 #' @examples
 #' ecdf_data <- data.frame(eruptions = faithful$eruptions)
 #' plotit(ecdf_data, encode(x = eruptions)) |>
@@ -2342,6 +2973,8 @@ S7::method(mark_qq, plotit_class) <- function(
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
 #' @param ... Other arguments passed to `geom_qq_line`
 #' @return Modified plotit object
+#' @references
+#' R: \code{stats::qqline()} (quartile-pair reference line)
 #' @examples
 #' ecdf_data <- data.frame(eruptions = faithful$eruptions)
 #' plotit(ecdf_data, encode(x = eruptions)) |>
@@ -2399,7 +3032,8 @@ S7::method(mark_qq_line, plotit_class) <- function(
 #' @param ... Other arguments passed to the underlying step layer
 #' @return Modified plotit object
 #' @references
-#' Observable Plot: \href{https://observablehq.com/plot/marks/ecdf}{Plot.ecdf}
+#' R: \code{stats::ecdf()} (empirical cumulative distribution)
+#' Observable Plot: `Plot.ecdf`
 #'
 #' Vega-Lite: `line`/`step` with cumulative `window` transform
 #' @examples
@@ -2458,7 +3092,15 @@ S7::method(mark_ecdf, plotit_class) <- function(
 #' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
 #' @param rasterize_dpi DPI for rasterization (default 300).
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
-#' @param ... Other arguments passed to `geom_label` or `geom_label_repel`
+#' @param ... Other arguments passed to `geom_label` or `geom_label_repel`.
+#'   With `repel = TRUE` the \pkg{ggrepel} passthrough parameters are the
+#'   same as [mark_text()] (see its `@param ...` for the full list with
+#'   defaults); `geom_label_repel` additionally styles the box with
+#'   `label.padding = 0.25`, `label.r = 0.15`, `label.size = 0.25`.
+#'   Without repel, ggplot2 4.0 styles the box with the `linewidth`
+#'   aesthetic (the old `label.size` argument is deprecated): use
+#'   `mark_label(linewidth = 0.4)`; `border.colour`/`text.colour` style the
+#'   box and text independently.
 #' @return Modified plotit object
 #' @references
 #' AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/text}{Text} (`badge` state)
@@ -2601,6 +3243,7 @@ S7::method(mark_forest, plotit_class) <- function(
   "mark_point", "mark_line", "mark_area", "mark_bar", "mark_rect",
   "mark_polygon", "mark_text", "mark_rule", "mark_path",
   "mark_step", "mark_rug", "mark_spoke", "mark_curve",
+  "mark_image",
   # Distributions
   "mark_histogram", "mark_density", "mark_boxplot", "mark_violin",
   "mark_ecdf",
@@ -2609,9 +3252,10 @@ S7::method(mark_forest, plotit_class) <- function(
   # Statistical
   "mark_smooth", "mark_hex", "mark_density_2d", "mark_corr", "mark_heatmap",
   "mark_count", "mark_bin2d", "mark_contour", "mark_qq", "mark_qq_line",
+  "mark_ribbon",
   # Composite / annotation
   "mark_errorbar", "mark_significance", "mark_lollipop", "mark_dumbbell",
-  "mark_beeswarm", "mark_forest", "mark_label",
+  "mark_beeswarm", "mark_forest", "mark_label", "mark_encircle",
   # Relational sugars
   "mark_sankey", "mark_treemap", "mark_network", "mark_chord"
 )

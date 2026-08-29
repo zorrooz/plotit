@@ -9,6 +9,14 @@ NULL
 #' identically to built-in marks: it supports `mapping`, `data`,
 #' `position`, auto-dodge, and rasterization.
 #'
+#' @section Stability:
+#' Extension surface (contract tier: extensible). The signature is stable as
+#' documented; registration behaviour (how the new mark is exposed to the
+#' pipeline) may be iterated in future releases without a deprecation
+#' cycle. Marks registered via `make_mark()` that are not listed in
+#' `._MARK_CHROME` keep `axis = "keep"` by default (zero behavioural
+#' difference vs. hand-rolled layers).
+#'
 #' @param name Mark name as a string (e.g. `"mark_spoke"`).
 #'   Should start with `"mark_"`.
 #' @param geom_fun A ggplot2 geom function
@@ -28,22 +36,24 @@ NULL
 #' @export
 make_mark <- function(name, geom_fun) {
   if (!is.character(name) || length(name) != 1) {
-    cli::cli_abort("{.arg name} must be a single string.")
+    ._abort_arg_range("name", "a single string", got = name)
   }
   if (!is.function(geom_fun)) {
-    cli::cli_abort("{.arg geom_fun} must be a geom function.")
+    ._abort_arg_range("geom_fun", "a geom function")
   }
   if (!grepl("^mark_", name)) {
-    cli::cli_warn(
-      "{.arg name} should start with 'mark_', got {.val {name}}."
-    )
+    cli::cli_warn(c(
+      "{.arg name} should start with 'mark_'.",
+      "x" = "Got {.val {name}}.",
+      "i" = "The mark_ prefix keeps custom marks callable through the shared mark path."
+    ))
   }
   # Re-registering silently replaces the previous binding; say so.
   if (exists(name, envir = parent.frame(), inherits = FALSE)) {
-    cli::cli_warn(
-      "{.val {name}} already exists in the calling environment and will be \\
-       replaced."
-    )
+    cli::cli_warn(c(
+      "{.val {name}} already exists in the calling environment.",
+      "i" = "It will be replaced; assign a different name first to keep the old function."
+    ))
   }
 
   generic <- ._make_mark_generic(name)
@@ -60,6 +70,11 @@ make_mark <- function(name, geom_fun) {
 #' Builds a theme function from `ggplot2::theme()` elements and
 #' an optional base theme. The returned function applies the theme
 #' to a plotit object and can be used anywhere `style()` is used.
+#'
+#' @section Stability:
+#' Extension surface (contract tier: extensible). The signature is stable as
+#' documented; the set of theme elements accepted via `...` is governed by
+#' [ggplot2::theme()] and may grow with ggplot2 releases.
 #'
 #' @param name Name for the theme function as a string
 #'   (e.g. `"style_dark"`).

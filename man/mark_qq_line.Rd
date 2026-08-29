@@ -57,3 +57,6 @@ plotit(ecdf_data, encode(x = eruptions)) |>
   mark_qq() |>
   mark_qq_line()
 }
+\references{
+R: \code{stats::qqline()} (quartile-pair reference line)
+}

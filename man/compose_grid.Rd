@@ -13,6 +13,8 @@ compose_grid(
   heights = NULL,
   guides = "collect",
   axes = "keep",
+  axis_titles = axes,
+  design = NULL,
   tag_levels = NULL
 )
 }
@@ -36,6 +38,17 @@ the number of plots.}
 
 \item{axes}{\code{"collect"} to share all axes, \code{"collect_x"} or \code{"collect_y"}
 for a single direction, \code{"keep"} (default) to keep axes independent.}
+
+\item{axis_titles}{Axis-title sharing: defaults to the \code{axes} value;
+\code{"collect"} merges repeated axis titles onto one panel,
+\code{"collect_x"}/\code{"collect_y"} per direction, \code{"keep"} independent.}
+
+\item{design}{Layout specification replacing \code{ncol}/\code{nrow}/\code{byrow}:
+either a text layout (one row per line, digits = plot order,
+\verb{#} = empty cell, e.g. the two-row layout "122" / "133") or a
+list of numeric area
+vectors \code{c(top, left, bottom, right)}.  When given, it wins over
+\code{ncol}/\code{nrow}/\code{byrow} (a warning flags the overlap).}
 
 \item{tag_levels}{Sub-figure tag scheme: \code{"A"} for uppercase letters,
 \code{"a"} for lowercase, \code{"1"} for numbers, \code{"i"} for roman numerals, or a

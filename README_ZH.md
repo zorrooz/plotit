@@ -112,7 +112,7 @@ compose_*(p1, p2, ...) |> label_*() |> style() |> export()
 
 ### `mark_*` — 几何图层
 
-共 39 种 mark，分三层体系：基础几何、统计、复合/关系。
+共 43 种 mark，分三层体系：基础几何、统计、复合/关系。
 复合与关系 mark 均为下层原语的文档化语法糖
 （如 `mark_significance()` ≈ `mark_rule()` + `mark_text()`）。
 
@@ -156,6 +156,10 @@ compose_*(p1, p2, ...) |> label_*() |> style() |> export()
 | `mark_treemap()` | `layout_treemap()` 语法糖 | 矩形树图 |
 | `mark_network()` | `layout_force()/circle()` 语法糖 | 网络图（直/曲边 `edge_shape=`） |
 | `mark_chord()` | `layout_chord()` 语法糖 | 弦图 |
+| `mark_image()` | 自研 `GeomPlotitImage` | 图像散点/ISOTYPE（圆形 alpha 蒙版缩略图） |
+| `mark_encircle()` | hull / `stat_ellipse` 语法糖 | 分组圈注（凸包、置信椭圆） |
+| `mark_ribbon()` | `geom_ribbon` 语法糖 | 统计区间带（SE/SD/CI、可 bootstrap） |
+| `mark_heatmap()` | 内部矩阵重塑 + `geom_tile` | 矩阵热图（聚类、z-score、数值叠加） |
 
 ### 关系数据 — `as_graph()` + `layout_*()`
 
@@ -194,13 +198,16 @@ edges |>
 |:---|:---|
 | `scale_color()` | 颜色 |
 | `scale_fill()` | 填充 |
-| `scale_size()` | 大小 |
-| `scale_radius()` | 半径（气泡面积诚实编码） |
+| `scale_size()` | 大小 / 半径（气泡编码） |
 | `scale_alpha()` | 透明度 |
 | `scale_shape()` | 形状 |
 | `scale_linetype()` | 线型 |
 | `scale_x()` | x 轴 |
 | `scale_y()` | y 轴 |
+
+`scale_radius()` 自 1.0 起 **defunct** —— 半径编码归 `scale_size()` 域
+（`scale_size(range = ...)`）；如需面积诚实半径映射，直接用
+`ggplot2::scale_radius`。
 
 ### `label_*` — 文本标签
 

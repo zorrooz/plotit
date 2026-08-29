@@ -41,3 +41,7 @@ Adds a kernel density estimate layer.
 \examples{
 plotit(iris, encode(x = Sepal.Width)) |> mark_density()
 }
+\references{
+R: \code{stats::density()} (kernel density estimate)
+AntV G2: \href{https://g2.antv.antgroup.com/en/api/mark/density}{Density} (corelib)
+}
