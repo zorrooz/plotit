@@ -34,7 +34,8 @@ if (requireNamespace("sf", quietly = TRUE)) {
 ## Point symbols over a map
 
 ```{r, eval = FALSE}
-nc |> plotit(encode(x = 1, y = 1)) |>
+nc |>
+  plotit(encode(x = 1, y = 1)) |>
   mark_map(fill = "grey90", colour = "grey50") |>
   mark_point(mapping = encode(x = lon, y = lat), data = nc, size = 0.8)
 ```

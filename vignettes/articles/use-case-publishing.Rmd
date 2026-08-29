@@ -22,7 +22,8 @@ The paper workflow end to end: canvas size -> theme -> labels -> export.
 ```{r}
 p <- ggplot2::mpg |>
   plotit(encode(x = displ, y = hwy, colour = class),
-    autofit = FALSE, width = 6, height = 4, size_unit = "in") |>
+    autofit = FALSE, width = 6, height = 4, size_unit = "in"
+  ) |>
   mark_point(size = 2, alpha = 0.7) |>
   scale_color(range = "friendly")
 ```

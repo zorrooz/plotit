@@ -30,6 +30,13 @@ The theme function is assigned to \code{name} in the calling environment
 explicitly -- the \code{parent.frame()} assignment is lost when that
 function returns.
 }
+\section{Stability}{
+
+Extension surface (contract tier: extensible). The signature is stable as
+documented; the set of theme elements accepted via \code{...} is governed by
+\code{\link[ggplot2:theme]{ggplot2::theme()}} and may grow with ggplot2 releases.
+}
+
 \examples{
 style_dark <- make_theme("style_dark",
   plot.background = ggplot2::element_rect(fill = "#1a1a1a"),

@@ -22,6 +22,16 @@ making it available in the plotit pipeline. The new mark behaves
 identically to built-in marks: it supports \code{mapping}, \code{data},
 \code{position}, auto-dodge, and rasterization.
 }
+\section{Stability}{
+
+Extension surface (contract tier: extensible). The signature is stable as
+documented; registration behaviour (how the new mark is exposed to the
+pipeline) may be iterated in future releases without a deprecation
+cycle. Marks registered via \code{make_mark()} that are not listed in
+\code{._MARK_CHROME} keep \code{axis = "keep"} by default (zero behavioural
+difference vs. hand-rolled layers).
+}
+
 \examples{
 make_mark("mark_spoke", ggplot2::geom_spoke)
 df <- data.frame(

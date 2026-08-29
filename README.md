@@ -115,7 +115,7 @@ compose_*(p1, p2, ...) |> label_*() |> style() |> export()
 
 ### `mark_*` — Geometric layers
 
-39 marks across three tiers: basic geometry, statistical, and composite/relational.
+43 marks across three tiers: basic geometry, statistical, and composite/relational.
 Composite and relational marks are documented syntax sugar over the primitives
 below (e.g. `mark_significance()` ≈ `mark_rule()` + `mark_text()`).
 
@@ -159,6 +159,10 @@ below (e.g. `mark_significance()` ≈ `mark_rule()` + `mark_text()`).
 | `mark_treemap()` | `layout_treemap()` sugar | Treemaps |
 | `mark_network()` | `layout_force()/circle()` sugar | Network graphs (straight or curved edges) |
 | `mark_chord()` | `layout_chord()` sugar | Chord diagrams |
+| `mark_image()` | custom `GeomPlotitImage` | Image scatter / ISOTYPE (circular alpha-masked thumbnails) |
+| `mark_encircle()` | hull / `stat_ellipse` sugar | Group envelopes (convex hull, confidence ellipse) |
+| `mark_ribbon()` | `geom_ribbon` sugar | Statistical interval bands (SE/SD/CI, bootstrapped) |
+| `mark_heatmap()` | internal matrix melt + `geom_tile` | Matrix heatmap (clustering, z-score, numeric overlay) |
 
 ### Relational data — `as_graph()` + `layout_*()`
 

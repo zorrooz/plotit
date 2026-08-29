@@ -1,7 +1,8 @@
 #' Initialize a plotit object
 #'
 #' @include class.R encode.R utils.R style.R
-#' @param data A data frame.
+#' @param data A data frame, a matrix (coerced with `as.data.frame()`),
+#'   or a `plotit_graph` (relational pipeline; see [as_graph()]).
 #' @param mapping An object created by [encode()].
 #' @param autofit Logical; if `TRUE`, plot dimensions are determined automatically.
 #' @param width,height Numeric; default width and height (ignored if `autofit = TRUE`).
@@ -70,6 +71,16 @@ plotit <- function(
       "{.arg autofit} is {.val TRUE}; {.arg width} and {.arg height} have no effect.",
       "i" = "They are ignored; remove them or set {.code autofit = FALSE} for explicit sizing."
     ))
+  }
+
+  # Matrix input: ggplot2 4.0's data validation requires uniquely named
+  # columns (`check_data_frame_like`), so plain matrices (with or without
+  # dimnames) error before any layer is built.  Coerce early on the plotit
+  # boundary so `plotit(matrix, encode(...))` just works; `as.data.frame()`
+  # keeps dimnames (column names, row names) when present and invents
+  # V1..Vk otherwise.
+  if (!graph_input && is.matrix(data)) {
+    data <- as.data.frame(data, stringsAsFactors = FALSE)
   }
 
   if (graph_input) {
@@ -183,6 +194,12 @@ plotit <- function(
 #' and return the `plotit` object so the pipeline continues.  Prefer the
 #' verb API (`mark_*`, `scale_*`, `label_*`, `style`) for reproducible,
 #' well-validated plots.
+#'
+#' @section Stability:
+#' Extension surface (contract tier: extensible). The signature is stable as
+#' documented; it is the supported replacement for the former S3 `+` operator
+#' on `plotit` objects, which is intentionally not defined so that ggplot2
+#' components are only added through this single explicit entry point.
 #'
 #' ggplot2 4.0's [ggplot2::stat_manual()] slots in here as a custom
 #' data-transformation layer without a dedicated plotit verb:

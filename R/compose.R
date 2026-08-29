@@ -639,7 +639,8 @@ compose_marginal <- function(
   # Design as patchwork area() objects.  The base spans its whole grid
   # row AND column so strips align to the base panel by construction;
   # each strip occupies its single slot cell.
-  base_area <- patchwork::area(base_row, base_col,
+  base_area <- patchwork::area(
+    base_row, base_col,
     match("base", row_slots), match("base", col_slots)
   )
   areas <- list(base_area)
@@ -753,11 +754,14 @@ compose_marginal <- function(
 #'
 #' @return A `plotit_composite` object.
 #' @examples
-#' mat <- matrix(c(9, 1, 8, 2, 1, 9, 2, 8, 5, 3, 7, 4), nrow = 4,
-#'   dimnames = list(paste0("g", 1:4), paste0("s", 1:3)))
+#' mat <- matrix(c(9, 1, 8, 2, 1, 9, 2, 8, 5, 3, 7, 4),
+#'   nrow = 4,
+#'   dimnames = list(paste0("g", 1:4), paste0("s", 1:3))
+#' )
 #' h <- stats::hclust(stats::dist(mat))
 #' hm <- plotit(mat, encode()) |> mark_heatmap(cluster = h)
-#' tree <- as_graph(h) |> plotit() |>
+#' tree <- as_graph(h) |>
+#'   plotit() |>
 #'   layout_dendrogram(direction = "up") |>
 #'   mark_rule(data = ~edges)
 #' hm |> compose_annot(top = tree)
@@ -817,9 +821,9 @@ compose_annot <- function(
   )
 
   plotit_composite(
-    gg          = gg,
-    plots       = c(list(base), strips),
-    layout      = list(
+    gg = gg,
+    plots = c(list(base), strips),
+    layout = list(
       type   = "annot",
       sides  = names(strips),
       gap    = gap,

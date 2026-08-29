@@ -9,6 +9,14 @@ NULL
 #' identically to built-in marks: it supports `mapping`, `data`,
 #' `position`, auto-dodge, and rasterization.
 #'
+#' @section Stability:
+#' Extension surface (contract tier: extensible). The signature is stable as
+#' documented; registration behaviour (how the new mark is exposed to the
+#' pipeline) may be iterated in future releases without a deprecation
+#' cycle. Marks registered via `make_mark()` that are not listed in
+#' `._MARK_CHROME` keep `axis = "keep"` by default (zero behavioural
+#' difference vs. hand-rolled layers).
+#'
 #' @param name Mark name as a string (e.g. `"mark_spoke"`).
 #'   Should start with `"mark_"`.
 #' @param geom_fun A ggplot2 geom function
@@ -62,6 +70,11 @@ make_mark <- function(name, geom_fun) {
 #' Builds a theme function from `ggplot2::theme()` elements and
 #' an optional base theme. The returned function applies the theme
 #' to a plotit object and can be used anywhere `style()` is used.
+#'
+#' @section Stability:
+#' Extension surface (contract tier: extensible). The signature is stable as
+#' documented; the set of theme elements accepted via `...` is governed by
+#' [ggplot2::theme()] and may grow with ggplot2 releases.
 #'
 #' @param name Name for the theme function as a string
 #'   (e.g. `"style_dark"`).

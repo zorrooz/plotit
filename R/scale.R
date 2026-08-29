@@ -142,7 +142,7 @@ NULL
 #' @noRd
 #' @keywords internal
 ._palette_friendly_long <- function(n) {
-  colorRampPalette(c(
+  grDevices::colorRampPalette(c(
     "#CC79A7", "#0072B2", "#56B4E9", "#009E73", "#F5C710", "#E69F00", "#D55E00"
   ))(n)
 }
@@ -150,7 +150,7 @@ NULL
 #' @noRd
 #' @keywords internal
 ._palette_tableau10 <- function(n) {
-  colorRampPalette(c(
+  grDevices::colorRampPalette(c(
     "#4E79A7", "#F28E2C", "#E15759", "#76B7B2", "#59A14F",
     "#EDC949", "#AF7AA1", "#FF9DA7", "#9C755F", "#BAB0AB"
   ))(n)
@@ -159,7 +159,7 @@ NULL
 #' @noRd
 #' @keywords internal
 ._palette_okabeito <- function(n) {
-  colorRampPalette(grDevices::palette.colors(palette = "Okabe-Ito"))(n)
+  grDevices::colorRampPalette(grDevices::palette.colors(palette = "Okabe-Ito"))(n)
 }
 
 # Scheme-based dispatch over the 20-name catalog.
@@ -227,7 +227,7 @@ NULL
       ramp <- ._diverging_ramp(scheme)
       ggplot2::discrete_scale(
         aesthetics = aes,
-        palette = function(n) colorRampPalette(if (reverse) rev(ramp) else ramp)(n),
+        palette = function(n) grDevices::colorRampPalette(if (reverse) rev(ramp) else ramp)(n),
         ...
       )
     } else {
@@ -648,7 +648,8 @@ S7::method(scale_color, plotit_class) <- function(plot, name = ggplot2::waiver()
                                                   labels = NULL, na_color = NULL,
                                                   n_bins = NULL, mid = NULL, ...) {
   ._scale_cf_impl(plot, "colour", name, trans, limits, range, breaks, labels,
-    na_color = na_color, n_bins = n_bins, mid = mid, ...)
+    na_color = na_color, n_bins = n_bins, mid = mid, ...
+  )
 }
 
 # ---- scale_fill ----
@@ -691,7 +692,8 @@ S7::method(scale_fill, plotit_class) <- function(plot, name = ggplot2::waiver(),
                                                  labels = NULL, na_color = NULL,
                                                  n_bins = NULL, mid = NULL, ...) {
   ._scale_cf_impl(plot, "fill", name, trans, limits, range, breaks, labels,
-    na_color = na_color, n_bins = n_bins, mid = mid, ...)
+    na_color = na_color, n_bins = n_bins, mid = mid, ...
+  )
 }
 
 # ---- scale_size ----

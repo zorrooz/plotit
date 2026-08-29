@@ -76,6 +76,15 @@ test_that("[BDD] print() returns plotit object invisibly", {
   expect_s3_class(print(p), "plotit::plotit")
 })
 
+test_that("[BDD] print() on a composite renders and returns invisibly", {
+  # TBD-1 / U-9 regression guard: composite printing runs through the S7
+  # bridge (S7::method(print, plotit_composite)) and must not error.
+  p1 <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
+  p2 <- plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot()
+  comp <- compose_grid(p1, p2, tag_levels = "A")
+  expect_invisible(print(comp))
+})
+
 # ---- contract boundary (3.3.10) ----
 test_that("[BDD] panel size respects contract within +/-1%", {
   p <- plotit(mtcars, encode(x = wt, y = mpg),

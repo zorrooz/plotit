@@ -43,3 +43,4 @@ docs/
 skills-lock.json
 .agent/
 plotit.Rcheck/
+plotit_*.tar.gz

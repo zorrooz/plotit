@@ -22,11 +22,18 @@ and return the \code{plotit} object so the pipeline continues.  Prefer the
 verb API (\verb{mark_*}, \verb{scale_*}, \verb{label_*}, \code{style}) for reproducible,
 well-validated plots.
 }
-\details{
+\section{Stability}{
+
+Extension surface (contract tier: extensible). The signature is stable as
+documented; it is the supported replacement for the former S3 \code{+} operator
+on \code{plotit} objects, which is intentionally not defined so that ggplot2
+components are only added through this single explicit entry point.
+
 ggplot2 4.0's \code{\link[ggplot2:stat_manual]{ggplot2::stat_manual()}} slots in here as a custom
 data-transformation layer without a dedicated plotit verb:
 \code{add_ggplot(p, ggplot2::stat_manual(fun = function(d) ...))}.
 }
+
 \examples{
 p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
   mark_point() |>

@@ -122,6 +122,47 @@ test_that("[BDD] non-wrapped expressions keep deparsed axis titles", {
   expect_match(p2@gg$labels$x, "wt")
 })
 
+# ---- matrix input coercion (TBD-7: ggplot2 4.0 requires named columns) ----
+
+test_that("[BDD] plain matrix without dimnames is coerced for plotting", {
+  m <- matrix(1:6, nrow = 2) # 2 rows x 3 cols, no names
+  p <- plotit(m, encode(x = V1, y = V3)) |> mark_point()
+  built <- ggplot2::ggplot_build(p@gg)
+  expect_equal(nrow(built$data[[1]]), 2)
+  expect_equal(names(built$data[[1]])[1], "x")
+  # Data frame behind the scenes keeps invented V1..Vk column names.
+  expect_equal(names(p@gg$data), c("V1", "V2", "V3"))
+})
+
+test_that("[BDD] dimnamed matrix keeps column and row names without warnings", {
+  m <- matrix(
+    1:6,
+    nrow = 2,
+    dimnames = list(c("row_a", "row_b"), c("col_c", "col_d", "col_e"))
+  )
+  expect_no_warning(
+    p <- plotit(m, encode(x = col_c, y = col_e)) |> mark_point()
+  )
+  expect_equal(names(p@gg$data), c("col_c", "col_d", "col_e"))
+  expect_equal(rownames(p@gg$data), c("row_a", "row_b"))
+})
+
+test_that("[BDD] character matrix columns are not factorised at the boundary", {
+  m <- matrix(c("a", "b", "c", "d"), nrow = 2)
+  p <- plotit(m, encode(x = V1, y = V2)) |> mark_point()
+  expect_type(p@gg$data[[1]], "character")
+})
+
+test_that("[BDD] constant-only mapped matrix still renders (pie idiom)", {
+  # The documented `encode(x = 1, y = count)` idiom keeps a constant column;
+  # ggplot2 itself warns when *every* mapped aesthetic is length 1, so the
+  # assertion targets the rendered layer, not the noise.
+  m <- matrix(1:4, nrow = 2)
+  p <- plotit(m, encode(x = 1, y = 2)) |> mark_point()
+  built <- suppressWarnings(ggplot2::ggplot_build(p@gg))
+  expect_equal(nrow(built$data[[1]]), 2)
+})
+
 # ---- aspect-true fixed gtable (letterbox) ----
 
 test_that("[BDD] fixed-aspect panels stay aspect-true in the export gtable", {

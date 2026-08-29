@@ -21,7 +21,7 @@ title: plotit
 subtitle: Declarative Plotting with ggplot2
 
 development:
-  mode: auto
+  mode: release
 
 navbar:
   structure:
