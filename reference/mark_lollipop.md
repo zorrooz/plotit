@@ -66,6 +66,11 @@ Equivalent expansion:
       p |> mark_rule(x = x, xend = x, y = ref, yend = y) |>
            mark_point(x = x, y = y)
 
+## References
+
+AntV G2: `interval` + `point` layer composition (corelib); no native
+lollipop mark
+
 ## Examples
 
 ``` r

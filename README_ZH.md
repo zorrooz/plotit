@@ -111,7 +111,7 @@ flows |>
 
 ### `mark_*` — 几何图层
 
-共 39 种 mark，分三层体系：基础几何、统计、复合/关系。 复合与关系 mark
+共 43 种 mark，分三层体系：基础几何、统计、复合/关系。 复合与关系 mark
 均为下层原语的文档化语法糖 （如
 [`mark_significance()`](https://zorrooz.github.io/plotit/reference/mark_significance.md)
 ≈
@@ -158,6 +158,10 @@ flows |>
 | [`mark_treemap()`](https://zorrooz.github.io/plotit/reference/mark_treemap.md) | [`layout_treemap()`](https://zorrooz.github.io/plotit/reference/layout_treemap.md) 语法糖 | 矩形树图 |
 | [`mark_network()`](https://zorrooz.github.io/plotit/reference/mark_network.md) | `layout_force()/circle()` 语法糖 | 网络图（直/曲边 `edge_shape=`） |
 | [`mark_chord()`](https://zorrooz.github.io/plotit/reference/mark_chord.md) | [`layout_chord()`](https://zorrooz.github.io/plotit/reference/layout_chord.md) 语法糖 | 弦图 |
+| [`mark_image()`](https://zorrooz.github.io/plotit/reference/mark_image.md) | 自研 `GeomPlotitImage` | 图像散点/ISOTYPE（圆形 alpha 蒙版缩略图） |
+| [`mark_encircle()`](https://zorrooz.github.io/plotit/reference/mark_encircle.md) | hull / `stat_ellipse` 语法糖 | 分组圈注（凸包、置信椭圆） |
+| [`mark_ribbon()`](https://zorrooz.github.io/plotit/reference/mark_ribbon.md) | `geom_ribbon` 语法糖 | 统计区间带（SE/SD/CI、可 bootstrap） |
+| [`mark_heatmap()`](https://zorrooz.github.io/plotit/reference/mark_heatmap.md) | 内部矩阵重塑 + `geom_tile` | 矩阵热图（聚类、z-score、数值叠加） |
 
 ### 关系数据 — `as_graph()` + `layout_*()`
 
@@ -197,13 +201,18 @@ edges |>
 |:---|:---|
 | [`scale_color()`](https://zorrooz.github.io/plotit/reference/scale_color.md) | 颜色 |
 | [`scale_fill()`](https://zorrooz.github.io/plotit/reference/scale_fill.md) | 填充 |
-| [`scale_size()`](https://zorrooz.github.io/plotit/reference/scale_size.md) | 大小 |
-| [`scale_radius()`](https://zorrooz.github.io/plotit/reference/scale_radius.md) | 半径（气泡面积诚实编码） |
+| [`scale_size()`](https://zorrooz.github.io/plotit/reference/scale_size.md) | 大小 / 半径（气泡编码） |
 | [`scale_alpha()`](https://zorrooz.github.io/plotit/reference/scale_alpha.md) | 透明度 |
 | [`scale_shape()`](https://zorrooz.github.io/plotit/reference/scale_shape.md) | 形状 |
 | [`scale_linetype()`](https://zorrooz.github.io/plotit/reference/scale_linetype.md) | 线型 |
 | [`scale_x()`](https://zorrooz.github.io/plotit/reference/scale_x.md) | x 轴 |
 | [`scale_y()`](https://zorrooz.github.io/plotit/reference/scale_y.md) | y 轴 |
+
+[`scale_radius()`](https://zorrooz.github.io/plotit/reference/scale_radius.md)
+自 1.0 起 **defunct** —— 半径编码归
+[`scale_size()`](https://zorrooz.github.io/plotit/reference/scale_size.md)
+域 （`scale_size(range = ...)`）；如需面积诚实半径映射，直接用
+[`ggplot2::scale_radius`](https://ggplot2.tidyverse.org/reference/scale_size.html)。
 
 ### `label_*` — 文本标签
 

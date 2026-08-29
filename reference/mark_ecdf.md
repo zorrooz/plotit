@@ -67,7 +67,8 @@ Modified plotit object
 
 ## References
 
-Observable Plot: [Plot.ecdf](https://observablehq.com/plot/marks/ecdf)
+R: [`stats::ecdf()`](https://rdrr.io/r/stats/ecdf.html) (empirical
+cumulative distribution) Observable Plot: `Plot.ecdf`
 
 Vega-Lite: `line`/`step` with cumulative `window` transform
 

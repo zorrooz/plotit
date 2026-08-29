@@ -4,15 +4,24 @@ pkgdown_sha: ~
 articles:
   composing: composing.html
   customizing: customizing.html
+  articles/gallery-annotations: gallery-annotations.html
+  articles/gallery-comparisons: gallery-comparisons.html
   articles/gallery-composing: gallery-composing.html
   articles/gallery-coordinates: gallery-coordinates.html
   articles/gallery-distributions: gallery-distributions.html
-  articles/gallery-groups: gallery-groups.html
+  articles/gallery-geo: gallery-geo.html
+  articles/gallery-matrix: gallery-matrix.html
+  articles/gallery-proportions: gallery-proportions.html
   articles/gallery-relational: gallery-relational.html
   articles/gallery-relationships: gallery-relationships.html
+  articles/gallery-trends: gallery-trends.html
+  articles/philosophy: philosophy.html
   plotit: plotit.html
   relational: relational.html
-last_built: 2026-08-27T16:13Z
+  articles/transform-recipes: transform-recipes.html
+  articles/use-case-bioinformatics: use-case-bioinformatics.html
+  articles/use-case-publishing: use-case-publishing.html
+last_built: 2026-08-29T10:26Z
 urls:
   reference: https://zorrooz.github.io/plotit/reference
   article: https://zorrooz.github.io/plotit/articles

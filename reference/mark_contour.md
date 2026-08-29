@@ -87,7 +87,10 @@ afterwards.
 
 ## References
 
-AntV G2: [Contour](https://g2.antv.antgroup.com/en/api/mark/contour)
+R:
+[`grDevices::contourLines()`](https://rdrr.io/r/grDevices/contourLines.html)
+(contour extraction) AntV G2:
+[Contour](https://g2.antv.antgroup.com/en/api/mark/contour)
 
 Observable Plot: `Plot.contour`
 

@@ -14,7 +14,7 @@ to share a common 0-1 scale."><style>.r-plt { display: block; margin: 1rem 0; }
 
     <a class="navbar-brand me-2" href="../index.html">plotit</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,12 +31,21 @@ to share a common 0-1 scale."><style>.r-plt { display: block; margin: 1rem 0; }
     <li><a class="dropdown-item" href="../articles/composing.html">Composing Figures</a></li>
     <li><a class="dropdown-item" href="../articles/relational.html">Relational Charts</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><a class="dropdown-item" href="../articles/gallery-groups.html">Gallery: Groups</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-comparisons.html">Gallery: Comparisons</a></li>
     <li><a class="dropdown-item" href="../articles/gallery-distributions.html">Gallery: Distributions</a></li>
     <li><a class="dropdown-item" href="../articles/gallery-relationships.html">Gallery: Relationships</a></li>
     <li><a class="dropdown-item" href="../articles/gallery-coordinates.html">Gallery: Time &amp; Coordinates</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-trends.html">Gallery: Trends</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-matrix.html">Gallery: Matrix</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-proportions.html">Gallery: Proportions</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-geo.html">Gallery: Geo</a></li>
     <li><a class="dropdown-item" href="../articles/gallery-relational.html">Gallery: Relational</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-annotations.html">Gallery: Annotations</a></li>
     <li><a class="dropdown-item" href="../articles/gallery-composing.html">Gallery: Annotation &amp; Composition</a></li>
+    <li><a class="dropdown-item" href="../articles/use-case-bioinformatics.html">Use Case: Bioinformatics</a></li>
+    <li><a class="dropdown-item" href="../articles/use-case-publishing.html">Use Case: Publishing</a></li>
+    <li><a class="dropdown-item" href="../articles/transform-recipes.html">Transform Recipes</a></li>
+    <li><a class="dropdown-item" href="../articles/philosophy.html">Design Philosophy</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -66,9 +75,13 @@ to share a common 0-1 scale.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">project_parallel</span><span class="op">(</span></span>
 <span>  <span class="va">plot</span>,</span>
-<span>  <span class="va">columns</span>,</span>
+<span>  columns <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  group <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  scale <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"std"</span>, <span class="st">"global"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
+<span>  order <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  recenter <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  aggregate <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"mean"</span>, <span class="st">"median"</span><span class="op">)</span>,</span>
+<span>  axis_labels <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  size <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  <span class="va">...</span></span>
@@ -96,6 +109,30 @@ Order matters: the first column is the leftmost axis.</p></dd>
 <dd><p><code>"std"</code> (default): min-max normalise each column to 0-1.
 <code>"global"</code>: min-max normalise across all columns to 0-1.
 <code>"none"</code>: no normalisation, each column keeps its own range.</p></dd>
+
+
+<dt id="arg-order">order<a class="anchor" aria-label="anchor" href="#arg-order"></a></dt>
+<dd><p>Axis order: character subset of <code>columns</code>; axes render in
+the given order and omitted columns drop. <code>NULL</code> (default) keeps the
+<code>columns</code> order.</p></dd>
+
+
+<dt id="arg-recenter">recenter<a class="anchor" aria-label="anchor" href="#arg-recenter"></a></dt>
+<dd><p>Reference axis for a difference-from-reference view: a
+column name; every polyline is re-expressed as its difference from
+that axis (normalised space), so the reference becomes a straight
+zero baseline. <code>NULL</code> disables.</p></dd>
+
+
+<dt id="arg-aggregate">aggregate<a class="anchor" aria-label="anchor" href="#arg-aggregate"></a></dt>
+<dd><p>Group overlay: <code>"none"</code> (default), or <code>"mean"</code> /
+<code>"median"</code> to draw one thick aggregate line per group behind the
+individual polylines (requires <code>group</code>).</p></dd>
+
+
+<dt id="arg-axis-labels">axis_labels<a class="anchor" aria-label="anchor" href="#arg-axis-labels"></a></dt>
+<dd><p>Draw the per-axis tick labels (default <code>TRUE</code>);
+<code>FALSE</code> blanks them for a clean silhouette view.</p></dd>
 
 
 <dt id="arg-alpha-size">alpha, size<a class="anchor" aria-label="anchor" href="#arg-alpha-size"></a></dt>

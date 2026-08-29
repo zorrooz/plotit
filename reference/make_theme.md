@@ -41,6 +41,14 @@ assign the return value explicitly – the
 [`parent.frame()`](https://rdrr.io/r/base/sys.parent.html) assignment is
 lost when that function returns.
 
+## Stability
+
+Extension surface (contract tier: extensible). The signature is stable
+as documented; the set of theme elements accepted via `...` is governed
+by
+[`ggplot2::theme()`](https://ggplot2.tidyverse.org/reference/theme.html)
+and may grow with ggplot2 releases.
+
 ## Examples
 
 ``` r

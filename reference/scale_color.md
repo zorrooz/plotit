@@ -14,6 +14,9 @@ scale_color(
   range = NULL,
   breaks = NULL,
   labels = NULL,
+  na_color = NULL,
+  n_bins = NULL,
+  mid = NULL,
   ...
 )
 ```
@@ -56,6 +59,23 @@ scale_color(
 - labels:
 
   Legend key labels.
+
+- na_color:
+
+  Colour used for `NA` values (passed to `na.value`). `NULL` = ggplot2
+  default.
+
+- n_bins:
+
+  Bin a continuous scale into this many legend steps
+  (`guide_coloursteps`; shorthand for `trans = "binned"`). `NULL` =
+  continuous.
+
+- mid:
+
+  Centre of a diverging colour scale (e.g. `0` for correlation
+  matrices). Requires a continuous scale and a diverging scheme in
+  `range` (`"rdbu"` default); mutually exclusive with `n_bins`.
 
 - ...:
 

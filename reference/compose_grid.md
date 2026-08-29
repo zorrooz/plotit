@@ -22,6 +22,8 @@ compose_grid(
   heights = NULL,
   guides = "collect",
   axes = "keep",
+  axis_titles = axes,
+  design = NULL,
   tag_levels = NULL
 )
 ```
@@ -63,6 +65,20 @@ compose_grid(
 
   `"collect"` to share all axes, `"collect_x"` or `"collect_y"` for a
   single direction, `"keep"` (default) to keep axes independent.
+
+- axis_titles:
+
+  Axis-title sharing: defaults to the `axes` value; `"collect"` merges
+  repeated axis titles onto one panel, `"collect_x"`/`"collect_y"` per
+  direction, `"keep"` independent.
+
+- design:
+
+  Layout specification replacing `ncol`/`nrow`/`byrow`: either a text
+  layout (one row per line, digits = plot order, `#` = empty cell, e.g.
+  the two-row layout "122" / "133") or a list of numeric area vectors
+  `c(top, left, bottom, right)`. When given, it wins over
+  `ncol`/`nrow`/`byrow` (a warning flags the overlap).
 
 - tag_levels:
 

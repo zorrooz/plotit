@@ -1,6 +1,7 @@
 # Export a plotit object to a file
 
-Export a plotit object to a file
+Exports a single plot, a composite, or a list of plots as a multi-page
+PDF (each list element becomes one page, in order).
 
 ## Usage
 
@@ -20,7 +21,11 @@ export(
 
 - plot:
 
-  A plotit object.
+  A plotit object, a `plotit_composite`, or a list of
+  `plotit`/`plotit_composite` objects. A list is exported as a
+  multi-page PDF and therefore requires a `.pdf` filename (or
+  `device = "pdf"`): single-page devices would silently keep only the
+  last page.
 
 - filename:
 
@@ -28,11 +33,13 @@ export(
 
 - width:
 
-  Output width (if NULL, uses meta then package default).
+  Output width (if NULL, uses meta then package default; for a list,
+  applied to every page).
 
 - height:
 
-  Output height (if NULL, uses meta then package default).
+  Output height (if NULL, uses meta then package default; for a list,
+  applied to every page).
 
 - dpi:
 
@@ -49,7 +56,7 @@ export(
 
 ## Value
 
-Invisibly, the original `plotit` object.
+Invisibly, the original `plot` argument.
 
 ## Examples
 

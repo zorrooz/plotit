@@ -42,7 +42,16 @@ mark_label(
 
 - ...:
 
-  Other arguments passed to `geom_label` or `geom_label_repel`
+  Other arguments passed to `geom_label` or `geom_label_repel`. With
+  `repel = TRUE` the ggrepel passthrough parameters are the same as
+  [`mark_text()`](https://zorrooz.github.io/plotit/reference/mark_text.md)
+  (see its `@param ...` for the full list with defaults);
+  `geom_label_repel` additionally styles the box with
+  `label.padding = 0.25`, `label.r = 0.15`, `label.size = 0.25`. Without
+  repel, ggplot2 4.0 styles the box with the `linewidth` aesthetic (the
+  old `label.size` argument is deprecated): use
+  `mark_label(linewidth = 0.4)`; `border.colour`/`text.colour` style the
+  box and text independently.
 
 - repel:
 

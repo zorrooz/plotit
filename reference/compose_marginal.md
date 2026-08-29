@@ -10,11 +10,12 @@ axes.
 ``` r
 compose_marginal(
   main,
-  top,
-  right,
+  top = NULL,
+  right = NULL,
   widths = c(4, 1),
   heights = c(1, 4),
-  guides = "collect"
+  guides = "collect",
+  align = "panel"
 )
 ```
 
@@ -38,18 +39,27 @@ compose_marginal(
 
 - widths:
 
-  Relative column widths for the main and right-marginal panels. Default
-  `c(4, 1)` = right marginal is 1/5 of total width.
+  Relative column widths for the main and right-marginal panels (applies
+  when `right` is supplied). Default `c(4, 1)` = right marginal is 1/5
+  of total width.
 
 - heights:
 
-  Relative row heights for the top-marginal and main panels. Default
-  `c(1, 4)` = top marginal is 1/5 of total height.
+  Relative row heights for the top-marginal and main panels (applies
+  when `top` is supplied). Default `c(1, 4)` = top marginal is 1/5 of
+  total height.
 
 - guides:
 
   `"collect"` (default) to merge legends across all panels, `"keep"` to
   keep them separate, `NULL` for patchwork auto-detect.
+
+- align:
+
+  Alignment reference: `"panel"` (default, strips align to the base
+  panel area). `"plot"` requests full-area alignment; grid members
+  always align on panel areas, so it currently falls back to `"panel"`
+  (documented approximation).
 
 ## Value
 

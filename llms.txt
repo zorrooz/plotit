@@ -110,7 +110,7 @@ Multi-plot compositions follow their own outermost pipeline:
 
 ### `mark_*` — Geometric layers
 
-39 marks across three tiers: basic geometry, statistical, and
+43 marks across three tiers: basic geometry, statistical, and
 composite/relational. Composite and relational marks are documented
 syntax sugar over the primitives below
 (e.g. [`mark_significance()`](https://zorrooz.github.io/plotit/reference/mark_significance.md)
@@ -158,6 +158,10 @@ syntax sugar over the primitives below
 | [`mark_treemap()`](https://zorrooz.github.io/plotit/reference/mark_treemap.md) | [`layout_treemap()`](https://zorrooz.github.io/plotit/reference/layout_treemap.md) sugar | Treemaps |
 | [`mark_network()`](https://zorrooz.github.io/plotit/reference/mark_network.md) | `layout_force()/circle()` sugar | Network graphs (straight or curved edges) |
 | [`mark_chord()`](https://zorrooz.github.io/plotit/reference/mark_chord.md) | [`layout_chord()`](https://zorrooz.github.io/plotit/reference/layout_chord.md) sugar | Chord diagrams |
+| [`mark_image()`](https://zorrooz.github.io/plotit/reference/mark_image.md) | custom `GeomPlotitImage` | Image scatter / ISOTYPE (circular alpha-masked thumbnails) |
+| [`mark_encircle()`](https://zorrooz.github.io/plotit/reference/mark_encircle.md) | hull / `stat_ellipse` sugar | Group envelopes (convex hull, confidence ellipse) |
+| [`mark_ribbon()`](https://zorrooz.github.io/plotit/reference/mark_ribbon.md) | `geom_ribbon` sugar | Statistical interval bands (SE/SD/CI, bootstrapped) |
+| [`mark_heatmap()`](https://zorrooz.github.io/plotit/reference/mark_heatmap.md) | internal matrix melt + `geom_tile` | Matrix heatmap (clustering, z-score, numeric overlay) |
 
 ### Relational data — `as_graph()` + `layout_*()`
 
@@ -199,13 +203,19 @@ like-named arguments).
 |:---|:---|
 | [`scale_color()`](https://zorrooz.github.io/plotit/reference/scale_color.md) | colour |
 | [`scale_fill()`](https://zorrooz.github.io/plotit/reference/scale_fill.md) | fill |
-| [`scale_size()`](https://zorrooz.github.io/plotit/reference/scale_size.md) | size |
-| [`scale_radius()`](https://zorrooz.github.io/plotit/reference/scale_radius.md) | radius (area-honest bubbles) |
+| [`scale_size()`](https://zorrooz.github.io/plotit/reference/scale_size.md) | size / radius (bubble encoding) |
 | [`scale_alpha()`](https://zorrooz.github.io/plotit/reference/scale_alpha.md) | alpha |
 | [`scale_shape()`](https://zorrooz.github.io/plotit/reference/scale_shape.md) | shape |
 | [`scale_linetype()`](https://zorrooz.github.io/plotit/reference/scale_linetype.md) | linetype |
 | [`scale_x()`](https://zorrooz.github.io/plotit/reference/scale_x.md) | x-axis |
 | [`scale_y()`](https://zorrooz.github.io/plotit/reference/scale_y.md) | y-axis |
+
+[`scale_radius()`](https://zorrooz.github.io/plotit/reference/scale_radius.md)
+is **defunct** since 1.0 — radius encoding is the
+[`scale_size()`](https://zorrooz.github.io/plotit/reference/scale_size.md)
+domain (`scale_size(range = ...)`); area-honest radius mapping stays
+available via
+[`ggplot2::scale_radius`](https://ggplot2.tidyverse.org/reference/scale_size.html).
 
 ### `label_*` — Text labels
 
@@ -289,8 +299,8 @@ plotit is licensed under the MIT License. See
   Initialize a plotit object
 - [`encode()`](https://zorrooz.github.io/plotit/reference/encode.md) :
   Create aesthetic mapping
-- [`` `+`( ``*`<plotit>`*`)`](https://zorrooz.github.io/plotit/reference/plus-.plotit.md)
-  : Add a ggplot2 component to a plotit object
+- [`add_ggplot()`](https://zorrooz.github.io/plotit/reference/add_ggplot.md)
+  : Add a ggplot2 component to a plot
 
 ## Geometric Layers
 
@@ -324,6 +334,8 @@ Add visual marks to your plot.
   : Dumbbell comparison chart layer
 - [`mark_ecdf()`](https://zorrooz.github.io/plotit/reference/mark_ecdf.md)
   : Empirical CDF layer
+- [`mark_encircle()`](https://zorrooz.github.io/plotit/reference/mark_encircle.md)
+  : Group annotation envelope layer
 - [`mark_errorbar()`](https://zorrooz.github.io/plotit/reference/mark_errorbar.md)
   : Error bar / interval layer
 - [`mark_forest()`](https://zorrooz.github.io/plotit/reference/mark_forest.md)
@@ -334,6 +346,8 @@ Add visual marks to your plot.
   : Hexagonal heatmap layer
 - [`mark_histogram()`](https://zorrooz.github.io/plotit/reference/mark_histogram.md)
   : Histogram layer
+- [`mark_image()`](https://zorrooz.github.io/plotit/reference/mark_image.md)
+  : Image layer
 - [`mark_label()`](https://zorrooz.github.io/plotit/reference/mark_label.md)
   : Label layer
 - [`mark_line()`](https://zorrooz.github.io/plotit/reference/mark_line.md)
@@ -356,6 +370,8 @@ Add visual marks to your plot.
   : Quantile-quantile reference line layer
 - [`mark_rect()`](https://zorrooz.github.io/plotit/reference/mark_rect.md)
   : Rectangle layer
+- [`mark_ribbon()`](https://zorrooz.github.io/plotit/reference/mark_ribbon.md)
+  : Statistical ribbon layer
 - [`mark_rug()`](https://zorrooz.github.io/plotit/reference/mark_rug.md)
   : Rug / tick layer
 - [`mark_rule()`](https://zorrooz.github.io/plotit/reference/mark_rule.md)
@@ -390,7 +406,7 @@ Control how data maps to visual properties.
 - [`scale_linetype()`](https://zorrooz.github.io/plotit/reference/scale_linetype.md)
   : Linetype scale
 - [`scale_radius()`](https://zorrooz.github.io/plotit/reference/scale_radius.md)
-  : Radius scale (area-proportional bubble size)
+  : Radius scale (defunct)
 - [`scale_shape()`](https://zorrooz.github.io/plotit/reference/scale_shape.md)
   : Shape scale
 - [`scale_size()`](https://zorrooz.github.io/plotit/reference/scale_size.md)
@@ -463,6 +479,8 @@ Split data into subplots.
 
 Combine multiple plots into layouts.
 
+- [`compose_annot()`](https://zorrooz.github.io/plotit/reference/compose_annot.md)
+  : Attach annotation strips to a base plot
 - [`compose_grid()`](https://zorrooz.github.io/plotit/reference/compose_grid.md)
   : Assemble multiple plots into a grid layout
 - [`compose_inset()`](https://zorrooz.github.io/plotit/reference/compose_inset.md)
@@ -501,19 +519,37 @@ Extend plotit with custom marks and themes.
   plotit](https://zorrooz.github.io/plotit/articles/composing.md):
 - [Customizing Plots with
   plotit](https://zorrooz.github.io/plotit/articles/customizing.md):
+- [Gallery:
+  Annotations](https://zorrooz.github.io/plotit/articles/gallery-annotations.md):
+- [Gallery: Comparing
+  Groups](https://zorrooz.github.io/plotit/articles/gallery-comparisons.md):
 - [Gallery: Faceting, Composition &
   Annotation](https://zorrooz.github.io/plotit/articles/gallery-composing.md):
 - [Gallery: Time, Polar &
   Coordinates](https://zorrooz.github.io/plotit/articles/gallery-coordinates.md):
 - [Gallery:
   Distributions](https://zorrooz.github.io/plotit/articles/gallery-distributions.md):
-- [Gallery: Comparing
-  Groups](https://zorrooz.github.io/plotit/articles/gallery-groups.md):
+- [Gallery:
+  Geo](https://zorrooz.github.io/plotit/articles/gallery-geo.md):
+- [Gallery:
+  Matrix](https://zorrooz.github.io/plotit/articles/gallery-matrix.md):
+- [Gallery:
+  Proportions](https://zorrooz.github.io/plotit/articles/gallery-proportions.md):
 - [Gallery: Relational
   Charts](https://zorrooz.github.io/plotit/articles/gallery-relational.md):
 - [Gallery: Relationships &
   Trends](https://zorrooz.github.io/plotit/articles/gallery-relationships.md):
+- [Gallery:
+  Trends](https://zorrooz.github.io/plotit/articles/gallery-trends.md):
+- [Design
+  Philosophy](https://zorrooz.github.io/plotit/articles/philosophy.md):
 - [Getting Started with
   plotit](https://zorrooz.github.io/plotit/articles/plotit.md):
 - [Relational Charts: Graphs, Flows, and
   Hierarchies](https://zorrooz.github.io/plotit/articles/relational.md):
+- [Transform
+  Recipes](https://zorrooz.github.io/plotit/articles/transform-recipes.md):
+- [Use Case:
+  Bioinformatics](https://zorrooz.github.io/plotit/articles/use-case-bioinformatics.md):
+- [Use Case:
+  Publishing](https://zorrooz.github.io/plotit/articles/use-case-publishing.md):

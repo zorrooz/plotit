@@ -27,6 +27,15 @@ make_mark(name, geom_fun)
 
 Invisibly returns the registered S7 generic.
 
+## Stability
+
+Extension surface (contract tier: extensible). The signature is stable
+as documented; registration behaviour (how the new mark is exposed to
+the pipeline) may be iterated in future releases without a deprecation
+cycle. Marks registered via `make_mark()` that are not listed in
+`._MARK_CHROME` keep `axis = "keep"` by default (zero behavioural
+difference vs. hand-rolled layers).
+
 ## Examples
 
 ``` r

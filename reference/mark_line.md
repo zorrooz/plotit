@@ -56,6 +56,12 @@ mark_line(
 
 Modified plotit object
 
+## References
+
+Vega-Lite: [Line](https://vega.github.io/vega-lite/docs/line.html)
+
+AntV G2: [Line](https://g2.antv.antgroup.com/en/api/mark/line) (corelib)
+
 ## Examples
 
 ``` r

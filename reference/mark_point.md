@@ -57,6 +57,13 @@ mark_point(
 
 Modified plotit object
 
+## References
+
+Vega-Lite: [Point](https://vega.github.io/vega-lite/docs/point.html)
+
+AntV G2: [Point](https://g2.antv.antgroup.com/en/api/mark/point)
+(corelib)
+
 ## Examples
 
 ``` r

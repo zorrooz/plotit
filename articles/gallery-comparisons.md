@@ -20,7 +20,7 @@ ggplot2::mpg |>
   mark_bar()
 ```
 
-![](gallery-groups_files/figure-html/unnamed-chunk-2-1.png)
+![](gallery-comparisons_files/figure-html/unnamed-chunk-2-1.png)
 
 ### Value bars
 
@@ -36,7 +36,7 @@ dfv |>
   mark_bar()
 ```
 
-![](gallery-groups_files/figure-html/unnamed-chunk-3-1.png)
+![](gallery-comparisons_files/figure-html/unnamed-chunk-3-1.png)
 
 ### Stacked bars
 
@@ -50,7 +50,7 @@ ggplot2::mpg |>
   mark_bar(position = "stack")
 ```
 
-![](gallery-groups_files/figure-html/unnamed-chunk-4-1.png)
+![](gallery-comparisons_files/figure-html/unnamed-chunk-4-1.png)
 
 ### Filled bars
 
@@ -64,7 +64,7 @@ ggplot2::mpg |>
   mark_bar(position = "fill")
 ```
 
-![](gallery-groups_files/figure-html/unnamed-chunk-5-1.png)
+![](gallery-comparisons_files/figure-html/unnamed-chunk-5-1.png)
 
 ### Flipped bars
 
@@ -79,7 +79,7 @@ ggplot2::mpg |>
   project_cartesian(flip = TRUE)
 ```
 
-![](gallery-groups_files/figure-html/unnamed-chunk-6-1.png)
+![](gallery-comparisons_files/figure-html/unnamed-chunk-6-1.png)
 
 ### Grouped bars
 
@@ -95,7 +95,7 @@ mpg_grp |>
   mark_bar(position = "dodge")
 ```
 
-![](gallery-groups_files/figure-html/unnamed-chunk-7-1.png)
+![](gallery-comparisons_files/figure-html/unnamed-chunk-7-1.png)
 
 ## Lollipop and Dumbbell
 
@@ -113,7 +113,7 @@ dfl |>
   mark_lollipop()
 ```
 
-![](gallery-groups_files/figure-html/unnamed-chunk-8-1.png)
+![](gallery-comparisons_files/figure-html/unnamed-chunk-8-1.png)
 
 ### Dumbbell chart
 
@@ -133,7 +133,7 @@ dfd |>
   mark_dumbbell()
 ```
 
-![](gallery-groups_files/figure-html/unnamed-chunk-9-1.png)
+![](gallery-comparisons_files/figure-html/unnamed-chunk-9-1.png)
 
 ## Boxplots
 
@@ -150,7 +150,7 @@ iris |>
   mark_boxplot()
 ```
 
-![](gallery-groups_files/figure-html/unnamed-chunk-10-1.png)
+![](gallery-comparisons_files/figure-html/unnamed-chunk-10-1.png)
 
 ### Grouped boxplots
 
@@ -164,7 +164,7 @@ mtcars |>
   mark_boxplot()
 ```
 
-![](gallery-groups_files/figure-html/unnamed-chunk-11-1.png)
+![](gallery-comparisons_files/figure-html/unnamed-chunk-11-1.png)
 
 ## Violins and Strips
 
@@ -180,7 +180,7 @@ iris |>
   mark_violin(draw_quantiles = 0.5)
 ```
 
-![](gallery-groups_files/figure-html/unnamed-chunk-12-1.png)
+![](gallery-comparisons_files/figure-html/unnamed-chunk-12-1.png)
 
 ### Beeswarm
 
@@ -195,7 +195,7 @@ iris |>
   mark_beeswarm()
 ```
 
-![](gallery-groups_files/figure-html/unnamed-chunk-13-1.png)
+![](gallery-comparisons_files/figure-html/unnamed-chunk-13-1.png)
 
 ### Strip plot
 
@@ -211,7 +211,7 @@ iris |>
   mark_point(position = "jitter", alpha = 0.5, size = 1.5)
 ```
 
-![](gallery-groups_files/figure-html/unnamed-chunk-14-1.png)
+![](gallery-comparisons_files/figure-html/unnamed-chunk-14-1.png)
 
 ### Boxplot with jitter overlay
 
@@ -228,7 +228,7 @@ iris |>
   mark_point(mapping = encode(colour = Species), position = "jitter", alpha = 0.4, size = 1)
 ```
 
-![](gallery-groups_files/figure-html/unnamed-chunk-15-1.png)
+![](gallery-comparisons_files/figure-html/unnamed-chunk-15-1.png)
 
 ## Cumulative Distributions
 
@@ -245,7 +245,7 @@ faithful |>
   mark_ecdf()
 ```
 
-![](gallery-groups_files/figure-html/unnamed-chunk-16-1.png)
+![](gallery-comparisons_files/figure-html/unnamed-chunk-16-1.png)
 
 ### ECDF by group
 
@@ -263,7 +263,7 @@ ec |>
   mark_ecdf()
 ```
 
-![](gallery-groups_files/figure-html/unnamed-chunk-17-1.png)
+![](gallery-comparisons_files/figure-html/unnamed-chunk-17-1.png)
 
 ## Distributions Across Groups
 
@@ -279,7 +279,7 @@ iris |>
   mark_histogram(position = "dodge", bins = 20)
 ```
 
-![](gallery-groups_files/figure-html/unnamed-chunk-18-1.png)
+![](gallery-comparisons_files/figure-html/unnamed-chunk-18-1.png)
 
 ### Density by group
 
@@ -294,4 +294,4 @@ iris |>
   mark_density(alpha = 0.4)
 ```
 
-![](gallery-groups_files/figure-html/unnamed-chunk-19-1.png)
+![](gallery-comparisons_files/figure-html/unnamed-chunk-19-1.png)

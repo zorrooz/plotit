@@ -15,6 +15,9 @@ scale_fill(
   range = NULL,
   breaks = NULL,
   labels = NULL,
+  na_color = NULL,
+  n_bins = NULL,
+  mid = NULL,
   ...
 )
 ```
@@ -55,6 +58,11 @@ scale_fill(
 - labels:
 
   Legend key labels.
+
+- na_color, n_bins, mid:
+
+  Same as
+  [`scale_color()`](https://zorrooz.github.io/plotit/reference/scale_color.md).
 
 - ...:
 

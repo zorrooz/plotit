@@ -10,9 +10,13 @@ share a common 0-1 scale.
 ``` r
 project_parallel(
   plot,
-  columns,
+  columns = NULL,
   group = NULL,
   scale = c("std", "global", "none"),
+  order = NULL,
+  recenter = NULL,
+  aggregate = c("none", "mean", "median"),
+  axis_labels = TRUE,
   alpha = 0.5,
   size = 1,
   ...
@@ -39,6 +43,30 @@ project_parallel(
   `"std"` (default): min-max normalise each column to 0-1. `"global"`:
   min-max normalise across all columns to 0-1. `"none"`: no
   normalisation, each column keeps its own range.
+
+- order:
+
+  Axis order: character subset of `columns`; axes render in the given
+  order and omitted columns drop. `NULL` (default) keeps the `columns`
+  order.
+
+- recenter:
+
+  Reference axis for a difference-from-reference view: a column name;
+  every polyline is re-expressed as its difference from that axis
+  (normalised space), so the reference becomes a straight zero baseline.
+  `NULL` disables.
+
+- aggregate:
+
+  Group overlay: `"none"` (default), or `"mean"` / `"median"` to draw
+  one thick aggregate line per group behind the individual polylines
+  (requires `group`).
+
+- axis_labels:
+
+  Draw the per-axis tick labels (default `TRUE`); `FALSE` blanks them
+  for a clean silhouette view.
 
 - alpha, size:
 

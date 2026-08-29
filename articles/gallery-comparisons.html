@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">plotit</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,12 +41,21 @@
     <li><a class="dropdown-item" href="../articles/composing.html">Composing Figures</a></li>
     <li><a class="dropdown-item" href="../articles/relational.html">Relational Charts</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><a class="dropdown-item" href="../articles/gallery-groups.html">Gallery: Groups</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-comparisons.html">Gallery: Comparisons</a></li>
     <li><a class="dropdown-item" href="../articles/gallery-distributions.html">Gallery: Distributions</a></li>
     <li><a class="dropdown-item" href="../articles/gallery-relationships.html">Gallery: Relationships</a></li>
     <li><a class="dropdown-item" href="../articles/gallery-coordinates.html">Gallery: Time &amp; Coordinates</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-trends.html">Gallery: Trends</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-matrix.html">Gallery: Matrix</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-proportions.html">Gallery: Proportions</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-geo.html">Gallery: Geo</a></li>
     <li><a class="dropdown-item" href="../articles/gallery-relational.html">Gallery: Relational</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-annotations.html">Gallery: Annotations</a></li>
     <li><a class="dropdown-item" href="../articles/gallery-composing.html">Gallery: Annotation &amp; Composition</a></li>
+    <li><a class="dropdown-item" href="../articles/use-case-bioinformatics.html">Use Case: Bioinformatics</a></li>
+    <li><a class="dropdown-item" href="../articles/use-case-publishing.html">Use Case: Publishing</a></li>
+    <li><a class="dropdown-item" href="../articles/transform-recipes.html">Transform Recipes</a></li>
+    <li><a class="dropdown-item" href="../articles/philosophy.html">Design Philosophy</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -72,8 +81,8 @@
       <h1>Gallery: Comparing Groups</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/zorrooz/plotit/blob/main/vignettes/articles/gallery-groups.Rmd" class="external-link"><code>vignettes/articles/gallery-groups.Rmd</code></a></small>
-      <div class="d-none name"><code>gallery-groups.Rmd</code></div>
+      <small class="dont-index">Source: <a href="https://github.com/zorrooz/plotit/blob/main/vignettes/articles/gallery-comparisons.Rmd" class="external-link"><code>vignettes/articles/gallery-comparisons.Rmd</code></a></small>
+      <div class="d-none name"><code>gallery-comparisons.Rmd</code></div>
     </div>
 
     
@@ -94,7 +103,7 @@ each <code>class</code> are in the <code><a href="https://ggplot2.tidyverse.org/
 <code class="sourceCode R"><span><span class="fu">ggplot2</span><span class="fu">::</span><span class="va"><a href="https://ggplot2.tidyverse.org/reference/mpg.html" class="external-link">mpg</a></span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">class</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_bar.html">mark_bar</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="gallery-groups_files/figure-html/unnamed-chunk-2-1.png" class="r-plt" alt="" width="72%"></p>
+<p><img src="gallery-comparisons_files/figure-html/unnamed-chunk-2-1.png" class="r-plt" alt="" width="72%"></p>
 </div>
 <div class="section level3">
 <h3 id="value-bars">Value bars<a class="anchor" aria-label="anchor" href="#value-bars"></a>
@@ -107,7 +116,7 @@ small, hand-built figures.</p>
 <span><span class="va">dfv</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">cat</span>, y <span class="op">=</span> <span class="va">val</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_bar.html">mark_bar</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="gallery-groups_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="" width="72%"></p>
+<p><img src="gallery-comparisons_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="" width="72%"></p>
 </div>
 <div class="section level3">
 <h3 id="stacked-bars">Stacked bars<a class="anchor" aria-label="anchor" href="#stacked-bars"></a>
@@ -118,7 +127,7 @@ stacking shows the composition of every group at a glance.</p>
 <code class="sourceCode R"><span><span class="fu">ggplot2</span><span class="fu">::</span><span class="va"><a href="https://ggplot2.tidyverse.org/reference/mpg.html" class="external-link">mpg</a></span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">class</span>, fill <span class="op">=</span> <span class="va">drv</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_bar.html">mark_bar</a></span><span class="op">(</span>position <span class="op">=</span> <span class="st">"stack"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="gallery-groups_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="" width="72%"></p>
+<p><img src="gallery-comparisons_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="" width="72%"></p>
 </div>
 <div class="section level3">
 <h3 id="filled-bars">Filled bars<a class="anchor" aria-label="anchor" href="#filled-bars"></a>
@@ -130,7 +139,7 @@ one.</p>
 <code class="sourceCode R"><span><span class="fu">ggplot2</span><span class="fu">::</span><span class="va"><a href="https://ggplot2.tidyverse.org/reference/mpg.html" class="external-link">mpg</a></span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">class</span>, fill <span class="op">=</span> <span class="va">drv</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_bar.html">mark_bar</a></span><span class="op">(</span>position <span class="op">=</span> <span class="st">"fill"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="gallery-groups_files/figure-html/unnamed-chunk-5-1.png" class="r-plt" alt="" width="72%"></p>
+<p><img src="gallery-comparisons_files/figure-html/unnamed-chunk-5-1.png" class="r-plt" alt="" width="72%"></p>
 </div>
 <div class="section level3">
 <h3 id="flipped-bars">Flipped bars<a class="anchor" aria-label="anchor" href="#flipped-bars"></a>
@@ -142,7 +151,7 @@ coordinates with <code>project_cartesian(flip = TRUE)</code>.</p>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">class</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_bar.html">mark_bar</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/project_cartesian.html">project_cartesian</a></span><span class="op">(</span>flip <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="gallery-groups_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="72%"></p>
+<p><img src="gallery-comparisons_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="72%"></p>
 </div>
 <div class="section level3">
 <h3 id="grouped-bars">Grouped bars<a class="anchor" aria-label="anchor" href="#grouped-bars"></a>
@@ -155,7 +164,7 @@ first.</p>
 <span><span class="va">mpg_grp</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">class</span>, y <span class="op">=</span> <span class="va">hwy</span>, fill <span class="op">=</span> <span class="va">drv</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_bar.html">mark_bar</a></span><span class="op">(</span>position <span class="op">=</span> <span class="st">"dodge"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="gallery-groups_files/figure-html/unnamed-chunk-7-1.png" class="r-plt" alt="" width="72%"></p>
+<p><img src="gallery-comparisons_files/figure-html/unnamed-chunk-7-1.png" class="r-plt" alt="" width="72%"></p>
 </div>
 </div>
 <div class="section level2">
@@ -172,7 +181,7 @@ rectangle.</p>
 <span><span class="va">dfl</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">cat</span>, y <span class="op">=</span> <span class="va">val</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_lollipop.html">mark_lollipop</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="gallery-groups_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="" width="72%"></p>
+<p><img src="gallery-comparisons_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="" width="72%"></p>
 </div>
 <div class="section level3">
 <h3 id="dumbbell-chart">Dumbbell chart<a class="anchor" aria-label="anchor" href="#dumbbell-chart"></a>
@@ -189,7 +198,7 @@ a line. Encode the start in <code>y</code> and the end in
 <span><span class="va">dfd</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">item</span>, y <span class="op">=</span> <span class="va">before</span>, yend <span class="op">=</span> <span class="va">after</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_dumbbell.html">mark_dumbbell</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="gallery-groups_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="72%"></p>
+<p><img src="gallery-comparisons_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="72%"></p>
 </div>
 </div>
 <div class="section level2">
@@ -205,7 +214,7 @@ distinct.</p>
 <code class="sourceCode R"><span><span class="va">iris</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Species</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span>, fill <span class="op">=</span> <span class="va">Species</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_boxplot.html">mark_boxplot</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="gallery-groups_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="72%"></p>
+<p><img src="gallery-comparisons_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="72%"></p>
 </div>
 <div class="section level3">
 <h3 id="grouped-boxplots">Grouped boxplots<a class="anchor" aria-label="anchor" href="#grouped-boxplots"></a>
@@ -217,7 +226,7 @@ easy — engine <code>cyl</code> on <code>x</code>, transmission
 <code class="sourceCode R"><span><span class="va">mtcars</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span>, y <span class="op">=</span> <span class="va">mpg</span>, fill <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">am</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_boxplot.html">mark_boxplot</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="gallery-groups_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="72%"></p>
+<p><img src="gallery-comparisons_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="72%"></p>
 </div>
 </div>
 <div class="section level2">
@@ -233,7 +242,7 @@ each body.</p>
 <code class="sourceCode R"><span><span class="va">iris</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Species</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span>, fill <span class="op">=</span> <span class="va">Species</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_violin.html">mark_violin</a></span><span class="op">(</span>draw_quantiles <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span></code></pre></div>
-<p><img src="gallery-groups_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="" width="72%"></p>
+<p><img src="gallery-comparisons_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="" width="72%"></p>
 </div>
 <div class="section level3">
 <h3 id="beeswarm">Beeswarm<a class="anchor" aria-label="anchor" href="#beeswarm"></a>
@@ -245,7 +254,7 @@ densest.</p>
 <code class="sourceCode R"><span><span class="va">iris</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Species</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span>, colour <span class="op">=</span> <span class="va">Species</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_beeswarm.html">mark_beeswarm</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="gallery-groups_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="72%"></p>
+<p><img src="gallery-comparisons_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="72%"></p>
 </div>
 <div class="section level3">
 <h3 id="strip-plot">Strip plot<a class="anchor" aria-label="anchor" href="#strip-plot"></a>
@@ -258,7 +267,7 @@ renders.</p>
 <span><span class="va">iris</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Species</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span>, colour <span class="op">=</span> <span class="va">Species</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>position <span class="op">=</span> <span class="st">"jitter"</span>, alpha <span class="op">=</span> <span class="fl">0.5</span>, size <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span></span></code></pre></div>
-<p><img src="gallery-groups_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="72%"></p>
+<p><img src="gallery-comparisons_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="72%"></p>
 </div>
 <div class="section level3">
 <h3 id="boxplot-with-jitter-overlay">Boxplot with jitter overlay<a class="anchor" aria-label="anchor" href="#boxplot-with-jitter-overlay"></a>
@@ -272,7 +281,7 @@ points are not doubled.</p>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Species</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span>, fill <span class="op">=</span> <span class="va">Species</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_boxplot.html">mark_boxplot</a></span><span class="op">(</span>outlier.shape <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>mapping <span class="op">=</span> <span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="va">Species</span><span class="op">)</span>, position <span class="op">=</span> <span class="st">"jitter"</span>, alpha <span class="op">=</span> <span class="fl">0.4</span>, size <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
-<p><img src="gallery-groups_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="" width="72%"></p>
+<p><img src="gallery-comparisons_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="" width="72%"></p>
 </div>
 </div>
 <div class="section level2">
@@ -288,7 +297,7 @@ parameter to choose.</p>
 <code class="sourceCode R"><span><span class="va">faithful</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">eruptions</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_ecdf.html">mark_ecdf</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="gallery-groups_files/figure-html/unnamed-chunk-16-1.png" class="r-plt" alt="" width="72%"></p>
+<p><img src="gallery-comparisons_files/figure-html/unnamed-chunk-16-1.png" class="r-plt" alt="" width="72%"></p>
 </div>
 <div class="section level3">
 <h3 id="ecdf-by-group">ECDF by group<a class="anchor" aria-label="anchor" href="#ecdf-by-group"></a>
@@ -303,7 +312,7 @@ shifts, spreads, and tail behaviour are all visible.</p>
 <span><span class="va">ec</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">value</span>, colour <span class="op">=</span> <span class="va">part</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_ecdf.html">mark_ecdf</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="gallery-groups_files/figure-html/unnamed-chunk-17-1.png" class="r-plt" alt="" width="72%"></p>
+<p><img src="gallery-comparisons_files/figure-html/unnamed-chunk-17-1.png" class="r-plt" alt="" width="72%"></p>
 </div>
 </div>
 <div class="section level2">
@@ -318,7 +327,7 @@ making shape comparisons direct.</p>
 <code class="sourceCode R"><span><span class="va">iris</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Sepal.Length</span>, fill <span class="op">=</span> <span class="va">Species</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_histogram.html">mark_histogram</a></span><span class="op">(</span>position <span class="op">=</span> <span class="st">"dodge"</span>, bins <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></span></code></pre></div>
-<p><img src="gallery-groups_files/figure-html/unnamed-chunk-18-1.png" class="r-plt" alt="" width="72%"></p>
+<p><img src="gallery-comparisons_files/figure-html/unnamed-chunk-18-1.png" class="r-plt" alt="" width="72%"></p>
 </div>
 <div class="section level3">
 <h3 id="density-by-group">Density by group<a class="anchor" aria-label="anchor" href="#density-by-group"></a>
@@ -330,7 +339,7 @@ groups on one panel. Mapping both <code>fill</code> and
 <code class="sourceCode R"><span><span class="va">iris</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Sepal.Length</span>, fill <span class="op">=</span> <span class="va">Species</span>, colour <span class="op">=</span> <span class="va">Species</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_density.html">mark_density</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">0.4</span><span class="op">)</span></span></code></pre></div>
-<p><img src="gallery-groups_files/figure-html/unnamed-chunk-19-1.png" class="r-plt" alt="" width="72%"></p>
+<p><img src="gallery-comparisons_files/figure-html/unnamed-chunk-19-1.png" class="r-plt" alt="" width="72%"></p>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -92,7 +92,12 @@ mark_rule(
 
 - ...:
 
-  Other arguments passed to the underlying geom
+  Other arguments passed to the underlying geom. ggplot2 4.0 also
+  accepts `layout=` on any layer, which controls how the layer is placed
+  across `split_*` facet panels: `NULL` (default) matches layer rows to
+  panels by the facet variable, `"fixed"` repeats the layer on every
+  panel (a unified reference line), and an integer pins it to a single
+  panel, e.g. `mark_rule(yintercept = 0, layout = "fixed")`.
 
 - rasterize:
 
@@ -113,16 +118,16 @@ Modified plotit object
 
 ## Details
 
-- `xintercept` →
+- `xintercept` \<U+2192\>
   [ggplot2::geom_vline](https://ggplot2.tidyverse.org/reference/geom_abline.html)
 
-- `yintercept` →
+- `yintercept` \<U+2192\>
   [ggplot2::geom_hline](https://ggplot2.tidyverse.org/reference/geom_abline.html)
 
-- `slope` + `intercept` →
+- `slope` + `intercept` \<U+2192\>
   [ggplot2::geom_abline](https://ggplot2.tidyverse.org/reference/geom_abline.html)
 
-- `x`/`xend`/`y`/`yend` →
+- `x`/`xend`/`y`/`yend` \<U+2192\>
   [ggplot2::geom_segment](https://ggplot2.tidyverse.org/reference/geom_segment.html)
 
 Dispatch priority: vline/hline \> abline \> segment.

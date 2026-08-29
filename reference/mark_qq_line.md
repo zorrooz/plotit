@@ -76,6 +76,11 @@ mark_qq_line(
 
 Modified plotit object
 
+## References
+
+R: [`stats::qqline()`](https://rdrr.io/r/stats/qqnorm.html)
+(quartile-pair reference line)
+
 ## Examples
 
 ``` r

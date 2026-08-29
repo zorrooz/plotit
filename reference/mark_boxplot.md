@@ -56,6 +56,15 @@ mark_boxplot(
 
 Modified plotit object
 
+## References
+
+R: [`stats::quantile()`](https://rdrr.io/r/stats/quantile.html)
+(five-number summary behind the boxplot stat) Vega-Lite:
+[Boxplot](https://vega.github.io/vega-lite/docs/boxplot.html) (composite
+mark)
+
+AntV G2: boxplot (corelib)
+
 ## Examples
 
 ``` r

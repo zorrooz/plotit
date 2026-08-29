@@ -3,11 +3,12 @@
 Creates a chord diagram showing pairwise relationships between groups.
 Equivalent to the pipeline
 `as_graph() |> layout_chord() |> mark_polygon(data = ~ribbons) |> mark_polygon(data = ~arcs)`
-– see §3.3.4a. Accepts an **edges table** with `source`, `target`, and
-optionally `value` columns (either mapped via structural aesthetics or
-present as literal columns); sector arcs and bezier bands come from the
-built-in circular layout (deterministic, dependency-free). The fill
-channel defaults to source identity (the same derived-channel rule as
+– see \<U+00A7\>3.3.4a. Accepts an **edges table** with `source`,
+`target`, and optionally `value` columns (either mapped via structural
+aesthetics or present as literal columns); sector arcs and bezier bands
+come from the built-in circular layout (deterministic, dependency-free).
+The fill channel defaults to source identity (the same derived-channel
+rule as
 [`mark_sankey()`](https://zorrooz.github.io/plotit/reference/mark_sankey.md))
 and ships with the curated token palette – friendly qualitative for
 categories, viridis sequential for continuous values (chain

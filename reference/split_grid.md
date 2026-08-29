@@ -11,7 +11,8 @@ split_grid(
   rows = NULL,
   cols = NULL,
   scales = "fixed",
-  space = "fixed"
+  space = "fixed",
+  axes = NULL
 )
 ```
 
@@ -42,6 +43,13 @@ split_grid(
 
   Should the space be fixed ("fixed"), free ("free"), or free in one
   dimension ("free_x", "free_y")?
+
+- axes:
+
+  Axis repetition passed to
+  [`ggplot2::facet_grid()`](https://ggplot2.tidyverse.org/reference/facet_grid.html):
+  `"all"`/`"all_x"`/`"all_y"` repeat axes on every panel (ggplot2 \>=
+  3.5). `NULL` = axes on the outer edges only.
 
 ## Value
 

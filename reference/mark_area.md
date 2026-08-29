@@ -2,9 +2,9 @@
 
 Adds a filled area layer. With `y` mapped this is a classic (optionally
 stacked) area chart via `geom_area`; with `ymin`/`ymax` mapped instead
-it becomes an interval band via `geom_ribbon` — confidence bands,
-min/max envelopes, or any "area between two curves" view (Vega-Lite's
-`area` covers both, as does G2).
+it becomes an interval band via `geom_ribbon` \<U+2014\> confidence
+bands, min/max envelopes, or any "area between two curves" view
+(Vega-Lite's `area` covers both, as does G2).
 
 ## Usage
 

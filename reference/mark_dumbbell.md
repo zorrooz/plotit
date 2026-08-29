@@ -76,6 +76,10 @@ Equivalent expansion:
            mark_point(x = x, y = y_start, colour = color_start) |>
            mark_point(x = x, y = y_end, colour = color_end)
 
+## References
+
+AntV G2: [Link](https://g2.antv.antgroup.com/en/api/mark/link) (corelib)
+
 ## Examples
 
 ``` r

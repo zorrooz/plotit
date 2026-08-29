@@ -8,7 +8,12 @@ parent to child; multiple roots (forests) are supported.
 ## Usage
 
 ``` r
-layout_tree(plot, direction = c("down", "up", "left", "right"))
+layout_tree(
+  plot,
+  direction = c("down", "up", "left", "right"),
+  leaf_spacing = "count",
+  edge = "straight"
+)
 ```
 
 ## Arguments
@@ -25,6 +30,20 @@ layout_tree(plot, direction = c("down", "up", "left", "right"))
   Direction the tree grows: `"down"` (root on top), `"up"`, `"right"`,
   or `"left"`.
 
+- leaf_spacing:
+
+  Leaf placement: `"count"` packs leaves one unit apart in merge-side
+  order (d3 tidy-tree); `"equal"` normalises leaves onto `[0, 1]` so
+  leaf slots align with split-facet panels.
+
+- edge:
+
+  Edge shape: `"straight"` (direct parent-child segments) or `"elbow"`
+  (right-angle bend via a midpoint row pair; each edge becomes two rows
+  in the edges table so
+  [`mark_rule()`](https://zorrooz.github.io/plotit/reference/mark_rule.md)
+  renders the polyline).
+
 ## Value
 
 A modified `plotit` object (pipeline form), or a new `plotit_graph` when
@@ -40,6 +59,13 @@ h <- data.frame(
 as_graph(h) |>
   plotit() |>
   layout_tree(direction = "down") |>
+  mark_rule(data = ~edges) |>
+  mark_point(data = ~nodes)
+
+
+as_graph(h) |>
+  plotit() |>
+  layout_tree(direction = "right", edge = "elbow") |>
   mark_rule(data = ~edges) |>
   mark_point(data = ~nodes)
 ```

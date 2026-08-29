@@ -38,7 +38,10 @@ mark_violin(
 
 - ...:
 
-  Other arguments passed to `geom_violin`
+  Other arguments passed to `geom_violin`. Since ggplot2 4.0 the
+  quantile lines live on the stat: `quantiles =` selects the quantiles
+  drawn and `quantile.colour`/`quantile.linetype`/`quantile.linewidth`
+  style them (`quantile.linetype = 0` hides them by default).
 
 - rasterize:
 
@@ -57,9 +60,14 @@ mark_violin(
 
 Modified plotit object
 
+## References
+
+AntV G2: [density
+(violin)](https://g2.antv.antgroup.com/en/api/general/shape)
+
 ## Examples
 
 ``` r
 plotit(iris, encode(x = Species, y = Sepal.Length)) |>
-  mark_violin(draw_quantiles = 0.5)
+  mark_violin(quantiles = 0.5, quantile.linetype = "dashed")
 ```

@@ -57,6 +57,13 @@ mark_bar(
 
 Modified plotit object
 
+## References
+
+Vega-Lite: [Bar](https://vega.github.io/vega-lite/docs/bar.html)
+
+AntV G2: [Interval](https://g2.antv.antgroup.com/en/api/mark/interval)
+(corelib)
+
 ## Examples
 
 ``` r

@@ -74,8 +74,10 @@ Modified plotit object
 
 ## References
 
-AntV G2: [Density](https://g2.antv.antgroup.com/en/api/mark/density)
-(corelib, contour mode)
+R: [`MASS::kde2d()`](https://rdrr.io/pkg/MASS/man/kde2d.html) (2D kernel
+density estimate) AntV G2:
+[Density](https://g2.antv.antgroup.com/en/api/mark/density) (corelib,
+contour mode)
 
 ## Examples
 

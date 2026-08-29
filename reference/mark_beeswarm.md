@@ -65,8 +65,10 @@ Modified plotit object
 
 ## References
 
-AntV G2: [Beeswarm](https://g2.antv.antgroup.com/en/api/mark/beeswarm)
-(corelib)
+R:
+[`ggbeeswarm::geom_beeswarm()`](https://rdrr.io/pkg/ggbeeswarm/man/geom_beeswarm.html)
+(collision-avoidance rendering) AntV G2:
+[Beeswarm](https://g2.antv.antgroup.com/en/api/mark/beeswarm) (corelib)
 
 ## Examples
 

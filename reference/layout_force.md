@@ -45,10 +45,10 @@ called on raw graph data.
 e <- data.frame(source = c("a", "a", "b"), target = c("b", "c", "c"))
 g <- as_graph(e) |> layout_force(seed = 1)
 g$nodes
-#>   id          x            y
-#> 1  a  0.4368677  0.008629767
-#> 2  b -0.4368677  0.500000000
-#> 3  c -0.4288172 -0.500000000
+#>   id         x         y
+#> 1  a 0.8931809 0.5077668
+#> 2  b 0.1068191 0.9500000
+#> 3  c 0.1140646 0.0500000
 
 as_graph(e) |>
   plotit() |>

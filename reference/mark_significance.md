@@ -79,6 +79,11 @@ Equivalent expansion:
            mark_text(x = midpoint, y = comp$y_position + y_offset,
                      label = comp$label)
 
+## References
+
+Vega-Lite: `layer` composition of rule + text annotation layers; no
+native significance mark
+
 ## Examples
 
 ``` r

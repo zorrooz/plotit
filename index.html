@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="index.html">plotit</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,12 +43,21 @@
     <li><a class="dropdown-item" href="articles/composing.html">Composing Figures</a></li>
     <li><a class="dropdown-item" href="articles/relational.html">Relational Charts</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><a class="dropdown-item" href="articles/gallery-groups.html">Gallery: Groups</a></li>
+    <li><a class="dropdown-item" href="articles/gallery-comparisons.html">Gallery: Comparisons</a></li>
     <li><a class="dropdown-item" href="articles/gallery-distributions.html">Gallery: Distributions</a></li>
     <li><a class="dropdown-item" href="articles/gallery-relationships.html">Gallery: Relationships</a></li>
     <li><a class="dropdown-item" href="articles/gallery-coordinates.html">Gallery: Time &amp; Coordinates</a></li>
+    <li><a class="dropdown-item" href="articles/gallery-trends.html">Gallery: Trends</a></li>
+    <li><a class="dropdown-item" href="articles/gallery-matrix.html">Gallery: Matrix</a></li>
+    <li><a class="dropdown-item" href="articles/gallery-proportions.html">Gallery: Proportions</a></li>
+    <li><a class="dropdown-item" href="articles/gallery-geo.html">Gallery: Geo</a></li>
     <li><a class="dropdown-item" href="articles/gallery-relational.html">Gallery: Relational</a></li>
+    <li><a class="dropdown-item" href="articles/gallery-annotations.html">Gallery: Annotations</a></li>
     <li><a class="dropdown-item" href="articles/gallery-composing.html">Gallery: Annotation &amp; Composition</a></li>
+    <li><a class="dropdown-item" href="articles/use-case-bioinformatics.html">Use Case: Bioinformatics</a></li>
+    <li><a class="dropdown-item" href="articles/use-case-publishing.html">Use Case: Publishing</a></li>
+    <li><a class="dropdown-item" href="articles/transform-recipes.html">Transform Recipes</a></li>
+    <li><a class="dropdown-item" href="articles/philosophy.html">Design Philosophy</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">News</a></li>
@@ -216,7 +225,7 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <h3 id="mark_--geometric-layers">
 <code>mark_*</code> — Geometric layers<a class="anchor" aria-label="anchor" href="#mark_--geometric-layers"></a>
 </h3>
-<p>39 marks across three tiers: basic geometry, statistical, and composite/relational. Composite and relational marks are documented syntax sugar over the primitives below (e.g. <code><a href="reference/mark_significance.html">mark_significance()</a></code> ≈ <code><a href="reference/mark_rule.html">mark_rule()</a></code> + <code><a href="reference/mark_text.html">mark_text()</a></code>).</p>
+<p>43 marks across three tiers: basic geometry, statistical, and composite/relational. Composite and relational marks are documented syntax sugar over the primitives below (e.g. <code><a href="reference/mark_significance.html">mark_significance()</a></code> ≈ <code><a href="reference/mark_rule.html">mark_rule()</a></code> + <code><a href="reference/mark_text.html">mark_text()</a></code>).</p>
 <table class="table">
 <colgroup>
 <col width="33%">
@@ -439,6 +448,29 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 <code><a href="reference/layout_chord.html">layout_chord()</a></code> sugar</td>
 <td align="left">Chord diagrams</td>
 </tr>
+<tr>
+<td align="left"><code><a href="reference/mark_image.html">mark_image()</a></code></td>
+<td align="left">custom <code>GeomPlotitImage</code>
+</td>
+<td align="left">Image scatter / ISOTYPE (circular alpha-masked thumbnails)</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_encircle.html">mark_encircle()</a></code></td>
+<td align="left">hull / <code>stat_ellipse</code> sugar</td>
+<td align="left">Group envelopes (convex hull, confidence ellipse)</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_ribbon.html">mark_ribbon()</a></code></td>
+<td align="left">
+<code>geom_ribbon</code> sugar</td>
+<td align="left">Statistical interval bands (SE/SD/CI, bootstrapped)</td>
+</tr>
+<tr>
+<td align="left"><code><a href="reference/mark_heatmap.html">mark_heatmap()</a></code></td>
+<td align="left">internal matrix melt + <code>geom_tile</code>
+</td>
+<td align="left">Matrix heatmap (clustering, z-score, numeric overlay)</td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -524,11 +556,7 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 </tr>
 <tr>
 <td align="left"><code><a href="reference/scale_size.html">scale_size()</a></code></td>
-<td align="left">size</td>
-</tr>
-<tr>
-<td align="left"><code><a href="reference/scale_radius.html">scale_radius()</a></code></td>
-<td align="left">radius (area-honest bubbles)</td>
+<td align="left">size / radius (bubble encoding)</td>
 </tr>
 <tr>
 <td align="left"><code><a href="reference/scale_alpha.html">scale_alpha()</a></code></td>
@@ -552,6 +580,7 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 </tr>
 </tbody>
 </table>
+<p><code><a href="reference/scale_radius.html">scale_radius()</a></code> is <strong>defunct</strong> since 1.0 — radius encoding is the <code><a href="reference/scale_size.html">scale_size()</a></code> domain (<code>scale_size(range = ...)</code>); area-honest radius mapping stays available via <code><a href="https://ggplot2.tidyverse.org/reference/scale_size.html" class="external-link">ggplot2::scale_radius</a></code>.</p>
 </div>
 <div class="section level3">
 <h3 id="label_--text-labels">
@@ -761,15 +790,7 @@ plotit is under active, pre-release development. Breaking changes are <strong>ex
 </ul>
 </div>
 
-<div class="dev-status">
-<h2 data-toc-skip>Dev status</h2>
-<ul class="list-unstyled">
-<li><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental" class="external-link"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a></li>
-<li><a href="https://github.com/zorrooz/plotit/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/zorrooz/plotit/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
-<li><a href="https://zorrooz.github.io/plotit/"><img src="https://github.com/zorrooz/plotit/actions/workflows/pkgdown.yaml/badge.svg" alt="pkgdown"></a></li>
-<li><a href="https://github.com/zorrooz/plotit/actions/workflows/lint.yaml" class="external-link"><img src="https://github.com/zorrooz/plotit/actions/workflows/lint.yaml/badge.svg" alt="lint"></a></li>
-</ul>
-</div>
+
 
   </aside>
 </div>

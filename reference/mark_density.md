@@ -56,6 +56,12 @@ mark_density(
 
 Modified plotit object
 
+## References
+
+R: [`stats::density()`](https://rdrr.io/r/stats/density.html) (kernel
+density estimate) AntV G2:
+[Density](https://g2.antv.antgroup.com/en/api/mark/density) (corelib)
+
 ## Examples
 
 ``` r

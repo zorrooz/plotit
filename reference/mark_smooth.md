@@ -75,7 +75,9 @@ Modified plotit object
 
 ## References
 
-Vega-Lite: achieved via
+R: [`stats::loess()`](https://rdrr.io/r/stats/loess.html) /
+[`stats::lm()`](https://rdrr.io/r/stats/lm.html) (default smoothing
+methods) Vega-Lite: achieved via
 `layer(point) + layer(line) + transform(regression)`
 
 AntV G2: achieved via transform pipeline

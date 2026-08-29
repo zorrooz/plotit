@@ -60,8 +60,10 @@ Modified plotit object
 
 ## References
 
-AntV G2: [Cell](https://g2.antv.antgroup.com/en/api/mark/cell)
-(correlation matrix expression)
+R: [`stats::cor()`](https://rdrr.io/r/stats/cor.html) (pairwise
+correlation matrix) AntV G2:
+[Cell](https://g2.antv.antgroup.com/en/api/mark/cell) (correlation
+matrix expression)
 
 ## Examples
 

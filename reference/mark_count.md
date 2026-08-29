@@ -3,7 +3,7 @@
 Draws each unique point once, sized by the number of observations at
 that location (`stat_sum`). The standard answer to overplotting in
 scatter plots of discrete or binned data; pair with
-[`scale_radius()`](https://zorrooz.github.io/plotit/reference/scale_radius.md)
+[`scale_size()`](https://zorrooz.github.io/plotit/reference/scale_size.md)
 for an area-proportional legend.
 
 ## Usage

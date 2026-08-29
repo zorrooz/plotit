@@ -10,7 +10,7 @@ to the appropriate ggplot2 geom based on the parameters supplied:"><style>.r-plt
 
     <a class="navbar-brand me-2" href="../index.html">plotit</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -27,12 +27,21 @@ to the appropriate ggplot2 geom based on the parameters supplied:"><style>.r-plt
     <li><a class="dropdown-item" href="../articles/composing.html">Composing Figures</a></li>
     <li><a class="dropdown-item" href="../articles/relational.html">Relational Charts</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><a class="dropdown-item" href="../articles/gallery-groups.html">Gallery: Groups</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-comparisons.html">Gallery: Comparisons</a></li>
     <li><a class="dropdown-item" href="../articles/gallery-distributions.html">Gallery: Distributions</a></li>
     <li><a class="dropdown-item" href="../articles/gallery-relationships.html">Gallery: Relationships</a></li>
     <li><a class="dropdown-item" href="../articles/gallery-coordinates.html">Gallery: Time &amp; Coordinates</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-trends.html">Gallery: Trends</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-matrix.html">Gallery: Matrix</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-proportions.html">Gallery: Proportions</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-geo.html">Gallery: Geo</a></li>
     <li><a class="dropdown-item" href="../articles/gallery-relational.html">Gallery: Relational</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-annotations.html">Gallery: Annotations</a></li>
     <li><a class="dropdown-item" href="../articles/gallery-composing.html">Gallery: Annotation &amp; Composition</a></li>
+    <li><a class="dropdown-item" href="../articles/use-case-bioinformatics.html">Use Case: Bioinformatics</a></li>
+    <li><a class="dropdown-item" href="../articles/use-case-publishing.html">Use Case: Publishing</a></li>
+    <li><a class="dropdown-item" href="../articles/transform-recipes.html">Transform Recipes</a></li>
+    <li><a class="dropdown-item" href="../articles/philosophy.html">Design Philosophy</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -145,7 +154,12 @@ spelling <code>colour</code> is still accepted through <code>...</code>.</p></dd
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Other arguments passed to the underlying geom</p></dd>
+<dd><p>Other arguments passed to the underlying geom. ggplot2 4.0
+also accepts <code>layout=</code> on any layer, which controls how the layer is
+placed across <code>split_*</code> facet panels: <code>NULL</code> (default) matches layer
+rows to panels by the facet variable, <code>"fixed"</code> repeats the layer on
+every panel (a unified reference line), and an integer pins it to a
+single panel, e.g. <code>mark_rule(yintercept = 0, layout = "fixed")</code>.</p></dd>
 
 
 <dt id="arg-rasterize">rasterize<a class="anchor" aria-label="anchor" href="#arg-rasterize"></a></dt>
@@ -167,10 +181,10 @@ spelling <code>colour</code> is still accepted through <code>...</code>.</p></dd
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
 
-<ul><li><p><code>xintercept</code> → <a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">ggplot2::geom_vline</a></p></li>
-<li><p><code>yintercept</code> → <a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">ggplot2::geom_hline</a></p></li>
-<li><p><code>slope</code> + <code>intercept</code> → <a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">ggplot2::geom_abline</a></p></li>
-<li><p><code>x</code>/<code>xend</code>/<code>y</code>/<code>yend</code> → <a href="https://ggplot2.tidyverse.org/reference/geom_segment.html" class="external-link">ggplot2::geom_segment</a></p></li>
+<ul><li><p><code>xintercept</code> &lt;U+2192&gt; <a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">ggplot2::geom_vline</a></p></li>
+<li><p><code>yintercept</code> &lt;U+2192&gt; <a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">ggplot2::geom_hline</a></p></li>
+<li><p><code>slope</code> + <code>intercept</code> &lt;U+2192&gt; <a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">ggplot2::geom_abline</a></p></li>
+<li><p><code>x</code>/<code>xend</code>/<code>y</code>/<code>yend</code> &lt;U+2192&gt; <a href="https://ggplot2.tidyverse.org/reference/geom_segment.html" class="external-link">ggplot2::geom_segment</a></p></li>
 </ul><p>Dispatch priority: vline/hline &gt; abline &gt; segment.</p>
     </div>
     <div class="section level2">

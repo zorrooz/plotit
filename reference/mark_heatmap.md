@@ -25,6 +25,10 @@ mark_heatmap(
   plot,
   cluster = c("both", "row", "column", "none"),
   scale = c("none", "row", "column"),
+  show_numbers = FALSE,
+  number_format = "%.2f",
+  number_color = NULL,
+  na_color = "grey85",
   ...,
   rasterize = FALSE,
   rasterize_dpi = 300,
@@ -46,6 +50,25 @@ mark_heatmap(
 - scale:
 
   z-score normalisation: `"none"` (default), `"row"`, or `"column"`.
+
+- show_numbers:
+
+  Print the value of each cell inside the tile (default `FALSE`);
+  implemented as a `mark_text` overlay.
+
+- number_format:
+
+  Format string for the cell numbers (default `"%.2f"`).
+
+- number_color:
+
+  Cell number colour; `NULL` (default) applies auto-contrast (white on
+  dark cells, ink on light cells).
+
+- na_color:
+
+  Fill colour for `NA` cells (default `"grey85"`; the tidyheatmaps
+  `color_na` counterpart).
 
 - ...:
 
@@ -71,7 +94,9 @@ Modified plotit object.
 
 ## References
 
-tidyheatmaps: [Heatmaps from Tidy
+R: [`stats::hclust()`](https://rdrr.io/r/stats/hclust.html) /
+[`stats::dist()`](https://rdrr.io/r/stats/dist.html) (row/column
+clustering) tidyheatmaps: [Heatmaps from Tidy
 Data](https://jbengler.github.io/tidyheatmaps/)
 
 ## Examples

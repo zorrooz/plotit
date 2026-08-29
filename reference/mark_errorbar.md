@@ -1,11 +1,10 @@
 # Error bar / interval layer
 
-Adds interval bars showing confidence intervals, standard errors, or
-other variability measures. Vertical bars (default) map the position on
-`x` and the interval on `ymin`/`ymax`; horizontal bars map the position
-on `y` and the interval on `xmin`/`xmax` (G2's `rangeX`/`rangeY`
-semantics). Set `caps = FALSE` for plain interval lines without end caps
-(Vega-Lite's `errorband`).
+Adds interval bars showing pre-computed intervals (`stat = "identity"`,
+the default: `ymin`/`ymax` come straight from the data) or statistical
+entities computed per group (`stat = "mean_sem"`, `"mean_sd"`,
+`"mean_range"`, `"mean_ci95"`): the interval is aggregated from the raw
+`y` values of each x group with no manual pre-computation.
 
 ## Usage
 
@@ -16,6 +15,10 @@ mark_errorbar(
   data = NULL,
   position = NULL,
   ...,
+  stat = "identity",
+  level = 0.95,
+  ci_method = c("normal", "boot"),
+  seed = NULL,
   width = 0.5,
   orientation = c("vertical", "horizontal"),
   caps = TRUE,
@@ -33,8 +36,10 @@ mark_errorbar(
 
 - mapping:
 
-  Optional new aesthetics (must include the interval columns for the
-  chosen orientation: `ymin`/`ymax` vertical, `xmin`/`xmax` horizontal)
+  Optional new aesthetics. With `stat = "identity"` it must include the
+  interval columns for the chosen orientation (`ymin`/`ymax` vertical,
+  `xmin`/`xmax` horizontal); with a statistical entity it only needs `x`
+  (group) and `y` (value).
 
 - data:
 
@@ -47,6 +52,26 @@ mark_errorbar(
 - ...:
 
   Other arguments passed to the underlying geom
+
+- stat:
+
+  Statistical entity: `"identity"` (pre-computed intervals, no implicit
+  aggregation) or one of `"mean_sem"`, `"mean_sd"`, `"mean_range"`,
+  `"mean_ci95"` (per-group aggregation of `y`).
+
+- level:
+
+  Confidence level for `stat = "mean_ci95"`, in `(0, 1)` (default 0.95).
+
+- ci_method:
+
+  `"normal"` (default, t-based normal approximation) or `"boot"`
+  (percentile bootstrap of the mean; requires `seed`).
+
+- seed:
+
+  RNG seed for `ci_method = "boot"`; required for reproducibility of the
+  bootstrap.
 
 - width:
 
@@ -79,12 +104,19 @@ mark_errorbar(
 
 Modified plotit object
 
+## Details
+
+Vertical bars (default) map the position on `x` and the interval on
+`ymin`/`ymax`; horizontal bars map the position on `y` and the interval
+on `xmin`/`xmax` (G2's `rangeX`/`rangeY` semantics). Set `caps = FALSE`
+for plain interval lines without end caps (Vega-Lite's `errorband`).
+
 ## References
 
 Vega-Lite:
 [Errorbar](https://vega.github.io/vega-lite/docs/errorbar.html) /
 [Errorband](https://vega.github.io/vega-lite/docs/errorband.html)
-(composite marks)
+(`extent`: stderr \<-\> sem, stdev \<-\> sd, ci \<-\> ci95)
 
 AntV G2: [Range](https://g2.antv.antgroup.com/en/api/mark/range)
 
@@ -96,6 +128,11 @@ df <- data.frame(
 )
 plotit(df, encode(x = x, y = y, ymin = ymin, ymax = ymax)) |>
   mark_errorbar(width = 0.3)
+
+
+# statistical entity: mean +- sem aggregated per group from raw y
+plotit(iris, encode(x = Species, y = Sepal.Length)) |>
+  mark_errorbar(stat = "mean_sem")
 
 
 # horizontal interval (position on y, range on x)

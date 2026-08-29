@@ -6,8 +6,8 @@
   Initialize a plotit object
 - [`encode()`](https://zorrooz.github.io/plotit/reference/encode.md) :
   Create aesthetic mapping
-- [`` `+`( ``*`<plotit>`*`)`](https://zorrooz.github.io/plotit/reference/plus-.plotit.md)
-  : Add a ggplot2 component to a plotit object
+- [`add_ggplot()`](https://zorrooz.github.io/plotit/reference/add_ggplot.md)
+  : Add a ggplot2 component to a plot
 
 ## Geometric Layers
 
@@ -41,6 +41,8 @@ Add visual marks to your plot.
   : Dumbbell comparison chart layer
 - [`mark_ecdf()`](https://zorrooz.github.io/plotit/reference/mark_ecdf.md)
   : Empirical CDF layer
+- [`mark_encircle()`](https://zorrooz.github.io/plotit/reference/mark_encircle.md)
+  : Group annotation envelope layer
 - [`mark_errorbar()`](https://zorrooz.github.io/plotit/reference/mark_errorbar.md)
   : Error bar / interval layer
 - [`mark_forest()`](https://zorrooz.github.io/plotit/reference/mark_forest.md)
@@ -51,6 +53,8 @@ Add visual marks to your plot.
   : Hexagonal heatmap layer
 - [`mark_histogram()`](https://zorrooz.github.io/plotit/reference/mark_histogram.md)
   : Histogram layer
+- [`mark_image()`](https://zorrooz.github.io/plotit/reference/mark_image.md)
+  : Image layer
 - [`mark_label()`](https://zorrooz.github.io/plotit/reference/mark_label.md)
   : Label layer
 - [`mark_line()`](https://zorrooz.github.io/plotit/reference/mark_line.md)
@@ -73,6 +77,8 @@ Add visual marks to your plot.
   : Quantile-quantile reference line layer
 - [`mark_rect()`](https://zorrooz.github.io/plotit/reference/mark_rect.md)
   : Rectangle layer
+- [`mark_ribbon()`](https://zorrooz.github.io/plotit/reference/mark_ribbon.md)
+  : Statistical ribbon layer
 - [`mark_rug()`](https://zorrooz.github.io/plotit/reference/mark_rug.md)
   : Rug / tick layer
 - [`mark_rule()`](https://zorrooz.github.io/plotit/reference/mark_rule.md)
@@ -107,7 +113,7 @@ Control how data maps to visual properties.
 - [`scale_linetype()`](https://zorrooz.github.io/plotit/reference/scale_linetype.md)
   : Linetype scale
 - [`scale_radius()`](https://zorrooz.github.io/plotit/reference/scale_radius.md)
-  : Radius scale (area-proportional bubble size)
+  : Radius scale (defunct)
 - [`scale_shape()`](https://zorrooz.github.io/plotit/reference/scale_shape.md)
   : Shape scale
 - [`scale_size()`](https://zorrooz.github.io/plotit/reference/scale_size.md)
@@ -180,6 +186,8 @@ Split data into subplots.
 
 Combine multiple plots into layouts.
 
+- [`compose_annot()`](https://zorrooz.github.io/plotit/reference/compose_annot.md)
+  : Attach annotation strips to a base plot
 - [`compose_grid()`](https://zorrooz.github.io/plotit/reference/compose_grid.md)
   : Assemble multiple plots into a grid layout
 - [`compose_inset()`](https://zorrooz.github.io/plotit/reference/compose_inset.md)

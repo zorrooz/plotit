@@ -68,7 +68,8 @@ Modified plotit object
 
 ## References
 
-Observable Plot: [Plot.qq](https://observablehq.com/plot/plots/qq)
+R: [`stats::qqnorm()`](https://rdrr.io/r/stats/qqnorm.html) /
+[`stats::qqplot()`](https://rdrr.io/r/stats/qqnorm.html)
 
 ## Examples
 

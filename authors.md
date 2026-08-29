@@ -7,15 +7,15 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/zorrooz/plotit/blob/main/DESCRIPTION)
+[`inst/CITATION`](https://github.com/zorrooz/plotit/blob/main/inst/CITATION)
 
-zorrooz (2026). *plotit: Declarative Plotting with ggplot2*. R package
-version 0.0.0.9000, <https://github.com/zorrooz/plotit>.
+zorrooz (2026). plotit: Declarative Plotting with ggplot2. R package
+version 1.0.0 . https://github.com/zorrooz/plotit
 
     @Manual{,
-      title = {plotit: Declarative Plotting with ggplot2},
       author = {{zorrooz}},
       year = {2026},
-      note = {R package version 0.0.0.9000},
+      title = {plotit: Declarative Plotting with ggplot2},
       url = {https://github.com/zorrooz/plotit},
+      note = {R package version 1.0.0},
     }

@@ -110,7 +110,7 @@ Multi-plot compositions follow their own outermost pipeline:
 
 ### `mark_*` — Geometric layers
 
-39 marks across three tiers: basic geometry, statistical, and
+43 marks across three tiers: basic geometry, statistical, and
 composite/relational. Composite and relational marks are documented
 syntax sugar over the primitives below
 (e.g. [`mark_significance()`](https://zorrooz.github.io/plotit/reference/mark_significance.md)
@@ -158,6 +158,10 @@ syntax sugar over the primitives below
 | [`mark_treemap()`](https://zorrooz.github.io/plotit/reference/mark_treemap.md) | [`layout_treemap()`](https://zorrooz.github.io/plotit/reference/layout_treemap.md) sugar | Treemaps |
 | [`mark_network()`](https://zorrooz.github.io/plotit/reference/mark_network.md) | `layout_force()/circle()` sugar | Network graphs (straight or curved edges) |
 | [`mark_chord()`](https://zorrooz.github.io/plotit/reference/mark_chord.md) | [`layout_chord()`](https://zorrooz.github.io/plotit/reference/layout_chord.md) sugar | Chord diagrams |
+| [`mark_image()`](https://zorrooz.github.io/plotit/reference/mark_image.md) | custom `GeomPlotitImage` | Image scatter / ISOTYPE (circular alpha-masked thumbnails) |
+| [`mark_encircle()`](https://zorrooz.github.io/plotit/reference/mark_encircle.md) | hull / `stat_ellipse` sugar | Group envelopes (convex hull, confidence ellipse) |
+| [`mark_ribbon()`](https://zorrooz.github.io/plotit/reference/mark_ribbon.md) | `geom_ribbon` sugar | Statistical interval bands (SE/SD/CI, bootstrapped) |
+| [`mark_heatmap()`](https://zorrooz.github.io/plotit/reference/mark_heatmap.md) | internal matrix melt + `geom_tile` | Matrix heatmap (clustering, z-score, numeric overlay) |
 
 ### Relational data — `as_graph()` + `layout_*()`
 
@@ -199,13 +203,19 @@ like-named arguments).
 |:---|:---|
 | [`scale_color()`](https://zorrooz.github.io/plotit/reference/scale_color.md) | colour |
 | [`scale_fill()`](https://zorrooz.github.io/plotit/reference/scale_fill.md) | fill |
-| [`scale_size()`](https://zorrooz.github.io/plotit/reference/scale_size.md) | size |
-| [`scale_radius()`](https://zorrooz.github.io/plotit/reference/scale_radius.md) | radius (area-honest bubbles) |
+| [`scale_size()`](https://zorrooz.github.io/plotit/reference/scale_size.md) | size / radius (bubble encoding) |
 | [`scale_alpha()`](https://zorrooz.github.io/plotit/reference/scale_alpha.md) | alpha |
 | [`scale_shape()`](https://zorrooz.github.io/plotit/reference/scale_shape.md) | shape |
 | [`scale_linetype()`](https://zorrooz.github.io/plotit/reference/scale_linetype.md) | linetype |
 | [`scale_x()`](https://zorrooz.github.io/plotit/reference/scale_x.md) | x-axis |
 | [`scale_y()`](https://zorrooz.github.io/plotit/reference/scale_y.md) | y-axis |
+
+[`scale_radius()`](https://zorrooz.github.io/plotit/reference/scale_radius.md)
+is **defunct** since 1.0 — radius encoding is the
+[`scale_size()`](https://zorrooz.github.io/plotit/reference/scale_size.md)
+domain (`scale_size(range = ...)`); area-honest radius mapping stays
+available via
+[`ggplot2::scale_radius`](https://ggplot2.tidyverse.org/reference/scale_size.html).
 
 ### `label_*` — Text labels
 

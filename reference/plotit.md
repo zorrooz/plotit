@@ -21,7 +21,10 @@ plotit(
 
 - data:
 
-  A data frame.
+  A data frame, a matrix (coerced with
+  [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html)), or a
+  `plotit_graph` (relational pipeline; see
+  [`as_graph()`](https://zorrooz.github.io/plotit/reference/as_graph.md)).
 
 - mapping:
 

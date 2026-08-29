@@ -3,13 +3,13 @@
 Creates a Sankey diagram showing directed flows between nodes.
 Equivalent to the pipeline
 `as_graph() |> layout_sankey() |> mark_polygon(data = ~ribbons) |> mark_rect(data = ~nodes)`
-– see §3.3.4a. Accepts an **edges table** with `source`, `target`, and
-optionally `value` columns (either mapped via structural aesthetics or
-present as literal columns); node and ribbon geometry come from the
-built-in layered layout (deterministic, dependency-free). The derived
-flow/node fill channel defaults to source identity and ships with the
-curated token palette – friendly qualitative for categories, viridis
-sequential for continuous values; chain
+– see \<U+00A7\>3.3.4a. Accepts an **edges table** with `source`,
+`target`, and optionally `value` columns (either mapped via structural
+aesthetics or present as literal columns); node and ribbon geometry come
+from the built-in layered layout (deterministic, dependency-free). The
+derived flow/node fill channel defaults to source identity and ships
+with the curated token palette – friendly qualitative for categories,
+viridis sequential for continuous values; chain
 [`scale_fill()`](https://zorrooz.github.io/plotit/reference/scale_fill.md)
 to replace it (last call wins).
 

@@ -5,7 +5,7 @@ Generic for wrapping facets
 ## Usage
 
 ``` r
-split_wrap(plot, ..., nrow = NULL, ncol = NULL, scales = "fixed")
+split_wrap(plot, ..., nrow = NULL, ncol = NULL, scales = "fixed", dir = NULL)
 ```
 
 ## Arguments
@@ -17,8 +17,8 @@ split_wrap(plot, ..., nrow = NULL, ncol = NULL, scales = "fixed")
 - ...:
 
   Unnamed arguments are faceting variables (e.g. `Species`); named
-  arguments (`labeller`, `strip.position`, `dir`, `drop`, ...) are
-  passed through to
+  arguments (`labeller`, `strip.position`, `drop`, ...) are passed
+  through to
   [`ggplot2::facet_wrap()`](https://ggplot2.tidyverse.org/reference/facet_wrap.html).
 
 - nrow:
@@ -33,6 +33,14 @@ split_wrap(plot, ..., nrow = NULL, ncol = NULL, scales = "fixed")
 
   Should scales be fixed ("fixed"), free ("free"), or free in one
   dimension ("free_x", "free_y")?
+
+- dir:
+
+  Facet fill direction code passed to
+  [`ggplot2::facet_wrap()`](https://ggplot2.tidyverse.org/reference/facet_wrap.html):
+  ggplot2 4.0 supports the eight-direction codes `"lt"`, `"tl"`, `"lb"`,
+  `"bl"`, `"rt"`, `"tr"`, `"rb"`, `"br"` (first letter = first-panel
+  corner, second letter = fill direction). `NULL` = ggplot2 default.
 
 ## Value
 

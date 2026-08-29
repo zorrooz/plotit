@@ -56,6 +56,13 @@ mark_histogram(
 
 Modified plotit object
 
+## References
+
+R: [`graphics::hist()`](https://rdrr.io/r/graphics/hist.html) (binning
+semantics; realised by ggplot2's stat_bin) Vega-Lite:
+[Bar](https://vega.github.io/vega-lite/docs/bar.html) with `bin`
+transform
+
 ## Examples
 
 ``` r
