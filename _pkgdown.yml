@@ -54,10 +54,22 @@ navbar:
         href: articles/gallery-relationships.html
       - text: "Gallery: Time & Coordinates"
         href: articles/gallery-coordinates.html
+      - text: "Gallery: Trends"
+        href: articles/gallery-trends.html
+      - text: "Gallery: Matrix"
+        href: articles/gallery-matrix.html
+      - text: "Gallery: Proportions"
+        href: articles/gallery-proportions.html
+      - text: "Gallery: Geo"
+        href: articles/gallery-geo.html
       - text: "Gallery: Relational"
         href: articles/gallery-relational.html
+      - text: "Gallery: Annotations"
+        href: articles/gallery-annotations.html
       - text: "Gallery: Annotation & Composition"
         href: articles/gallery-composing.html
+      - text: "Design Philosophy"
+        href: articles/philosophy.html
     news:
       text: News
       href: news/index.html

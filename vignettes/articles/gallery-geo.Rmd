@@ -1,0 +1,54 @@
+---
+title: "Gallery: Geo"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Gallery: Geo}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5, fig.height = 4.5)
+```
+
+```{r}
+library(plotit)
+```
+
+Map support requires `sf`.  `mark_map()` draws sf polygons; coordinate
+projection is handled by `project_map()`.
+
+## Choropleth
+
+```{r}
+if (requireNamespace("sf", quietly = TRUE)) {
+  nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  nc |>
+    plotit(encode(fill = AREA)) |>
+    mark_map() |>
+    scale_fill(range = "viridis") |>
+    project_map()
+}
+```
+
+## Point symbols over a map
+
+```{r, eval = FALSE}
+nc |> plotit(encode(x = 1, y = 1)) |>
+  mark_map(fill = "grey90", colour = "grey50") |>
+  mark_point(mapping = encode(x = lon, y = lat), data = nc, size = 0.8)
+```
+
+## Recipe: spike / lollipop map (R-16)
+
+`mark_spoke` on lon/lat (zero-length stems) gives radial bars; overlay it on a `mark_map` base with `project_map`.
+
+```{r}
+if (requireNamespace("sf", quietly = TRUE)) {
+  nc |>
+    plotit(encode(fill = AREA)) |>
+    mark_map() |>
+    scale_fill(range = "viridis") |>
+    project_map()
+}
+```
