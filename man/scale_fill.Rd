@@ -12,6 +12,9 @@ scale_fill(
   range = NULL,
   breaks = NULL,
   labels = NULL,
+  na_color = NULL,
+  n_bins = NULL,
+  mid = NULL,
   ...
 )
 }
@@ -32,6 +35,8 @@ Unsupported values (e.g. \code{"log"}) produce a targeted error message.}
 \item{breaks}{Legend key positions.}
 
 \item{labels}{Legend key labels.}
+
+\item{na_color, n_bins, mid}{Same as \code{\link[=scale_color]{scale_color()}}.}
 
 \item{...}{Passed to the underlying ggplot2 scale function.}
 }

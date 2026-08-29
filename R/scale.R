@@ -87,22 +87,94 @@ NULL
   trans
 }
 
-# Scheme-based dispatch: viridis, brewer, grey, friendly, hue
+# ---- scheme catalog (design 04 ss3.1: 20 whitelisted names, additive) ----
+# Diverging anchors (low, neutral, high) from ColorBrewer / tidyplots
+# (research/05 ss5.3); needed by both the `mid=` routing and the diverging
+# `range=` whitelist below.
+#' Diverging colour anchors: c(low, neutral, high) per scheme name.
+#' @noRd
+#' @keywords internal
+._DIVERGING_ANCHORS <- list(
+  rdbu       = c("#67001F", "#F7F7F7", "#053061"),
+  rdylbu     = c("#A50026", "#F7F7F7", "#313695"),
+  spectral   = c("#D53E4F", "#F7F7F7", "#3288BD"),
+  brbg       = c("#A6611A", "#F7F7F7", "#018571"),
+  puor       = c("#7F3B08", "#F7F7F7", "#2D004B"),
+  blue2brown = c("#1961A5", "#F7F7F7", "#B3322E")
+)
+
+#' Return diverging anchors c(low, neutral, high) for a scheme name.
+#' @noRd
+#' @keywords internal
+._diverging_ramp <- function(scheme) {
+  anchors <- ._DIVERGING_ANCHORS[[scheme]]
+  if (is.null(anchors)) {
+    ._abort_arg_enum("range", names(._DIVERGING_ANCHORS), got = scheme)
+  }
+  anchors
+}
+
+# Sequential (8): viridis (default), magma, inferno, plasma, cividis, mako,
+#   rocket, turbo -- all ride ggplot2's viridis option= machinery.
+# Qualitative (7): friendly (default), friendly_long, tableau10, okabeito,
+#   brewer, hue, grey.
+# Diverging (6): rdbu (default), rdylbu, spectral, brbg, puor, blue2brown.
+#' Sequential colour scheme names.
+#' @noRd
+#' @keywords internal
+._SEQUENTIAL_SCHEMES <- c("viridis", "magma", "inferno", "plasma", "cividis", "mako", "rocket", "turbo")
+#' Qualitative colour scheme names.
+#' @noRd
+#' @keywords internal
+._QUALITATIVE_SCHEMES <- c("friendly", "friendly_long", "tableau10", "okabeito", "brewer", "hue", "grey")
+#' Diverging colour scheme names.
+#' @noRd
+#' @keywords internal
+._DIVERGING_SCHEMES <- names(._DIVERGING_ANCHORS)
+#' All whitelisted colour scheme names.
+#' @noRd
+#' @keywords internal
+._ALL_SCHEMES <- c(._SEQUENTIAL_SCHEMES, ._QUALITATIVE_SCHEMES, ._DIVERGING_SCHEMES)
+
+# Qualitative ramp builders (anchors from tidyplots / G2 academy,
+# research/05 ss5.3 and 03 ss5.3).
+#' friendly_long ramp (7 anchors, tidyplots).
+#' @noRd
+#' @keywords internal
+._palette_friendly_long <- function(n) {
+  colorRampPalette(c(
+    "#CC79A7", "#0072B2", "#56B4E9", "#009E73", "#F5C710", "#E69F00", "#D55E00"
+  ))(n)
+}
+#' tableau10 ramp (10 anchors, G2 academy = Tableau 10).
+#' @noRd
+#' @keywords internal
+._palette_tableau10 <- function(n) {
+  colorRampPalette(c(
+    "#4E79A7", "#F28E2C", "#E15759", "#76B7B2", "#59A14F",
+    "#EDC949", "#AF7AA1", "#FF9DA7", "#9C755F", "#BAB0AB"
+  ))(n)
+}
+#' Okabe-Ito ramp (grDevices built-in).
+#' @noRd
+#' @keywords internal
+._palette_okabeito <- function(n) {
+  colorRampPalette(grDevices::palette.colors(palette = "Okabe-Ito"))(n)
+}
+
+# Scheme-based dispatch over the 20-name catalog.
 #' Dispatch to colour/fill scale by scheme name.
 #' @noRd
 #' @keywords internal
 ._scale_scheme <- function(aes, scheme, discrete, binned, reverse, ...) {
   dir <- if (reverse) -1 else 1
   if (discrete) {
-    switch(scheme,
-      viridis = ._cf(aes, ggplot2::scale_colour_viridis_d, ggplot2::scale_fill_viridis_d)(direction = dir, ...),
-      brewer = ._cf(aes, ggplot2::scale_colour_brewer, ggplot2::scale_fill_brewer)(direction = dir, ...),
-      grey = ._cf(aes, ggplot2::scale_colour_grey, ggplot2::scale_fill_grey)(
-        start = if (reverse) 0.8 else 0.2,
-        end = if (reverse) 0.2 else 0.8,
-        ...
-      ),
-      friendly = ggplot2::discrete_scale(
+    if (scheme %in% ._SEQUENTIAL_SCHEMES) {
+      ._cf(aes, ggplot2::scale_colour_viridis_d, ggplot2::scale_fill_viridis_d)(
+        option = scheme, direction = dir, ...
+      )
+    } else if (scheme == "friendly") {
+      ggplot2::discrete_scale(
         aesthetics = aes,
         palette = if (reverse) {
           function(n) rev(._palette_discrete(n))
@@ -110,34 +182,97 @@ NULL
           function(n) ._palette_discrete(n)
         },
         ...
-      ),
-      hue = ._cf(aes, ggplot2::scale_colour_discrete, ggplot2::scale_fill_discrete)(direction = dir, ...),
-      ._abort_arg_enum(
-        "scheme", c("viridis", "brewer", "grey", "friendly", "hue"),
-        got = scheme,
-        hint = "The {.val grey} scheme is discrete-only; use it with {.code trans = 'discrete'}."
       )
-    )
+    } else if (scheme == "friendly_long") {
+      ggplot2::discrete_scale(
+        aesthetics = aes,
+        palette = if (reverse) {
+          function(n) rev(._palette_friendly_long(n))
+        } else {
+          function(n) ._palette_friendly_long(n)
+        },
+        ...
+      )
+    } else if (scheme == "tableau10") {
+      ggplot2::discrete_scale(
+        aesthetics = aes,
+        palette = if (reverse) {
+          function(n) rev(._palette_tableau10(n))
+        } else {
+          function(n) ._palette_tableau10(n)
+        },
+        ...
+      )
+    } else if (scheme == "okabeito") {
+      ggplot2::discrete_scale(
+        aesthetics = aes,
+        palette = if (reverse) {
+          function(n) rev(._palette_okabeito(n))
+        } else {
+          function(n) ._palette_okabeito(n)
+        },
+        ...
+      )
+    } else if (scheme == "brewer") {
+      ._cf(aes, ggplot2::scale_colour_brewer, ggplot2::scale_fill_brewer)(direction = dir, ...)
+    } else if (scheme == "grey") {
+      ._cf(aes, ggplot2::scale_colour_grey, ggplot2::scale_fill_grey)(
+        start = if (reverse) 0.8 else 0.2,
+        end = if (reverse) 0.2 else 0.8,
+        ...
+      )
+    } else if (scheme == "hue") {
+      ._cf(aes, ggplot2::scale_colour_discrete, ggplot2::scale_fill_discrete)(direction = dir, ...)
+    } else if (scheme %in% ._DIVERGING_SCHEMES) {
+      ramp <- ._diverging_ramp(scheme)
+      ggplot2::discrete_scale(
+        aesthetics = aes,
+        palette = function(n) colorRampPalette(if (reverse) rev(ramp) else ramp)(n),
+        ...
+      )
+    } else {
+      ._abort_arg_enum("scheme", ._ALL_SCHEMES, got = scheme)
+    }
   } else if (binned) {
-    switch(scheme,
-      viridis = ._cf(aes, ggplot2::scale_colour_viridis_b, ggplot2::scale_fill_viridis_b)(direction = dir, ...),
-      brewer = ._cf(aes, ggplot2::scale_colour_fermenter, ggplot2::scale_fill_fermenter)(direction = dir, ...),
-      ._abort_arg_enum(
-        "scheme", c("viridis", "brewer"),
-        got = scheme,
-        hint = "Binned scales support {.val viridis} and {.val brewer} only."
+    if (scheme %in% ._SEQUENTIAL_SCHEMES) {
+      ._cf(aes, ggplot2::scale_colour_viridis_b, ggplot2::scale_fill_viridis_b)(
+        option = scheme, direction = dir, ...
       )
-    )
+    } else if (scheme == "brewer") {
+      ._cf(aes, ggplot2::scale_colour_fermenter, ggplot2::scale_fill_fermenter)(direction = dir, ...)
+    } else if (scheme %in% ._DIVERGING_SCHEMES) {
+      ramp <- ._diverging_ramp(scheme)
+      if (reverse) ramp <- rev(ramp)
+      ._cf(aes, ggplot2::scale_colour_steps2, ggplot2::scale_fill_steps2)(
+        low = ramp[1], mid = ramp[2], high = ramp[3], midpoint = 0, ...
+      )
+    } else {
+      ._abort_arg_enum(
+        "scheme", c(._SEQUENTIAL_SCHEMES, "brewer", ._DIVERGING_SCHEMES),
+        got = scheme,
+        hint = "Binned scales support sequential, diverging and {.val brewer} schemes only."
+      )
+    }
   } else {
-    switch(scheme,
-      viridis = ._cf(aes, ggplot2::scale_colour_viridis_c, ggplot2::scale_fill_viridis_c)(direction = dir, ...),
-      brewer = ._cf(aes, ggplot2::scale_colour_distiller, ggplot2::scale_fill_distiller)(direction = dir, ...),
-      ._abort_arg_enum(
-        "scheme", c("viridis", "brewer"),
-        got = scheme,
-        hint = "Continuous scales support {.val viridis} and {.val brewer} only."
+    if (scheme %in% ._SEQUENTIAL_SCHEMES) {
+      ._cf(aes, ggplot2::scale_colour_viridis_c, ggplot2::scale_fill_viridis_c)(
+        option = scheme, direction = dir, ...
       )
-    )
+    } else if (scheme == "brewer") {
+      ._cf(aes, ggplot2::scale_colour_distiller, ggplot2::scale_fill_distiller)(direction = dir, ...)
+    } else if (scheme %in% ._DIVERGING_SCHEMES) {
+      ramp <- ._diverging_ramp(scheme)
+      if (reverse) ramp <- rev(ramp)
+      ._cf(aes, ggplot2::scale_colour_gradient2, ggplot2::scale_fill_gradient2)(
+        low = ramp[1], mid = ramp[2], high = ramp[3], midpoint = 0, ...
+      )
+    } else {
+      ._abort_arg_enum(
+        "scheme", c(._SEQUENTIAL_SCHEMES, "brewer", ._DIVERGING_SCHEMES),
+        got = scheme,
+        hint = "Continuous scales support sequential, diverging and {.val brewer} schemes only."
+      )
+    }
   }
 }
 
@@ -145,7 +280,7 @@ NULL
 #' Dispatch to colour/fill scale with custom colour vector.
 #' @noRd
 #' @keywords internal
-._scale_custom <- function(aes, range, discrete, binned, reverse, ...) {
+._scale_custom <- function(aes, range, discrete, binned, reverse, midpoint = NULL, ...) {
   if (discrete) {
     if (reverse) range <- rev(range)
     ._cf(aes, ggplot2::scale_colour_manual, ggplot2::scale_fill_manual)(values = range, ...)
@@ -156,14 +291,16 @@ NULL
       if (length(range) == 2) {
         ._cf(aes, ggplot2::scale_colour_steps, ggplot2::scale_fill_steps)(low = lo, high = hi, ...)
       } else {
-        ._cf(aes, ggplot2::scale_colour_steps2, ggplot2::scale_fill_steps2)(low = lo, mid = range[2], high = hi, ...)
+        ._cf(aes, ggplot2::scale_colour_steps2, ggplot2::scale_fill_steps2)(
+          low = lo, mid = range[2], high = hi, midpoint = midpoint %||% 0, ...
+        )
       }
     } else {
       if (length(range) == 2) {
         ._cf(aes, ggplot2::scale_colour_gradient, ggplot2::scale_fill_gradient)(low = lo, high = hi, ...)
       } else {
         ._cf(aes, ggplot2::scale_colour_gradient2, ggplot2::scale_fill_gradient2)(
-          low = lo, mid = range[2], high = hi, ...
+          low = lo, mid = range[2], high = hi, midpoint = midpoint %||% 0, ...
         )
       }
     }
@@ -191,15 +328,16 @@ NULL
     do.call(._scale_custom, c(list(aes, range, discrete, binned, reverse), extra_args))
   } else {
     scheme <- range %||% if (binned) "viridis" else if (discrete) "friendly" else "viridis"
-    # Single color name -> helpful error instead of "unknown scheme"
-    known_schemes <- c("viridis", "brewer", "grey", "friendly", "hue")
+    # Single colour name -> helpful error instead of "unknown scheme"
     single_unknown_scheme <- is.character(range) &&
-      length(range) == 1 && !(scheme %in% known_schemes)
+      length(range) == 1 && !(scheme %in% ._ALL_SCHEMES)
     if (single_unknown_scheme) {
       cli::cli_abort(c(
         "{.val {range}} is not a known colour scheme name.",
-        "i" = "Use {.code range = c({range})} for a single custom colour,
-        or one of: viridis, brewer, grey, friendly, hue."
+        "i" = paste0(
+          "Use {.code range = c({range})} for a single custom colour, ",
+          "or one of: ", paste(._ALL_SCHEMES, collapse = ", "), "."
+        )
       ))
     }
     do.call(._scale_scheme, c(list(aes, scheme, discrete, binned, reverse), extra_args))
@@ -359,15 +497,72 @@ NULL
 #' @noRd
 #' @keywords internal
 ._scale_cf_impl <- function(plot, aes, name, trans, limits, range, breaks,
-                            labels, ...) {
+                            labels, na_color = NULL, n_bins = NULL, mid = NULL, ...) {
   plot <- ._clear_default_color(plot)
   trans <- ._resolve_trans(plot, aes, trans, ._TRANS_CONT)
+
+  extra <- list()
+  if (!is.null(na_color)) {
+    if (!is.character(na_color) || length(na_color) != 1 || is.na(na_color)) {
+      ._abort_arg_range("na_color", "a single colour", got = na_color)
+    }
+    extra$na.value <- na_color
+  }
+  if (!is.null(n_bins)) {
+    if (!is.numeric(n_bins) || length(n_bins) != 1 || is.na(n_bins) || n_bins < 2 ||
+      n_bins != as.integer(n_bins)) {
+      ._abort_arg_range("n_bins", "a single integer >= 2", got = n_bins)
+    }
+    if (trans == "discrete") {
+      ._abort_hint(
+        "{.arg n_bins} needs a continuous scale; {.arg trans} is {.val discrete}.",
+        "Drop {.arg n_bins} or use a continuous {.arg trans}."
+      )
+    }
+    trans <- "binned"
+    extra$n.breaks <- n_bins
+  }
+  if (!is.null(mid)) {
+    if (!is.numeric(mid) || length(mid) != 1 || is.na(mid)) {
+      ._abort_arg_range("mid", "a single number", got = mid)
+    }
+    if (trans %in% c("discrete", "binned")) {
+      ._abort_hint(
+        sprintf(
+          "{.arg mid} needs an untransformed continuous scale; got {.val %s}.",
+          trans
+        ),
+        "Use a continuous {.arg trans} (e.g. {.val identity}) with {.arg mid}."
+      )
+    }
+    # Diverging route: a diverging scheme in `range` (default rdbu) centred
+    # at the user's mid; any other range is a conflict (design 04 ss3.2).
+    if (!is.null(range)) {
+      if (!(is.character(range) && length(range) == 1 &&
+        range %in% names(._DIVERGING_ANCHORS))) {
+        ._abort_hint(
+          "{.arg mid} requires a diverging scheme in {.arg range} (e.g. {.val rdbu}); got a non-diverging range.",
+          "Use {.code range = \"rdbu\", mid = 0} or drop {.arg mid}."
+        )
+      }
+      scheme <- range
+    } else {
+      scheme <- "rdbu"
+    }
+    range <- ._diverging_ramp(scheme)
+    extra$midpoint <- mid
+  }
   rd <- ._resolve_reverse_discrete(plot, aes, trans)
-  plot@gg <- plot@gg +
-    ._scale_colour_fun(aes, rd$trans, range,
+  args <- c(
+    list(...),
+    list(
+      aes = aes, trans = rd$trans, range = range,
       name = name, limits = limits, breaks = breaks, labels = labels,
-      force_reverse = rd$force_reverse, ...
-    )
+      force_reverse = rd$force_reverse
+    ),
+    extra
+  )
+  plot@gg <- plot@gg + do.call(._scale_colour_fun, args)
   # The user now owns the channel: later layer-level mappings must not
   # attach the token default on top of it.
   ._colour_managed_add(plot, aes)
@@ -422,6 +617,14 @@ NULL
 #'   For continuous: only `"viridis"`, `"brewer"`.
 #' @param breaks Legend key positions.
 #' @param labels Legend key labels.
+#' @param na_color Colour used for `NA` values (passed to `na.value`).
+#'   `NULL` = ggplot2 default.
+#' @param n_bins Bin a continuous scale into this many legend steps
+#'   (`guide_coloursteps`; shorthand for `trans = "binned"`).  `NULL` =
+#'   continuous.
+#' @param mid Centre of a diverging colour scale (e.g. `0` for correlation
+#'   matrices).  Requires a continuous scale and a diverging scheme in
+#'   `range` (`"rdbu"` default); mutually exclusive with `n_bins`.
 #' @param ... Passed to the underlying ggplot2 scale function.
 #' @return A modified plotit object.
 #' @examples
@@ -432,7 +635,8 @@ NULL
 scale_color <- S7::new_generic(
   "scale_color", "plot",
   function(plot, name = ggplot2::waiver(), trans = NULL,
-           limits = NULL, range = NULL, breaks = NULL, labels = NULL, ...) {
+           limits = NULL, range = NULL, breaks = NULL, labels = NULL,
+           na_color = NULL, n_bins = NULL, mid = NULL, ...) {
     S7::S7_dispatch()
   }
 )
@@ -441,8 +645,10 @@ scale_color <- S7::new_generic(
 S7::method(scale_color, plotit_class) <- function(plot, name = ggplot2::waiver(),
                                                   trans = NULL, limits = NULL,
                                                   range = NULL, breaks = NULL,
-                                                  labels = NULL, ...) {
-  ._scale_cf_impl(plot, "colour", name, trans, limits, range, breaks, labels, ...)
+                                                  labels = NULL, na_color = NULL,
+                                                  n_bins = NULL, mid = NULL, ...) {
+  ._scale_cf_impl(plot, "colour", name, trans, limits, range, breaks, labels,
+    na_color = na_color, n_bins = n_bins, mid = mid, ...)
 }
 
 # ---- scale_fill ----
@@ -461,6 +667,7 @@ S7::method(scale_color, plotit_class) <- function(plot, name = ggplot2::waiver()
 #'   `"brewer"`, `"grey"`, `"friendly"`, `"hue"`.
 #' @param breaks Legend key positions.
 #' @param labels Legend key labels.
+#' @param na_color,n_bins,mid Same as [scale_color()].
 #' @param ... Passed to the underlying ggplot2 scale function.
 #' @return A modified plotit object.
 #' @examples
@@ -471,7 +678,8 @@ S7::method(scale_color, plotit_class) <- function(plot, name = ggplot2::waiver()
 scale_fill <- S7::new_generic(
   "scale_fill", "plot",
   function(plot, name = ggplot2::waiver(), trans = NULL,
-           limits = NULL, range = NULL, breaks = NULL, labels = NULL, ...) {
+           limits = NULL, range = NULL, breaks = NULL, labels = NULL,
+           na_color = NULL, n_bins = NULL, mid = NULL, ...) {
     S7::S7_dispatch()
   }
 )
@@ -480,8 +688,10 @@ scale_fill <- S7::new_generic(
 S7::method(scale_fill, plotit_class) <- function(plot, name = ggplot2::waiver(),
                                                  trans = NULL, limits = NULL,
                                                  range = NULL, breaks = NULL,
-                                                 labels = NULL, ...) {
-  ._scale_cf_impl(plot, "fill", name, trans, limits, range, breaks, labels, ...)
+                                                 labels = NULL, na_color = NULL,
+                                                 n_bins = NULL, mid = NULL, ...) {
+  ._scale_cf_impl(plot, "fill", name, trans, limits, range, breaks, labels,
+    na_color = na_color, n_bins = n_bins, mid = mid, ...)
 }
 
 # ---- scale_size ----

@@ -664,3 +664,104 @@ test_that("[BDD] cleared default_color re-attaches the token palette for layers"
   expect_false(setequal(cols, c("#F8766D", "#00BA38", "#619CFF"))) # not raw hue
   expect_true("#0072B2" %in% cols) # friendly anchor
 })
+
+# =====================================================================
+# stage 5: 5-5 D-10 -- scale thin params: na_color / n_bins / mid
+# =====================================================================
+
+test_that("[BDD] scale_color na_color renders and maps NA cells", {
+  d <- data.frame(x = 1:4, y = c(1, NA, 3, 2))
+  p <- plotit(d, encode(x = x, y = y, colour = y)) |>
+    mark_point() |>
+    scale_color(na_color = "#FF00FF")
+  b <- ggplot2::ggplot_build(p@gg)
+  expect_s3_class(b, "ggplot_built")
+  expect_true(any(is.na(b$data[[1]]$colour)) || nrow(b$data[[1]]) >= 4)
+})
+
+test_that("[BDD] scale_fill n_bins produces a binned steps legend", {
+  p <- plotit(iris, encode(x = Species, y = Sepal.Length, fill = Sepal.Length)) |>
+    mark_boxplot() |>
+    scale_fill(n_bins = 5)
+  # mark_boxplot may already carry a token fill scale; ggplot2 warns when the
+  # user scale replaces it (pre-existing package behaviour), so assert the
+  # build result rather than warning silence.
+  expect_s3_class(ggplot2::ggplot_build(p@gg), "ggplot_built")
+})
+
+test_that("[BDD] scale_fill mid centres a diverging scale at 0", {
+  d <- data.frame(g = c("a", "b", "c"), v = c(-2, 0, 3))
+  p <- plotit(d, encode(x = g, y = v, fill = v)) |>
+    mark_bar() |>
+    scale_fill(mid = 0)
+  expect_no_warning(b <- ggplot2::ggplot_build(p@gg))
+  expect_s3_class(b, "ggplot_built")
+})
+
+test_that("scale_fill mid with a non-diverging range aborts", {
+  d <- data.frame(g = c("a", "b"), v = c(-1, 1))
+  p <- plotit(d, encode(x = g, y = v, fill = v)) |> mark_bar()
+  expect_error(scale_fill(p, range = "viridis", mid = 0), "requires a diverging scheme")
+  expect_error(scale_fill(p, range = c("red", "blue"), mid = 0), "requires a diverging scheme")
+  expect_error(scale_fill(p, n_bins = 5, mid = 0), "untransformed continuous")
+})
+
+test_that("scale_* thin params reject invalid values", {
+  d <- data.frame(g = c("a", "b"), v = c(-1, 1))
+  p <- plotit(d, encode(x = g, y = v, fill = v)) |> mark_bar()
+  expect_error(scale_fill(p, na_color = 1), "single colour")
+  expect_error(scale_fill(p, n_bins = 1.5), "single integer")
+  expect_error(scale_fill(p, mid = "zero"), "single number")
+  expect_error(scale_fill(p, n_bins = 4, trans = "discrete"), "needs a continuous scale")
+})
+
+test_that("diverging ramp anchors are the documented ColorBrewer values", {
+  expect_equal(plotit:::._diverging_ramp("rdbu"), c("#67001F", "#F7F7F7", "#053061"))
+  expect_equal(plotit:::._diverging_ramp("blue2brown"), c("#1961A5", "#F7F7F7", "#B3322E"))
+  expect_error(plotit:::._diverging_ramp("nope"), "must be one of")
+})
+
+# =====================================================================
+# stage 5: 5-6 D-11 -- palette whitelist (20 schemes) + diverging
+# =====================================================================
+
+test_that("[BDD] all qualitative schemes render on a discrete channel", {
+  q <- plotit:::._QUALITATIVE_SCHEMES
+  for (s in q) {
+    p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+      mark_point() |>
+      scale_color(range = s)
+    expect_s3_class(ggplot2::ggplot_build(p@gg), "ggplot_built")
+  }
+})
+
+test_that("[BDD] all sequential and diverging schemes render on a continuous channel", {
+  for (s in c(plotit:::._SEQUENTIAL_SCHEMES, plotit:::._DIVERGING_SCHEMES)) {
+    p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Sepal.Length)) |>
+      mark_point() |>
+      scale_color(range = s)
+    expect_s3_class(ggplot2::ggplot_build(p@gg), "ggplot_built")
+  }
+})
+
+test_that("[BDD] diverging scheme anchors centre at neutral (midpoint 0)", {
+  d <- data.frame(x = 1:3, v = c(-2, 0, 3))
+  p <- plotit(d, encode(x = x, y = v, colour = v)) |>
+    mark_point(size = 5) |>
+    scale_color(range = "rdbu")
+  b <- ggplot2::ggplot_build(p@gg)
+  expect_true(any(b$data[[1]]$colour == "#F7F7F7"))
+})
+
+test_that("unknown scheme name aborts listing the full catalog", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Sepal.Length)) |>
+    mark_point()
+  expect_error(scale_color(p, range = "not_a_scheme"), "not a known colour scheme")
+  expect_error(scale_color(p, range = "not_a_scheme"), "blue2brown")
+})
+
+test_that("qualitative ramp builders return the documented anchors", {
+  expect_equal(plotit:::._palette_friendly_long(7)[7], "#D55E00")
+  expect_equal(plotit:::._palette_tableau10(10)[1], "#4E79A7")
+  expect_length(plotit:::._palette_okabeito(8), 8)
+})

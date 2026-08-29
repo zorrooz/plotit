@@ -93,12 +93,23 @@ S7::method(project_cartesian, plotit_class) <- function(
 #' @param plot A plotit object.
 #' @param theta Variable mapped to angle: `"x"` or `"y"`.
 #' @param start Starting angle in radians (0 = 12 o'clock).
+#' @param end Ending angle in radians (radial mode only).  `NULL` (default)
+#'   = full circle; a finite value renders a partial arc (e.g. semicircle
+#'   gauges via `start = -pi / 2, end = pi / 2`).  Ignored with a warning
+#'   in plain polar mode.
 #' @param direction `1` = clockwise, `-1` = anti-clockwise.
+#'   **Deprecated**: use `reverse = "theta"`.  `-1` still works but warns
+#'   once per call (deprecation cycle, AGENTS.md 1.4).
 #' @param inner_radius Inner radius as a fraction of the panel (0-1).
 #'   `0` = polar (full circle). `>0` = radial (hollow centre).
 #' @param r_axis_inside If `TRUE`, place the radial axis inside the panel
 #'   (radial mode only).
 #' @param clip Should drawing be clipped? `"on"` or `"off"`.
+#' @param reverse Reverse direction: `"none"` (default), `"theta"`
+#'   (anti-clockwise, replaces `direction = -1`), `"r"` (radial axis) or
+#'   `"thetar"` (both).  `"r"`/`"thetar"` are radial-mode only.
+#' @param rotate_angle Rotate angle aesthetics with the theta axis
+#'   (radial mode only, ggplot2 `coord_radial(rotate.angle)`).
 #' @param ... Passed to the underlying `coord_polar()` or `coord_radial()`.
 #' @return Modified plotit object.
 #' @examples
@@ -109,8 +120,9 @@ S7::method(project_cartesian, plotit_class) <- function(
 project_polar <- S7::new_generic(
   "project_polar",
   "plot",
-  function(plot, theta = "x", start = 0, direction = 1,
-           inner_radius = 0, r_axis_inside = FALSE, clip = "on", ...) {
+  function(plot, theta = "x", start = 0, end = NULL, direction = 1,
+           inner_radius = 0, r_axis_inside = FALSE, clip = "on",
+           reverse = "none", rotate_angle = FALSE, ...) {
     S7::S7_dispatch()
   }
 )
@@ -120,15 +132,22 @@ S7::method(project_polar, plotit_class) <- function(
   plot,
   theta = "x",
   start = 0,
+  end = NULL,
   direction = 1,
   inner_radius = 0,
   r_axis_inside = FALSE,
   clip = "on",
+  reverse = "none",
+  rotate_angle = FALSE,
   ...
 ) {
   bad_r <- !is.numeric(inner_radius) || length(inner_radius) != 1 || is.na(inner_radius) || inner_radius < 0
   if (bad_r) {
     ._abort_arg_range("inner_radius", "a single non-negative number", got = inner_radius)
+  }
+  reverse_choices <- c("none", "theta", "r", "thetar")
+  if (length(reverse) != 1 || !reverse %in% reverse_choices) {
+    ._abort_arg_enum("reverse", reverse_choices, got = reverse)
   }
   bad_dir <- !is.numeric(direction) || length(direction) != 1 || is.na(direction) || !direction %in% c(1, -1)
   if (bad_dir) {
@@ -137,22 +156,62 @@ S7::method(project_polar, plotit_class) <- function(
       "x" = "You supplied {.val {direction}}."
     ))
   }
+  bad_end <- !is.null(end) && (!is.numeric(end) || length(end) != 1 || is.na(end))
+  if (bad_end) {
+    ._abort_arg_range("end", "a single number or NULL", got = end)
+  }
+  if (!is.logical(rotate_angle) || length(rotate_angle) != 1 || is.na(rotate_angle)) {
+    ._abort_arg_range("rotate_angle", "TRUE or FALSE", got = rotate_angle)
+  }
+
   use_radial <- inner_radius > 0 || isTRUE(r_axis_inside)
+
+  # Deprecation cycle for `direction` (ggplot2 4.0 deprecated it in favour
+  # of coord_radial(reverse); AGENTS.md 1.4 allows warn -> defunct).
+  if (reverse == "none" && direction == -1) {
+    cli::cli_warn(c(
+      "{.arg direction} is deprecated; use {.code reverse = \"theta\"}.",
+      "i" = "{.arg direction} will be removed in a future minor release."
+    ))
+    reverse <- "theta"
+  } else if (reverse != "none" && direction == -1) {
+    cli::cli_warn(c(
+      "Both {.arg reverse} and {.arg direction} supplied: {.arg reverse} wins.",
+      "i" = "{.arg direction} is deprecated; drop it and keep {.arg reverse}."
+    ))
+  }
+
   if (use_radial) {
     args <- list(
       theta = theta, start = start,
-      r.axis.inside = r_axis_inside, inner.radius = inner_radius, clip = clip
+      r.axis.inside = r_axis_inside, inner.radius = inner_radius, clip = clip,
+      reverse = reverse, rotate.angle = rotate_angle
     )
-    # coord_radial deprecated `direction` (ggplot2 4.0.0) in favour of
-    # `reverse = "theta"`; translate internally so radial mode stays
-    # warning-free under the pinned ggplot2 >= 4.0.0 base.
-    if (direction == -1) args$reverse <- "theta"
+    if (!is.null(end)) {
+      args$end <- end
+    }
     plot@gg <- plot@gg + do.call(ggplot2::coord_radial, c(args, list(...)))
   } else {
+    # Plain coord_polar has no end / r-reversal semantics.
+    if (!is.null(end)) {
+      cli::cli_warn(c(
+        "{.arg end} requires radial mode ({.code inner_radius > 0} or {.code r_axis_inside = TRUE}); it is ignored here.",
+        "i" = "Switch to radial mode for partial arcs."
+      ))
+    }
+    if (reverse %in% c("r", "thetar")) {
+      ._abort_hint(
+        sprintf(
+          "{.arg reverse} = {.val %s} needs radial mode ({.code inner_radius > 0} or {.code r_axis_inside = TRUE}).",
+          reverse
+        ),
+        "Plain {.fn coord_polar} supports only {.val none} and {.val theta}."
+      )
+    }
     plot@gg <- plot@gg +
       ggplot2::coord_polar(
         theta = theta, start = start,
-        direction = direction, clip = clip, ...
+        direction = if (reverse == "theta") -1 else 1, clip = clip, ...
       )
   }
   # Blank axes only in polar mode (shared helper, R/mark_style.R).

@@ -534,3 +534,28 @@ test_that("[BDD] compose_marginal with a single side renders (regression)", {
   expect_error(compose_marginal(main), "at least one marginal")
   expect_error(compose_marginal(main, top = top, align = "diagonal"), "must be one of")
 })
+
+# =====================================================================
+# stage 5: 5-3 D-05 -- flagship recipe prerequisites
+#   - compose_annot + dendrogram strips verified above (5-2 tests)
+#   - mark_heatmap cluster accepts a user hclust (single-axis; the
+#     design's list(row=, col=) four-state is NOT yet implemented --
+#     registered as a gap in plan.md card 5-3 / bug ledger)
+# =====================================================================
+
+test_that("[BDD] mark_heatmap accepts a user hclust for row clustering", {
+  set.seed(7)
+  cols <- paste0("v", 1:6)
+  g1 <- matrix(rnorm(60, mean = 1), nrow = 10, dimnames = list(paste0("a", 1:10), cols))
+  g2 <- matrix(rnorm(60, mean = 5), nrow = 10, dimnames = list(paste0("b", 1:10), cols))
+  mat <- rbind(g1, g2)
+  h_row <- stats::hclust(stats::dist(mat))
+  p <- plotit(mat, encode()) |> mark_heatmap(cluster = h_row)
+  b <- ggplot2::ggplot_build(p@gg)
+  expect_s3_class(b, "ggplot_built")
+  # Cluster string enum still validates its legal values.
+  expect_error(
+    plotit(mat, encode()) |> mark_heatmap(cluster = "sideways"),
+    "should be one of"
+  )
+})
