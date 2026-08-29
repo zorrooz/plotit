@@ -72,6 +72,8 @@ navbar:
         href: articles/use-case-bioinformatics.html
       - text: "Use Case: Publishing"
         href: articles/use-case-publishing.html
+      - text: "Transform Recipes"
+        href: articles/transform-recipes.html
       - text: "Design Philosophy"
         href: articles/philosophy.html
     news:
