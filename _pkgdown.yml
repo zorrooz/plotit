@@ -46,8 +46,8 @@ navbar:
       - text: Relational Charts
         href: articles/relational.html
       - text: "---"
-      - text: "Gallery: Groups"
-        href: articles/gallery-groups.html
+      - text: "Gallery: Comparisons"
+        href: articles/gallery-comparisons.html
       - text: "Gallery: Distributions"
         href: articles/gallery-distributions.html
       - text: "Gallery: Relationships"
