@@ -43,8 +43,24 @@ df |>
 ```{r}
 set.seed(7)
 ts <- data.frame(t = 1:60, v = cumsum(rnorm(60)))
-ts$ma <- zoo::rollmean(ts$v, 10, fill = NA)
-ts$sd <- zoo::rollapply(ts$v, 10, sd, fill = NA)
+# Center-aligned rolling window helper (equivalent to
+# zoo::rollmean(x, k, fill = NA): window centred, edges NA).
+roll_center <- function(x, k, fun) {
+  # Same window indices as zoo::rollapply(x, k, fun, align = "center"):
+  # value i uses x[i - floor((k-1)/2) .. i + ceiling((k-1)/2)].
+  n <- length(x)
+  lo_off <- floor((k - 1) / 2)
+  hi_off <- ceiling((k - 1) / 2)
+  out <- rep(NA_real_, n)
+  for (i in seq_len(n)) {
+    lo <- i - lo_off
+    hi <- i + hi_off
+    if (lo >= 1 && hi <= n) out[i] <- fun(x[lo:hi])
+  }
+  out
+}
+ts$ma <- roll_center(ts$v, 10, mean)
+ts$sd <- roll_center(ts$v, 10, sd)
 ts |>
   plotit(encode(x = t, y = v)) |>
   mark_line(alpha = 0.5) |>
