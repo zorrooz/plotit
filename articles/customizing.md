@@ -1,5 +1,12 @@
 # Customizing Plots with plotit
 
+> **本页解决什么问题**：Learn the label/scale/theme/coordinate controls
+> that refine any plot. **前置**：已完成
+> [plotit](https://zorrooz.github.io/plotit/articles/articles/plotit.md)
+
+> **下一步**：→
+> [composing](https://zorrooz.github.io/plotit/articles/articles/composing.md)
+
 ``` r
 
 library(plotit)
@@ -149,12 +156,10 @@ wins, then `hide`, then `text`.
 iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
   mark_point() |>
-  scale_color(range = "viridis") |>
+  # T5.3: discrete Species uses the friendly qualitative palette by default\n
   label_title("Iris Sepal Measurements") |>
   label_subtitle("Three species, 150 observations") |>
   label_caption("Data: Anderson (1935)")
-#> Scale for colour is already present.
-#> Adding another scale for colour, which will replace the existing scale.
 ```
 
 ![](customizing_files/figure-html/unnamed-chunk-11-1.png)
@@ -166,12 +171,10 @@ iris |>
 iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
   mark_point() |>
-  scale_color(range = "viridis") |>
+  # T5.3: discrete Species uses the friendly qualitative palette by default\n
   label_axis("Sepal Width (cm)", aes = "x") |>
   label_axis("Sepal Length (cm)", aes = "y") |>
   label_legend("Iris Species", aes = "colour")
-#> Scale for colour is already present.
-#> Adding another scale for colour, which will replace the existing scale.
 ```
 
 ![](customizing_files/figure-html/unnamed-chunk-12-1.png)
@@ -185,11 +188,9 @@ iris |>
 iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
   mark_point() |>
-  scale_color(range = "viridis") |>
+  # T5.3: discrete Species uses the friendly qualitative palette by default\n
   label_title(hide = TRUE) |>
   label_legend(hide = TRUE, aes = "colour")
-#> Scale for colour is already present.
-#> Adding another scale for colour, which will replace the existing scale.
 ```
 
 ![](customizing_files/figure-html/unnamed-chunk-13-1.png)
@@ -220,15 +221,13 @@ a base theme and merges overrides via `...`:
 iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
   mark_point(size = 2, alpha = 0.7) |>
-  scale_color(range = "viridis") |>
+  # T5.3: discrete Species uses the friendly qualitative palette by default\n
   style(
     base_theme = ggplot2::theme_minimal(base_size = 14),
     plot.title = ggplot2::element_text(face = "bold", colour = "#2c3e50"),
     legend.position = "bottom"
   ) |>
   label_title("Iris Sepal Measurements")
-#> Scale for colour is already present.
-#> Adding another scale for colour, which will replace the existing scale.
 ```
 
 ![](customizing_files/figure-html/unnamed-chunk-15-1.png)
@@ -241,10 +240,8 @@ a `base_theme` applies the built-in plotit default theme:
 iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
   mark_point() |>
-  scale_color(range = "viridis") |>
+  # T5.3: discrete Species uses the friendly qualitative palette by default\n
   style(base_size = 12)
-#> Scale for colour is already present.
-#> Adding another scale for colour, which will replace the existing scale.
 ```
 
 ![](customizing_files/figure-html/unnamed-chunk-16-1.png)

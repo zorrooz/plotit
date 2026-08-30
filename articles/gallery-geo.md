@@ -1,5 +1,14 @@
 # Gallery: Geo
 
+> **本页解决什么问题**：Map data with
+> [`mark_map()`](https://zorrooz.github.io/plotit/reference/mark_map.md) +
+> [`project_map()`](https://zorrooz.github.io/plotit/reference/project_map.md).
+> **前置**：已完成
+> [gallery-proportions](https://zorrooz.github.io/plotit/articles/articles/gallery-proportions.md)
+
+> **下一步**：→
+> [gallery-annotations](https://zorrooz.github.io/plotit/articles/articles/gallery-annotations.md)
+
 ``` r
 
 library(plotit)

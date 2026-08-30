@@ -37,24 +37,29 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/plotit.html">Getting Started</a></li>
-    <li><a class="dropdown-item" href="../articles/customizing.html">Customizing Plots</a></li>
+    <li><a class="dropdown-item" href="../articles/customizing.html">Syntax &amp; Pipeline</a></li>
     <li><a class="dropdown-item" href="../articles/composing.html">Composing Figures</a></li>
     <li><a class="dropdown-item" href="../articles/relational.html">Relational Charts</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><a class="dropdown-item" href="../articles/gallery-comparisons.html">Gallery: Comparisons</a></li>
-    <li><a class="dropdown-item" href="../articles/gallery-distributions.html">Gallery: Distributions</a></li>
-    <li><a class="dropdown-item" href="../articles/gallery-relationships.html">Gallery: Relationships</a></li>
-    <li><a class="dropdown-item" href="../articles/gallery-coordinates.html">Gallery: Time &amp; Coordinates</a></li>
-    <li><a class="dropdown-item" href="../articles/gallery-trends.html">Gallery: Trends</a></li>
-    <li><a class="dropdown-item" href="../articles/gallery-matrix.html">Gallery: Matrix</a></li>
-    <li><a class="dropdown-item" href="../articles/gallery-proportions.html">Gallery: Proportions</a></li>
-    <li><a class="dropdown-item" href="../articles/gallery-geo.html">Gallery: Geo</a></li>
-    <li><a class="dropdown-item" href="../articles/gallery-relational.html">Gallery: Relational</a></li>
-    <li><a class="dropdown-item" href="../articles/gallery-annotations.html">Gallery: Annotations</a></li>
-    <li><a class="dropdown-item" href="../articles/gallery-composing.html">Gallery: Annotation &amp; Composition</a></li>
-    <li><a class="dropdown-item" href="../articles/use-case-bioinformatics.html">Use Case: Bioinformatics</a></li>
-    <li><a class="dropdown-item" href="../articles/use-case-publishing.html">Use Case: Publishing</a></li>
-    <li><a class="dropdown-item" href="../articles/transform-recipes.html">Transform Recipes</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Galleries by Goal</h6></li>
+    <li><a class="dropdown-item" href="../articles/gallery-comparisons.html">  Compare groups</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-distributions.html">  Distributions</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-relationships.html">  Relationships</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-coordinates.html">  Time &amp; Coordinates</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-trends.html">  Trends</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-matrix.html">  Matrix</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-proportions.html">  Proportions</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-geo.html">  Geography</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-relational.html">  Networks &amp; Flows</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-annotations.html">  Annotations</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-composing.html">  Composition</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Recipes &amp; Use Cases</h6></li>
+    <li><a class="dropdown-item" href="../articles/transform-recipes.html">  Transform Recipes</a></li>
+    <li><a class="dropdown-item" href="../articles/use-case-bioinformatics.html">  Bioinformatics</a></li>
+    <li><a class="dropdown-item" href="../articles/use-case-publishing.html">  Publishing</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="../articles/philosophy.html">Design Philosophy</a></li>
     <li><a class="dropdown-item" href="../articles/philosophy.html">Design Philosophy</a></li>
   </ul>
 </li>
@@ -87,6 +92,14 @@
 
     
     
+<blockquote>
+<p><strong>本页解决什么问题</strong>：Learn the
+label/scale/theme/coordinate controls that refine any plot.
+<strong>前置</strong>：已完成 <a href="articles/plotit.html">plotit</a></p>
+</blockquote>
+<blockquote>
+<p><strong>下一步</strong>：→ <a href="articles/composing.html">composing</a></p>
+</blockquote>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/zorrooz/plotit" class="external-link">plotit</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
@@ -249,12 +262,10 @@ then <code>text</code>.</p>
 <code class="sourceCode R"><span><span class="va">iris</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Sepal.Width</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span>, colour <span class="op">=</span> <span class="va">Species</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/scale_color.html">scale_color</a></span><span class="op">(</span>range <span class="op">=</span> <span class="st">"viridis"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="co"># T5.3: discrete Species uses the friendly qualitative palette by default\n</span></span>
 <span>  <span class="fu"><a href="../reference/label_title.html">label_title</a></span><span class="op">(</span><span class="st">"Iris Sepal Measurements"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/label_subtitle.html">label_subtitle</a></span><span class="op">(</span><span class="st">"Three species, 150 observations"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/label_caption.html">label_caption</a></span><span class="op">(</span><span class="st">"Data: Anderson (1935)"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Scale for <span style="color: #00BB00;">colour</span> is already present.</span></span>
-<span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">colour</span>, which will replace the existing scale.</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/label_caption.html">label_caption</a></span><span class="op">(</span><span class="st">"Data: Anderson (1935)"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="customizing_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="672"></p>
 </div>
 <div class="section level3">
@@ -264,12 +275,10 @@ then <code>text</code>.</p>
 <code class="sourceCode R"><span><span class="va">iris</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Sepal.Width</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span>, colour <span class="op">=</span> <span class="va">Species</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/scale_color.html">scale_color</a></span><span class="op">(</span>range <span class="op">=</span> <span class="st">"viridis"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="co"># T5.3: discrete Species uses the friendly qualitative palette by default\n</span></span>
 <span>  <span class="fu"><a href="../reference/label_axis.html">label_axis</a></span><span class="op">(</span><span class="st">"Sepal Width (cm)"</span>, aes <span class="op">=</span> <span class="st">"x"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/label_axis.html">label_axis</a></span><span class="op">(</span><span class="st">"Sepal Length (cm)"</span>, aes <span class="op">=</span> <span class="st">"y"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/label_legend.html">label_legend</a></span><span class="op">(</span><span class="st">"Iris Species"</span>, aes <span class="op">=</span> <span class="st">"colour"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Scale for <span style="color: #00BB00;">colour</span> is already present.</span></span>
-<span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">colour</span>, which will replace the existing scale.</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/label_legend.html">label_legend</a></span><span class="op">(</span><span class="st">"Iris Species"</span>, aes <span class="op">=</span> <span class="st">"colour"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="customizing_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="" width="672"></p>
 </div>
 <div class="section level3">
@@ -281,11 +290,9 @@ layout:</p>
 <code class="sourceCode R"><span><span class="va">iris</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Sepal.Width</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span>, colour <span class="op">=</span> <span class="va">Species</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/scale_color.html">scale_color</a></span><span class="op">(</span>range <span class="op">=</span> <span class="st">"viridis"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="co"># T5.3: discrete Species uses the friendly qualitative palette by default\n</span></span>
 <span>  <span class="fu"><a href="../reference/label_title.html">label_title</a></span><span class="op">(</span>hide <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/label_legend.html">label_legend</a></span><span class="op">(</span>hide <span class="op">=</span> <span class="cn">TRUE</span>, aes <span class="op">=</span> <span class="st">"colour"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Scale for <span style="color: #00BB00;">colour</span> is already present.</span></span>
-<span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">colour</span>, which will replace the existing scale.</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/label_legend.html">label_legend</a></span><span class="op">(</span>hide <span class="op">=</span> <span class="cn">TRUE</span>, aes <span class="op">=</span> <span class="st">"colour"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="customizing_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="672"></p>
 </div>
 <div class="section level3">
@@ -311,15 +318,13 @@ axes and legends) or removes the text (for titles):</p>
 <code class="sourceCode R"><span><span class="va">iris</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Sepal.Width</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span>, colour <span class="op">=</span> <span class="va">Species</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">2</span>, alpha <span class="op">=</span> <span class="fl">0.7</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/scale_color.html">scale_color</a></span><span class="op">(</span>range <span class="op">=</span> <span class="st">"viridis"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="co"># T5.3: discrete Species uses the friendly qualitative palette by default\n</span></span>
 <span>  <span class="fu"><a href="../reference/style.html">style</a></span><span class="op">(</span></span>
 <span>    base_theme <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">14</span><span class="op">)</span>,</span>
 <span>    plot.title <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>face <span class="op">=</span> <span class="st">"bold"</span>, colour <span class="op">=</span> <span class="st">"#2c3e50"</span><span class="op">)</span>,</span>
 <span>    legend.position <span class="op">=</span> <span class="st">"bottom"</span></span>
 <span>  <span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/label_title.html">label_title</a></span><span class="op">(</span><span class="st">"Iris Sepal Measurements"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Scale for <span style="color: #00BB00;">colour</span> is already present.</span></span>
-<span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">colour</span>, which will replace the existing scale.</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/label_title.html">label_title</a></span><span class="op">(</span><span class="st">"Iris Sepal Measurements"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="customizing_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="" width="672"></p>
 <p><code><a href="../reference/style.html">style()</a></code> without a <code>base_theme</code> applies the
 built-in plotit default theme:</p>
@@ -327,10 +332,8 @@ built-in plotit default theme:</p>
 <code class="sourceCode R"><span><span class="va">iris</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/plotit.html">plotit</a></span><span class="op">(</span><span class="fu"><a href="../reference/encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Sepal.Width</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span>, colour <span class="op">=</span> <span class="va">Species</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/mark_point.html">mark_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/scale_color.html">scale_color</a></span><span class="op">(</span>range <span class="op">=</span> <span class="st">"viridis"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/style.html">style</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">12</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Scale for <span style="color: #00BB00;">colour</span> is already present.</span></span>
-<span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">colour</span>, which will replace the existing scale.</span></span></code></pre></div>
+<span>  <span class="co"># T5.3: discrete Species uses the friendly qualitative palette by default\n</span></span>
+<span>  <span class="fu"><a href="../reference/style.html">style</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">12</span><span class="op">)</span></span></code></pre></div>
 <p><img src="customizing_files/figure-html/unnamed-chunk-16-1.png" class="r-plt" alt="" width="672"></p>
 </div>
 <div class="section level2">

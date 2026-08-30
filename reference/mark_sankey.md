@@ -95,6 +95,9 @@ df |>
   scale_fill(range = "viridis")
 #> Coordinate system already present.
 #> ℹ Adding new coordinate system, which will replace the existing one.
+#> Warning: `range` = "viridis" with a discrete "fill" variable uses the discrete "viridis"
+#> variant.
+#> ℹ For a continuous gradient, map a numeric column instead.
 #> Scale for fill is already present.
 #> Adding another scale for fill, which will replace the existing scale.
 ```

@@ -1,5 +1,12 @@
 # Transform Recipes
 
+> **本页解决什么问题**：Data-shaped recipes before plotting: pivots,
+> rolling, summaries. **前置**：已完成
+> [gallery-composing](https://zorrooz.github.io/plotit/articles/articles/gallery-composing.md)
+
+> **下一步**：→
+> [use-case-bioinformatics](https://zorrooz.github.io/plotit/articles/articles/use-case-bioinformatics.md)
+
 ``` r
 
 library(plotit)

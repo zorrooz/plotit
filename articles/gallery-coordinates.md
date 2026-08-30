@@ -1,5 +1,12 @@
 # Gallery: Time, Polar & Coordinates
 
+> **本页解决什么问题**：Polar, flipped, zoomed and fixed-aspect
+> coordinate systems. **前置**：已完成
+> [gallery-relationships](https://zorrooz.github.io/plotit/articles/articles/gallery-relationships.md)
+
+> **下一步**：→
+> [gallery-trends](https://zorrooz.github.io/plotit/articles/articles/gallery-trends.md)
+
 ``` r
 
 library(plotit)
@@ -23,7 +30,7 @@ shares |>
   plotit(encode(x = 1, y = value, fill = segment)) |>
   mark_bar(position = "stack", width = 1) |>
   project_polar(theta = "y") |>
-  style(axis.text = ggplot2::element_blank(), axis.title = ggplot2::element_blank()) |>
+  # T1.1: project_polar() blanks all polar axes automatically
   label_title("Pie = mark_bar + project_polar")
 ```
 
@@ -37,7 +44,7 @@ shares |>
   plotit(encode(x = 1, y = value, fill = segment)) |>
   mark_bar(position = "stack", width = 1) |>
   project_polar(theta = "y", inner_radius = 0.45) |>
-  style(axis.text = ggplot2::element_blank(), axis.title = ggplot2::element_blank()) |>
+  # T1.1: project_polar() blanks all polar axes automatically
   label_title("Donut = same, inner_radius = 0.45")
 ```
 
@@ -55,7 +62,7 @@ weekly |>
   plotit(encode(x = day, y = visits, fill = day)) |>
   mark_bar(width = 0.9) |>
   project_polar(inner_radius = 0.15) |>
-  style(axis.text = ggplot2::element_blank(), axis.title = ggplot2::element_blank()) |>
+  # T1.1: project_polar() blanks all polar axes automatically
   label_title("Rose: unstacked bars around the circle")
 ```
 
@@ -117,7 +124,7 @@ angles |>
   plotit(encode(x = a, fill = half)) |>
   mark_histogram(bins = 24) |>
   project_polar() |>
-  style(axis.text = ggplot2::element_blank(), axis.title = ggplot2::element_blank()) |>
+  # T1.1: project_polar() blanks all polar axes automatically
   label_title("Circular histogram")
 ```
 

@@ -83,11 +83,14 @@ conventions). The result can be nested into
 ## Examples
 
 ``` r
-mat <- matrix(c(9, 1, 8, 2, 1, 9, 2, 8, 5, 3, 7, 4), nrow = 4,
-  dimnames = list(paste0("g", 1:4), paste0("s", 1:3)))
+mat <- matrix(c(9, 1, 8, 2, 1, 9, 2, 8, 5, 3, 7, 4),
+  nrow = 4,
+  dimnames = list(paste0("g", 1:4), paste0("s", 1:3))
+)
 h <- stats::hclust(stats::dist(mat))
 hm <- plotit(mat, encode()) |> mark_heatmap(cluster = h)
-tree <- as_graph(h) |> plotit() |>
+tree <- as_graph(h) |>
+  plotit() |>
   layout_dendrogram(direction = "up") |>
   mark_rule(data = ~edges)
 hm |> compose_annot(top = tree)

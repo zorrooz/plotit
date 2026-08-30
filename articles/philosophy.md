@@ -1,5 +1,12 @@
 # Design Philosophy
 
+> **本页解决什么问题**：Why plotit is built the way it is: grammar,
+> defaults, extensibility. **前置**：已完成
+> [use-case-publishing](https://zorrooz.github.io/plotit/articles/articles/use-case-publishing.md)
+
+> **下一步**：→
+> [plotit](https://zorrooz.github.io/plotit/articles/articles/plotit.md)
+
 ## Composition first
 
 If a visual can be expressed by combining `mark_*` + `project_*` +

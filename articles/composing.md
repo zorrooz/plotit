@@ -1,5 +1,12 @@
 # Composing Figures with plotit
 
+> **本页解决什么问题**：Combine several plots into one figure with
+> `compose_*()`. **前置**：已完成
+> [customizing](https://zorrooz.github.io/plotit/articles/articles/customizing.md)
+
+> **下一步**：→
+> [relational](https://zorrooz.github.io/plotit/articles/articles/relational.md)
+
 ``` r
 
 library(plotit)
@@ -40,6 +47,9 @@ p1 <- iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
   mark_point(size = 2, alpha = 0.7) |>
   scale_color(range = "viridis")
+#> Warning: `range` = "viridis" with a discrete "colour" variable uses the discrete
+#> "viridis" variant.
+#> ℹ For a continuous gradient, map a numeric column instead.
 #> Scale for colour is already present.
 #> Adding another scale for colour, which will replace the existing scale.
 
@@ -99,6 +109,9 @@ p1 <- iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
   mark_point(alpha = 0.6) |>
   scale_color(range = "viridis")
+#> Warning: `range` = "viridis" with a discrete "colour" variable uses the discrete
+#> "viridis" variant.
+#> ℹ For a continuous gradient, map a numeric column instead.
 #> Scale for colour is already present.
 #> Adding another scale for colour, which will replace the existing scale.
 
@@ -106,6 +119,9 @@ p2 <- iris |>
   plotit(encode(x = Petal.Width, y = Petal.Length, colour = Species)) |>
   mark_point(alpha = 0.6) |>
   scale_color(range = "viridis")
+#> Warning: `range` = "viridis" with a discrete "colour" variable uses the discrete
+#> "viridis" variant.
+#> ℹ For a continuous gradient, map a numeric column instead.
 #> Scale for colour is already present.
 #> Adding another scale for colour, which will replace the existing scale.
 
@@ -188,6 +204,9 @@ main <- iris |>
   mark_point(alpha = 0.6) |>
   scale_color(range = "viridis") |>
   label_title("")
+#> Warning: `range` = "viridis" with a discrete "colour" variable uses the discrete
+#> "viridis" variant.
+#> ℹ For a continuous gradient, map a numeric column instead.
 #> Scale for colour is already present.
 #> Adding another scale for colour, which will replace the existing scale.
 
@@ -195,6 +214,9 @@ top <- iris |>
   plotit(encode(x = Sepal.Width, fill = Species)) |>
   mark_histogram(bins = 20, alpha = 0.4) |>
   scale_fill(range = "viridis")
+#> Warning: `range` = "viridis" with a discrete "fill" variable uses the discrete "viridis"
+#> variant.
+#> ℹ For a continuous gradient, map a numeric column instead.
 #> Scale for fill is already present.
 #> Adding another scale for fill, which will replace the existing scale.
 
@@ -203,6 +225,9 @@ right <- iris |>
   mark_histogram(bins = 20, alpha = 0.4) |>
   scale_fill(range = "viridis") |>
   project_cartesian(flip = TRUE)
+#> Warning: `range` = "viridis" with a discrete "fill" variable uses the discrete "viridis"
+#> variant.
+#> ℹ For a continuous gradient, map a numeric column instead.
 #> Scale for fill is already present.
 #> Adding another scale for fill, which will replace the existing scale.
 

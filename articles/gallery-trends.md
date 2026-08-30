@@ -1,5 +1,12 @@
 # Gallery: Trends
 
+> **本页解决什么问题**：Show change over time: lines, areas, step and
+> date axes. **前置**：已完成
+> [gallery-coordinates](https://zorrooz.github.io/plotit/articles/articles/gallery-coordinates.md)
+
+> **下一步**：→
+> [gallery-matrix](https://zorrooz.github.io/plotit/articles/articles/gallery-matrix.md)
+
 ``` r
 
 library(plotit)
@@ -13,11 +20,16 @@ library(plotit)
 
 ggplot2::economics |>
   plotit(encode(x = date, y = unemploy)) |>
-  mark_line(linewidth = 0.9) |>
-  scale_x(trans = "identity")
+  mark_line(linewidth = 0.9)
 ```
 
 ![](gallery-trends_files/figure-html/unnamed-chunk-3-1.png)
+
+``` r
+
+# T9.1: Date columns are auto-routed to the date axis; an explicit
+# trans="identity" would turn them into raw day numbers.
+```
 
 ### Step change
 

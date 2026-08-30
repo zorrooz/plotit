@@ -13,6 +13,7 @@ mark_corr(
   plot,
   method = c("pearson", "spearman", "kendall"),
   reorder = TRUE,
+  range = NULL,
   ...,
   rasterize = FALSE,
   rasterize_dpi = 300,
@@ -36,6 +37,12 @@ mark_corr(
 
   If `TRUE` (default), reorder rows and columns by hierarchical
   clustering.
+
+- range:
+
+  Fill scale for the correlation values: a diverging scheme name
+  (default `"rdbu"`; also `"rdylbu"`, `"spectral"`, `"brbg"`, `"puor"`,
+  `"blue2brown"`), a colour vector, or `NULL` for the default.
 
 - ...:
 

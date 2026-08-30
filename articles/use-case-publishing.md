@@ -1,5 +1,12 @@
 # Use Case: Publishing
 
+> **本页解决什么问题**：Publication-quality figures: canvas, fonts,
+> export. **前置**：已完成
+> [use-case-bioinformatics](https://zorrooz.github.io/plotit/articles/articles/use-case-bioinformatics.md)
+
+> **下一步**：→
+> [philosophy](https://zorrooz.github.io/plotit/articles/articles/philosophy.md)
+
 ``` r
 
 library(plotit)

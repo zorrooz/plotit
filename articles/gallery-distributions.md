@@ -1,5 +1,12 @@
 # Gallery: Distributions
 
+> **本页解决什么问题**：Explore one or two variables: histograms,
+> density, ECDF, QQ, 2D bins. **前置**：已完成
+> [gallery-comparisons](https://zorrooz.github.io/plotit/articles/articles/gallery-comparisons.md)
+
+> **下一步**：→
+> [gallery-relationships](https://zorrooz.github.io/plotit/articles/articles/gallery-relationships.md)
+
 Distributions describe how values spread out. plotit’s distribution
 marks reveal shape, tails, and relationships — from histograms and
 densities to ECDFs, QQ plots, and bivariate binning.

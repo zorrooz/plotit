@@ -1,5 +1,12 @@
 # Gallery: Matrix
 
+> **本页解决什么问题**：Matrix heatmaps, correlation matrices and
+> annotated heatmaps. **前置**：已完成
+> [gallery-trends](https://zorrooz.github.io/plotit/articles/articles/gallery-trends.md)
+
+> **下一步**：→
+> [gallery-proportions](https://zorrooz.github.io/plotit/articles/articles/gallery-proportions.md)
+
 ``` r
 
 library(plotit)

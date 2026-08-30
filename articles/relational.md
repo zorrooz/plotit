@@ -1,5 +1,12 @@
 # Relational Charts: Graphs, Flows, and Hierarchies
 
+> **本页解决什么问题**：Build graphs, flows and hierarchies with
+> `as_graph() + layout_*()`. **前置**：已完成
+> [composing](https://zorrooz.github.io/plotit/articles/articles/composing.md)
+
+> **下一步**：→
+> [gallery-comparisons](https://zorrooz.github.io/plotit/articles/articles/gallery-comparisons.md)
+
 ## Why relational charts need their own data model
 
 Everything in the other articles is *tabular*: one row, one mark. A

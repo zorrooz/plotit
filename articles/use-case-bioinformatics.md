@@ -1,5 +1,12 @@
 # Use Case: Bioinformatics
 
+> **本页解决什么问题**：A bioinformatics workflow: matrices,
+> correlations, annotations. **前置**：已完成
+> [transform-recipes](https://zorrooz.github.io/plotit/articles/articles/transform-recipes.md)
+
+> **下一步**：→
+> [use-case-publishing](https://zorrooz.github.io/plotit/articles/articles/use-case-publishing.md)
+
 ``` r
 
 library(plotit)

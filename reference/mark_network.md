@@ -139,6 +139,9 @@ nodes |>
   mark_network(edges = edges, seed = 1) |>
   scale_color(range = "viridis") |>
   scale_size(range = c(5, 20))
+#> Warning: `range` = "viridis" with a discrete "colour" variable uses the discrete
+#> "viridis" variant.
+#> ℹ For a continuous gradient, map a numeric column instead.
 #> Scale for colour is already present.
 #> Adding another scale for colour, which will replace the existing scale.
 ```

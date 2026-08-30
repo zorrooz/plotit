@@ -1,5 +1,8 @@
 # Getting Started with plotit
 
+> **本页解决什么问题**：Get started with the verb-prefix pipeline
+> (`plotit() |> mark_*() |> scale_*()`).
+
 ## Overview
 
 **plotit** is a declarative plotting package built on ggplot2. It wraps
@@ -16,12 +19,9 @@ library(plotit)
 iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
   mark_point(size = 2, alpha = 0.7) |>
-  scale_color(range = "viridis") |>
   label_title("Iris Sepal Dimensions") |>
   label_axis(text = "Sepal Width", aes = "x") |>
   label_axis(text = "Sepal Length", aes = "y")
-#> Scale for colour is already present.
-#> Adding another scale for colour, which will replace the existing scale.
 ```
 
 ![](plotit_files/figure-html/unnamed-chunk-2-1.png)
@@ -203,10 +203,7 @@ iris |>
 iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
   mark_point() |>
-  scale_color(range = "viridis") |>
   style(base_theme = ggplot2::theme_minimal(base_size = 14))
-#> Scale for colour is already present.
-#> Adding another scale for colour, which will replace the existing scale.
 ```
 
 ![](plotit_files/figure-html/unnamed-chunk-13-1.png)

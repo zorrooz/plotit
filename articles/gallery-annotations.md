@@ -1,5 +1,12 @@
 # Gallery: Annotations
 
+> **本页解决什么问题**：Annotate charts: text, labels, significance
+> brackets. **前置**：已完成
+> [gallery-geo](https://zorrooz.github.io/plotit/articles/articles/gallery-geo.md)
+
+> **下一步**：→
+> [gallery-composing](https://zorrooz.github.io/plotit/articles/articles/gallery-composing.md)
+
 ``` r
 
 library(plotit)

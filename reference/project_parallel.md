@@ -17,7 +17,7 @@ project_parallel(
   recenter = NULL,
   aggregate = c("none", "mean", "median"),
   axis_labels = TRUE,
-  alpha = 0.5,
+  alpha = 0.2,
   size = 1,
   ...
 )

@@ -1,5 +1,12 @@
 # Gallery: Comparing Groups
 
+> **本页解决什么问题**：Compare groups: bars, boxes, violins, beeswarm,
+> lollipops, forests. **前置**：已完成
+> [relational](https://zorrooz.github.io/plotit/articles/articles/relational.md)
+
+> **下一步**：→
+> [gallery-distributions](https://zorrooz.github.io/plotit/articles/articles/gallery-distributions.md)
+
 Group comparisons are the bread and butter of statistical graphics:
 bars, boxes, violins, and cumulative curves all place summaries or
 distributions side by side.

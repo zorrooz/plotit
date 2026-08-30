@@ -23,24 +23,29 @@ supports manual colour vectors and named colour schemes."><style>.r-plt { displa
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/plotit.html">Getting Started</a></li>
-    <li><a class="dropdown-item" href="../articles/customizing.html">Customizing Plots</a></li>
+    <li><a class="dropdown-item" href="../articles/customizing.html">Syntax &amp; Pipeline</a></li>
     <li><a class="dropdown-item" href="../articles/composing.html">Composing Figures</a></li>
     <li><a class="dropdown-item" href="../articles/relational.html">Relational Charts</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><a class="dropdown-item" href="../articles/gallery-comparisons.html">Gallery: Comparisons</a></li>
-    <li><a class="dropdown-item" href="../articles/gallery-distributions.html">Gallery: Distributions</a></li>
-    <li><a class="dropdown-item" href="../articles/gallery-relationships.html">Gallery: Relationships</a></li>
-    <li><a class="dropdown-item" href="../articles/gallery-coordinates.html">Gallery: Time &amp; Coordinates</a></li>
-    <li><a class="dropdown-item" href="../articles/gallery-trends.html">Gallery: Trends</a></li>
-    <li><a class="dropdown-item" href="../articles/gallery-matrix.html">Gallery: Matrix</a></li>
-    <li><a class="dropdown-item" href="../articles/gallery-proportions.html">Gallery: Proportions</a></li>
-    <li><a class="dropdown-item" href="../articles/gallery-geo.html">Gallery: Geo</a></li>
-    <li><a class="dropdown-item" href="../articles/gallery-relational.html">Gallery: Relational</a></li>
-    <li><a class="dropdown-item" href="../articles/gallery-annotations.html">Gallery: Annotations</a></li>
-    <li><a class="dropdown-item" href="../articles/gallery-composing.html">Gallery: Annotation &amp; Composition</a></li>
-    <li><a class="dropdown-item" href="../articles/use-case-bioinformatics.html">Use Case: Bioinformatics</a></li>
-    <li><a class="dropdown-item" href="../articles/use-case-publishing.html">Use Case: Publishing</a></li>
-    <li><a class="dropdown-item" href="../articles/transform-recipes.html">Transform Recipes</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Galleries by Goal</h6></li>
+    <li><a class="dropdown-item" href="../articles/gallery-comparisons.html">  Compare groups</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-distributions.html">  Distributions</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-relationships.html">  Relationships</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-coordinates.html">  Time &amp; Coordinates</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-trends.html">  Trends</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-matrix.html">  Matrix</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-proportions.html">  Proportions</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-geo.html">  Geography</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-relational.html">  Networks &amp; Flows</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-annotations.html">  Annotations</a></li>
+    <li><a class="dropdown-item" href="../articles/gallery-composing.html">  Composition</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Recipes &amp; Use Cases</h6></li>
+    <li><a class="dropdown-item" href="../articles/transform-recipes.html">  Transform Recipes</a></li>
+    <li><a class="dropdown-item" href="../articles/use-case-bioinformatics.html">  Bioinformatics</a></li>
+    <li><a class="dropdown-item" href="../articles/use-case-publishing.html">  Publishing</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="../articles/philosophy.html">Design Philosophy</a></li>
     <li><a class="dropdown-item" href="../articles/philosophy.html">Design Philosophy</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -151,6 +156,9 @@ matrices).  Requires a continuous scale and a diverging scheme in
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="plotit.html">plotit</a></span><span class="op">(</span><span class="va">iris</span>, <span class="fu"><a href="encode.html">encode</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Sepal.Width</span>, y <span class="op">=</span> <span class="va">Sepal.Length</span>, colour <span class="op">=</span> <span class="va">Species</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="mark_point.html">mark_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu">scale_color</span><span class="op">(</span>range <span class="op">=</span> <span class="st">"viridis"</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>`range` = <span style="color: #0000BB;">"viridis"</span> with a discrete <span style="color: #0000BB;">"colour"</span> variable uses the discrete</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;">"viridis"</span> variant.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> For a continuous gradient, map a numeric column instead.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Scale for <span style="color: #00BB00;">colour</span> is already present.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Adding another scale for <span style="color: #00BB00;">colour</span>, which will replace the existing scale.</span>
 <span class="r-plt img"><img src="scale_color-1.png" alt="" width="816" height="528"></span>

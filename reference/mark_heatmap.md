@@ -29,6 +29,7 @@ mark_heatmap(
   number_format = "%.2f",
   number_color = NULL,
   na_color = "grey85",
+  range = NULL,
   ...,
   rasterize = FALSE,
   rasterize_dpi = 300,
@@ -69,6 +70,12 @@ mark_heatmap(
 
   Fill colour for `NA` cells (default `"grey85"`; the tidyheatmaps
   `color_na` counterpart).
+
+- range:
+
+  Fill scale for the cell values: a scheme name (`"viridis"` default for
+  sequential data; `"rdbu"`/`"spectral"`/`"brbg"` etc. for diverging
+  data), a colour vector, or `NULL` for the default.
 
 - ...:
 

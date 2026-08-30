@@ -1,5 +1,12 @@
 # Gallery: Relationships & Trends
 
+> **本页解决什么问题**：Show relations between continuous variables:
+> points, smooths, counts. **前置**：已完成
+> [gallery-distributions](https://zorrooz.github.io/plotit/articles/articles/gallery-distributions.md)
+
+> **下一步**：→
+> [gallery-coordinates](https://zorrooz.github.io/plotit/articles/articles/gallery-coordinates.md)
+
 ``` r
 
 library(plotit)

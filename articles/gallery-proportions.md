@@ -1,5 +1,12 @@
 # Gallery: Proportions
 
+> **本页解决什么问题**：Part-to-whole views: stacked bars and polar
+> proportions. **前置**：已完成
+> [gallery-matrix](https://zorrooz.github.io/plotit/articles/articles/gallery-matrix.md)
+
+> **下一步**：→
+> [gallery-geo](https://zorrooz.github.io/plotit/articles/articles/gallery-geo.md)
+
 ``` r
 
 library(plotit)

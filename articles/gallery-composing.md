@@ -1,5 +1,12 @@
 # Gallery: Faceting, Composition & Annotation
 
+> **本页解决什么问题**：Compose multi-panel and annotated figures end to
+> end. **前置**：已完成
+> [gallery-annotations](https://zorrooz.github.io/plotit/articles/articles/gallery-annotations.md)
+
+> **下一步**：→
+> [transform-recipes](https://zorrooz.github.io/plotit/articles/articles/transform-recipes.md)
+
 ``` r
 
 library(plotit)

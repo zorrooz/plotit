@@ -91,6 +91,9 @@ A modified plotit object.
 plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
   mark_point() |>
   scale_color(range = "viridis")
+#> Warning: `range` = "viridis" with a discrete "colour" variable uses the discrete
+#> "viridis" variant.
+#> ℹ For a continuous gradient, map a numeric column instead.
 #> Scale for colour is already present.
 #> Adding another scale for colour, which will replace the existing scale.
 ```
