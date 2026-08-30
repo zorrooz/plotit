@@ -195,7 +195,7 @@ S7::method(project_polar, plotit_class) <- function(
     # Plain coord_polar has no end / r-reversal semantics.
     if (!is.null(end)) {
       cli::cli_warn(c(
-        "{.arg end} requires radial mode ({.code inner_radius > 0} or {.code r_axis_inside = TRUE}); it is ignored here.",
+        "{.arg end} requires radial mode (inner_radius > 0 or r_axis_inside = TRUE); ignored here.",
         "i" = "Switch to radial mode for partial arcs."
       ))
     }
@@ -214,13 +214,12 @@ S7::method(project_polar, plotit_class) <- function(
         direction = if (reverse == "theta") -1 else 1, clip = clip, ...
       )
   }
-  # Blank axes only in polar mode (shared helper, R/mark_style.R).
-  # Radial mode (inner_radius > 0 or r_axis_inside = TRUE) needs its radial
-  # axis visible; polar mode also zeroes residual tick space so the panel
-  # stays centred.
-  if (!(inner_radius > 0 || isTRUE(r_axis_inside))) {
-    plot@gg <- ._gg_blank_axes(plot@gg, ticks_length = TRUE)
-  }
+  # Polar chrome is one decision point (R/theme.R): pie/donut and plain
+  # polar blank everything; radial + theta = "x" keeps the radius axis.
+  # The render path re-applies the budget so a later style() cannot
+  # resurrect Cartesian axes around the polar panel.
+  plot@gg <- ._polar_unframe(plot@gg)
+  plot@gg <- ._polar_axes_budget(plot@gg)
   plot
 }
 
@@ -270,7 +269,7 @@ project_parallel <- S7::new_generic(
            order = NULL, recenter = NULL,
            aggregate = c("none", "mean", "median"),
            axis_labels = TRUE,
-           alpha = 0.5, size = 1, ...) {
+           alpha = 0.2, size = 1, ...) {
     S7::S7_dispatch()
   }
 )
@@ -454,7 +453,7 @@ S7::method(project_parallel, plotit_class) <- function(
   recenter = NULL,
   aggregate = c("none", "mean", "median"),
   axis_labels = TRUE,
-  alpha = 0.5,
+  alpha = 0.2,
   size = 1,
   ...
 ) {

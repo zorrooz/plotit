@@ -7,6 +7,11 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+> **本页解决什么问题**：Show relations between continuous variables: points, smooths, counts.
+> **前置**：已完成 [gallery-distributions](articles/gallery-distributions.html)
+
+> **下一步**：→ [gallery-coordinates](articles/gallery-coordinates.html)
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,

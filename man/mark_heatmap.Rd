@@ -12,6 +12,7 @@ mark_heatmap(
   number_format = "\%.2f",
   number_color = NULL,
   na_color = "grey85",
+  range = NULL,
   ...,
   rasterize = FALSE,
   rasterize_dpi = 300,
@@ -38,6 +39,10 @@ auto-contrast (white on dark cells, ink on light cells).}
 
 \item{na_color}{Fill colour for \code{NA} cells (default \code{"grey85"}; the
 tidyheatmaps \code{color_na} counterpart).}
+
+\item{range}{Fill scale for the cell values: a scheme name (\code{"viridis"}
+default for sequential data; \code{"rdbu"}/\code{"spectral"}/\code{"brbg"} etc. for
+diverging data), a colour vector, or \code{NULL} for the default.}
 
 \item{...}{Other arguments passed to \code{\link[ggplot2:geom_tile]{ggplot2::geom_tile()}}.}
 

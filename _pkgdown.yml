@@ -39,41 +39,47 @@ navbar:
       menu:
       - text: Getting Started
         href: articles/plotit.html
-      - text: Customizing Plots
+      - text: Syntax & Pipeline
         href: articles/customizing.html
       - text: Composing Figures
         href: articles/composing.html
       - text: Relational Charts
         href: articles/relational.html
       - text: "---"
-      - text: "Gallery: Comparisons"
+      - text: "Galleries by Goal"
+      - text: "  Compare groups"
         href: articles/gallery-comparisons.html
-      - text: "Gallery: Distributions"
+      - text: "  Distributions"
         href: articles/gallery-distributions.html
-      - text: "Gallery: Relationships"
+      - text: "  Relationships"
         href: articles/gallery-relationships.html
-      - text: "Gallery: Time & Coordinates"
+      - text: "  Time & Coordinates"
         href: articles/gallery-coordinates.html
-      - text: "Gallery: Trends"
+      - text: "  Trends"
         href: articles/gallery-trends.html
-      - text: "Gallery: Matrix"
+      - text: "  Matrix"
         href: articles/gallery-matrix.html
-      - text: "Gallery: Proportions"
+      - text: "  Proportions"
         href: articles/gallery-proportions.html
-      - text: "Gallery: Geo"
+      - text: "  Geography"
         href: articles/gallery-geo.html
-      - text: "Gallery: Relational"
+      - text: "  Networks & Flows"
         href: articles/gallery-relational.html
-      - text: "Gallery: Annotations"
+      - text: "  Annotations"
         href: articles/gallery-annotations.html
-      - text: "Gallery: Annotation & Composition"
+      - text: "  Composition"
         href: articles/gallery-composing.html
-      - text: "Use Case: Bioinformatics"
-        href: articles/use-case-bioinformatics.html
-      - text: "Use Case: Publishing"
-        href: articles/use-case-publishing.html
-      - text: "Transform Recipes"
+      - text: "---"
+      - text: "Recipes & Use Cases"
+      - text: "  Transform Recipes"
         href: articles/transform-recipes.html
+      - text: "  Bioinformatics"
+        href: articles/use-case-bioinformatics.html
+      - text: "  Publishing"
+        href: articles/use-case-publishing.html
+      - text: "---"
+      - text: Design Philosophy
+        href: articles/philosophy.html
       - text: "Design Philosophy"
         href: articles/philosophy.html
     news:

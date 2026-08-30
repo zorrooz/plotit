@@ -240,8 +240,8 @@ NULL
       sizes <- lapply(plots, ._subplot_panel_size)
       grid <- ._grid_dims(layout, length(sizes))
       units <- ._grid_units(sizes, grid$ncol, grid$nrow, layout$byrow %||% TRUE)
-      if (is.null(widths)) widths <- grid::unit(units$widths, "cm")
-      if (is.null(heights)) heights <- grid::unit(units$heights, "cm")
+      if (is.null(widths)) widths <- grid::unit(units$widths, "in")
+      if (is.null(heights)) heights <- grid::unit(units$heights, "in")
     }
   }
 
@@ -454,6 +454,15 @@ compose_inset <- function(
 
   base_gg <- ._prep_subplot_gg(base)
   inset_gg <- ._prep_subplot_gg(inset)
+  # The inset is self-contained: its legend must not float outside the inset
+  # box onto the base canvas (T2.3).  Park it inside the inset panel; a user
+  # style() on the inset plot overrides this in the usual way.
+  inset_gg <- inset_gg + ggplot2::theme(
+    legend.position = "inside",
+    legend.position.inside = c(0.98, 0.98),
+    legend.justification = c(1, 1),
+    legend.background = ggplot2::element_rect(fill = "white", colour = NA)
+  )
   gg <- base_gg + patchwork::inset_element(
     inset_gg,
     left     = left,

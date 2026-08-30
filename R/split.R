@@ -18,6 +18,45 @@ NULL
   )
 }
 
+
+# T2.4: when a facet variable is also the colour/fill grouping variable, the
+# legend is redundant (every level is already visible in its own panel --
+# Vega-Lite/G2 drop the legend in this case).  Auto-hide that channel.
+#' Suppress redundant legends when the facet variable == colour/fill variable.
+#' @noRd
+#' @keywords internal
+._facet_suppress_legend <- function(plot, facet_quos) {
+  if (length(facet_quos) == 0) {
+    return(plot)
+  }
+  mapping <- plot@gg$mapping
+  hide <- c()
+  for (aes_name in c("colour", "fill")) {
+    mv <- mapping[[aes_name]]
+    if (is.null(mv) || inherits(mv, "AsIs")) {
+      next
+    }
+    mv_expr <- deparse(rlang::quo_get_expr(mv))
+    for (fq in facet_quos) {
+      fv_expr <- deparse(rlang::quo_get_expr(fq))
+      if (identical(mv_expr, fv_expr)) {
+        hide <- c(hide, aes_name)
+        break
+      }
+    }
+  }
+  if (length(hide) > 0) {
+    # do.call with the plain aesthetic name works; the trailing-= form is
+    # not recognised on all ggplot2 versions.
+    args <- stats::setNames(
+      rep(list("none"), length(hide)),
+      hide
+    )
+    plot@gg <- plot@gg + do.call(ggplot2::guides, args)
+  }
+  plot
+}
+
 #' Generic for wrapping facets
 #'
 #' @param plot A plotit object.
@@ -97,6 +136,7 @@ S7::method(split_wrap, plotit_class) <- function(
     args$dir <- dir
   }
   plot@gg <- plot@gg + do.call(ggplot2::facet_wrap, args)
+  plot <- ._facet_suppress_legend(plot, split$facets)
   ._split_rebake_size(plot)
 }
 
@@ -145,7 +185,27 @@ S7::method(split_grid, plotit_class) <- function(
     if (!is.null(rows)) {
       ._warn_precedence("...", "rows")
     }
-    rows <- ggplot2::vars(!!!split$facets)
+    # The ggplot2-idiomatic `rows ~ cols` formula is accepted directly
+    # (T11.1); any other unnamed facets become the rows shorthand.
+    formulas <- vapply(split$facets, function(fq) {
+      rlang::is_formula(rlang::quo_get_expr(fq))
+    }, logical(1))
+    if (any(formulas)) {
+      if (sum(formulas) > 1 || length(split$facets) > 1) {
+        ._abort_hint(
+          "A {.code rows ~ cols} formula must be the only unnamed facet argument.",
+          "Pass the formula alone ({.code split_grid(Species ~ year)}) or use the vars() form."
+        )
+      }
+      fml <- split$facets[[1]]
+      if (!is.null(cols)) {
+        ._warn_precedence("formula", "cols")
+        cols <- NULL
+      }
+      rows <- rlang::quo_get_expr(fml)
+    } else {
+      rows <- ggplot2::vars(!!!split$facets)
+    }
   }
 
   args <- c(
@@ -158,6 +218,7 @@ S7::method(split_grid, plotit_class) <- function(
     args$axes <- axes
   }
   plot@gg <- plot@gg + do.call(ggplot2::facet_grid, args)
+  plot <- ._facet_suppress_legend(plot, split$facets)
   ._split_rebake_size(plot)
 }
 

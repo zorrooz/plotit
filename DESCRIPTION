@@ -1,6 +1,7 @@
 Package: plotit
 Title: Declarative Plotting with ggplot2
 Version: 1.0.0
+Depends: R (>= 4.1.0)
 Authors@R: 
     person("zorrooz", , , "zorrooz@github.com", role = c("aut", "cre"))
 Description: A declarative plotting package built on top of 'ggplot2',

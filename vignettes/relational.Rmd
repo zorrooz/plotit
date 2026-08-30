@@ -7,6 +7,11 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+> **本页解决什么问题**：Build graphs, flows and hierarchies with `as_graph() + layout_*()`.
+> **前置**：已完成 [composing](articles/composing.html)
+
+> **下一步**：→ [gallery-comparisons](articles/gallery-comparisons.html)
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,

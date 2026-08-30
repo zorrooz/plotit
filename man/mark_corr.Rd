@@ -8,6 +8,7 @@ mark_corr(
   plot,
   method = c("pearson", "spearman", "kendall"),
   reorder = TRUE,
+  range = NULL,
   ...,
   rasterize = FALSE,
   rasterize_dpi = 300,
@@ -23,6 +24,10 @@ or \code{"kendall"}.}
 
 \item{reorder}{If \code{TRUE} (default), reorder rows and columns by
 hierarchical clustering.}
+
+\item{range}{Fill scale for the correlation values: a diverging scheme
+name (default \code{"rdbu"}; also \code{"rdylbu"}, \code{"spectral"}, \code{"brbg"},
+\code{"puor"}, \code{"blue2brown"}), a colour vector, or \code{NULL} for the default.}
 
 \item{...}{Other arguments passed to \code{geom_tile}}
 

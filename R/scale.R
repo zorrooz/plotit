@@ -450,8 +450,36 @@ NULL
     ))
   }
 
+  # Date/POSIXct columns must use the date scale; trans="identity" would
+  # turn dates into raw day numbers (T9.1).  Warn on the misconfiguration
+  # and route automatically.
+  date_axis <- FALSE
+  if (!discrete && !binned) {
+    data <- plot@gg$data
+    var <- plot@gg$mapping[[aes]]
+    if (!is.null(data) && !is.null(var)) {
+      vals <- tryCatch(rlang::eval_tidy(var, data), error = function(e) NULL)
+      date_axis <- !is.null(vals) &&
+        (inherits(vals, "Date") || inherits(vals, "POSIXct") || inherits(vals, "POSIXt"))
+    }
+  }
+  if (date_axis) {
+    if (!is.null(trans) && identical(trans, "identity")) {
+      cli::cli_warn(c(
+        sprintf(
+          "{.fn scale_%s}: {.arg trans} = {.val identity} on a DATE/POSIXct column shows raw day numbers.",
+          aes
+        ),
+        "i" = "Date axes use the date scale automatically; drop {.arg trans}."
+      ))
+    }
+    trans <- "date"
+  }
+
   scale_fun <- if (aes == "x") {
-    if (binned) {
+    if (date_axis) {
+      ggplot2::scale_x_date
+    } else if (binned) {
       ggplot2::scale_x_binned
     } else if (discrete) {
       ggplot2::scale_x_discrete
@@ -459,7 +487,9 @@ NULL
       ggplot2::scale_x_continuous
     }
   } else {
-    if (binned) {
+    if (date_axis) {
+      ggplot2::scale_y_date
+    } else if (binned) {
       ggplot2::scale_y_binned
     } else if (discrete) {
       ggplot2::scale_y_discrete
@@ -473,7 +503,9 @@ NULL
   if (!is.null(range) && !discrete && !binned) {
     args$expand <- c(0, 0)
   }
-  if (!discrete && !binned) args$trans <- trans
+  # Date scales have no trans parameter (T9.1).
+  if (!discrete && !binned && !date_axis) args$trans <- trans
+  if (date_axis && identical(trans, "date")) args$trans <- NULL
   # For discrete + reverse, reverse the level order in limits
   if (discrete && reverse && is.null(limits)) {
     args$limits <- rev
@@ -499,7 +531,30 @@ NULL
 ._scale_cf_impl <- function(plot, aes, name, trans, limits, range, breaks,
                             labels, na_color = NULL, n_bins = NULL, mid = NULL, ...) {
   plot <- ._clear_default_color(plot)
+  user_trans <- trans
   trans <- ._resolve_trans(plot, aes, trans, ._TRANS_CONT)
+
+  # T5.3: a sequential/diverging scheme name with a discrete variable is
+  # almost always a misconfiguration (the variable should be numeric for a
+  # continuous gradient).  Warn with the actual routing instead of silently
+  # switching to the discrete variant.
+  if (is.character(range) && length(range) == 1 &&
+        range %in% c(._SEQUENTIAL_SCHEMES, ._DIVERGING_SCHEMES) &&
+        (is.null(user_trans) || identical(user_trans, "identity")) &&
+        isTRUE(._detect_discrete_aes(plot, aes))) {
+    variant <- if (identical(trans, "discrete") || identical(trans, "binned")) {
+      sprintf("%s", trans)
+    } else {
+      "discrete"
+    }
+    cli::cli_warn(c(
+      sprintf(
+        "{.arg range} = {.val %s} with a discrete {.val %s} variable uses the %s {.val %s} variant.",
+        range, aes, variant, range
+      ),
+      "i" = "For a continuous gradient, map a numeric column instead."
+    ))
+  }
 
   extra <- list()
   if (!is.null(na_color)) {
@@ -510,7 +565,7 @@ NULL
   }
   if (!is.null(n_bins)) {
     if (!is.numeric(n_bins) || length(n_bins) != 1 || is.na(n_bins) || n_bins < 2 ||
-      n_bins != as.integer(n_bins)) {
+          n_bins != as.integer(n_bins)) {
       ._abort_arg_range("n_bins", "a single integer >= 2", got = n_bins)
     }
     if (trans == "discrete") {
@@ -539,7 +594,7 @@ NULL
     # at the user's mid; any other range is a conflict (design 04 ss3.2).
     if (!is.null(range)) {
       if (!(is.character(range) && length(range) == 1 &&
-        range %in% names(._DIVERGING_ANCHORS))) {
+              range %in% names(._DIVERGING_ANCHORS))) {
         ._abort_hint(
           "{.arg mid} requires a diverging scheme in {.arg range} (e.g. {.val rdbu}); got a non-diverging range.",
           "Use {.code range = \"rdbu\", mid = 0} or drop {.arg mid}."

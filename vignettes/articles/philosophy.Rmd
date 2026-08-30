@@ -7,6 +7,11 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+> **本页解决什么问题**：Why plotit is built the way it is: grammar, defaults, extensibility.
+> **前置**：已完成 [use-case-publishing](articles/use-case-publishing.html)
+
+> **下一步**：→ [plotit](articles/plotit.html)
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5, fig.height = 4.5)
 ```

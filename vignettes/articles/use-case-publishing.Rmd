@@ -7,6 +7,11 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+> **本页解决什么问题**：Publication-quality figures: canvas, fonts, export.
+> **前置**：已完成 [use-case-bioinformatics](articles/use-case-bioinformatics.html)
+
+> **下一步**：→ [philosophy](articles/philosophy.html)
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5, fig.height = 4.5)
 ```

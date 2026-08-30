@@ -7,6 +7,11 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+> **本页解决什么问题**：Show change over time: lines, areas, step and date axes.
+> **前置**：已完成 [gallery-coordinates](articles/gallery-coordinates.html)
+
+> **下一步**：→ [gallery-matrix](articles/gallery-matrix.html)
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5, fig.height = 4.5)
 ```
@@ -22,8 +27,9 @@ library(plotit)
 ```{r}
 ggplot2::economics |>
   plotit(encode(x = date, y = unemploy)) |>
-  mark_line(linewidth = 0.9) |>
-  scale_x(trans = "identity")
+  mark_line(linewidth = 0.9)
+# T9.1: Date columns are auto-routed to the date axis; an explicit
+# trans="identity" would turn them into raw day numbers.
 ```
 
 ### Step change

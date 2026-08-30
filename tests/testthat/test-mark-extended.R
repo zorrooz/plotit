@@ -103,8 +103,10 @@ test_that("[BDD] mark_bin2d bins the plane and defaults to viridis", {
   b <- .built(p)
   expect_true(inherits(p@gg$layers[[1]]$geom, "GeomRect"))
   expect_true(nrow(b$data[[1]]) > 1)
-  # Derived count channel owns a managed continuous fill scale.
-  expect_true(inherits(p@gg$scales$get_scales("fill"), "ScaleContinuous"))
+  # Derived count channel owns a managed BINNED fill scale: count
+  # distributions are heavily skewed, so linear viridis washes the low
+  # cells into one dark shade (T5.5).
+  expect_true(grepl("Binned", class(p@gg$scales$get_scales("fill"))[1]))
 })
 
 test_that("mark_bin2d lets a later scale_fill win over the derived default", {
@@ -115,7 +117,7 @@ test_that("mark_bin2d lets a later scale_fill win over the derived default", {
   p <- plotit(df, encode(x = x, y = y)) |>
     mark_bin2d(bins = 6) |>
     suppressMessages(scale_fill(trans = "identity", range = "brewer"))
-  expect_s3_class(p@gg$scales$get_scales("fill"), "ScaleContinuous")
+  expect_true(grepl("Binned", class(p@gg$scales$get_scales("fill"))[1]))
   expect_true(!is.null(.built(p)))
 })
 

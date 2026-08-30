@@ -7,6 +7,11 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+> **本页解决什么问题**：Annotate charts: text, labels, significance brackets.
+> **前置**：已完成 [gallery-geo](articles/gallery-geo.html)
+
+> **下一步**：→ [gallery-composing](articles/gallery-composing.html)
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5, fig.height = 4.5)
 ```

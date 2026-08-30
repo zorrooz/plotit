@@ -72,6 +72,32 @@ NULL
   if (is.null(pos) && auto_dodge && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
     pos <- ggplot2::position_dodge(plot@meta@dodge)
   }
+  # T6: grouped dodge-family marks over a NUMERIC x overlap silently (the
+  # auto-dodge heuristic only fires for discrete x).  Warn and point at the
+  # two remedies instead of rendering stacked boxes/bars.
+  if (is.null(pos) && !is.null(mark_name) &&
+        mark_name %in% c("mark_bar", "mark_boxplot", "mark_violin") &&
+        !is.null(plot@gg$mapping$x)) {
+    layer_map <- mapping %||% list()
+    grp_aes <- intersect(c("fill", "colour"), union(names(layer_map), names(plot@gg$mapping)))[1]
+    if (!is.na(grp_aes) && !is.null(grp_aes)) {
+      xv <- tryCatch(rlang::eval_tidy(plot@gg$mapping$x, plot@gg$data), error = function(e) NULL)
+      x_numeric <- !is.null(xv) && is.numeric(xv)
+      mv <- if (!is.null(layer_map[[grp_aes]])) layer_map[[grp_aes]] else plot@gg$mapping[[grp_aes]]
+      fv <- tryCatch(rlang::eval_tidy(mv, plot@gg$data %||% data), error = function(e) NULL)
+      grp_discrete <- !is.null(fv) && !inherits(mv, "AsIs") &&
+        (is.factor(fv) || is.character(fv) || is.logical(fv))
+      if (x_numeric && grp_discrete) {
+        cli::cli_warn(c(
+          sprintf(
+            "{.fn %s}: numeric {.arg x} with a {.val %s}-grouped channel overlaps groups at the same x position.",
+            mark_name, grp_aes
+          ),
+          "i" = "Convert {.arg x} to a factor ({.code encode(x = factor(x))}) or set {.arg position} deliberately."
+        ))
+      }
+    }
+  }
   geom <- if (is.null(pos)) {
     do.call(geom_fun, c(list(mapping = mapping, data = data), dots))
   } else {
@@ -1029,7 +1055,10 @@ S7::method(mark_hex, plotit_class) <- function(
     bind_aes = ._MARK_BIND_AES$mark_hex, mark_name = "mark_hex",
     extra = params
   )
-  ._closed_fill_post(plot, pre$user_fill, trans = "identity")
+  # Bin-count fills are skewed (most cells empty, few very dense); a binned
+  # scale keeps the low end readable instead of a linear viridis wash
+  # (T5.5).
+  ._closed_fill_post(plot, pre$user_fill, trans = "binned")
 }
 
 # ---- mark_density_2d ----
@@ -1159,6 +1188,9 @@ S7::method(mark_density_2d, plotit_class) <- function(
 #'   or `"kendall"`.
 #' @param reorder If `TRUE` (default), reorder rows and columns by
 #'   hierarchical clustering.
+#' @param range Fill scale for the correlation values: a diverging scheme
+#'   name (default `"rdbu"`; also `"rdylbu"`, `"spectral"`, `"brbg"`,
+#'   `"puor"`, `"blue2brown"`), a colour vector, or `NULL` for the default.
 #' @param rasterize If `TRUE`, rasterize via `ggrastr::rasterise()`.
 #' @param rasterize_dpi DPI for rasterization (default 300).
 #' @param rasterize_dev Graphics device for rasterization (default `"cairo"`).
@@ -1173,7 +1205,7 @@ S7::method(mark_density_2d, plotit_class) <- function(
 mark_corr <- S7::new_generic(
   "mark_corr", "plot",
   function(plot, method = c("pearson", "spearman", "kendall"),
-           reorder = TRUE, ...,
+           reorder = TRUE, range = NULL, ...,
            rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
     S7::S7_dispatch()
   }
@@ -1182,7 +1214,7 @@ mark_corr <- S7::new_generic(
 #' @export
 S7::method(mark_corr, plotit_class) <- function(
   plot, method = c("pearson", "spearman", "kendall"),
-  reorder = TRUE, ...,
+  reorder = TRUE, range = NULL, ...,
   rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
 ) {
   # Clear the default_color injected by plotit() so the fill legend appears
@@ -1209,9 +1241,13 @@ S7::method(mark_corr, plotit_class) <- function(
     auto_dodge = FALSE, bind_aes = NULL, mark_name = "mark_corr",
     extra = rlang::list2(...)
   )
-  # Default the value fill to the colour-blind-safe continuous scheme; a
-  # later scale_fill() call replaces it (last wins).
-  plot <- ._derived_fill(plot, trans = "identity")
+  # Default the value fill to a DIVERGING scheme: correlation values live
+  # in [-1, 1] and the sign carries the story (tidyheatmaps / G2 / VL corr
+  # matrices are always diverging).  rdbu is the package default; a later
+  # scale_fill() call replaces it (last wins).
+  scheme <- range %||% "rdbu"
+  if (is.character(scheme) && length(scheme) == 1) scheme <- tolower(scheme)
+  plot <- ._derived_fill(plot, trans = "identity", range = scheme)
   # Synthetic Var1/Var2 titles carry no meaning; the variable names on the
   # axes do.  (Axis lines/ticks and expansion are handled by the shared
   # closed-cell chrome inside ._mark_impl.)
@@ -1324,6 +1360,9 @@ S7::method(mark_corr, plotit_class) <- function(
 #'   `"row"`, `"column"`, or `"none"`.
 #' @param scale z-score normalisation: `"none"` (default), `"row"`, or
 #'   `"column"`.
+#' @param range Fill scale for the cell values: a scheme name (`"viridis"`
+#'   default for sequential data; `"rdbu"`/`"spectral"`/`"brbg"` etc. for
+#'   diverging data), a colour vector, or `NULL` for the default.
 #' @param show_numbers Print the value of each cell inside the tile
 #'   (default `FALSE`); implemented as a `mark_text` overlay.
 #' @param number_format Format string for the cell numbers
@@ -1353,7 +1392,7 @@ mark_heatmap <- S7::new_generic(
   function(plot, cluster = c("both", "row", "column", "none"),
            scale = c("none", "row", "column"),
            show_numbers = FALSE, number_format = "%.2f", number_color = NULL,
-           na_color = "grey85", ...,
+           na_color = "grey85", range = NULL, ...,
            rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
     S7::S7_dispatch()
   }
@@ -1364,7 +1403,7 @@ S7::method(mark_heatmap, plotit_class) <- function(
   plot, cluster = c("both", "row", "column", "none"),
   scale = c("none", "row", "column"),
   show_numbers = FALSE, number_format = "%.2f", number_color = NULL,
-  na_color = "grey85", ...,
+  na_color = "grey85", range = NULL, ...,
   rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
 ) {
   scale <- match.arg(scale)
@@ -1431,7 +1470,9 @@ S7::method(mark_heatmap, plotit_class) <- function(
     auto_dodge = FALSE, bind_aes = NULL, mark_name = "mark_heatmap",
     extra = rlang::list2(...)
   )
-  plot <- ._derived_fill(plot, trans = "identity", na.value = na_color)
+  scheme <- range %||% "viridis"
+  if (is.character(scheme) && length(scheme) == 1) scheme <- tolower(scheme)
+  plot <- ._derived_fill(plot, trans = "identity", range = scheme, na.value = na_color)
   if (isTRUE(show_numbers)) {
     df$label <- sprintf(number_format, df$value)
     if (is.null(number_color)) {
@@ -1983,6 +2024,24 @@ S7::method(mark_significance, plotit_class) <- function(
       x = mid_x, y = y_pos + y_offset,
       label = comparisons$label[keep], size = text_size, ...
     )
+  # T4.3: keep the topmost bracket and its label inside the panel.  The
+  # auto-computed positions sit above the data range; without extra y
+  # headroom the highest bracket clips at the panel edge.  Only touch the
+  # y expansion when no y scale is installed yet (a user scale_*() or
+  # limits keeps full control).
+  if (length(y_pos) > 0) {
+    y_scale_now <- tryCatch(plot@gg$scales$get_scales("y"), error = function(e) NULL)
+    if (is.null(y_scale_now)) {
+      need_top <- max(y_pos) + y_offset + y_span * 0.02
+      default_top <- y_range[2] + y_span * 0.05 + 0.6
+      if (need_top > default_top) {
+        pad <- need_top - default_top
+        plot@gg <- plot@gg + ggplot2::scale_y_continuous(
+          expand = ggplot2::expansion(mult = c(0.05, 0.05), add = c(0.6, 0.6 + pad))
+        )
+      }
+    }
+  }
   plot
 }
 
@@ -2763,7 +2822,8 @@ S7::method(mark_bin2d, plotit_class) <- function(
     bind_aes = ._MARK_BIND_AES$mark_bin2d, mark_name = "mark_bin2d",
     extra = params
   )
-  ._closed_fill_post(plot, pre$user_fill, trans = "identity")
+  # Bin-count fills are skewed; binned scale keeps the low end readable.
+  ._closed_fill_post(plot, pre$user_fill, trans = "binned")
 }
 
 # ---- mark_contour ----
