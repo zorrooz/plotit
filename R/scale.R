@@ -539,9 +539,9 @@ NULL
   # continuous gradient).  Warn with the actual routing instead of silently
   # switching to the discrete variant.
   if (is.character(range) && length(range) == 1 &&
-    range %in% c(._SEQUENTIAL_SCHEMES, ._DIVERGING_SCHEMES) &&
-    (is.null(user_trans) || identical(user_trans, "identity")) &&
-    isTRUE(._detect_discrete_aes(plot, aes))) {
+        range %in% c(._SEQUENTIAL_SCHEMES, ._DIVERGING_SCHEMES) &&
+        (is.null(user_trans) || identical(user_trans, "identity")) &&
+        isTRUE(._detect_discrete_aes(plot, aes))) {
     variant <- if (identical(trans, "discrete") || identical(trans, "binned")) {
       sprintf("%s", trans)
     } else {
@@ -565,7 +565,7 @@ NULL
   }
   if (!is.null(n_bins)) {
     if (!is.numeric(n_bins) || length(n_bins) != 1 || is.na(n_bins) || n_bins < 2 ||
-      n_bins != as.integer(n_bins)) {
+          n_bins != as.integer(n_bins)) {
       ._abort_arg_range("n_bins", "a single integer >= 2", got = n_bins)
     }
     if (trans == "discrete") {
@@ -594,7 +594,7 @@ NULL
     # at the user's mid; any other range is a conflict (design 04 ss3.2).
     if (!is.null(range)) {
       if (!(is.character(range) && length(range) == 1 &&
-        range %in% names(._DIVERGING_ANCHORS))) {
+              range %in% names(._DIVERGING_ANCHORS))) {
         ._abort_hint(
           "{.arg mid} requires a diverging scheme in {.arg range} (e.g. {.val rdbu}); got a non-diverging range.",
           "Use {.code range = \"rdbu\", mid = 0} or drop {.arg mid}."

@@ -195,7 +195,7 @@ S7::method(project_polar, plotit_class) <- function(
     # Plain coord_polar has no end / r-reversal semantics.
     if (!is.null(end)) {
       cli::cli_warn(c(
-        "{.arg end} requires radial mode ({.code inner_radius > 0} or {.code r_axis_inside = TRUE}); it is ignored here.",
+        "{.arg end} needs radial mode ({.code inner_radius > 0} or {.code r_axis_inside = TRUE}); ignored here.",
         "i" = "Switch to radial mode for partial arcs."
       ))
     }

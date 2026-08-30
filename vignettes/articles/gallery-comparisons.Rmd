@@ -6,6 +6,11 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+
+> **本页解决什么问题**：Compare groups: bars, boxes, violins, beeswarm, lollipops, forests.
+> **前置**：已完成 [relational](articles/relational.html)
+
+> **下一步**：→ [gallery-distributions](articles/gallery-distributions.html)
 ```{r, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5, fig.height = 4.5, out.width = "72%")
 library(plotit)

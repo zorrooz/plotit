@@ -97,9 +97,8 @@ test_that("[BDD] correlation matrix defaults to a diverging scale", {
   # Corr values live in [-1, 1]; the sign carries the story, so the default
   # must be diverging (rdbu): the diagonal (corr = 1) renders dark blue and
   # negative pairs render red-brown (T5.1).
-  expect_true("#053061" %in% fills)  # rdbu high anchor (corr = 1)
-  expect_true(any(grepl("^#67|^#A2|^#D0|^#8D|^#67", fills, ignore.case = TRUE)) ||
-    any(grDevices::col2rgb(fills)[1, ] > grDevices::col2rgb(fills)[3, ]))
+  expect_true("#053061" %in% fills) # rdbu high anchor (corr = 1)
+  expect_true(any(grDevices::col2rgb(fills)[1, ] > grDevices::col2rgb(fills)[3, ] + 30))
 })
 
 test_that("[BDD] corr diverging default is replaceable by scale_fill", {

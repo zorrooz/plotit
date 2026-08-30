@@ -39,7 +39,8 @@ test_that("scale_color range=viridis (discrete)", {
     plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
       mark_point() |>
       scale_color(range = "viridis"),
-    "discrete", ignore.case = TRUE
+    "discrete",
+    ignore.case = TRUE
   )
 })
 
@@ -179,7 +180,8 @@ test_that("scale_fill range=viridis (discrete)", {
     plotit(iris, encode(x = Species, fill = Species)) |>
       mark_bar() |>
       scale_fill(range = "viridis"),
-    "discrete", ignore.case = TRUE
+    "discrete",
+    ignore.case = TRUE
   )
 })
 

@@ -7,6 +7,11 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+> **本页解决什么问题**：Learn the label/scale/theme/coordinate controls that refine any plot.
+> **前置**：已完成 [plotit](articles/plotit.html)
+
+> **下一步**：→ [composing](articles/composing.html)
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -126,7 +131,7 @@ and `reset`. Priority is well-defined: `reset` always wins, then `hide`, then `t
 iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
   mark_point() |>
-  scale_color(range = "viridis") |>
+  # T5.3: discrete Species uses the friendly qualitative palette by default\n
   label_title("Iris Sepal Measurements") |>
   label_subtitle("Three species, 150 observations") |>
   label_caption("Data: Anderson (1935)")
@@ -138,7 +143,7 @@ iris |>
 iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
   mark_point() |>
-  scale_color(range = "viridis") |>
+  # T5.3: discrete Species uses the friendly qualitative palette by default\n
   label_axis("Sepal Width (cm)", aes = "x") |>
   label_axis("Sepal Length (cm)", aes = "y") |>
   label_legend("Iris Species", aes = "colour")
@@ -152,7 +157,7 @@ iris |>
 iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
   mark_point() |>
-  scale_color(range = "viridis") |>
+  # T5.3: discrete Species uses the friendly qualitative palette by default\n
   label_title(hide = TRUE) |>
   label_legend(hide = TRUE, aes = "colour")
 ```
@@ -178,7 +183,7 @@ iris |>
 iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
   mark_point(size = 2, alpha = 0.7) |>
-  scale_color(range = "viridis") |>
+  # T5.3: discrete Species uses the friendly qualitative palette by default\n
   style(
     base_theme = ggplot2::theme_minimal(base_size = 14),
     plot.title = ggplot2::element_text(face = "bold", colour = "#2c3e50"),
@@ -193,7 +198,7 @@ iris |>
 iris |>
   plotit(encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
   mark_point() |>
-  scale_color(range = "viridis") |>
+  # T5.3: discrete Species uses the friendly qualitative palette by default\n
   style(base_size = 12)
 ```
 

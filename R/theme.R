@@ -322,19 +322,12 @@ NULL
       )
     }
   }
-  theta <- coord$theta %||% "x"
-  radial <- inherits(coord, "CoordRadial")
-  if (identical(theta, "y") || !radial) {
-    return(._gg_blank_axes(gg, ticks_length = TRUE))
-  }
-  # radial + theta = "x": blank the angular axis, keep the radius axis.
-  gg + ggplot2::theme(
-    axis.line.x = ggplot2::element_blank(),
-    axis.ticks.x = ggplot2::element_blank(),
-    axis.text.x = ggplot2::element_blank(),
-    axis.title.x = ggplot2::element_blank(),
-    axis.ticks.length.x = ggplot2::unit(0, "pt")
-  )
+  # All polar modes blank every axis element: reference galleries
+  # (r-graph-gallery / G2 / Vega-Lite) draw pies, donuts, roses and
+  # circular histograms without Cartesian furniture, and the default
+  # target of project_polar() is exactly those forms.  Radial bar charts
+  # that want the radius ticks back can re-enable them with style().
+  ._gg_blank_axes(gg, ticks_length = TRUE)
 }
 
 # Polar unframing: bar-family layers get a white hairline border by default
@@ -354,7 +347,7 @@ NULL
     lay <- gg$layers[[i]]
     bc <- lay$aes_params$colour %||% lay$geom$default_aes$colour %||% NA
     if (is.character(bc) && length(bc) == 1 && identical(unname(bc), "white") &&
-      !is.null(lay$aes_params$linewidth)) {
+          !is.null(lay$aes_params$linewidth)) {
       lay$aes_params$linewidth <- 0
     }
   }

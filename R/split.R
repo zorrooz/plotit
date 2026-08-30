@@ -25,7 +25,7 @@ NULL
 #' Suppress redundant legends when the facet variable == colour/fill variable.
 #' @noRd
 #' @keywords internal
-._facet_suppress_redundant_legend <- function(plot, facet_quos) {
+._facet_suppress_legend <- function(plot, facet_quos) {
   if (length(facet_quos) == 0) {
     return(plot)
   }
@@ -136,7 +136,7 @@ S7::method(split_wrap, plotit_class) <- function(
     args$dir <- dir
   }
   plot@gg <- plot@gg + do.call(ggplot2::facet_wrap, args)
-  plot <- ._facet_suppress_redundant_legend(plot, split$facets)
+  plot <- ._facet_suppress_legend(plot, split$facets)
   ._split_rebake_size(plot)
 }
 
@@ -194,7 +194,7 @@ S7::method(split_grid, plotit_class) <- function(
       if (sum(formulas) > 1 || length(split$facets) > 1) {
         ._abort_hint(
           "A {.code rows ~ cols} formula must be the only unnamed facet argument.",
-          "Pass the formula alone ({.code split_grid(Species ~ year)}) or use {.code split_grid(rows = vars(...), cols = vars(...))}."
+          "Pass the formula alone ({.code split_grid(Species ~ year)}) or use the vars() form."
         )
       }
       fml <- split$facets[[1]]
@@ -218,7 +218,7 @@ S7::method(split_grid, plotit_class) <- function(
     args$axes <- axes
   }
   plot@gg <- plot@gg + do.call(ggplot2::facet_grid, args)
-  plot <- ._facet_suppress_redundant_legend(plot, split$facets)
+  plot <- ._facet_suppress_legend(plot, split$facets)
   ._split_rebake_size(plot)
 }
 
