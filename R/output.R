@@ -101,6 +101,9 @@ pkgdown_print.plotit_composite <- function(x, visible = TRUE) {
   if (._gg_aspect_conflict(x@gg)) {
     x@gg <- ._strip_panel_size(x@gg)
   }
+  # Polar chrome budget: re-apply so a later style() cannot resurrect axes.
+  x@gg <- ._polar_unframe(x@gg)
+  x@gg <- ._polar_axes_budget(x@gg)
   # Apply lazy labels on every print (not just the first)
   ._sync_labels(x)
 }
@@ -193,6 +196,11 @@ knit_print.plotit_composite <- function(x, ...) {
     ))
   }
   plot <- ._ensure_theme(plot)
+  if (._gg_aspect_conflict(plot@gg)) {
+    plot@gg <- ._strip_panel_size(plot@gg)
+  }
+  plot@gg <- ._polar_unframe(plot@gg)
+  plot@gg <- ._polar_axes_budget(plot@gg)
   plot <- ._sync_labels(plot)
   if (isTRUE(plot@meta@autofit)) {
     def_size <- ._default_panel_size()

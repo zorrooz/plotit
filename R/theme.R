@@ -276,5 +276,87 @@ NULL
 #' @noRd
 #' @keywords internal
 ._gg_aspect_conflict <- function(gg) {
-  !is.null(gg$coordinates) && inherits(gg$coordinates, "CoordFixed")
+  if (is.null(gg$coordinates)) {
+    return(FALSE)
+  }
+  inherits(gg$coordinates, "CoordFixed") ||
+    inherits(gg$coordinates, "CoordPolar") ||
+    inherits(gg$coordinates, "CoordRadial")
+}
+
+# ---- polar coordinate chrome (single decision point) ----
+#
+# Polar panels never carry Cartesian furniture.  The budget:
+#   theta = "y"  (pie / donut)              -> no axes at all
+#   theta = "x", plain coord_polar (rose)   -> no axes at all
+#   theta = "x", coord_radial              -> angular (theta) axis blanked,
+#                                             radius axis kept (radial ticks
+#                                             carry the value story per
+#                                             AGENTS.md 3.2b)
+# Applied inside project_polar() AND defensively at every render entry
+# (._prepare_render / ._export_prepare_page) so a later style() cannot
+# resurrect Cartesian axes around a polar panel.
+#' Apply the polar-coordinate axis budget to a ggplot.
+#' @noRd
+#' @keywords internal
+._polar_axes_budget <- function(gg) {
+  coord <- gg$coordinates
+  if (is.null(coord) || !(inherits(coord, "CoordPolar") || inherits(coord, "CoordRadial"))) {
+    return(gg)
+  }
+  # ggplot2's polar background render takes a collapsed, small-panel layout
+  # branch when the panel background rect has an NA or white border.  Force a
+  # non-NA border (black, linewidth 0 = invisible) so the polar panel keeps
+  # the full-extent layout; any user border colour survives.
+  bg <- ggplot2::calc_element("panel.background", gg$theme)
+  if (inherits(bg, "element_rect")) {
+    border_bad <- is.null(bg$colour) || is.na(bg$colour) ||
+      (is.character(bg$colour) && identical(unname(bg$colour), "white"))
+    if (border_bad) {
+      gg <- gg + ggplot2::theme(
+        panel.background = ggplot2::element_rect(
+          fill = bg$fill %||% "white",
+          colour = "black",
+          linewidth = 0
+        )
+      )
+    }
+  }
+  theta <- coord$theta %||% "x"
+  radial <- inherits(coord, "CoordRadial")
+  if (identical(theta, "y") || !radial) {
+    return(._gg_blank_axes(gg, ticks_length = TRUE))
+  }
+  # radial + theta = "x": blank the angular axis, keep the radius axis.
+  gg + ggplot2::theme(
+    axis.line.x = ggplot2::element_blank(),
+    axis.ticks.x = ggplot2::element_blank(),
+    axis.text.x = ggplot2::element_blank(),
+    axis.title.x = ggplot2::element_blank(),
+    axis.ticks.length.x = ggplot2::unit(0, "pt")
+  )
+}
+
+# Polar unframing: bar-family layers get a white hairline border by default
+# (mark_bar / mark_histogram).  Around a circle this draws the "dashed white
+# ring" at the pie rim (segment borders meeting the rim).  Polar layouts drop
+# the stroke so sector separation comes from the palette, matching
+# r-graph-gallery / G2 / Vega-Lite pies.
+#' Remove white hairline borders from bar-family layers in polar coords.
+#' @noRd
+#' @keywords internal
+._polar_unframe <- function(gg) {
+  coord <- gg$coordinates
+  if (is.null(coord) || !(inherits(coord, "CoordPolar") || inherits(coord, "CoordRadial"))) {
+    return(gg)
+  }
+  for (i in seq_along(gg$layers)) {
+    lay <- gg$layers[[i]]
+    bc <- lay$aes_params$colour %||% lay$geom$default_aes$colour %||% NA
+    if (is.character(bc) && length(bc) == 1 && identical(unname(bc), "white") &&
+      !is.null(lay$aes_params$linewidth)) {
+      lay$aes_params$linewidth <- 0
+    }
+  }
+  gg
 }

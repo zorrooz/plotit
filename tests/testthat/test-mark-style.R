@@ -91,32 +91,40 @@ test_that("[BDD] smooth trend lines use the data-line weight", {
   expect_equal(unique(.built(p)[[1]]$linewidth), 0.9)
 })
 
-test_that("[BDD] correlation matrix defaults to viridis", {
+test_that("[BDD] correlation matrix defaults to a diverging scale", {
   p <- plotit(mtcars, encode()) |> mark_corr()
   fills <- unique(.built(p)[[1]]$fill)
-  # legacy muted gradient must be gone; viridis max yellow present (corr = 1)
-  expect_false("#132B43" %in% fills)
-  expect_true("#FDE725" %in% fills)
+  # Corr values live in [-1, 1]; the sign carries the story, so the default
+  # must be diverging (rdbu): the diagonal (corr = 1) renders dark blue and
+  # negative pairs render red-brown (T5.1).
+  expect_true("#053061" %in% fills)  # rdbu high anchor (corr = 1)
+  expect_true(any(grepl("^#67|^#A2|^#D0|^#8D|^#67", fills, ignore.case = TRUE)) ||
+    any(grDevices::col2rgb(fills)[1, ] > grDevices::col2rgb(fills)[3, ]))
 })
 
-test_that("[BDD] corr viridis default is replaceable by scale_fill", {
+test_that("[BDD] corr diverging default is replaceable by scale_fill", {
   p1 <- plotit(mtcars, encode()) |> mark_corr()
   p2 <- suppressMessages(p1 |> scale_fill(trans = "identity"))
-  expect_identical(
+  # scale_fill() replaces the diverging default with the sequential scheme
+  # (last-wins); the two renders must now differ (T5.1).
+  expect_false(identical(
     .built(p1)[[1]]$fill,
     .built(p2)[[1]]$fill
-  )
+  ))
 })
 
-test_that("[BDD] hex bins default to viridis", {
+test_that("[BDD] hex bins default to a binned viridis scale", {
   skip_if_not_installed("hexbin")
   p <- plotit(
     ggplot2::diamonds[sample(nrow(ggplot2::diamonds), 500), ],
     encode(x = carat, y = price)
   ) |> mark_hex()
+  # Skewed 2D counts need binned breaks so the low end stays readable
+  # (T5.5); the ramp is still the colour-blind-safe viridis.
+  sc <- p@gg$scales$get_scales("fill")
+  expect_true(grepl("Binned", class(sc)[1]))
   fills <- unique(.built(p)[[1]]$fill)
   expect_false("#132B43" %in% fills)
-  expect_true("#FDE725" %in% fills)
 })
 
 test_that("[BDD] filled 2D density bands default to discrete viridis", {
