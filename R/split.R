@@ -46,9 +46,11 @@ NULL
     }
   }
   if (length(hide) > 0) {
+    # do.call with the plain aesthetic name works; the trailing-= form is
+    # not recognised on all ggplot2 versions.
     args <- stats::setNames(
       rep(list("none"), length(hide)),
-      paste0(hide, "=")
+      hide
     )
     plot@gg <- plot@gg + do.call(ggplot2::guides, args)
   }

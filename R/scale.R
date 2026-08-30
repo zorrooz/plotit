@@ -531,6 +531,7 @@ NULL
 ._scale_cf_impl <- function(plot, aes, name, trans, limits, range, breaks,
                             labels, na_color = NULL, n_bins = NULL, mid = NULL, ...) {
   plot <- ._clear_default_color(plot)
+  user_trans <- trans
   trans <- ._resolve_trans(plot, aes, trans, ._TRANS_CONT)
 
   # T5.3: a sequential/diverging scheme name with a discrete variable is
@@ -539,6 +540,7 @@ NULL
   # switching to the discrete variant.
   if (is.character(range) && length(range) == 1 &&
     range %in% c(._SEQUENTIAL_SCHEMES, ._DIVERGING_SCHEMES) &&
+    (is.null(user_trans) || identical(user_trans, "identity")) &&
     isTRUE(._detect_discrete_aes(plot, aes))) {
     variant <- if (identical(trans, "discrete") || identical(trans, "binned")) {
       sprintf("%s", trans)

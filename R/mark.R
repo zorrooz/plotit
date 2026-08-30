@@ -76,7 +76,7 @@ NULL
   # auto-dodge heuristic only fires for discrete x).  Warn and point at the
   # two remedies instead of rendering stacked boxes/bars.
   if (is.null(pos) && !is.null(mark_name) &&
-    mark_name %in% c("mark_bar", "mark_boxplot", "mark_violin", "mark_histogram") &&
+    mark_name %in% c("mark_bar", "mark_boxplot", "mark_violin") &&
     !is.null(plot@gg$mapping$x)) {
     layer_map <- mapping %||% list()
     grp_aes <- intersect(c("fill", "colour"), union(names(layer_map), names(plot@gg$mapping)))[1]

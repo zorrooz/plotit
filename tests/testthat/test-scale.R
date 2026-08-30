@@ -33,10 +33,14 @@ test_that("[BDD] scale_color clears default_color (legend becomes visible)", {
 })
 
 test_that("scale_color range=viridis (discrete)", {
-  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
-    mark_point() |>
-    scale_color(range = "viridis")
-  expect_s3_class(p, "plotit::plotit")
+  # T5.3: an auto-routed sequential scheme on a discrete variable warns
+  # against the misconfiguration while still applying the discrete variant.
+  expect_warning(
+    plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+      mark_point() |>
+      scale_color(range = "viridis"),
+    "discrete", ignore.case = TRUE
+  )
 })
 
 test_that("scale_color range=brewer (discrete)", {
@@ -170,10 +174,13 @@ test_that("[BDD] scale_fill clears default_color (legend becomes visible)", {
 })
 
 test_that("scale_fill range=viridis (discrete)", {
-  p <- plotit(iris, encode(x = Species, fill = Species)) |>
-    mark_bar() |>
-    scale_fill(range = "viridis")
-  expect_s3_class(p, "plotit::plotit")
+  # T5.3: auto-routed sequential scheme on a discrete variable warns.
+  expect_warning(
+    plotit(iris, encode(x = Species, fill = Species)) |>
+      mark_bar() |>
+      scale_fill(range = "viridis"),
+    "discrete", ignore.case = TRUE
+  )
 })
 
 test_that("scale_fill range=brewer (discrete)", {
