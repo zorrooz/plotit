@@ -305,23 +305,20 @@ NULL
     return(gg)
   }
   # ggplot2's polar background render takes a collapsed, small-panel layout
-  # branch when the panel background rect has an NA or white border.  Force a
-  # non-NA border (black, linewidth 0 = invisible) so the polar panel keeps
-  # the full-extent layout; any user border colour survives.
-  bg <- ggplot2::calc_element("panel.background", gg$theme)
-  if (inherits(bg, "element_rect")) {
-    border_bad <- is.null(bg$colour) || is.na(bg$colour) ||
-      (is.character(bg$colour) && identical(unname(bg$colour), "white"))
-    if (border_bad) {
-      gg <- gg + ggplot2::theme(
-        panel.background = ggplot2::element_rect(
-          fill = bg$fill %||% "white",
-          colour = "black",
-          linewidth = 0
-        )
-      )
-    }
-  }
+  # branch when the panel background rect has an NA/white border (and can be
+  # skipped entirely when the resolved element is blank, as some platforms
+  # resolve).  Override the panel background unconditionally with a white
+  # fill and an invisible (linewidth 0) black border so the polar panel
+  # always keeps the full-extent layout.
+  bg <- tryCatch(ggplot2::calc_element("panel.background", gg$theme), error = function(e) NULL)
+  bg_fill <- if (inherits(bg, "element_rect") && !is.null(bg$fill)) bg$fill else "white"
+  gg <- gg + ggplot2::theme(
+    panel.background = ggplot2::element_rect(
+      fill = bg_fill,
+      colour = "black",
+      linewidth = 0
+    )
+  )
   # All polar modes blank every axis element: reference galleries
   # (r-graph-gallery / G2 / Vega-Lite) draw pies, donuts, roses and
   # circular histograms without Cartesian furniture, and the default
