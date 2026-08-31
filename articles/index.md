@@ -2,6 +2,8 @@
 
 ### All vignettes
 
+- [API System Reference
+  (v2)](https://zorrooz.github.io/plotit/articles/api-system.md):
 - [Composing Figures with
   plotit](https://zorrooz.github.io/plotit/articles/composing.md):
 - [Customizing Plots with
@@ -26,6 +28,8 @@
   Charts](https://zorrooz.github.io/plotit/articles/gallery-relational.md):
 - [Gallery: Relationships &
   Trends](https://zorrooz.github.io/plotit/articles/gallery-relationships.md):
+- [Gallery System: Pipeline Chains
+  (v2)](https://zorrooz.github.io/plotit/articles/gallery-system.md):
 - [Gallery:
   Trends](https://zorrooz.github.io/plotit/articles/gallery-trends.md):
 - [Design
