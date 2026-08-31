@@ -73,6 +73,10 @@ navbar:
       - text: "Recipes & Use Cases"
       - text: "  Transform Recipes"
         href: articles/transform-recipes.html
+      - text: "  Gallery System (v2)"
+        href: articles/gallery-system.html
+      - text: "  API System Reference (v2)"
+        href: articles/api-system.html
       - text: "  Bioinformatics"
         href: articles/use-case-bioinformatics.html
       - text: "  Publishing"
