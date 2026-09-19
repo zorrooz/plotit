@@ -95,8 +95,10 @@ test_that("[BDD] mark_ribbon identity mode renders ymin/ymax band", {
   band <- data.frame(
     x = 1:5, ymin = c(1, 2, 3, 4, 5), ymax = c(3, 4, 5, 6, 7)
   )
-  p <- plotit(band, encode(x = x, ymin = ymin, ymax = ymax)) |>
-    mark_ribbon()
+  expect_no_warning(
+    p <- plotit(band, encode(x = x, ymin = ymin, ymax = ymax)) |>
+      mark_ribbon()
+  )
   b <- ggplot2::ggplot_build(p@gg)
   expect_true(inherits(p@gg$layers[[1]]$geom, "GeomRibbon"))
   expect_equal(b$data[[1]]$ymin, band$ymin)

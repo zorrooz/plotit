@@ -56,6 +56,15 @@ test_that("[BDD] label_title text=\"\" renders empty title", {
   expect_equal(built$plot$labels$title, "")
 })
 
+test_that("[BDD] label_title text=\"FALSE\" is text, not hide", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |>
+    label_title(text = "FALSE")
+  built <- .build_synced(p)
+  expect_equal(built$plot$labels$title, "FALSE")
+  expect_false(inherits(built$plot$theme$plot.title, "element_blank"))
+})
+
 # ---- label_subtitle ----
 test_that("[BDD] label_subtitle sets rendered subtitle after sync", {
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>

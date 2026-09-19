@@ -1,7 +1,7 @@
 # plotit
 
 <!-- badges: start -->
-[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![Lifecycle: maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html#maturing)
 [![R-CMD-check](https://github.com/zorrooz/plotit/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/zorrooz/plotit/actions/workflows/R-CMD-check.yaml)
 [![pkgdown](https://github.com/zorrooz/plotit/actions/workflows/pkgdown.yaml/badge.svg)](https://zorrooz.github.io/plotit/)
 [![lint](https://github.com/zorrooz/plotit/actions/workflows/lint.yaml/badge.svg)](https://github.com/zorrooz/plotit/actions/workflows/lint.yaml)
@@ -9,11 +9,10 @@
 
 <p align="center"><a href="https://zorrooz.github.io/plotit/README_ZH.html">简体中文</a> | <b>English</b></p>
 
-> ⚠️ **Early development stage.**  
-> plotit is under active, pre-release development. Breaking changes are
-> **extremely likely** with every update. The API is incomplete, many
-> planned features are missing, and bugs are expected. Do not use in
-> production. Use at your own risk. Feedback and contributions are welcome.
+> **plotit 1.0.0** — the declarative pipeline API surface (plotit/encode,
+> mark_*/scale_*/layout_*/compose_*, style/export) is treated as the 1.0
+> contract. Minor releases may still refine defaults and documentation;
+> report issues on GitHub.
 
 ---
 

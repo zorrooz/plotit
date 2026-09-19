@@ -57,7 +57,7 @@ make_mark <- function(name, geom_fun) {
   }
 
   generic <- ._make_mark_generic(name)
-  ._register_mark_method(generic, geom_fun)
+  ._register_mark_method(generic, geom_fun, mark_name = name)
   # Make the new mark callable from the calling environment (same pattern
   # as make_theme), so it works inside pipelines right away.
   assign(name, generic, envir = parent.frame())

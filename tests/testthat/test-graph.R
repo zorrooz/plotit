@@ -5,7 +5,7 @@ test_that("[BDD] as_graph: canonical edgelist generates implicit nodes and unit 
   g <- as_graph(e)
 
   expect_s3_class(g, "plotit_graph")
-  expect_true(is_graph(g))
+  expect_true(plotit:::is_graph(g))
   expect_setequal(names(g), c("nodes", "edges"))
   expect_identical(g$nodes$id, c("a", "b", "c")) # first-appearance order
   expect_identical(g$edges$source, c("a", "a", "b"))
@@ -113,7 +113,7 @@ test_that("[BDD] plotit accepts graph data and rejects global mappings", {
   g <- as_graph(data.frame(source = "a", target = "b"))
 
   p <- plotit(g)
-  expect_true(is_graph(p@graph))
+  expect_true(plotit:::is_graph(p@graph))
 
   expect_error(plotit(g, encode(x = id)), "mark level")
   expect_warning(plotit(g, default_color = "red"), "ignored")

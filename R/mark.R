@@ -243,10 +243,13 @@ NULL
 #' Register an S7 method for a standard mark.
 #' @noRd
 #' @keywords internal
-._register_mark_method <- function(generic, geom_fun) {
+._register_mark_method <- function(generic, geom_fun, mark_name = NULL) {
   force(generic)
   force(geom_fun)
-  mark_name <- deparse(substitute(generic))
+  # Built-in one-line registrations pass the generic as a symbol
+  # (deparse(substitute()) yields "mark_point"); factory callers pass
+  # mark_name explicitly because the local binding is always "generic".
+  mark_name <- mark_name %||% deparse(substitute(generic))
   # Restrict graph auto-binding to what this mark family understands.
   bind_aes <- ._MARK_BIND_AES[[mark_name]]
 
@@ -630,6 +633,20 @@ S7::method(mark_map, plotit_class) <- function(
   if (!is.null(mapping) && (!is.null(mapping$colour) || !is.null(mapping$fill))) {
     plot <- ._clear_default_color(plot, mapping)
   }
+  # Layer-level curated palette -- same decision point as ._mark_impl.
+  if (!is.null(mapping)) {
+    unmanaged <- setdiff(
+      intersect(c("colour", "fill"), names(mapping)),
+      ._colour_managed_get(plot)
+    )
+    for (aes_name in unmanaged) {
+      sc <- ._default_colour_scale(aes_name, layer_data, mapping[[aes_name]])
+      if (!is.null(sc)) {
+        plot@gg <- plot@gg + sc
+        plot <- ._colour_managed_add(plot, aes_name)
+      }
+    }
+  }
   geom <- ggplot2::geom_sf(mapping = mapping, data = data, ...)
   plot <- ._add_geom(plot, geom,
     rasterize = rasterize, rasterize_dpi = rasterize_dpi,
@@ -881,6 +898,9 @@ S7::method(mark_rule, plotit_class) <- function(
     if (!is.null(linewidth)) ann_args$linewidth <- linewidth
     if (is.null(ann_args$colour) && !"colour" %in% ._user_owned_aes(plot, mapping)) {
       ann_args$colour <- ._MARK_STYLE$soft
+    }
+    if (is.null(ann_args$linewidth) && !"linewidth" %in% ._user_owned_aes(plot, mapping)) {
+      ann_args$linewidth <- ._MARK_STYLE$lw_thin
     }
     geom_call <- do.call(
       ggplot2::annotate, c(list("segment"), ann_args, rlang::list2(...))
@@ -1393,7 +1413,7 @@ mark_heatmap <- S7::new_generic(
   function(plot, cluster = c("both", "row", "column", "none"),
            scale = c("none", "row", "column"),
            show_numbers = FALSE, number_format = "%.2f", number_color = NULL,
-            na_color = ._MARK_STYLE$na_colour, range = NULL, ...,
+           na_color = ._MARK_STYLE$na_colour, range = NULL, ...,
            rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
     S7::S7_dispatch()
   }
@@ -1618,7 +1638,9 @@ S7::method(mark_heatmap, plotit_class) <- function(
 #' @param seed RNG seed for `ci_method = "boot"`; required for
 #'   reproducibility of the bootstrap.
 #' @param width Size of the error bar caps as a fraction of the resolution
-#'   of the data (default 0.5).  Ignored when `caps = FALSE`.
+#'   of the data.  When `NULL` (default) the style token
+#'   `width_errorbar` (0.4) applies for `caps = TRUE`.  Ignored when
+#'   `caps = FALSE`.
 #' @param orientation `"vertical"` (default) or `"horizontal"`.
 #' @param caps If `TRUE` (default), draw end caps; `FALSE` renders bare
 #'   interval lines (`geom_linerange`).
@@ -1657,7 +1679,7 @@ mark_errorbar <- S7::new_generic(
   function(plot, mapping = NULL, data = NULL, position = NULL, ...,
            stat = "identity", level = 0.95,
            ci_method = c("normal", "boot"), seed = NULL,
-            width = NULL, orientation = c("vertical", "horizontal"),
+           width = NULL, orientation = c("vertical", "horizontal"),
            caps = TRUE,
            rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
     S7::S7_dispatch()
@@ -1681,7 +1703,11 @@ S7::method(mark_errorbar, plotit_class) <- function(
   params <- rlang::list2(...)
   params$orientation <- gg_orient
   # Cap width is an errorbar-only parameter; linerange has no caps.
-  if (isTRUE(caps)) params$width <- width
+  if (isTRUE(caps)) {
+    params$width <- width %||% ._MARK_STYLE$width_errorbar
+  } else {
+    params$width <- NULL
+  }
   if (!identical(stat, "identity")) {
     params$stat <- "summary"
     params$fun.data <- switch(stat,
@@ -1791,13 +1817,9 @@ S7::method(mark_ribbon, plotit_class) <- function(
     alpha <- ._MARK_STYLE$alpha_ci
   }
   params$alpha <- alpha
-  if (is.null(width)) {
-    width <- ._MARK_STYLE$width_ribbon
-  }
-  if (is.null(width)) {
-    width <- ._MARK_STYLE$width_errorbar
-  }
-  params$width <- width
+  # geom_ribbon ignores width on continuous identity bands and warns; only
+  # pass it when the user asked, or on the discrete tile path below.
+  user_width <- width
 
   # Discrete axis + statistical entity: stat_summary collapses each ribbon
   # group to a single point (no band).  Aggregate here instead and emit one
@@ -1846,7 +1868,7 @@ S7::method(mark_ribbon, plotit_class) <- function(
         band_mapping$group <- rlang::sym("grp")
       }
       params$inherit.aes <- FALSE # the band carries its own data
-      params$width <- width
+      params$width <- user_width %||% ._MARK_STYLE$width_ribbon
       params$colour <- params$colour %||% NA
       params$linewidth <- 0
       params$show.legend <- FALSE # the grouping legend lives on the marks
@@ -1859,6 +1881,11 @@ S7::method(mark_ribbon, plotit_class) <- function(
     }
   }
 
+  if (!is.null(user_width)) {
+    params$width <- user_width
+  } else {
+    params$width <- NULL
+  }
   if (!identical(stat, "identity")) {
     params$stat <- "summary"
     params$fun.data <- switch(stat,

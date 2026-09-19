@@ -50,7 +50,9 @@ no implicit aggregation) or one of \code{"mean_sem"}, \code{"mean_sd"},
 reproducibility of the bootstrap.}
 
 \item{width}{Size of the error bar caps as a fraction of the resolution
-of the data (default 0.5).  Ignored when \code{caps = FALSE}.}
+of the data.  When \code{NULL} (default) the style token
+\code{width_errorbar} (0.4) applies for \code{caps = TRUE}.  Ignored when
+\code{caps = FALSE}.}
 
 \item{orientation}{\code{"vertical"} (default) or \code{"horizontal"}.}
 

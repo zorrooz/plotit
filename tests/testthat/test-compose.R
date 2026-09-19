@@ -113,6 +113,18 @@ test_that("[BDD] compose_grid nested: composite + single plot renders", {
   unlink(f)
 })
 
+test_that("[BDD] nested compose keeps inner composite annotations", {
+  inner <- compose_grid(.p1, .p2, nrow = 1) |>
+    label_title("INNER-TITLE") |>
+    label_caption("INNER-CAPTION")
+  outer <- compose_grid(inner, .p3, ncol = 1)
+  gg_inner <- plotit:::._prep_subplot_gg(inner)
+  ann <- gg_inner$patches$annotation
+  expect_false(is.null(ann))
+  expect_equal(ann$title, "INNER-TITLE")
+  expect_equal(ann$caption, "INNER-CAPTION")
+})
+
 # =====================================================================
 # compose_inset
 # =====================================================================
@@ -495,6 +507,19 @@ test_that("[BDD] compose_annot four sides + gap render", {
   unlink(f)
 })
 
+test_that("compose_annot gap does not absorb spacer into base cell", {
+  strip_v <- .dend_strip(stats::hclust(dist(iris[, 1:4])), "up")
+  p <- .p1 |> compose_annot(top = strip_v, gap = 0.2)
+  design <- p@gg$patches$layout$design
+  # patch_area holds parallel vectors: first entry is the base plot
+  # With top + gapv + base, base must occupy row 3 only (not span 2:3)
+  expect_equal(as.integer(design$t[1]), 3L)
+  expect_equal(as.integer(design$b[1]), 3L)
+  # strip occupies the top row
+  expect_equal(as.integer(design$t[2]), 1L)
+  expect_equal(as.integer(design$b[2]), 1L)
+})
+
 test_that("[BDD] compose_annot accepts explicit strip sizes (three states)", {
   s1 <- .dend_strip(stats::hclust(dist(iris[, 1:4])), "up")
   p1 <- .p1 |> compose_annot(top = s1, heights = grid::unit(0.6, "in"))
@@ -528,11 +553,36 @@ test_that("[BDD] compose_marginal with a single side renders (regression)", {
   top <- plotit(iris, encode(x = Sepal.Width)) |> mark_histogram()
   c <- compose_marginal(main, top = top)
   expect_equal(c@layout$type, "marginal")
+  expect_equal(c@layout$sides, "top")
   f <- tempfile(fileext = ".png")
   expect_no_error(export(c, f, dpi = 72))
   unlink(f)
   expect_error(compose_marginal(main), "at least one marginal")
   expect_error(compose_marginal(main, top = top, align = "diagonal"), "must be one of")
+})
+
+test_that("compose_marginal default size scales only with present sides", {
+  main <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length, colour = Species)) |>
+    mark_point()
+  top <- plotit(iris, encode(x = Sepal.Width, fill = Species)) |>
+    mark_histogram(bins = 10)
+  right <- plotit(iris, encode(x = Sepal.Length, fill = Species)) |>
+    mark_histogram(bins = 10) |>
+    project_cartesian(flip = TRUE)
+  sz_top <- plotit:::._composite_default_size(compose_marginal(main, top = top))
+  sz_both <- plotit:::._composite_default_size(compose_marginal(main, top = top, right = right))
+  expect_lt(sz_top$width, sz_both$width)
+  expect_equal(sz_top$height, sz_both$height)
+})
+
+test_that("compose_grid design uses design geometry for default canvas", {
+  p <- .p1
+  cmp <- compose_grid(p, p, p, p, design = "12\n34")
+  dims <- plotit:::._design_dims("12\n34", 4)
+  expect_equal(dims$ncol, 2L)
+  expect_equal(dims$nrow, 2L)
+  sz <- plotit:::._composite_default_size(cmp)
+  expect_true(sz$width > 0 && sz$height > 0)
 })
 
 # =====================================================================

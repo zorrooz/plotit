@@ -123,8 +123,12 @@ test_that("[BDD] T2.3 compose_inset parks its legend inside", {
   set.seed(2)
   d <- data.frame(x = rnorm(50), y = rnorm(50), g = rep(letters[1:3], length.out = 50))
   cmp <- compose_inset(
-    d |> plotit(encode(x = x, y = y)) |> mark_point(alpha = 0.4),
-    d |> plotit(encode(x = x, y = y, colour = g)) |> mark_point() |>
+    d |>
+      plotit(encode(x = x, y = y)) |>
+      mark_point(alpha = 0.4),
+    d |>
+      plotit(encode(x = x, y = y, colour = g)) |>
+      mark_point() |>
       project_cartesian(xlim = c(-1, 1), ylim = c(-1, 1)),
     left = 0.55, bottom = 0.55, right = 0.95, top = 0.95
   )
@@ -205,7 +209,9 @@ test_that("[BDD] T5.3 discrete variable + auto continuous scheme warns", {
   set.seed(4)
   d <- data.frame(x = rnorm(40), y = rnorm(40), g = factor(rep(letters[1:3], length.out = 40)))
   expect_warning(
-    d |> plotit(encode(x = x, y = y, colour = g)) |> mark_point() |>
+    d |>
+      plotit(encode(x = x, y = y, colour = g)) |>
+      mark_point() |>
       scale_color(range = "viridis"),
     "discrete",
     ignore.case = TRUE
@@ -232,7 +238,8 @@ test_that("[BDD] T6 grouped boxes/bars on numeric x warn", {
   )
   expect_warning(
     aggregate(y ~ numx + grp, d, mean) |>
-      plotit(encode(x = numx, y = y, fill = grp)) |> mark_bar(),
+      plotit(encode(x = numx, y = y, fill = grp)) |>
+      mark_bar(),
     "overlap",
     ignore.case = TRUE
   )
