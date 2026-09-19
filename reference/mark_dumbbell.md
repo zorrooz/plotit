@@ -15,7 +15,7 @@ mark_dumbbell(
   color_end = ._MARK_STYLE$secondary,
   line_color = ._MARK_STYLE$soft,
   point_size = ._MARK_STYLE$point_head,
-  line_width = ._MARK_STYLE$lw_data,
+  line_width = ._MARK_STYLE$lw_thin,
   ...
 )
 ```
@@ -55,7 +55,7 @@ mark_dumbbell(
 
 - line_width:
 
-  Width for the connecting line (default 0.9).
+  Width for the connecting line (default 0.5, connector rung).
 
 - ...:
 
