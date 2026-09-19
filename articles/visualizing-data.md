@@ -345,6 +345,8 @@ d |>
   plotit(encode(x = x, y = y)) |>
   mark_line() |>
   mark_ribbon(mapping = encode(ymin = lo, ymax = hi))
+#> Warning in (function (mapping = NULL, data = NULL, stat = "identity", position
+#> = "identity", : Ignoring unknown parameters: `width`
 ```
 
 ![](visualizing-data_files/figure-html/unnamed-chunk-29-1.png)

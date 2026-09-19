@@ -127,6 +127,7 @@ band$hi <- band$fit + 1.96 * band$se
 plotit(band, encode(x = wt, ymin = lo, ymax = hi)) |>
   mark_ribbon() |>
   mark_line(mapping = encode(x = wt, y = fit))
+#> Warning: Ignoring unknown parameters: `width`
 
 
 # statistical entity: mean +- sem per group from raw y
