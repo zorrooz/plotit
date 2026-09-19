@@ -43,9 +43,77 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="plotit-development-version">plotit (development version)<a class="anchor" aria-label="anchor" href="#plotit-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="1.0.0" id="plotit-100">plotit 1.0.0<a class="anchor" aria-label="anchor" href="#plotit-100"></a></h2>
+<p>First stable API release of the declarative plotit pipeline on top of ggplot2 (&gt;= 4.0.0). The 1.0 contract covers verb-prefix construction (<code>plotit</code> / <code>encode</code>), 43 <code>mark_*</code> layers, scale/project/split/label/style/export, graph layouts, and multi-panel <code>compose_*</code>.</p>
+<div class="section level3">
+<h3 id="plot-construction-1-0-0">Plot construction<a class="anchor" aria-label="anchor" href="#plot-construction-1-0-0"></a></h3>
+<ul><li>
+<code><a href="../reference/plotit.html">plotit()</a></code> / <code><a href="../reference/encode.html">encode()</a></code>: WYSIWYG Nature single-column panel default (89 x 56 mm), tidyplots-calibrated theme tokens, friendly/viridis default palettes via a single colour-scale decision point.</li>
+<li>Discrete colour/fill mirroring attaches the twin channel with <code>guide = "none"</code> so one group variable never renders two legends.</li>
+<li>
+<code><a href="../reference/add_ggplot.html">add_ggplot()</a></code> escape hatch for raw ggplot2 components without leaving the pipe.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="marks-1-0-0">Marks (43)<a class="anchor" aria-label="anchor" href="#marks-1-0-0"></a></h3>
+<ul><li>
+<strong>Basic geometry</strong>: point, line, area, bar, rect, polygon, text, label, rule, path, step, rug, spoke, curve, histogram, density, boxplot, violin, map.</li>
+<li>
+<strong>Statistical</strong>: smooth, hex, bin2d, density_2d, contour, count, corr, heatmap, ecdf, qq, qq_line.</li>
+<li>
+<strong>Composite / relational</strong>: significance, errorbar, ribbon, lollipop, dumbbell, forest, beeswarm, image, encircle, sankey, treemap, network, chord.</li>
+<li>
+<code>mark_errorbar</code> / <code>mark_ribbon</code>: statistical entities (<code>mean_sem</code> / <code>mean_sd</code> / <code>mean_range</code> / <code>mean_ci95</code>); cap width is method-injected only for <code>caps = TRUE</code> (token 0.4).</li>
+<li>
+<code>mark_bar</code> no longer replaces a pre-installed continuous y scale when applying the tidyplots lower-expand flush.</li>
+<li>
+<code>mark_rule</code> segment path shares the reference-line linewidth default.</li>
+<li>
+<code>mark_map</code> layer-level colour/fill mappings use the curated default palette decision point.</li>
+<li>
+<code><a href="../reference/make_mark.html">make_mark()</a></code> registers methods under the requested mark name so style defaults and chrome lookups resolve correctly.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="scales-projects-splits-labels-1-0-0">Scales, projects, splits, labels<a class="anchor" aria-label="anchor" href="#scales-projects-splits-labels-1-0-0"></a></h3>
+<ul><li>
+<code>scale_*</code>: Vega-style trans/range matrix; colour schemes include sequential viridis family and diverging anchors (<code>mid=</code>); <code><a href="../reference/scale_radius.html">scale_radius()</a></code> is defunct in favour of <code><a href="../reference/scale_size.html">scale_size()</a></code>.</li>
+<li>
+<code><a href="../reference/project_polar.html">project_polar()</a></code> supports <code>start</code>/<code>end</code>/<code>reverse</code>/<code>rotate_angle</code>; <code>direction</code> is deprecated in favour of <code>reverse</code>.</li>
+<li>
+<code><a href="../reference/project_parallel.html">project_parallel()</a></code>, <code><a href="../reference/project_cartesian.html">project_cartesian()</a></code>, <code><a href="../reference/project_map.html">project_map()</a></code>.</li>
+<li>
+<code>label_*</code> three-parameter protocol (<code>reset</code> &gt; <code>hide</code> &gt; <code>text</code>); hide is logical FALSE only (literal <code>"FALSE"</code> is text).</li>
+<li>
+<code><a href="../reference/style.html">style()</a></code> accepts a theme object or a theme function; font args forwarded to theme functions and warned when a complete theme object is also given.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="graph-data-and-layouts-1-0-0">Graph data and layouts<a class="anchor" aria-label="anchor" href="#graph-data-and-layouts-1-0-0"></a></h3>
+<ul><li>
+<code><a href="../reference/as_graph.html">as_graph()</a></code>, <code><a href="../reference/layout_force.html">layout_force()</a></code>, <code><a href="../reference/layout_circle.html">layout_circle()</a></code>, <code><a href="../reference/layout_tree.html">layout_tree()</a></code>, <code><a href="../reference/layout_dendrogram.html">layout_dendrogram()</a></code>, <code><a href="../reference/layout_sankey.html">layout_sankey()</a></code>, <code><a href="../reference/layout_chord.html">layout_chord()</a></code>, <code><a href="../reference/layout_treemap.html">layout_treemap()</a></code> — pure-R engines (no igraph/ggraph/circlize/ggsankey).</li>
+<li>Relational sugar marks: <code>mark_sankey</code>, <code>mark_treemap</code>, <code>mark_network</code>, <code>mark_chord</code> over edges-table API; formula <code>data = ~nodes</code> / <code>~edges</code> against <code>@graph</code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="composition-1-0-0">Composition<a class="anchor" aria-label="anchor" href="#composition-1-0-0"></a></h3>
+<ul><li>
+<code><a href="../reference/compose_grid.html">compose_grid()</a></code> (design layouts, axis-title sharing), <code><a href="../reference/compose_inset.html">compose_inset()</a></code>, <code><a href="../reference/compose_marginal.html">compose_marginal()</a></code>, <code><a href="../reference/compose_annot.html">compose_annot()</a></code>.</li>
+<li>Nested composites apply inner annotations before outer assembly.</li>
+<li>
+<code>compose_annot(gap=)</code> no longer absorbs spacer rows into the base cell.</li>
+<li>Default composite canvas sizes account for present marginal sides, annot strips + gaps, and design grid geometry.</li>
+<li>Inset legend parking uses patchwork <code>&amp;</code> for composite insets.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="export-1-0-0">Export<a class="anchor" aria-label="anchor" href="#export-1-0-0"></a></h3>
+<ul><li>
+<code><a href="../reference/export.html">export()</a></code> for single plots and composites; <code>dpi</code> default <strong>600</strong>; multipage PDF when given a list of plotit objects.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="documentation-1-0-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-1-0-0"></a></h3>
+<ul><li>Five-article pkgdown IA (Get Started, Gallery, Advanced, API, Design Goals).</li>
+<li>NEWS.md summarises the 1.0 surface; README lifecycle set to maturing.</li>
+</ul></div>
 </div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">

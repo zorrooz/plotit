@@ -1,17 +1,17 @@
 # plotit
 
 [![Lifecycle:
-experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html#maturing)
 [![R-CMD-check](https://github.com/zorrooz/plotit/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/zorrooz/plotit/actions/workflows/R-CMD-check.yaml)
 [![pkgdown](https://github.com/zorrooz/plotit/actions/workflows/pkgdown.yaml/badge.svg)](https://zorrooz.github.io/plotit/)
 [![lint](https://github.com/zorrooz/plotit/actions/workflows/lint.yaml/badge.svg)](https://github.com/zorrooz/plotit/actions/workflows/lint.yaml)
 
 **简体中文** \| [English](https://zorrooz.github.io/plotit/)
 
-> ⚠️ **早期开发阶段**  
-> plotit 处于活跃的预发布开发中。每次更新都**极有可能**带来破坏性变更。
-> API 实现不完整，大量计划功能尚未实现，可能存在许多
-> bug。请勿用于生产环境。 使用风险自负。欢迎反馈和贡献。
+> **plotit 1.0.0** — 声明式管道 API
+> 表面（plotit/encode、mark\_*/scale\_*/layout\_*/compose\_*、
+> style/export）按 1.0 契约维护。次版本仍可能微调默认值与文档；问题请在
+> GitHub 反馈。
 
 ------------------------------------------------------------------------
 
@@ -247,6 +247,7 @@ edges |>
 | [`compose_grid()`](https://zorrooz.github.io/plotit/reference/compose_grid.md) | 网格排列 |
 | [`compose_inset()`](https://zorrooz.github.io/plotit/reference/compose_inset.md) | 浮动嵌入 |
 | [`compose_marginal()`](https://zorrooz.github.io/plotit/reference/compose_marginal.md) | 散点 + 边际分布 |
+| [`compose_annot()`](https://zorrooz.github.io/plotit/reference/compose_annot.md) | 基图 + 任意侧附着条带（如树状图） |
 
 ### 主题
 
@@ -270,16 +271,14 @@ edges |>
 ## 文档
 
 完整文档见
-[zorrooz.github.io/plotit](https://zorrooz.github.io/plotit/)，
-含[关系类图表系统指南](https://zorrooz.github.io/plotit/articles/relational.html)
-与图形画廊（分组、分布、关系、坐标系、关系图、组合与标注），见
-**Articles → Gallery**。
+[zorrooz.github.io/plotit](https://zorrooz.github.io/plotit/)， 含 Get
+Started、Gallery（意图导向图例）、Advanced（组合/关系布局/扩展）与 API
+系统页， 见站点 **Articles** 菜单。
 
 ## 贡献
 
-plotit 处于早期开发阶段。欢迎在 [GitHub
-Issues](https://github.com/zorrooz/plotit/issues) 上提交 bug
-报告、功能请求和 Pull Request。
+plotit 欢迎在 [GitHub Issues](https://github.com/zorrooz/plotit/issues)
+上提交 bug 报告、功能请求和 Pull Request。
 
 ## 许可证
 

@@ -75,8 +75,9 @@ mark_errorbar(
 
 - width:
 
-  Size of the error bar caps as a fraction of the resolution of the data
-  (default 0.5). Ignored when `caps = FALSE`.
+  Size of the error bar caps as a fraction of the resolution of the
+  data. When `NULL` (default) the style token `width_errorbar` (0.4)
+  applies for `caps = TRUE`. Ignored when `caps = FALSE`.
 
 - orientation:
 
@@ -142,5 +143,4 @@ dfh <- data.frame(
 plotit(dfh, encode(x = x, y = y, xmin = xmin, xmax = xmax)) |>
   mark_point() |>
   mark_errorbar(orientation = "horizontal", caps = FALSE)
-#> Warning: Ignoring unknown parameters: `width`
 ```

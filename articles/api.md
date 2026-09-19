@@ -45,7 +45,7 @@ not accept `plotit_composite`; build panels first, then `compose_*()`.
 ``` r
 
 plotit(data, mapping = encode(), autofit = FALSE,
-       width = 5, height = 3.5, size_unit = "in",
+       width = 89, height = 56, size_unit = "mm",
        dodge = NULL, default_color = "#0072B2")
 
 encode(...)                 # forwarded to aes(); returns plotit_encode

@@ -3,12 +3,10 @@
 [简体中文](https://zorrooz.github.io/plotit/README_ZH.html) \|
 **English**
 
-> ⚠️ **Early development stage.**  
-> plotit is under active, pre-release development. Breaking changes are
-> **extremely likely** with every update. The API is incomplete, many
-> planned features are missing, and bugs are expected. Do not use in
-> production. Use at your own risk. Feedback and contributions are
-> welcome.
+> **plotit 1.0.0** — the declarative pipeline API surface
+> (plotit/encode, mark\_*/scale\_*/layout\_*/compose\_*, style/export)
+> is treated as the 1.0 contract. Minor releases may still refine
+> defaults and documentation; report issues on GitHub.
 
 ------------------------------------------------------------------------
 

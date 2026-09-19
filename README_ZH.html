@@ -45,13 +45,12 @@
 <div id="plotit" class="section level1">
 
 <!-- badges: start -->
-<p><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental" class="external-link"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a> <a href="https://github.com/zorrooz/plotit/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/zorrooz/plotit/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a> <a href="https://zorrooz.github.io/plotit/"><img src="https://github.com/zorrooz/plotit/actions/workflows/pkgdown.yaml/badge.svg" alt="pkgdown"></a> <a href="https://github.com/zorrooz/plotit/actions/workflows/lint.yaml" class="external-link"><img src="https://github.com/zorrooz/plotit/actions/workflows/lint.yaml/badge.svg" alt="lint"></a> <!-- badges: end --></p>
+<p><a href="https://lifecycle.r-lib.org/articles/stages.html#maturing" class="external-link"><img src="https://img.shields.io/badge/lifecycle-maturing-blue.svg" alt="Lifecycle: maturing"></a> <a href="https://github.com/zorrooz/plotit/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/zorrooz/plotit/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a> <a href="https://zorrooz.github.io/plotit/"><img src="https://github.com/zorrooz/plotit/actions/workflows/pkgdown.yaml/badge.svg" alt="pkgdown"></a> <a href="https://github.com/zorrooz/plotit/actions/workflows/lint.yaml" class="external-link"><img src="https://github.com/zorrooz/plotit/actions/workflows/lint.yaml/badge.svg" alt="lint"></a> <!-- badges: end --></p>
 <p align="center">
 <b>简体中文</b> | <a href="https://zorrooz.github.io/plotit/">English</a>
 </p>
 <blockquote>
-<p>⚠️ <strong>早期开发阶段</strong><br>
-plotit 处于活跃的预发布开发中。每次更新都<strong>极有可能</strong>带来破坏性变更。 API 实现不完整，大量计划功能尚未实现，可能存在许多 bug。请勿用于生产环境。 使用风险自负。欢迎反馈和贡献。</p>
+<p><strong>plotit 1.0.0</strong> — 声明式管道 API 表面（plotit/encode、mark_<em>/scale_</em>/layout_<em>/compose_</em>、 style/export）按 1.0 契约维护。次版本仍可能微调默认值与文档；问题请在 GitHub 反馈。</p>
 </blockquote>
 <hr><div class="section level2">
 <h2 id="概述">概述<a class="anchor" aria-label="anchor" href="#%E6%A6%82%E8%BF%B0"></a></h2>
@@ -418,6 +417,8 @@ plotit 处于活跃的预发布开发中。每次更新都<strong>极有可能</
 <td align="left">浮动嵌入</td>
 </tr><tr><td align="left"><code><a href="reference/compose_marginal.html">compose_marginal()</a></code></td>
 <td align="left">散点 + 边际分布</td>
+</tr><tr><td align="left"><code><a href="reference/compose_annot.html">compose_annot()</a></code></td>
+<td align="left">基图 + 任意侧附着条带（如树状图）</td>
 </tr></tbody></table></div>
 <div class="section level3">
 <h3 id="主题">主题<a class="anchor" aria-label="anchor" href="#%E4%B8%BB%E9%A2%98"></a></h3>
@@ -445,11 +446,11 @@ plotit 处于活跃的预发布开发中。每次更新都<strong>极有可能</
 </div>
 <div class="section level2">
 <h2 id="文档">文档<a class="anchor" aria-label="anchor" href="#%E6%96%87%E6%A1%A3"></a></h2>
-<p>完整文档见 <a href="https://zorrooz.github.io/plotit/">zorrooz.github.io/plotit</a>， 含<a href="https://zorrooz.github.io/plotit/articles/relational.html">关系类图表系统指南</a> 与图形画廊（分组、分布、关系、坐标系、关系图、组合与标注），见 <strong>Articles → Gallery</strong>。</p>
+<p>完整文档见 <a href="https://zorrooz.github.io/plotit/">zorrooz.github.io/plotit</a>， 含 Get Started、Gallery（意图导向图例）、Advanced（组合/关系布局/扩展）与 API 系统页， 见站点 <strong>Articles</strong> 菜单。</p>
 </div>
 <div class="section level2">
 <h2 id="贡献">贡献<a class="anchor" aria-label="anchor" href="#%E8%B4%A1%E7%8C%AE"></a></h2>
-<p>plotit 处于早期开发阶段。欢迎在 <a href="https://github.com/zorrooz/plotit/issues" class="external-link">GitHub Issues</a> 上提交 bug 报告、功能请求和 Pull Request。</p>
+<p>plotit 欢迎在 <a href="https://github.com/zorrooz/plotit/issues" class="external-link">GitHub Issues</a> 上提交 bug 报告、功能请求和 Pull Request。</p>
 </div>
 <div class="section level2">
 <h2 id="许可证">许可证<a class="anchor" aria-label="anchor" href="#%E8%AE%B8%E5%8F%AF%E8%AF%81"></a></h2>
