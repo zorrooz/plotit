@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
   fig.width = 5.2,
   fig.height = 4.0,
   out.width = "85%",
-  dev.args = list(background = "white")
+  dev.args = list(bg = "white")
 )
 library(plotit)
 ```

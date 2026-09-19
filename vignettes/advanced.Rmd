@@ -9,7 +9,7 @@ vignette: >
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 5.5, fig.height = 4.2,
-                      dev.args = list(background = "white"))
+                      dev.args = list(bg = "white"))
 library(plotit)
 ```
 
