@@ -123,7 +123,9 @@ NULL
 #' @keywords internal
 ._sync_one_label <- function(plot, slot_name, theme_el_name, labs_name) {
   val <- S7::prop(plot@meta@labels, slot_name)
-  if (isTRUE(val == FALSE)) {
+  # Hide sentinel is logical FALSE only.  isFALSE() avoids the R gotcha
+  # `"FALSE" == FALSE` being TRUE, which would blank a literal "FALSE" title.
+  if (isFALSE(val)) {
     plot@gg <- plot@gg + ._theme_el(theme_el_name, ggplot2::element_blank())
   } else if (is.null(val)) {
     plot@gg <- plot@gg + ._theme_el(theme_el_name, NULL)

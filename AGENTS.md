@@ -200,7 +200,7 @@ G2 的每个复合 Mark 内部展开为 2-5 个基础 Mark 的组合，这与 pl
 - **统计 Mark**：对标 Vega-Lite 复合 Mark (`boxplot`/`errorbar`/`errorband`)的统计聚合能力 + G2 corelib 的 `density`/`heatmap`/`beeswarm`
 - **复合 Mark**：对标 Vega-Lite `layer` 运算符和 G2 graphlib/plotlib 的组合模式，封装 2+ 已有 Mark 的固定搭配
 
-**完整规划**（40 种，对标 Vega-Lite 15+ 种 + AntV G2 30+ 种，三层体系：基础 → 统计 → 复合；已全部实现。历史 27 种规划表保留如下，28–39 为 2025-12 覆盖扩展，40 为矩阵热图轮新增 `mark_heatmap`）：
+**完整规划**（43 种已实现：19 基础 + 12 统计 + 12 复合含关系。历史规划表 27+13 行如下；`mark_ribbon`/`mark_image`/`mark_encircle` 为阶段 3 落地的复合/关系类补充，见 §3.2 与 NAMESPACE）：
 
 | # | 层级 | 函数 | 类别 | 底层 R 实现 | 对标来源 | 用途 |
 |---|---|---|---|---|---|---|
@@ -690,18 +690,19 @@ data |> as_graph() |> plotit() |>
 
 #### 3.3.9 `export()` — 导出
 
-`export(plot, filename, width=NULL, height=NULL, dpi=300, device=NULL, ...)`
+`export(plot, filename, width=NULL, height=NULL, dpi=600, device=NULL, ...)`
 
 尺寸优先级链：显式传参 > meta 存储值 > autofit 自适应。
 
 - `autofit=FALSE` + 未传尺寸：通过 gtable 测量获得总尺寸（面板尺寸来自 meta，通过 `._build_fixed_gtable()` 固定；轴/标签/图例由当前主题决定）
-- `autofit=TRUE` + 未传尺寸：回退 `getOption("plotit.default_width", 5)` / `getOption("plotit.default_height", 3.5)`（英寸）
+- `autofit=TRUE` + 未传尺寸：回退 `getOption("plotit.default_width", 5)` / `getOption("plotit.default_height", 3.5)`（英寸）；实现亦可经 `._default_panel_size()` 使用 Nature 面板 89×56 mm 折算
 - 显式传入的 `width`/`height` 遵循 `plotit()` 时设定的 `size_unit` 换算。单位统一为英寸后传给 `ggsave()`
 - `device` 从文件名扩展名推断（`.pdf` / `.png` / `.svg` 等）
+- `export(list_of_plotit, "out.pdf")`：多页 PDF（矢量设备；`dpi` 不生效）
 
 #### 3.3.10 图片尺寸算法
 
-`plotit()` 的 `width`/`height` 指面板尺寸（非总尺寸）。`autofit=FALSE` 时通过 `patchwork::plot_layout()` 固定面板为绝对单位。
+`plotit()` 的 `width`/`height` 指面板尺寸（非总尺寸）。`autofit=FALSE` 时构造期把 meta 尺寸烘焙为 ggplot2 4.0+ 的 `theme(panel.widths=, panel.heights=)`（WYSIWYG）。
 
 **契约边界**：面板尺寸遵守 ±1% 浮点误差。总尺寸（面板+轴+标签+图例+边距）为衍生值，不在 API 契约内，可能随主题/字体/设备版本变化。
 
@@ -738,11 +739,12 @@ data |> as_graph() |> plotit() |>
 
 全部返回 `plotit_composite`（`@gg` + `@plots` + `@layout` + `@annotations`）。
 
-**`compose_grid(..., ncol=NULL, nrow=NULL, byrow=TRUE, widths=NULL, heights=NULL, guides="collect", axes="keep", tag_levels=NULL)`**
+**`compose_grid(..., ncol=NULL, nrow=NULL, byrow=TRUE, widths=NULL, heights=NULL, guides="collect", axes="keep", axis_titles=NULL, design=NULL, tag_levels=NULL)`**
 - 默认 `ncol=NULL, nrow=NULL` → `ncol=1`（纵向堆叠）。仅设 `nrow=1` 则横向并排
 - `guides="collect"` 默认合并相同图例（避免重复图例并排），可传 `"keep"` 独立
-- `axes` 封装 `patchwork::plot_layout(axes=)`
-- 嵌套：接受 `plotit_composite`，组合可嵌套
+- `axes` / `axis_titles` 封装 `patchwork::plot_layout(axes=, axis_titles=)`
+- `design`：布局字符串或 area 向量列表；给定时覆盖 ncol/nrow/byrow（警告）
+- 嵌套：接受 `plotit_composite`，组合可嵌套；内层 annotations 在组装前烘焙进 gg
 
 **组合图主题语义**：composite 上的 `style()` 经 patchwork `&` 作用到**全部**子面板（`+` 只作用于末图）；`plot_annotation()` 惰性渲染时附带 `._theme_default()`，标题/副标题/脚注层级与单图一致。print/export 未显式给尺寸时用 `._composite_default_size()`（子图 meta 面板 + chrome 余量）——禁止直接测量 patchworkGrob（null 单位视口外不解析）。
 
@@ -757,6 +759,11 @@ data |> as_graph() |> plotit() |>
 - 图例默认合并（`"collect"`），可传 `"keep"` 独立
 
 `label_title`/`label_subtitle`/`label_caption` → 写入 `@annotations`，`print()`/`export()` 时通过 `plot_annotation()` 惰性渲染（消除调用顺序依赖）。不支持的操作：`mark_*`/`scale_*`/`project_*`/`split_*`/`label_axis`/`label_legend` 不接受 `plotit_composite`——先构建再组合。
+
+**`compose_annot(base, top=NULL, bottom=NULL, left=NULL, right=NULL, heights=NULL, widths=NULL, gap=0, guides="collect", align="panel", on_top=FALSE)`**
+- 基图 + 最多四侧附着条带（树状图/注释条/边际密度）；与 `compose_marginal` 共享 `._assemble_annot()` 引擎
+- `gap` 以 spacer 行/列实现，不并入 base 单元格
+- 默认画布尺寸按 sides + strip 面板 + gap 计算
 
 ##### `compose_grid` 细节
 - 嵌套：接受 `plotit_composite`，组合可嵌套。单图：`compose_grid(p)` 合法。
@@ -773,7 +780,7 @@ data |> as_graph() |> plotit() |>
 ### 4.1 文件结构
 
 ```
-R/：class.R encode.R utils.R plot.R mark.R mark_relational.R scale.R project.R split.R label.R style.R output.R compose.R factory.R zzz.R
+R/：class.R encode.R utils.R theme.R style.R output.R label.R compose.R mark_style.R graph.R mark.R factory.R layout.R mark_image.R mark_relational.R plot.R project.R scale.R split.R zzz.R
 tests/testthat/：test-<func>.R 按函数族分文件
 ```
 
@@ -917,8 +924,8 @@ export(p, "output.pdf", dpi = 300)
 | 阶段 | 名称 | 范围 | 状态 |
 |---|---|---|---|
 | 0 | 固本 | 架构清债 + 代码质量 | 🔄 进行中（单图侧 patchwork 剥离、`._sync_labels` 抽象、mark 工厂函数、@examples 均已 ✅；剩余：组合图 patchwork 剥离） |
-| 1-4 | mark 扩展 | 13 种新 mark（20 种规划 − 6 已实现 − 1 已移除组合） | ✅ 已完成（现 40 种，见 §3.2；2025-12 覆盖轮 +12，矩阵热图轮 +1） |
-| 5 | 收尾 | 文档补齐、全量验证、发布准备 | ⬜ 未开始 |
+| 1-4 | mark 扩展 | 目录覆盖 | ✅ 已完成（现 **43** 种，见 §3.2 与 NAMESPACE；含 ribbon/image/encircle/heatmap） |
+| 5 | 收尾 | 文档补齐、全量验证、发布准备 | 🔄 进行中（Version 已 1.0.0；NEWS/README/AGENTS 已对齐本轮；R CMD check 多平台与 styler 待跑） |
 
 ---
 
@@ -1050,11 +1057,13 @@ export(p, "output.pdf", dpi = 300)
 
 **验收标准**：
 
-- [x] 20 种 mark 至少 15 个已实现（≥75% mark 覆盖率）——实际 40 种已达成
+- [x] 20 种 mark 至少 15 个已实现（≥75% mark 覆盖率）——实际 **43** 种已达成
 - [ ] `R CMD check` 4 平台（Linux/macOS/Windows + R-devel）零 ERROR 零 WARNING
-- [ ] `lintr::lint_package()` 零 lint 问题
+- [x] `lintr::lint_package()` 本地零 lint 问题（本轮已修缩进/pipe continuation）
 - [ ] pkgdown 网站完整渲染所有函数参考页
-- [ ] 五篇站点文章（§4.9）与当前 API 一致，无第 6 篇 vignette
+- [x] 五篇站点文章（§4.9）与当前 API 一致，无第 6 篇 vignette
+- [x] 版本号 1.0.0（DESCRIPTION）
+- [x] NEWS.md 汇总（1.0.0 条目）
 
 ---
 
@@ -1062,11 +1071,12 @@ export(p, "output.pdf", dpi = 300)
 
 | 层级 | 函数族 | 1.0 目标 | 已实现 | 完成度 |
 |------|--------|----------|--------|--------|
-| 内层 | plotit + encode | 2 | 2 | 100% |
-| 内层 | mark_* | 20（目标 ≥15） | 40 | 200%（超目标） |
-| 内层 | scale_* + project_* + split_* + label_* + style+export | 22 | 22 | 100% |
-| 最外层 | compose_* | 3 | 3 | 100% |
-| **总计** | | **~49** | **67** | **137%** |
+| 内层 | plotit + encode + add_ggplot + make_* | 2 | 6 | — |
+| 内层 | mark_* | 20（目标 ≥15） | **43** | 超目标 |
+| 内层 | scale_* + project_* + split_* + label_* + style + export | 22 | 23（含 defunct `scale_radius`） | 100% |
+| 关系 | as_graph + layout_* | — | 8 | — |
+| 最外层 | compose_* | 3 | **4**（含 `compose_annot`） | 100% |
+| **总计（NAMESPACE exports）** | | | **82** | — |
 
 ### 9.5 1.0 检查清单
 
@@ -1094,11 +1104,11 @@ export(p, "output.pdf", dpi = 300)
 
 **阶段 5（收尾）**：
 - [ ] `R CMD check` 4 平台零 ERROR 零 WARNING
-- [ ] lintr 零问题
+- [x] lintr 零问题（本地已清）
 - [ ] pkgdown 完整渲染
-- [ ] Vignette / README 更新
-- [ ] 版本号 1.0.0
-- [ ] NEWS.md 汇总
+- [x] Vignette / README 更新（五篇 IA + lifecycle maturing + compose_annot）
+- [x] 版本号 1.0.0
+- [x] NEWS.md 汇总
 
 ---
 
@@ -1264,35 +1274,36 @@ parse(file = "test.R")
 
 ---
 
-## 14. 发布级重构 API 设计基线（目标态，未实施）
+## 14. 发布级重构 API 设计基线（多数已落地；剩余见状态列）
 
 > 来源：阶段 0 调研（`.agent/research/`）→ 系统性回顾 + API 设计套件（`.agent/design/`，v1）。
-> 用户已裁决 5 项决策（design/10 §4）。**本节仅登记目标态与指针，实施前 §3 现行约定不变**；
-> 工程排期见 `.agent/plan.md`，实施完成后相应条目并入 §3 并从本节移除。
+> 用户已裁决 5 项决策（design/10 §4）。**已实施条目以 §3 与 NAMESPACE 为准**；
+> 工程排期见 `.agent/plan.md`。
 
-### 14.1 新增导出（原 4 个；mark_ribbon/mark_image/mark_encircle 已于阶段 3 落地移除，余 `compose_annot` 1 个，均过三闸门，justification 见 design/03、06）
+### 14.1 新增导出
 
-| 函数 | 层 | 一句话 | 详细设计 |
-|---|---|---|---|
-| `compose_annot` | 组合 | 任意侧附着条带（复杂热图旗舰配方使能器；D4） | design/06 §4 |
+| 函数 | 状态 | 一句话 |
+|---|---|---|
+| `compose_annot` | ✅ 已实现并导出 | 任意侧附着条带（复杂热图旗舰配方使能器；D4） |
+| `mark_ribbon` / `mark_image` / `mark_encircle` | ✅ 已实现并导出 | 统计带 / 图像散点 / 分组圈注 |
 
-### 14.2 主要扩参（全部进扩展契约层）
+### 14.2 主要扩参（下列均已进入实现，详见 man/*.Rd）
 
-- `mark_errorbar`/`mark_ribbon`：`stat`（identity/mean_sem/mean_sd/mean_range/mean_ci95）、`level`、`ci_method`（03§2）
-- `mark_heatmap`：`show_numbers`/`number_format`/`number_color`/`na_color`；`cluster` 扩型接受 hclust/list/字符向量四态（03§5.1、06§5）
-- `scale_color/fill`：`na_color`/`n_bins`/`mid`；palette 白名单扩至 20 方案（新增发散类 6 个，默认 `rdbu`；D-4 裁决本期封顶）（04§1–3）
-- `project_polar`：`start`/`end`/`reverse`，`direction` 进弃用周期（05§2）
-- `split_wrap`/`split_grid`：`dir` 八向码 / `axes` 透传（05§5）
-- `compose_grid`：`design`（字符串/数值向量列表）/`axis_titles`/三态尺寸（06§2）
-- `layout_tree`：`leaf_spacing`/`edge="elbow"`（07§2）
-- `export`：接受 plotit 列表 → 多页 PDF（08§3）
+- `mark_errorbar`/`mark_ribbon`：`stat`、`level`、`ci_method` ✅
+- `mark_heatmap`：`show_numbers`/`number_format`/`number_color`/`na_color`；`cluster` ✅
+- `scale_color`/`scale_fill`：`na_color`/`n_bins`/`mid`；发散色板 ✅
+- `project_polar`：`start`/`end`/`reverse`/`rotate_angle`；`direction` 弃用 ✅
+- `split_wrap`/`split_grid`：`dir` ✅
+- `compose_grid`：`design`/`axis_titles` ✅
+- `layout_tree`：`leaf_spacing`/`edge="elbow"` ✅
+- `export`：plotit 列表 → 多页 PDF ✅
 
 ### 14.3 已裁决的定位边界（并入非目标）
 
 - 仪表类 `mark_gauge`/`mark_liquid` **定位外**；`mark_venn` 维持 P3 二轮评审（D-5）。
 - 不自动计算统计检验 p 值：`mark_significance` 维持纯外观，预计算表经 `comparisons=` 喂入（D-1）。
 - mark_raster / layout_voronoi·delaunay：纯 R 自研、P2/P3 慢车道（D-2）。
-- NEWS.md 于阶段 7 随 1.0.0 统一补写（D-3）；palette 名录本期 20 方案封顶（D-4）。
+- NEWS.md 已随 1.0.0 写入（§9.3 5.6）；palette 名录本期 20 方案封顶（D-4）。
 
 ### 14.4 待核实项（实施前补验，design/01 §4 全表）
 

@@ -172,7 +172,7 @@ NULL
 #' (identity scaling owns those).
 #' @noRd
 #' @keywords internal
-._default_colour_scale <- function(aes_name, data_tbl, var) {
+._default_colour_scale <- function(aes_name, data_tbl, var, guide = "legend") {
   col <- tryCatch(rlang::eval_tidy(var, data_tbl), error = function(e) NULL)
   if (is.null(col) || inherits(col, "AsIs")) {
     return(NULL)
@@ -183,23 +183,35 @@ NULL
     # layer, which misinterprets plain palette functions.
     ggplot2::discrete_scale(
       aesthetics = aes_name,
-      palette = function(n) ._palette_discrete(n)
+      palette = function(n) ._palette_discrete(n),
+      guide = guide
     )
   } else {
-    ._cf(
+    sc <- ._cf(
       aes_name,
       ggplot2::scale_colour_viridis_c,
       ggplot2::scale_fill_viridis_c
     )(option = ._STYLE_TOKENS$palette_continuous)
+    if (!identical(guide, "legend")) {
+      guides <- list(guide)
+      names(guides) <- aes_name
+      sc <- sc + do.call(ggplot2::guides, guides)
+    }
+    sc
   }
 }
 
 #' Attach default colour scales for mapped colour/fill aesthetics.
+#' `silent_aes` get `guide = "none"` (mirrored colour/fill twins).
 #' @noRd
 #' @keywords internal
-._attach_default_colour_scale <- function(p, data, mapping) {
+._attach_default_colour_scale <- function(p, data, mapping,
+                                          silent_aes = character(0)) {
   for (aes_name in intersect(c("colour", "fill"), names(mapping))) {
-    sc <- ._default_colour_scale(aes_name, data, mapping[[aes_name]])
+    guide <- if (aes_name %in% silent_aes) "none" else "legend"
+    sc <- ._default_colour_scale(aes_name, data, mapping[[aes_name]],
+      guide = guide
+    )
     if (!is.null(sc)) {
       p <- p + sc
     }

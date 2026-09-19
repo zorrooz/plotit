@@ -16,7 +16,7 @@ figures:
   fig.width: 5.2
   fig.height: 4.0
   dev.args:
-    background: white
+    bg: white
 
 title: plotit
 subtitle: Declarative Plotting with ggplot2

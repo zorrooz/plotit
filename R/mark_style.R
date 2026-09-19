@@ -128,9 +128,10 @@ NULL
   ),
   mark_rule = list(colour = ._MARK_STYLE$soft, linewidth = ._MARK_STYLE$lw_thin),
   # tidyplots ff_errorbar: linewidth 0.25, width 0.4
+  # width is method-injected only for caps=TRUE (geom_errorbar); geom_linerange
+  # rejects it, so it must not live in static defaults.
   mark_errorbar = list(
-    linewidth = ._MARK_STYLE$lw_data,
-    width = 0.4
+    linewidth = ._MARK_STYLE$lw_data
   ),
   # tidyplots ff_ribbon: alpha 0.4, color = NA
   mark_ribbon = list(alpha = ._MARK_STYLE$alpha_ci, colour = NA),
@@ -155,22 +156,21 @@ NULL
 
 # tidyplots ff_bar / ff_barstack zero the lower padding so bars sit flush
 # on the value axis instead of floating above a 5% expansion gap.
-# Continuous value axis only; discrete axes keep ggplot2 expansion.
+# Applied only when the pipeline has not already installed a position scale:
+# a second scale_*() call would replace the user's trans/limits/breaks.
 #' Zero the lower expansion on the continuous value axis (tidyplots bars).
 #' @noRd
 #' @keywords internal
 ._flush_value_axis <- function(plot, axis = "y") {
   gg <- plot@gg
-  sc <- gg$scales$get_scales(axis)
-  has_sc <- !is.null(sc)
-  discrete <- has_sc && inherits(sc, c("ScaleDiscretePosition", "ScaleDiscrete"))
-  if (discrete) {
+  sc <- tryCatch(gg$scales$get_scales(axis), error = function(e) NULL)
+  # User-installed scale (discrete or continuous): leave it intact.
+  if (!is.null(sc)) {
     return(plot)
   }
   # Default continuous expansion is mult = c(0.05, 0.05); keep the upper
   # headroom for value labels (tidyplots padding = c(0, NA) -> upper 0.05).
   plot@gg <- gg + ggplot2::scale_y_continuous(
-    name = if (has_sc && !inherits(sc$name, "waiver")) sc$name else ggplot2::waiver(),
     expand = ggplot2::expansion(mult = c(0, 0.05))
   )
   plot

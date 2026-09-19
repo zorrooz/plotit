@@ -333,6 +333,18 @@ test_that("[BDD] mark_rule with x+xend+y+yend adds segment", {
   expect_true(length(built$data) >= 2)
 })
 
+test_that("mark_rule segment path shares the hline linewidth default", {
+  df <- data.frame(x = 1:5, y = 1:5)
+  ph <- plotit(df, encode(x = x, y = y)) |> mark_rule(yintercept = 3)
+  ps <- plotit(df, encode(x = x, y = y)) |>
+    mark_rule(x = 2, xend = 4, y = 2, yend = 4)
+  expect_equal(
+    ph@gg$layers[[1]]$aes_params$linewidth,
+    ps@gg$layers[[1]]$aes_params$linewidth
+  )
+  expect_equal(ps@gg$layers[[1]]$aes_params$linewidth, plotit:::._MARK_STYLE$lw_thin)
+})
+
 test_that("mark_rule supports rasterize", {
   skip_if_not_installed("ggrastr")
   p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
@@ -493,6 +505,15 @@ test_that("make_mark creates a usable custom mark", {
 
 test_that("make_mark warns on non-mark_ name", {
   expect_warning(make_mark("foo_bar", ggplot2::geom_point))
+})
+
+test_that("make_mark registers under the requested mark_name (style defaults apply)", {
+  # Re-register a catalogue mark through the factory; defaults must still hit.
+  g <- plotit:::._make_mark_generic("mark_point")
+  plotit:::._register_mark_method(g, ggplot2::geom_point, mark_name = "mark_point")
+  p <- g(plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)))
+  # mark_point default size is 1 (._MARK_DEFAULTS)
+  expect_equal(p@gg$layers[[1]]$aes_params$size, 1)
 })
 
 test_that("make_theme creates a usable theme function", {

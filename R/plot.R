@@ -105,22 +105,27 @@ plotit <- function(
     # bar edges, point borders).  Continuous fill (heatmap / corr magnitude)
     # is left alone: mirroring it would inject a colour quosure that layer
     # reshapes (Var1/Var2/value) cannot resolve.
+    # The mirrored twin is visual-only: its default scale is attached with
+    # guide="none" so one group variable never renders two legends.
     .is_disc_quo <- function(q, data) {
       col <- tryCatch(rlang::eval_tidy(q, data), error = function(e) NULL)
       !is.null(col) && (is.factor(col) || is.character(col) || is.logical(col))
     }
+    mirrored_aes <- NULL
     if (has_color && !has_fill && .is_disc_quo(mapping$colour, data)) {
       mapping <- structure(
         utils::modifyList(mapping, list(fill = mapping$colour)),
         class = c("plotit_encode", "uneval")
       )
       has_fill <- TRUE
+      mirrored_aes <- "fill"
     } else if (has_fill && !has_color && .is_disc_quo(mapping$fill, data)) {
       mapping <- structure(
         utils::modifyList(mapping, list(colour = mapping$fill)),
         class = c("plotit_encode", "uneval")
       )
       has_color <- TRUE
+      mirrored_aes <- "colour"
     }
 
     # Inject I(default_color) to both colour and fill so that all geoms
@@ -177,7 +182,8 @@ plotit <- function(
   # single-colour path, which owns its static brand blue.
   managed <- character(0)
   if (!graph_input && !use_default) {
-    p <- ._attach_default_colour_scale(p, data, mapping)
+    silent <- if (!is.null(mirrored_aes)) mirrored_aes else character(0)
+    p <- ._attach_default_colour_scale(p, data, mapping, silent_aes = silent)
     managed <- intersect(c("colour", "fill"), names(mapping))
   }
   if (use_default) {

@@ -286,9 +286,21 @@ test_that("mark_errorbar vertical caps stay an errorbar", {
 
 test_that("mark_errorbar caps = FALSE uses linerange", {
   df <- data.frame(x = c("A", "B"), y = c(10, 20), ymin = c(8, 18), ymax = c(12, 22))
-  p <- plotit(df, encode(x = x, y = y, ymin = ymin, ymax = ymax)) |>
-    mark_errorbar(caps = FALSE)
+  expect_no_warning(
+    p <- plotit(df, encode(x = x, y = y, ymin = ymin, ymax = ymax)) |>
+      mark_errorbar(caps = FALSE)
+  )
   expect_true(inherits(p@gg$layers[[1]]$geom, "GeomLinerange"))
+  expect_null(p@gg$layers[[1]]$aes_params$width)
+  expect_null(p@gg$layers[[1]]$geom_params$width)
+})
+
+test_that("mark_errorbar caps = TRUE injects the style-token width", {
+  df <- data.frame(x = c("A", "B"), y = c(10, 20), ymin = c(8, 18), ymax = c(12, 22))
+  p <- plotit(df, encode(x = x, y = y, ymin = ymin, ymax = ymax)) |>
+    mark_errorbar()
+  w <- p@gg$layers[[1]]$aes_params$width %||% p@gg$layers[[1]]$geom_params$width
+  expect_equal(w, plotit:::._MARK_STYLE$width_errorbar)
 })
 
 test_that("mark_errorbar horizontal maps y position with xmin/xmax", {

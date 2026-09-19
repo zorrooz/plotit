@@ -40,8 +40,8 @@ NULL
 }
 
 # Sync lazy labels on a sub-plot before extraction so label_* settings
-# survive composition (AGENTS.md <U+00A7>1.2).  Composites are skipped: their
-# labels live in annotations, not meta@labels.
+# survive composition (AGENTS.md 1.2).  Plain plotit objects sync meta@labels;
+# nested composites carry annotations instead (applied in ._prep_subplot_gg).
 #' Sync lazy labels on a sub-plot before composition.
 #' @noRd
 #' @keywords internal
@@ -53,13 +53,21 @@ NULL
   }
 }
 
-# Full subplot preparation: sync lazy labels, extract the raw ggplot, and
-# strip baked panel sizing.  One choke point for every compose_* entry.
+# Full subplot preparation: sync lazy labels (or apply nested-composite
+# annotations), extract the raw ggplot, and strip baked panel sizing.
+# One choke point for every compose_* entry.
 #' Prepare a sub-plot's raw ggplot for composite assembly.
 #' @noRd
 #' @keywords internal
 ._prep_subplot_gg <- function(p) {
-  ._reset_sizing(._extract_gg(._sync_subplot(p)))
+  if (S7::S7_inherits(p, plotit_composite)) {
+    # Nested composites must bake their title/caption/tags into the gg
+    # before extraction; otherwise outer compose_* silently drops them.
+    gg <- ._apply_annotations(p)
+  } else {
+    gg <- ._extract_gg(._sync_subplot(p))
+  }
+  ._reset_sizing(gg)
 }
 
 # Fresh annotation skeleton shared by all compose_* constructors.
@@ -169,24 +177,79 @@ NULL
   n <- length(sizes)
   lt <- cmp@layout$type %||% "grid"
   if (lt == "marginal") {
-    widths <- cmp@layout$widths %||% c(4, 1)
-    heights <- cmp@layout$heights %||% c(1, 4)
+    sides <- cmp@layout$sides %||% c("top", "right")
     main <- sizes[[1]]
+    w_fac <- 1
+    h_fac <- 1
+    if ("right" %in% sides) {
+      widths <- cmp@layout$widths %||% c(4, 1)
+      w_fac <- sum(widths) / widths[1]
+    }
+    if ("top" %in% sides) {
+      heights <- cmp@layout$heights %||% c(1, 4)
+      h_fac <- sum(heights) / heights[2]
+    }
     list(
-      width  = main$w * sum(widths) / widths[1] + allowance_w,
-      height = main$h * sum(heights) / heights[2] + allowance_h
+      width  = main$w * w_fac + allowance_w,
+      height = main$h * h_fac + allowance_h
     )
   } else if (lt == "inset") {
     base <- sizes[[1]]
     list(width = base$w + allowance_w, height = base$h + allowance_h)
+  } else if (lt == "annot") {
+    sides <- cmp@layout$sides %||% character()
+    gap <- as.numeric(cmp@layout$gap %||% 0)
+    base <- sizes[[1]]
+    w_extra <- 0
+    h_extra <- 0
+    for (i in seq_along(sides)) {
+      sz <- sizes[[i + 1L]] %||% base
+      if (sides[[i]] %in% c("left", "right")) {
+        w_extra <- w_extra + sz$w + gap
+      } else {
+        h_extra <- h_extra + sz$h + gap
+      }
+    }
+    list(
+      width  = base$w + w_extra + allowance_w,
+      height = base$h + h_extra + allowance_h
+    )
   } else {
-    grid <- ._grid_dims(cmp@layout, n)
+    grid <- if (!is.null(cmp@layout$design)) {
+      ._design_dims(cmp@layout$design, n)
+    } else {
+      ._grid_dims(cmp@layout, n)
+    }
     units <- ._grid_units(sizes, grid$ncol, grid$nrow, cmp@layout$byrow %||% TRUE)
     list(
       width  = sum(units$widths) + allowance_w,
       height = sum(units$heights) + allowance_h
     )
   }
+}
+
+# Effective (ncol, nrow) of a compose_grid design spec.
+# Invalid designs fall back to a 1-column stack so the later
+# ._parse_design() can raise the targeted abort message.
+#' @noRd
+#' @keywords internal
+._design_dims <- function(design, n) {
+  if (is.character(design) && length(design) == 1L) {
+    rows <- strsplit(design, "\n", fixed = TRUE)[[1]]
+    nrow <- max(1L, length(rows))
+    ncol <- max(1L, max(nchar(rows)))
+    return(list(ncol = ncol, nrow = nrow))
+  }
+  ok_list <- is.list(design) && length(design) > 0 &&
+    all(vapply(design, function(a) {
+      is.numeric(a) && length(a) == 4 && all(is.finite(a))
+    }, logical(1)))
+  if (ok_list) {
+    bottoms <- vapply(design, function(a) as.integer(a[[3]]), integer(1))
+    rights <- vapply(design, function(a) as.integer(a[[4]]), integer(1))
+    return(list(ncol = max(1L, max(rights)), nrow = max(1L, max(bottoms))))
+  }
+  ._grid_dims(list(ncol = NULL, nrow = NULL), n)
 }
 
 # Assemble a list of plots into a patchwork via wrap_plots()
@@ -238,7 +301,11 @@ NULL
     lt <- layout$type %||% "grid"
     if (lt == "grid" || is.null(layout$type)) {
       sizes <- lapply(plots, ._subplot_panel_size)
-      grid <- ._grid_dims(layout, length(sizes))
+      grid <- if (!is.null(layout$design)) {
+        ._design_dims(layout$design, length(sizes))
+      } else {
+        ._grid_dims(layout, length(sizes))
+      }
       units <- ._grid_units(sizes, grid$ncol, grid$nrow, layout$byrow %||% TRUE)
       if (is.null(widths)) widths <- grid::unit(units$widths, "in")
       if (is.null(heights)) heights <- grid::unit(units$heights, "in")
@@ -457,12 +524,18 @@ compose_inset <- function(
   # The inset is self-contained: its legend must not float outside the inset
   # box onto the base canvas (T2.3).  Park it inside the inset panel; a user
   # style() on the inset plot overrides this in the usual way.
-  inset_gg <- inset_gg + ggplot2::theme(
+  # patchwork composites need `&` so every sub-panel keeps the legend inside.
+  inset_legend_theme <- ggplot2::theme(
     legend.position = "inside",
     legend.position.inside = c(0.98, 0.98),
     legend.justification = c(1, 1),
     legend.background = ggplot2::element_rect(fill = "white", colour = NA)
   )
+  if (inherits(inset_gg, "patchwork")) {
+    inset_gg <- inset_gg & inset_legend_theme
+  } else {
+    inset_gg <- inset_gg + inset_legend_theme
+  }
   gg <- base_gg + patchwork::inset_element(
     inset_gg,
     left     = left,
@@ -603,6 +676,7 @@ compose_marginal <- function(
     plots = c(list(main), strips),
     layout = list(
       type    = "marginal",
+      sides   = names(strips),
       widths  = widths,
       heights = heights,
       align   = align
@@ -627,11 +701,9 @@ compose_marginal <- function(
   sides <- intersect(c("top", "bottom", "left", "right"), names(strips))
   nrow_m <- 1L + has("top") + has("bottom")
   ncol_m <- 1L + has("left") + has("right")
-  base_row <- 1L + has("top")
-  base_col <- 1L + has("left")
 
-  # Design matrix with optional gap spacer rows/cols.  Numbering: base = 1,
-  # strips follow the fixed top/bottom/left/right order.
+  # Design matrix with optional gap spacer rows/cols.  Base occupies its own
+  # slot cell; strips follow the fixed top/bottom/left/right order.
   row_slots <- character()
   if (has("top")) row_slots <- c(row_slots, "top")
   if (has("top") && gap > 0) row_slots <- c(row_slots, "gapv")
@@ -645,12 +717,17 @@ compose_marginal <- function(
   if (has("right") && gap > 0) col_slots <- c(col_slots, "gaph")
   if (has("right")) col_slots <- c(col_slots, "right")
 
-  # Design as patchwork area() objects.  The base spans its whole grid
+  # Resolve base cell from the slot vector so gap spacers are not absorbed
+  # into the base area (base must not span gapv/gaph).
+  base_row <- match("base", row_slots)
+  base_col <- match("base", col_slots)
+
+  # Design as patchwork area() objects.  The base occupies its whole grid
   # row AND column so strips align to the base panel by construction;
   # each strip occupies its single slot cell.
   base_area <- patchwork::area(
     base_row, base_col,
-    match("base", row_slots), match("base", col_slots)
+    base_row, base_col
   )
   areas <- list(base_area)
   for (s in sides) {
@@ -968,7 +1045,7 @@ S7::method(style, plotit_composite) <- function(
   base_family = NULL,
   base_theme = NULL
 ) {
-  thm <- base_theme %||% ._theme_default(base_size, base_family)
+  thm <- ._resolve_style_theme(base_size, base_family, base_theme)
   # patchwork: `+` adds to the last sub-plot only; `&` applies to every
   # panel, matching the single-plot style() semantics.
   if (inherits(plot@gg, "patchwork")) {

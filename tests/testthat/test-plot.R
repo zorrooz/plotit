@@ -10,6 +10,58 @@ test_that("plotit() and encode() cooperate to create valid object", {
   expect_true(inherits(p@gg, "ggplot"))
 })
 
+test_that("mark_bar preserves a pre-installed continuous y scale", {
+  p <- plotit(mtcars, encode(x = factor(cyl), y = mpg)) |>
+    scale_y(trans = "log10") |>
+    mark_bar()
+  sc <- p@gg$scales$get_scales("y")
+  expect_false(is.null(sc))
+  expect_equal(sc$trans$name, "log-10")
+})
+
+test_that("mark_bar still flushes the lower expand when no y scale exists", {
+  p <- plotit(mtcars, encode(x = factor(cyl), y = mpg)) |>
+    mark_bar()
+  sc <- p@gg$scales$get_scales("y")
+  expect_false(is.null(sc))
+  # tidyplots bar flush: lower mult 0, upper headroom 0.05
+  exp <- sc$expand
+  expect_equal(as.numeric(exp[[1]]), 0)
+})
+
+test_that("discrete colour/fill mirroring suppresses the twin legend", {
+  p <- plotit(iris, encode(x = Sepal.Length, y = Sepal.Width, colour = Species)) |>
+    mark_point()
+  expect_true(all(c("colour", "fill") %in% names(p@gg$mapping)))
+  guides <- vapply(p@gg$scales$scales, function(sc) {
+    g <- sc$guide
+    if (is.null(g)) "legend" else as.character(g)[1]
+  }, character(1))
+  names(guides) <- vapply(
+    p@gg$scales$scales,
+    function(sc) sc$aesthetics[[1]],
+    character(1)
+  )
+  expect_equal(unname(guides[["colour"]]), "legend")
+  expect_equal(unname(guides[["fill"]]), "none")
+})
+
+test_that("user-owned fill still gets a legend when colour was mirrored the other way", {
+  p <- plotit(iris, encode(x = Sepal.Length, y = Sepal.Width, fill = Species)) |>
+    mark_boxplot()
+  guides <- vapply(p@gg$scales$scales, function(sc) {
+    g <- sc$guide
+    if (is.null(g)) "legend" else as.character(g)[1]
+  }, character(1))
+  names(guides) <- vapply(
+    p@gg$scales$scales,
+    function(sc) sc$aesthetics[[1]],
+    character(1)
+  )
+  expect_equal(unname(guides[["fill"]]), "legend")
+  expect_equal(unname(guides[["colour"]]), "none")
+})
+
 test_that("plotit() rejects non-encode() mapping", {
   expect_error(
     plotit(iris, ggplot2::aes(x = Sepal.Width, y = Sepal.Length)),
@@ -174,7 +226,7 @@ test_that("[BDD] fixed-aspect panels stay aspect-true in the export gtable", {
   )
   build <- ggplot2::ggplot_build(p@gg)
   expected <- p@gg$coordinates$aspect(build$layout$panel_params[[1]])
-  gt <- ._build_fixed_gtable(p@gg, 5, 3.5, "in")
+  gt <- plotit:::._build_fixed_gtable(p@gg, 5, 3.5, "in")
   panel_idx <- which(gt$layout$name == "panel")[1]
   w_in <- grid::convertWidth(gt$widths[[gt$layout$l[panel_idx]]], "in", valueOnly = TRUE)
   h_in <- grid::convertHeight(gt$heights[[gt$layout$t[panel_idx]]], "in", valueOnly = TRUE)

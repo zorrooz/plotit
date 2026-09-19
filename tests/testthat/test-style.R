@@ -86,3 +86,19 @@ test_that("[BDD] plotit() applies default theme automatically", {
   fill <- built$plot$theme$panel.background$fill
   expect_true(is.null(fill) || fill == "white" || identical(fill, "#FFFFFF"))
 })
+
+test_that("style(base_theme= function) forwards base_size", {
+  p <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |>
+    mark_point() |>
+    style(base_size = 14, base_theme = ggplot2::theme_minimal)
+  expect_equal(p@gg$theme$text$size, 14)
+})
+
+test_that("style(base_theme= object + base_size) warns and keeps object size", {
+  p0 <- plotit(iris, encode(x = Sepal.Width, y = Sepal.Length)) |> mark_point()
+  expect_warning(
+    p <- style(p0, base_size = 14, base_theme = ggplot2::theme_minimal(base_size = 10)),
+    "ignored"
+  )
+  expect_equal(p@gg$theme$text$size, 10)
+})

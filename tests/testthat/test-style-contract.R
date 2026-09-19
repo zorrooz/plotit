@@ -54,7 +54,9 @@ testthat::test_that("[contract] mark tokens: strokes, alphas, widths", {
   testthat::expect_equal(d$mark_boxplot$staplewidth, 0.8)
   testthat::expect_equal(d$mark_boxplot$outlier.size, 0.5)
   testthat::expect_null(d$mark_boxplot$colour) # outline follows colour map
-  testthat::expect_equal(d$mark_errorbar$width, 0.4)
+  # width lives on the style token and is method-injected for caps=TRUE only
+  testthat::expect_equal(plotit:::._MARK_STYLE$width_errorbar, 0.4)
+  testthat::expect_null(d$mark_errorbar$width)
   testthat::expect_equal(d$mark_errorbar$linewidth, 0.25)
   testthat::expect_equal(d$mark_ribbon$alpha, 0.4)
   testthat::expect_true(is.na(d$mark_ribbon$colour))
