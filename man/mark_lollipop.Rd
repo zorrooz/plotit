@@ -8,7 +8,7 @@ mark_lollipop(
   plot,
   mapping = NULL,
   data = NULL,
-  stem_color = ._MARK_STYLE$soft,
+  stem_color = NULL,
   stem_width = ._MARK_STYLE$lw_thin,
   point_size = ._MARK_STYLE$point_head,
   ref = 0,

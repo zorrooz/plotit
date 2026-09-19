@@ -2080,7 +2080,7 @@ S7::method(mark_significance, plotit_class) <- function(
 mark_lollipop <- S7::new_generic(
   "mark_lollipop", "plot",
   function(plot, mapping = NULL, data = NULL,
-           stem_color = ._MARK_STYLE$soft, stem_width = ._MARK_STYLE$lw_thin,
+           stem_color = NULL, stem_width = ._MARK_STYLE$lw_thin,
            point_size = ._MARK_STYLE$point_head, ref = 0, ...) {
     S7::S7_dispatch()
   }
@@ -2089,7 +2089,7 @@ mark_lollipop <- S7::new_generic(
 #' @export
 S7::method(mark_lollipop, plotit_class) <- function(
   plot, mapping = NULL, data = NULL,
-  stem_color = ._MARK_STYLE$soft, stem_width = ._MARK_STYLE$lw_thin,
+  stem_color = NULL, stem_width = ._MARK_STYLE$lw_thin,
   point_size = ._MARK_STYLE$point_head, ref = 0, ...
 ) {
   resolved <- ._eval_layer_aes(
@@ -2097,16 +2097,26 @@ S7::method(mark_lollipop, plotit_class) <- function(
   )
   x_col <- resolved$cols$x
   y_col <- resolved$cols$y
-  # Stem: segment from `ref` to y.  Values are injected with !! so the
-  # aes do not depend on data column names (D4).
+  aes_src <- mapping %||% plot@gg$mapping
+  # Visual-variable rule: a live colour channel colours the stem via aes
+  # inheritance.  A static stem_color is only applied when the user passes
+  # it explicitly (or no colour channel exists).
   stem_mapping <- encode(x = !!x_col, xend = !!x_col, y = !!ref, yend = !!y_col)
-  geome <- ggplot2::geom_segment(
-    mapping = stem_mapping,
-    colour = stem_color, linewidth = stem_width
+  stem_params <- list(linewidth = stem_width)
+  colour_mapped <- !is.null(aes_src$colour)
+  if (is.null(stem_color)) {
+    if (!colour_mapped) {
+      stem_params$colour <- ._MARK_STYLE$soft
+    }
+    # else: inherit mapped colour from the global/layer mapping
+  } else {
+    stem_params$colour <- stem_color
+  }
+  geome <- do.call(
+    ggplot2::geom_segment,
+    c(list(mapping = stem_mapping), stem_params)
   )
   plot <- ._add_geom(plot, geome)
-  # Point at the top: keep the visual channels (colour/fill/...) but drop
-  # positional extras the point geom does not understand.
   plot <- plot |> mark_point(
     mapping = ._filter_aes(resolved$mapping, ._POINT_BIND_AES),
     data = resolved$data, size = point_size, ...
@@ -2131,12 +2141,14 @@ S7::method(mark_lollipop, plotit_class) <- function(
 #' @param plot A plotit object
 #' @param mapping Optional new aesthetics
 #' @param data Optional data for this layer
-#' @param color_start Colour for the start point
-#'   (default `._MARK_STYLE$primary` = `"#0072B2"`).
-#' @param color_end Colour for the end point
-#'   (default `._MARK_STYLE$secondary` = `"#E15759"`).
-#' @param line_color Colour for the connecting line
-#'   (default `._MARK_STYLE$soft` = `"grey50"`).
+#' @param color_start Colour for the start point.
+#'   `NULL` (default) uses primary `#0072B2` when no colour channel is
+#'   mapped; a live `colour` aesthetic colours both endpoints instead.
+#' @param color_end Colour for the end point.
+#'   `NULL` (default) uses secondary `#E15759` when no colour channel is
+#'   mapped; a live `colour` aesthetic colours both endpoints instead.
+#' @param line_color Colour for the connecting line.
+#'   `NULL` (default) follows a mapped colour, else soft grey.
 #' @param point_size Size for both dumbbell points (default 3).
 #' @param line_width Width for the connecting line (default 0.5, connector rung).
 #' @param ... Other arguments passed to `mark_point()` calls
@@ -2154,9 +2166,9 @@ S7::method(mark_lollipop, plotit_class) <- function(
 mark_dumbbell <- S7::new_generic(
   "mark_dumbbell", "plot",
   function(plot, mapping = NULL, data = NULL,
-           color_start = ._MARK_STYLE$primary,
-           color_end = ._MARK_STYLE$secondary,
-           line_color = ._MARK_STYLE$soft,
+           color_start = NULL,
+           color_end = NULL,
+           line_color = NULL,
            point_size = ._MARK_STYLE$point_head,
            line_width = ._MARK_STYLE$lw_thin, ...) {
     S7::S7_dispatch()
@@ -2166,9 +2178,9 @@ mark_dumbbell <- S7::new_generic(
 #' @export
 S7::method(mark_dumbbell, plotit_class) <- function(
   plot, mapping = NULL, data = NULL,
-  color_start = ._MARK_STYLE$primary,
-  color_end = ._MARK_STYLE$secondary,
-  line_color = ._MARK_STYLE$soft,
+  color_start = NULL,
+  color_end = NULL,
+  line_color = NULL,
   point_size = ._MARK_STYLE$point_head,
   line_width = ._MARK_STYLE$lw_thin, ...
 ) {
@@ -2183,31 +2195,51 @@ S7::method(mark_dumbbell, plotit_class) <- function(
     ))
   }
   yend_col <- rlang::eval_tidy(m$yend, d)
-  # Connecting line (values injected with !! so the aes do not depend on
-  # data column names, D4)
+  # AsIs single-colour injection is not a live grouping channel.
+  colour_quo <- m$colour
+  colour_live <- !is.null(colour_quo) && {
+    col <- tryCatch(rlang::eval_tidy(colour_quo, d), error = function(e) NULL)
+    !is.null(col) && !inherits(col, "AsIs")
+  }
+  injection_live <- !is.null(plot@meta@default_color)
+  explicit_ends <- !is.null(color_start) || !is.null(color_end)
+  # Mapped grouping colour drives stem + endpoints; static start/end
+  # colours apply when colour is absent, injected, or ends are explicit.
+  use_mapped_colour <- colour_live && !explicit_ends && !injection_live
+
   segment_mapping <- encode(
     x = !!x_col, xend = !!x_col,
     y = !!y_col, yend = !!yend_col
   )
-  geome <- ggplot2::geom_segment(
-    mapping = segment_mapping,
-    colour = line_color, linewidth = line_width
+  stem_params <- list(linewidth = line_width)
+  if (use_mapped_colour) {
+    if (!is.null(line_color)) stem_params$colour <- line_color
+    # else inherit mapped colour via global aes
+  } else {
+    stem_params$colour <- line_color %||% ._MARK_STYLE$soft
+  }
+  geome <- do.call(
+    ggplot2::geom_segment,
+    c(list(mapping = segment_mapping), stem_params)
   )
   plot <- ._add_geom(plot, geome)
-  # Start point
+
   start_mapping <- encode(x = !!x_col, y = !!y_col)
-  plot <- plot |>
-    mark_point(
-      mapping = start_mapping, data = d,
-      colour = color_start, size = point_size, ...
-    )
-  # End point
   end_mapping <- encode(x = !!x_col, y = !!yend_col)
-  plot <- plot |>
-    mark_point(
-      mapping = end_mapping, data = d,
-      colour = color_end, size = point_size, ...
-    )
+  start_params <- list(size = point_size, ...)
+  end_params <- list(size = point_size, ...)
+  if (!use_mapped_colour) {
+    start_params$colour <- color_start %||% ._MARK_STYLE$primary
+    end_params$colour <- color_end %||% ._MARK_STYLE$secondary
+  }
+  plot <- do.call(
+    function(...) plot |> mark_point(...),
+    c(list(mapping = start_mapping, data = d), start_params)
+  )
+  plot <- do.call(
+    function(...) plot |> mark_point(...),
+    c(list(mapping = end_mapping, data = d), end_params)
+  )
   plot
 }
 
@@ -2375,19 +2407,35 @@ S7::method(mark_encircle, plotit_class) <- function(
   }
 
   params <- rlang::list2(...)
-  if (is.null(params$fill)) {
+  aes_src <- mapping %||% plot@gg$mapping
+  mapped_cf <- !is.null(aes_src$colour) || !is.null(aes_src$fill) ||
+    !is.null(params$colour) || !is.null(params$fill)
+  if (is.null(params$fill) && !mapped_cf) {
     params$fill <- ._MARK_STYLE$primary
   }
-  if (is.null(params$colour)) {
+  if (is.null(params$colour) && !mapped_cf) {
     params$colour <- ._MARK_STYLE$faint
   }
   if (is.null(params$linewidth)) {
     params$linewidth <- ._MARK_STYLE$lw_thin
   }
-  params$alpha <- alpha
+  params$alpha <- alpha %||% ._MARK_STYLE$alpha_annot
+  # Envelope data is synthetic (grp, x, y); do not inherit the plot mapping
+  # (a global colour=g would be evaluated against poly_df and fail).
+  params$inherit.aes <- FALSE
   layer_mapping <- ggplot2::aes(x = x, y = y, fill = .data$grp)
   if (length(levels) > 1) {
     layer_mapping$group <- rlang::sym("grp")
+  }
+  # Live colour/fill channel → envelope outline/fill follow the group column
+  # so the discrete scale colours each cluster envelope.
+  if (mapped_cf) {
+    layer_mapping$colour <- rlang::sym("grp")
+    if (is.null(params$fill) || isTRUE(params$fill == ._MARK_STYLE$primary)) {
+      # when only colour was mapped globally, still fill by group via scale
+      layer_mapping$fill <- rlang::sym("grp")
+      params$fill <- NULL
+    }
   }
   ._impl_with(plot, layer_mapping, poly_df, position, ggplot2::geom_polygon,
     rasterize, rasterize_dpi, rasterize_dev,

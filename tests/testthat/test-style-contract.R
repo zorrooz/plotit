@@ -121,6 +121,41 @@ testthat::test_that("[contract] every catalogue mark has a style story", {
   }
 })
 
+testthat::test_that("[contract] mapped aesthetics drive mark colours", {
+  df <- data.frame(
+    g = rep(c("A", "B"), each = 6),
+    x = rep(1:6, 2),
+    y = c(1:6, 4:9),
+    y2 = c(3:8, 6:11)
+  )
+  cols <- function(p) {
+    bd <- ggplot2::ggplot_build(p@gg)
+    unique(as.character(bd$data[[1]]$colour))
+  }
+  expect_grouped <- function(p, label) {
+    c <- cols(p)
+    testthat::expect_true(any(c %in% c("#0072B2", "#D55E00")), label = label)
+  }
+  # lollipop stems follow mapped colour
+  expect_grouped(plotit(df, encode(x = g, y = y, colour = g)) |> plotit::mark_lollipop(), "lolli")
+  # dumbbell points follow mapped colour when groups are mixed
+  expect_grouped(plotit(df, encode(x = g, y = y, yend = y2, colour = g)) |> plotit::mark_dumbbell(), "dumb")
+  # default dumbbell: start=primary, end=secondary (no mapped colour)
+  p0 <- plotit(df, encode(x = g, y = y, yend = y2)) |> plotit::mark_dumbbell()
+  allc <- unique(unlist(lapply(ggplot2::ggplot_build(p0@gg)$data, function(d) d$colour)))
+  testthat::expect_true("#0072B2" %in% allc)
+  testthat::expect_true("#E15759" %in% allc)
+  # explicit stem override wins
+  pc <- plotit(df, encode(x = g, y = y, colour = g)) |>
+    plotit::mark_lollipop(stem_color = "red")
+  testthat::expect_true("red" %in% cols(pc))
+  # user alpha / size beat defaults
+  pa <- plotit(df, encode(x = g, y = y, fill = g)) |> plotit::mark_bar(alpha = 0.2)
+  testthat::expect_equal(unique(ggplot2::ggplot_build(pa@gg)$data[[1]]$alpha), 0.2)
+  ps <- plotit(df, encode(x = x, y = y)) |> plotit::mark_point(size = 4)
+  testthat::expect_equal(unique(ggplot2::ggplot_build(ps@gg)$data[[1]]$size), 4)
+})
+
 testthat::test_that("[contract] user parameters beat mark defaults", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
     plotit::mark_line(linewidth = 1.2)
