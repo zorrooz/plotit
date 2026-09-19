@@ -1393,7 +1393,7 @@ mark_heatmap <- S7::new_generic(
   function(plot, cluster = c("both", "row", "column", "none"),
            scale = c("none", "row", "column"),
            show_numbers = FALSE, number_format = "%.2f", number_color = NULL,
-           na_color = "grey85", range = NULL, ...,
+            na_color = ._MARK_STYLE$na_colour, range = NULL, ...,
            rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
     S7::S7_dispatch()
   }
@@ -1404,7 +1404,7 @@ S7::method(mark_heatmap, plotit_class) <- function(
   plot, cluster = c("both", "row", "column", "none"),
   scale = c("none", "row", "column"),
   show_numbers = FALSE, number_format = "%.2f", number_color = NULL,
-  na_color = "grey85", range = NULL, ...,
+  na_color = ._MARK_STYLE$na_colour, range = NULL, ...,
   rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
 ) {
   scale <- match.arg(scale)
@@ -1657,7 +1657,7 @@ mark_errorbar <- S7::new_generic(
   function(plot, mapping = NULL, data = NULL, position = NULL, ...,
            stat = "identity", level = 0.95,
            ci_method = c("normal", "boot"), seed = NULL,
-           width = 0.5, orientation = c("vertical", "horizontal"),
+            width = NULL, orientation = c("vertical", "horizontal"),
            caps = TRUE,
            rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
     S7::S7_dispatch()
@@ -1669,7 +1669,7 @@ S7::method(mark_errorbar, plotit_class) <- function(
   plot, mapping = NULL, data = NULL, position = NULL, ...,
   stat = "identity", level = 0.95,
   ci_method = c("normal", "boot"), seed = NULL,
-  width = 0.5, orientation = c("vertical", "horizontal"),
+  width = NULL, orientation = c("vertical", "horizontal"),
   caps = TRUE,
   rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
 ) {
@@ -1770,7 +1770,7 @@ mark_ribbon <- S7::new_generic(
   function(plot, mapping = NULL, data = NULL, position = NULL, ...,
            stat = "identity", level = 0.95,
            ci_method = c("normal", "boot"), seed = NULL, alpha = NULL,
-           width = 0.9,
+           width = NULL,
            rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo") {
     S7::S7_dispatch()
   }
@@ -1781,7 +1781,7 @@ S7::method(mark_ribbon, plotit_class) <- function(
   plot, mapping = NULL, data = NULL, position = NULL, ...,
   stat = "identity", level = 0.95,
   ci_method = c("normal", "boot"), seed = NULL, alpha = NULL,
-  width = 0.9,
+  width = NULL,
   rasterize = FALSE, rasterize_dpi = 300, rasterize_dev = "cairo"
 ) {
   ci_method <- match.arg(ci_method)
@@ -1791,6 +1791,13 @@ S7::method(mark_ribbon, plotit_class) <- function(
     alpha <- ._MARK_STYLE$alpha_ci
   }
   params$alpha <- alpha
+  if (is.null(width)) {
+    width <- ._MARK_STYLE$width_ribbon
+  }
+  if (is.null(width)) {
+    width <- ._MARK_STYLE$width_errorbar
+  }
+  params$width <- width
 
   # Discrete axis + statistical entity: stat_summary collapses each ribbon
   # group to a single point (no band).  Aggregate here instead and emit one
@@ -1924,7 +1931,8 @@ mark_significance <- S7::new_generic(
   "mark_significance", "plot",
   function(plot, comparisons, y_position = NULL, y_offset = NULL,
            line_color = ._MARK_STYLE$ink, line_width = ._MARK_STYLE$lw_thin,
-           text_size = ._MARK_STYLE$txt_note, tip_length = 0.02, ...) {
+           text_size = ._MARK_STYLE$txt_note,
+           tip_length = ._MARK_STYLE$tip_annot, ...) {
     S7::S7_dispatch()
   }
 )
@@ -1933,7 +1941,8 @@ mark_significance <- S7::new_generic(
 S7::method(mark_significance, plotit_class) <- function(
   plot, comparisons, y_position = NULL, y_offset = NULL,
   line_color = ._MARK_STYLE$ink, line_width = ._MARK_STYLE$lw_thin,
-  text_size = ._MARK_STYLE$txt_note, tip_length = 0.02, ...
+  text_size = ._MARK_STYLE$txt_note,
+  tip_length = ._MARK_STYLE$tip_annot, ...
 ) {
   if (!is.data.frame(comparisons)) {
     ._abort_arg_range("comparisons", "a data.frame", got = deparse(substitute(comparisons)))
@@ -3306,7 +3315,8 @@ S7::method(mark_label, plotit_class) <- function(
 mark_forest <- S7::new_generic(
   "mark_forest", "plot",
   function(plot, mapping = NULL, data = NULL,
-           ref = NULL, point_size = 2, bar_width = 0.4,
+           ref = NULL, point_size = ._MARK_STYLE$point_head,
+           bar_width = ._MARK_STYLE$width_errorbar,
            line_color = ._MARK_STYLE$soft, line_width = ._MARK_STYLE$lw_thin,
            ...) {
     S7::S7_dispatch()
@@ -3316,7 +3326,8 @@ mark_forest <- S7::new_generic(
 #' @export
 S7::method(mark_forest, plotit_class) <- function(
   plot, mapping = NULL, data = NULL,
-  ref = NULL, point_size = 2, bar_width = 0.4,
+  ref = NULL, point_size = ._MARK_STYLE$point_head,
+  bar_width = ._MARK_STYLE$width_errorbar,
   line_color = ._MARK_STYLE$soft, line_width = ._MARK_STYLE$lw_thin,
   ...
 ) {

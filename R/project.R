@@ -269,7 +269,8 @@ project_parallel <- S7::new_generic(
            order = NULL, recenter = NULL,
            aggregate = c("none", "mean", "median"),
            axis_labels = TRUE,
-           alpha = 0.2, size = 1, ...) {
+           alpha = ._MARK_STYLE$alpha_path,
+           size = ._MARK_STYLE$size_path, ...) {
     S7::S7_dispatch()
   }
 )
@@ -453,8 +454,8 @@ S7::method(project_parallel, plotit_class) <- function(
   recenter = NULL,
   aggregate = c("none", "mean", "median"),
   axis_labels = TRUE,
-  alpha = 0.2,
-  size = 1,
+  alpha = ._MARK_STYLE$alpha_path,
+  size = ._MARK_STYLE$size_path,
   ...
 ) {
   scale <- match.arg(scale)
@@ -673,7 +674,7 @@ S7::method(project_parallel, plotit_class) <- function(
     plot@gg <- plot@gg +
       ggplot2::geom_line(
         data = grid, mapping = agg_mapping,
-        linewidth = 1.6, lineend = "round"
+        linewidth = ._MARK_STYLE$lw_path, lineend = "round"
       )
   }
 

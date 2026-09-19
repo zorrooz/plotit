@@ -55,7 +55,7 @@ NULL
     plot = plot, mapping = ._rel_label_aes(), data = table,
     size = ._MARK_STYLE$txt_note
   )
-  lbl_args$colour <- if (!has_fill) "white" else "grey20"
+  lbl_args$colour <- if (!has_fill) ._MARK_STYLE$on_fill_light else ._MARK_STYLE$on_fill_dark
   do.call(mark_text, lbl_args)
 }
 
@@ -510,7 +510,7 @@ mark_network <- S7::new_generic(
            seed = NULL,
            edge_color = ._MARK_STYLE$faint, edge_width = ._MARK_STYLE$lw_thin,
            edge_alpha = NULL, edge_shape = c("straight", "curved"),
-           node_color = ._MARK_STYLE$primary, node_size = 5,
+           node_color = ._MARK_STYLE$primary, node_size = ._MARK_STYLE$size_node,
            show_labels = TRUE, ...) {
     S7::S7_dispatch()
   }
@@ -525,7 +525,7 @@ S7::method(mark_network, plotit_class) <- function(
   seed = NULL,
   edge_color = ._MARK_STYLE$faint, edge_width = ._MARK_STYLE$lw_thin,
   edge_alpha = NULL, edge_shape = c("straight", "curved"),
-  node_color = ._MARK_STYLE$primary, node_size = 5,
+           node_color = ._MARK_STYLE$primary, node_size = ._MARK_STYLE$size_node,
   show_labels = TRUE, ...
 ) {
   layout <- match.arg(layout)

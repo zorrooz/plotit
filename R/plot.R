@@ -29,7 +29,7 @@ plotit <- function(
   height = 56,
   size_unit = "mm",
   dodge = NULL,
-  default_color = "#0072B2"
+  default_color = "#0072B2"  # = ._MARK_STYLE$primary (friendly anchor)
 ) {
   if (!inherits(mapping, "plotit_encode")) {
     cli::cli_abort(c(

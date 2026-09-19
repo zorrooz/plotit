@@ -38,7 +38,25 @@ NULL
   alpha_link = 0.5, # sankey flows, chord bands
   alpha_ci = 0.4, # statistical ribbons / smooth confidence bands
   alpha_annot = 0.18, # encircle annotation envelopes
+  alpha_path = 0.2, # project_parallel polyline translucency
   annot_step = 0.06, # significance bracket stacking step (y-span share)
+  # Geometry slots (tidyplots)
+  width_bar = 0.6,
+  width_bar_stack = 0.8,
+  width_box = 0.6,
+  width_errorbar = 0.4,
+  width_ribbon = 0.9,
+  width_staple = 0.8,
+  size_outlier = 0.5,
+  size_node = 5, # network / sankey node dot
+  size_path = 1, # project_parallel points
+  tip_annot = 0.02, # significance bracket tip length
+  lw_path = 1.6, # project_parallel polyline
+  # NA cell fill for matrix marks
+  na_colour = "grey85",
+  # Label contrast on filled tiles (auto contrast)
+  on_fill_dark = "grey20",
+  on_fill_light = "white",
   # Composite point heads
   point_head = 3 # lollipop heads, dumbbell endpoints
 )
