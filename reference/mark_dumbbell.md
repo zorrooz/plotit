@@ -11,9 +11,9 @@ mark_dumbbell(
   plot,
   mapping = NULL,
   data = NULL,
-  color_start = ._MARK_STYLE$primary,
-  color_end = ._MARK_STYLE$secondary,
-  line_color = ._MARK_STYLE$soft,
+  color_start = NULL,
+  color_end = NULL,
+  line_color = NULL,
   point_size = ._MARK_STYLE$point_head,
   line_width = ._MARK_STYLE$lw_thin,
   ...
@@ -36,18 +36,20 @@ mark_dumbbell(
 
 - color_start:
 
-  Colour for the start point (default `._MARK_STYLE$primary` =
-  `"#0072B2"`).
+  Colour for the start point. `NULL` (default) uses primary `#0072B2`
+  when no colour channel is mapped; a live `colour` aesthetic colours
+  both endpoints instead.
 
 - color_end:
 
-  Colour for the end point (default `._MARK_STYLE$secondary` =
-  `"#E15759"`).
+  Colour for the end point. `NULL` (default) uses secondary `#E15759`
+  when no colour channel is mapped; a live `colour` aesthetic colours
+  both endpoints instead.
 
 - line_color:
 
-  Colour for the connecting line (default `._MARK_STYLE$soft` =
-  `"grey50"`).
+  Colour for the connecting line. `NULL` (default) follows a mapped
+  colour, else soft grey.
 
 - point_size:
 

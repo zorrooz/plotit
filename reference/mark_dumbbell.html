@@ -59,9 +59,9 @@ combining two <code>mark_point</code> calls and a <code>geom_segment</code>.</p>
 <span>  <span class="va">plot</span>,</span>
 <span>  mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  color_start <span class="op">=</span> <span class="va">._MARK_STYLE</span><span class="op">$</span><span class="va">primary</span>,</span>
-<span>  color_end <span class="op">=</span> <span class="va">._MARK_STYLE</span><span class="op">$</span><span class="va">secondary</span>,</span>
-<span>  line_color <span class="op">=</span> <span class="va">._MARK_STYLE</span><span class="op">$</span><span class="va">soft</span>,</span>
+<span>  color_start <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  color_end <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  line_color <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  point_size <span class="op">=</span> <span class="va">._MARK_STYLE</span><span class="op">$</span><span class="va">point_head</span>,</span>
 <span>  line_width <span class="op">=</span> <span class="va">._MARK_STYLE</span><span class="op">$</span><span class="va">lw_thin</span>,</span>
 <span>  <span class="va">...</span></span>
@@ -85,18 +85,20 @@ combining two <code>mark_point</code> calls and a <code>geom_segment</code>.</p>
 
 
 <dt id="arg-color-start">color_start<a class="anchor" aria-label="anchor" href="#arg-color-start"></a></dt>
-<dd><p>Colour for the start point
-(default <code>._MARK_STYLE$primary</code> = <code>"#0072B2"</code>).</p></dd>
+<dd><p>Colour for the start point.
+<code>NULL</code> (default) uses primary <code>#0072B2</code> when no colour channel is
+mapped; a live <code>colour</code> aesthetic colours both endpoints instead.</p></dd>
 
 
 <dt id="arg-color-end">color_end<a class="anchor" aria-label="anchor" href="#arg-color-end"></a></dt>
-<dd><p>Colour for the end point
-(default <code>._MARK_STYLE$secondary</code> = <code>"#E15759"</code>).</p></dd>
+<dd><p>Colour for the end point.
+<code>NULL</code> (default) uses secondary <code>#E15759</code> when no colour channel is
+mapped; a live <code>colour</code> aesthetic colours both endpoints instead.</p></dd>
 
 
 <dt id="arg-line-color">line_color<a class="anchor" aria-label="anchor" href="#arg-line-color"></a></dt>
-<dd><p>Colour for the connecting line
-(default <code>._MARK_STYLE$soft</code> = <code>"grey50"</code>).</p></dd>
+<dd><p>Colour for the connecting line.
+<code>NULL</code> (default) follows a mapped colour, else soft grey.</p></dd>
 
 
 <dt id="arg-point-size">point_size<a class="anchor" aria-label="anchor" href="#arg-point-size"></a></dt>
