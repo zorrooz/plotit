@@ -517,18 +517,19 @@ style_dark <- make_theme("style_dark",
 
 | 文件 | 内容 |
 |---|---|
-| `R/theme.R` → `._STYLE_TOKENS` | 纸面/墨色、字号、图例 key、默认色板 |
-| `R/mark_style.R` → `._MARK_STYLE` / `._MARK_DEFAULTS` | 线宽/透明度 token、每 mark 默认、canvas chrome |
+| `R/theme.R` → `._STYLE_TOKENS` | 纸面/墨色、字号阶梯（scale 锚定 6.5pt）、图例 key、默认色板、画布 |
+| `R/mark_style.R` → `._MARK_STYLE` / `._MARK_DEFAULTS` | 线宽/透明度 token、**每个 mark 的静态默认**、canvas chrome |
 
-对标 **tidyplots**（源码：`add-general.R` / `add-misc.R` / `themes.R`）。关键原则：
+对标 **Nature 出版契约 + tidyplots**（`add-general.R` / `add-misc.R` / `themes.R`）。关键原则：
 
-1. 几何描边默认 **0.25pt 发丝**；柱/tile **无描边贴合**；箱线描边**跟随 colour 映射**（仅单色注入时才强制 ink 对比）。
+1. 几何描边默认 **0.25pt 发丝**；柱/tile/hex/heatmap **无描边贴合**；箱线描边**跟随 colour 映射**。
 2. 透明度：填充类 **0.3**（violin/box/density），统计带 **0.4**（ribbon/smooth/area）。
-3. 尺寸：柱宽 **0.6**（stack 可显式 0.8）、箱宽 0.6、点径 1、误差棒帽 0.4。
-4. 合并优先级：**用户显式参数 > 已映射美学 > mark 默认**（`._apply_mark_defaults()`）。
-5. 色板决策点唯一：`._default_colour_scale()`——类别→friendly，数值→viridis。
+3. 尺寸：柱宽 **0.6**（stack 显式 0.8）、箱宽 0.6、点径 **1**、beeswarm **cex=3**、误差棒帽 0.4、注释字 3.2。
+4. 画布：默认 **89×56 mm** Nature 单栏；`autofit=TRUE` 不烘焙。
+5. 合并优先级：**用户显式参数 > 已映射美学 > mark 默认**。
+6. 色板决策点唯一：`._default_colour_scale()`——类别→friendly，数值→viridis。
 
-**禁止**在本文档逐 mark 复制数值表（会漂移）。查默认值直接读 `._MARK_DEFAULTS`；行为契约由 `tests/testthat/test-style-contract.R` 锁定。
+**禁止**在本文档逐 mark 复制数值表（会漂移）。查默认值直接读 `._MARK_DEFAULTS`；行为契约由 `tests/testthat/test-style-contract.R` 锁定（含「每个 catalogue mark 必须有默认或 chrome」）。
 
 - **特例**：
   - `mark_boxplot` 在 default_color 注入存活且用户未指定 colour 时自动改用 `ink` 描边（避免蓝底蓝线中位线不可读），见 `._user_owned_aes()` 对 AsIs 注入常量的豁免逻辑；

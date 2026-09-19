@@ -77,6 +77,22 @@ NULL
   mark_bar = list(linewidth = 0, width = 0.6),
   # tidyplots add_data_points: size 1 (ggplot2 default is 1.5)
   mark_point = list(size = 1),
+  # tidyplots add_data_points_beeswarm: size 1 + collision cex 3
+  mark_beeswarm = list(size = 1, cex = 3),
+  # QQ points follow the same point scale
+  mark_qq = list(size = 1),
+  mark_count = list(),
+  # Annotation text: publication-sized note font
+  mark_text = list(size = ._MARK_STYLE$txt_note),
+  mark_label = list(size = ._MARK_STYLE$txt_note),
+  # Rug ticks: hairline ink
+  mark_rug = list(linewidth = ._MARK_STYLE$lw_data),
+  # Contour / 2D density strokes: hairline
+  mark_contour = list(linewidth = ._MARK_STYLE$lw_data),
+  mark_density_2d = list(linewidth = ._MARK_STYLE$lw_data),
+  # Hex / heatmap cells flush like rect/tile family
+  mark_hex = list(linewidth = 0),
+  mark_heatmap = list(linewidth = 0),
   mark_histogram = list(linewidth = 0),
   mark_rect = list(linewidth = 0),
   mark_bin2d = list(linewidth = 0),

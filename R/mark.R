@@ -2138,7 +2138,7 @@ S7::method(mark_lollipop, plotit_class) <- function(
 #' @param line_color Colour for the connecting line
 #'   (default `._MARK_STYLE$soft` = `"grey50"`).
 #' @param point_size Size for both dumbbell points (default 3).
-#' @param line_width Width for the connecting line (default 0.9).
+#' @param line_width Width for the connecting line (default 0.5, connector rung).
 #' @param ... Other arguments passed to `mark_point()` calls
 #' @return Modified plotit object
 #' @references
@@ -2158,7 +2158,7 @@ mark_dumbbell <- S7::new_generic(
            color_end = ._MARK_STYLE$secondary,
            line_color = ._MARK_STYLE$soft,
            point_size = ._MARK_STYLE$point_head,
-           line_width = ._MARK_STYLE$lw_data, ...) {
+           line_width = ._MARK_STYLE$lw_thin, ...) {
     S7::S7_dispatch()
   }
 )
@@ -2170,7 +2170,7 @@ S7::method(mark_dumbbell, plotit_class) <- function(
   color_end = ._MARK_STYLE$secondary,
   line_color = ._MARK_STYLE$soft,
   point_size = ._MARK_STYLE$point_head,
-  line_width = ._MARK_STYLE$lw_data, ...
+  line_width = ._MARK_STYLE$lw_thin, ...
 ) {
   d <- data %||% plot@gg$data
   m <- mapping %||% plot@gg$mapping
@@ -2441,6 +2441,9 @@ S7::method(mark_beeswarm, plotit_class) <- function(
   method <- match.arg(method)
   params <- rlang::list2(...)
   params$method <- method
+  # tidyplots add_data_points_beeswarm defaults
+  if (is.null(params$cex)) params$cex <- 3
+  if (is.null(params$corral)) params$corral <- "wrap"
   # geom_beeswarm implements its own collision placement; the global
   # auto-dodge position is not supported (B3).
   ._impl_with(plot, mapping, data, position, ggbeeswarm::geom_beeswarm,

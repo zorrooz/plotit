@@ -12,7 +12,7 @@ mark_dumbbell(
   color_end = ._MARK_STYLE$secondary,
   line_color = ._MARK_STYLE$soft,
   point_size = ._MARK_STYLE$point_head,
-  line_width = ._MARK_STYLE$lw_data,
+  line_width = ._MARK_STYLE$lw_thin,
   ...
 )
 }
@@ -34,7 +34,7 @@ mark_dumbbell(
 
 \item{point_size}{Size for both dumbbell points (default 3).}
 
-\item{line_width}{Width for the connecting line (default 0.9).}
+\item{line_width}{Width for the connecting line (default 0.5, connector rung).}
 
 \item{...}{Other arguments passed to \code{mark_point()} calls}
 }

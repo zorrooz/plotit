@@ -91,6 +91,36 @@ testthat::test_that("[contract] single-colour injection is friendly blue", {
   testthat::expect_equal(unique(.built(p)[[1]]$colour), "#0072B2")
 })
 
+testthat::test_that("[contract] every catalogue mark has a style story", {
+  d <- plotit:::._MARK_DEFAULTS
+  ch <- plotit:::._MARK_CHROME
+  # Core visual marks that must carry explicit defaults
+  must_default <- c(
+    "mark_bar", "mark_point", "mark_line", "mark_path", "mark_step",
+    "mark_boxplot", "mark_violin", "mark_density", "mark_histogram",
+    "mark_area", "mark_ribbon", "mark_smooth", "mark_errorbar",
+    "mark_ecdf", "mark_qq", "mark_qq_line", "mark_rect", "mark_bin2d",
+    "mark_hex", "mark_corr", "mark_heatmap", "mark_contour",
+    "mark_density_2d", "mark_rug", "mark_text", "mark_label",
+    "mark_beeswarm", "mark_polygon"
+  )
+  for (nm in must_default) {
+    testthat::expect_true(nm %in% names(d), label = nm)
+  }
+  testthat::expect_equal(d$mark_beeswarm$size, 1)
+  testthat::expect_equal(d$mark_beeswarm$cex, 3)
+  testthat::expect_equal(d$mark_qq$size, 1)
+  testthat::expect_equal(d$mark_text$size, 3.2)
+  testthat::expect_equal(d$mark_hex$linewidth, 0)
+  testthat::expect_equal(d$mark_heatmap$linewidth, 0)
+  testthat::expect_equal(d$mark_rug$linewidth, 0.25)
+  testthat::expect_equal(d$mark_contour$linewidth, 0.25)
+  # Relational chrome blank
+  for (nm in c("mark_sankey", "mark_treemap", "mark_network", "mark_chord", "mark_map")) {
+    testthat::expect_equal(ch[[nm]]$axis, "blank", label = nm)
+  }
+})
+
 testthat::test_that("[contract] user parameters beat mark defaults", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |>
     plotit::mark_line(linewidth = 1.2)
