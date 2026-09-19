@@ -327,7 +327,7 @@ test_that("[BDD] label_title keeps the default title typography", {
   el <- p@gg$theme$plot.title
   expect_false(inherits(el, "element_blank"))
   expect_false(is.null(el$hjust))
-  expect_equal(el$hjust, 0) # shared token: left-aligned title
+  expect_equal(el$hjust, 0) # Nature contract: left-aligned title
 })
 
 test_that("[BDD] hide then set restores typography (no residual blank)", {

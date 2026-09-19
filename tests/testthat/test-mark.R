@@ -751,8 +751,8 @@ test_that("[BDD] mark_treemap lays out leaves from a hierarchy table", {
   # rect layer + label layer
   expect_length(built$plot$layers, 2)
   rects <- built$data[[1]]
-  # unified white hairline separators on tiles
-  expect_true(all(rects$colour == "white"))
+  # flush tiles (tidyplots heatmap look; no white separators)
+  expect_true(all(rects$linewidth == 0))
   # labels drawn at tile centres
   lbl <- built$data[[2]]
   expect_setequal(as.character(lbl$label), c("a1", "a2", "b1"))

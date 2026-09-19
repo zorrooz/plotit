@@ -242,14 +242,17 @@ NULL
 # Package-default panel size in inches (registered by zzz.R, overridable
 # via options()).  Single source for the autofit fallback in export() and
 # the composite chrome budget in compose.R -- both must agree with the
-# plotit() canvas defaults (5 x 3.5 in panel).
+# plotit() canvas defaults (Nature single-column 89 x 56 mm panel).
 #' Package-default panel size in inches.
 #' @noRd
 #' @keywords internal
 ._default_panel_size <- function() {
+  w <- getOption("plotit.default_width", 89)
+  h <- getOption("plotit.default_height", 56)
+  unit <- getOption("plotit.default_unit", "mm")
   list(
-    width = getOption("plotit.default_width", 5),
-    height = getOption("plotit.default_height", 3.5)
+    width = ._unit_to_inches(w, unit),
+    height = ._unit_to_inches(h, unit)
   )
 }
 

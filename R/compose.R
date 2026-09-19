@@ -868,7 +868,7 @@ S7::method(export, plotit_composite) <- function(
   filename,
   width = NULL,
   height = NULL,
-  dpi = 300,
+  dpi = 600,
   device = NULL,
   ...
 ) {

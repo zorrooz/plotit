@@ -5,9 +5,11 @@ NULL
 # Default values registered in .onLoad so they appear in options().
 .plotit_options <- list(
   plotit.device = "default",
-  plotit.default_width = 5,
-  plotit.default_height = 3.5,
-  plotit.default_unit = "in"
+  # Nature single-column panel (89 x 56 mm)
+  plotit.default_width = 89,
+  plotit.default_height = 56,
+  plotit.default_unit = "mm",
+  plotit.default_dpi = 600
 )
 
 .onLoad <- function(libname, pkgname) {

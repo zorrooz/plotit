@@ -348,7 +348,7 @@ S7::method(mark_sankey, plotit_class) <- function(
 #'   maps tile fill against any hierarchy column.
 #' @param data Optional hierarchy table for this layer.
 #' @param node_color Default tile fill when no fill aesthetic is mapped
-#'   (default `._MARK_STYLE$primary` = `"#4E79A7"`).
+#'   (default `._MARK_STYLE$primary` = `"#0072B2"`).
 #' @param show_labels If `TRUE` (default), draw leaf ids at tile centres.
 #'   Labels render white over the unmapped brand-blue fill; when a fill is
 #'   mapped they fall back to near-black -- chain
@@ -475,7 +475,7 @@ S7::method(mark_treemap, plotit_class) <- function(
 #'   via `curvature` in `...`.
 #' @param node_color Default node colour, applied to the `colour` and
 #'   `fill` channels only where they are not mapped
-#'   (default `._MARK_STYLE$primary` = \code{"#4E79A7"}).
+#'   (default `._MARK_STYLE$primary` = \code{"#0072B2"}).
 #' @param node_size Default node size when `size` is not mapped (default 5).
 #' @param show_labels If `TRUE` (default), draw node labels when a global
 #'   `label` aesthetic is mapped.

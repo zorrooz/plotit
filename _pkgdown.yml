@@ -6,16 +6,17 @@ template:
       <style>.r-plt { display: block; margin: 1rem 0; }
       .r-plt img { display: block; max-width: 100%; height: auto; margin: 0 auto; background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }</style>
 
-# Reference-example figure canvas.  WYSIWYG plots bake an absolute panel
-# size into the ggplot, so the device must exceed panel + axis/legend
-# chrome or the edges clip.  Defaults fit the 5x3.5 in panel with room for
-# wide legends and compose_* examples.
+# Reference-example figure canvas. WYSIWYG default panel is Nature
+# single-column 89 x 56 mm (~3.5 x 2.2 in); device fits panel + chrome
+# without a large margin. ragg background=white paints PNGs opaque.
 figures:
   dev: ragg::agg_png
   dpi: 96
   fig.retina: 2
-  fig.width: 8.5
-  fig.height: 5.5
+  fig.width: 5.2
+  fig.height: 4.0
+  dev.args:
+    background: white
 
 title: plotit
 subtitle: Declarative Plotting with ggplot2
@@ -23,6 +24,9 @@ subtitle: Declarative Plotting with ggplot2
 development:
   mode: release
 
+# Documentation IA (see AGENTS.md §4.9, DESIGN.md):
+# tidyverse-style navbar: Get Started first, then Reference, then the
+# remaining articles under Articles. Five articles only.
 navbar:
   structure:
     left:  [intro, reference, articles, news]
@@ -31,61 +35,18 @@ navbar:
     intro:
       text: Get Started
       href: articles/plotit.html
-    reference:
-      text: Reference
-      href: reference/index.html
     articles:
       text: Articles
       menu:
-      - text: Getting Started
-        href: articles/plotit.html
-      - text: Syntax & Pipeline
-        href: articles/customizing.html
-      - text: Composing Figures
-        href: articles/composing.html
-      - text: Relational Charts
-        href: articles/relational.html
+      - text: Gallery
+        href: articles/visualizing-data.html
+      - text: Advanced
+        href: articles/advanced.html
+      - text: API
+        href: articles/api.html
       - text: "---"
-      - text: "Galleries by Goal"
-      - text: "  Compare groups"
-        href: articles/gallery-comparisons.html
-      - text: "  Distributions"
-        href: articles/gallery-distributions.html
-      - text: "  Relationships"
-        href: articles/gallery-relationships.html
-      - text: "  Time & Coordinates"
-        href: articles/gallery-coordinates.html
-      - text: "  Trends"
-        href: articles/gallery-trends.html
-      - text: "  Matrix"
-        href: articles/gallery-matrix.html
-      - text: "  Proportions"
-        href: articles/gallery-proportions.html
-      - text: "  Geography"
-        href: articles/gallery-geo.html
-      - text: "  Networks & Flows"
-        href: articles/gallery-relational.html
-      - text: "  Annotations"
-        href: articles/gallery-annotations.html
-      - text: "  Composition"
-        href: articles/gallery-composing.html
-      - text: "---"
-      - text: "Recipes & Use Cases"
-      - text: "  Transform Recipes"
-        href: articles/transform-recipes.html
-      - text: "  Gallery System (v2)"
-        href: articles/gallery-system.html
-      - text: "  API System Reference (v2)"
-        href: articles/api-system.html
-      - text: "  Bioinformatics"
-        href: articles/use-case-bioinformatics.html
-      - text: "  Publishing"
-        href: articles/use-case-publishing.html
-      - text: "---"
-      - text: Design Philosophy
-        href: articles/philosophy.html
-      - text: "Design Philosophy"
-        href: articles/philosophy.html
+      - text: Design Goals
+        href: articles/design-goals.html
     news:
       text: News
       href: news/index.html
@@ -148,3 +109,4 @@ reference:
 # removes AGENTS.html post-build — see .github/workflows/pkgdown.yaml.
 exclude:
 - AGENTS.md
+- DESIGN.md

@@ -1,37 +1,42 @@
 #' @include class.R
 NULL
 
-# ---- Unified mark style system (AGENTS.md <U+00A7>6) ----
+# ---- Unified mark style system (visual contract) ----
 #
-# Single source of truth for every style literal used by mark_* so that all
-# marks share one visual language out of the box.
+# SINGLE SOURCE OF TRUTH for every mark-level visual literal.
+# Theme/canvas/palette tokens live in R/theme.R (._STYLE_TOKENS).
+# Do not duplicate these numbers in AGENTS.md -- point here instead.
+# Behavioural pins: tests/testthat/test-style-contract.R
 #
-# - `._MARK_STYLE`    : named style tokens (colours, stroke widths, sizes).
+# - `._MARK_STYLE`    : named tokens (colours, stroke widths, alphas).
 # - `._MARK_DEFAULTS` : per-mark static defaults injected by `._mark_impl()`.
 # - `._apply_mark_defaults()` : merge rules (see below).
+# - `._MARK_CHROME`   : per-mark canvas axis/legend/expand conventions.
 #
+# Calibrated to tidyplots source (add-general.R, add-misc.R, add-points.R).
 # Precedence: explicit user parameter > mapped aesthetic (layer or global,
 # including the AsIs constants injected by plotit()) > mark default.
-# Tokens are iterables per AGENTS.md <U+00A7>1.4 (default-aesthetics tier).
+# Tokens are iterables per AGENTS.md §1.4 (default-aesthetics tier).
 
 ._MARK_STYLE <- list(
-  # Brand palette (Tableau 10 subset)
-  primary = "#4E79A7", # data marks without a colour/fill mapping
+  # Brand palette: first friendly anchor (tidyplots single-colour default)
+  primary = "#0072B2", # data marks without a colour/fill mapping
   secondary = "#E15759", # comparison accent (e.g. mark_dumbbell end point)
   # Neutral greys, strong -> light
   ink = "grey30", # strong annotation strokes (significance brackets, sankey nodes)
   soft = "grey50", # mid connectors (lollipop stems, dumbbell links, reference rules)
   faint = "grey70", # background structure (network edges)
-  # Stroke ladder (mm): data lines > thin strokes > hairline borders
-  lw_data = 0.9, # lines / paths / smooth trends
-  lw_thin = 0.5, # stems, edges, connectors, brackets, error bars
-  lw_border = 0.25, # white hairline borders on bars / tiles
+  # Stroke ladder calibrated to tidyplots source (add-general.R / add-misc.R):
+  # almost every geometric stroke is 0.25pt hairline; connectors stay at 0.5.
+  lw_data = 0.25, # lines / paths / smooth / step / boxplot outlines
+  lw_thin = 0.5, # stems, edges, connectors, brackets
+  lw_border = 0.25, # hairline rung (alias of tidyplots' default linewidth)
   # Annotation text size
   txt_note = 3.2, # significance labels, network / sankey node labels
-  # Translucency for overlapping filled forms
-  alpha_fill = 0.6, # density curves, violins
+  # Translucency (tidyplots: violin/box 0.3, ribbon/area/smooth 0.4)
+  alpha_fill = 0.3, # density curves, violins, boxplot fills
   alpha_link = 0.5, # sankey flows, chord bands
-  alpha_ci = 0.25, # statistical confidence ribbons
+  alpha_ci = 0.4, # statistical ribbons / smooth confidence bands
   alpha_annot = 0.18, # encircle annotation envelopes
   annot_step = 0.06, # significance bracket stacking step (y-span share)
   # Composite point heads
@@ -59,50 +64,83 @@ NULL
     linewidth = ._MARK_STYLE$lw_data,
     linejoin = "mitre"
   ),
-  # Link/connector marks share the thin stroke rung of the width ladder.
+  # Link/connector marks share the mid stroke rung of the width ladder.
   mark_curve = list(linewidth = ._MARK_STYLE$lw_thin),
   mark_spoke = list(linewidth = ._MARK_STYLE$lw_thin),
-  mark_smooth = list(linewidth = ._MARK_STYLE$lw_data),
-  # Bars: 0.7 of the slot (slot = global dodge 0.8) -- slimmer than ggplot2's
-  # 0.9 so single-series bars get air and grouped slots keep clear gaps.
-  mark_bar = list(colour = "white", linewidth = ._MARK_STYLE$lw_border, width = 0.7),
-  mark_histogram = list(colour = "white", linewidth = ._MARK_STYLE$lw_border),
-  mark_rect = list(colour = "white", linewidth = ._MARK_STYLE$lw_border),
-  mark_bin2d = list(colour = "white", linewidth = ._MARK_STYLE$lw_border),
-  mark_area = list(linewidth = 0),
-  mark_polygon = list(linewidth = 0),
-  mark_density = list(alpha = ._MARK_STYLE$alpha_fill),
-  mark_violin = list(alpha = ._MARK_STYLE$alpha_fill),
-  mark_rule = list(colour = ._MARK_STYLE$soft, linewidth = ._MARK_STYLE$lw_thin),
-  mark_errorbar = list(linewidth = ._MARK_STYLE$lw_thin),
-  mark_qq_line = list(
-    linewidth = ._MARK_STYLE$lw_thin,
-    linetype = "dashed",
-    colour = ._MARK_STYLE$soft
+  # tidyplots add_curve_fit: linewidth 0.25, alpha 0.4
+  mark_smooth = list(
+    linewidth = ._MARK_STYLE$lw_data,
+    alpha = ._MARK_STYLE$alpha_ci
   ),
-  # Polygons without an explicit fill inherit the brand primary (the
-  # default_color mechanism only covers the no-mapping case; a pure
-  # `colour` grouping otherwise leaves fill at ggplot2's dark grey).
+  # tidyplots ff_bar: width 0.6, color = NA (flush, no stroke).
+  # Stacked bars often want width 0.8 -- pass width= explicitly.
+  mark_bar = list(linewidth = 0, width = 0.6),
+  # tidyplots add_data_points: size 1 (ggplot2 default is 1.5)
+  mark_point = list(size = 1),
+  mark_histogram = list(linewidth = 0),
+  mark_rect = list(linewidth = 0),
+  mark_bin2d = list(linewidth = 0),
+  # tidyplots add_area: linewidth 0, alpha 0.4
+  mark_area = list(linewidth = 0, alpha = ._MARK_STYLE$alpha_ci),
   mark_polygon = list(
     linewidth = 0,
     fill = ._MARK_STYLE$primary
   ),
-  # Boxplots: slim boxes with generous slot spacing and hairline strokes,
-  # calibrated against tidyplots' add_boxplot (box_width 0.6 / lw 0.25 /
-  # tiny outliers).  Slot width is the global dodge (0.8), so a 0.5-wide
-  # box leaves ~0.3 slot of air between neighbouring groups.
-  mark_boxplot = list(
-    width = 0.5,
-    linewidth = ._MARK_STYLE$lw_border,
-    staplewidth = 0.4,
-    outlier.size = 0.6
+  # tidyplots add_violin / density family: alpha 0.3
+  mark_density = list(alpha = ._MARK_STYLE$alpha_fill),
+  mark_violin = list(
+    alpha = ._MARK_STYLE$alpha_fill,
+    linewidth = ._MARK_STYLE$lw_data
   ),
-  # Closed statistical / relational marks rendered through tile-like geoms:
-  # white hairline separators keep adjacent cells readable (same token as
-  # bar/histogram/rect).  (The treemap sugar renders through mark_rect and
-  # inherits its hairline entry above; it needs no entry of its own.)
-  mark_corr = list(colour = "white", linewidth = ._MARK_STYLE$lw_border)
+  mark_rule = list(colour = ._MARK_STYLE$soft, linewidth = ._MARK_STYLE$lw_thin),
+  # tidyplots ff_errorbar: linewidth 0.25, width 0.4
+  mark_errorbar = list(
+    linewidth = ._MARK_STYLE$lw_data,
+    width = 0.4
+  ),
+  # tidyplots ff_ribbon: alpha 0.4, color = NA
+  mark_ribbon = list(alpha = ._MARK_STYLE$alpha_ci, colour = NA),
+  mark_qq_line = list(
+    linewidth = ._MARK_STYLE$lw_data,
+    linetype = "dashed",
+    colour = ._MARK_STYLE$soft
+  ),
+  # tidyplots add_boxplot: width 0.6, alpha 0.3, linewidth 0.25,
+  # staplewidth 0.8, outlier.size 0.5.  Stroke follows the mapped colour
+  # (do NOT force ink -- that overrode group outlines).
+  mark_boxplot = list(
+    width = 0.6,
+    alpha = ._MARK_STYLE$alpha_fill,
+    linewidth = ._MARK_STYLE$lw_data,
+    staplewidth = 0.8,
+    outlier.size = 0.5
+  ),
+  # Closed statistical / relational marks: flush cells (tidyplots heatmap).
+  mark_corr = list(linewidth = 0)
 )
+
+# tidyplots ff_bar / ff_barstack zero the lower padding so bars sit flush
+# on the value axis instead of floating above a 5% expansion gap.
+# Continuous value axis only; discrete axes keep ggplot2 expansion.
+#' Zero the lower expansion on the continuous value axis (tidyplots bars).
+#' @noRd
+#' @keywords internal
+._flush_value_axis <- function(plot, axis = "y") {
+  gg <- plot@gg
+  sc <- gg$scales$get_scales(axis)
+  has_sc <- !is.null(sc)
+  discrete <- has_sc && inherits(sc, c("ScaleDiscretePosition", "ScaleDiscrete"))
+  if (discrete) {
+    return(plot)
+  }
+  # Default continuous expansion is mult = c(0.05, 0.05); keep the upper
+  # headroom for value labels (tidyplots padding = c(0, NA) -> upper 0.05).
+  plot@gg <- gg + ggplot2::scale_y_continuous(
+    name = if (has_sc && !inherits(sc$name, "waiver")) sc$name else ggplot2::waiver(),
+    expand = ggplot2::expansion(mult = c(0, 0.05))
+  )
+  plot
+}
 
 # Collect aesthetics mapped on the layer or globally.  Used to gate static
 # defaults: a default never overrides an aesthetic the pipeline already maps.

@@ -59,7 +59,7 @@ via \code{curvature} in \code{...}.}
 
 \item{node_color}{Default node colour, applied to the \code{colour} and
 \code{fill} channels only where they are not mapped
-(default \code{._MARK_STYLE$primary} = \code{"#4E79A7"}).}
+(default \code{._MARK_STYLE$primary} = \code{"#0072B2"}).}
 
 \item{node_size}{Default node size when \code{size} is not mapped (default 5).}
 

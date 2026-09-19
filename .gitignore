@@ -28,8 +28,8 @@ Thumbs.db
 *.swo
 *~
 
-# Toolchain
-.reasonix/
+# Toolchain / agent workspace
+.agent/
 
 # Package-specific
 playground.R

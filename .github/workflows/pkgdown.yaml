@@ -38,6 +38,7 @@ jobs:
       - name: Remove dev-only pages
         run: |
           rm -f docs/AGENTS.html docs/AGENTS.md docs/AGENTS.new.html docs/AGENTS.new.md
+          rm -f docs/DESIGN.html docs/DESIGN.md docs/DESIGN.new.html docs/DESIGN.new.md
 
       - name: Clean search index
         run: |
@@ -45,7 +46,8 @@ jobs:
           with open("docs/search.json", encoding="utf-8") as f:
               data = json.load(f)
           before = len(data)
-          data = [e for e in data if "AGENTS" not in e.get("path","")]
+          drop = ("AGENTS", "DESIGN")
+          data = [e for e in data if not any(s in e.get("path","") for s in drop)]
           with open("docs/search.json", "w", encoding="utf-8") as f:
               json.dump(data, f, ensure_ascii=False)
           print(f"Search entries: {before} -> {len(data)}")

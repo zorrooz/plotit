@@ -25,13 +25,15 @@ testthat::test_that("[BDD] discrete palette sampling subsamples then interpolate
   testthat::expect_false(all(pal10 %in% plotit:::._STYLE_TOKENS$palette_discrete))
 })
 
-testthat::test_that("[BDD] default theme follows the academic-minimal recipe", {
+testthat::test_that("[BDD] default theme follows the Nature publication contract", {
   thm <- plotit:::._theme_default()
-  testthat::expect_equal(thm$axis.line$linewidth, 0.25)
+  testthat::expect_equal(thm$axis.line$linewidth, 0.35)
   testthat::expect_equal(thm$axis.line$colour, "#000000")
-  testthat::expect_s3_class(thm$panel.grid, "element_blank")
-  testthat::expect_false(thm$plot.title$face == "bold")
+  testthat::expect_s3_class(thm$panel.border, "element_blank")
+  testthat::expect_equal(thm$plot.title$face, "bold")
+  testthat::expect_equal(thm$plot.title$hjust, 0)
   testthat::expect_equal(as.numeric(thm$legend.key.size), 3.5)
+  testthat::expect_equal(thm$plot.background$fill, "#FFFFFF")
 })
 
 testthat::test_that("[BDD] fixed panel dimensions are baked into every plot", {
@@ -51,16 +53,13 @@ testthat::test_that("[BDD] autofit plots carry no absolute panel constraint", {
   testthat::expect_null(p@gg$theme$panel.widths)
 })
 
-testthat::test_that("[BDD] default canvas is the compact academic size", {
+testthat::test_that("[BDD] default canvas is Nature single column (89 x 56 mm)", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |> mark_point()
-  testthat::expect_equal(p@meta@width, 5)
-  testthat::expect_equal(p@meta@height, 3.5)
-  testthat::expect_equal(p@meta@unit, "in")
-  # Baked values match the meta canvas exactly: a single-panel 1x1 grid
-  # carries one width/height unit each (multi-panel facets spread the
-  # declared area across their cells).
-  testthat::expect_equal(as.numeric(p@gg$theme$panel.widths), 5)
-  testthat::expect_equal(as.numeric(p@gg$theme$panel.heights), 3.5)
+  testthat::expect_equal(p@meta@width, 89)
+  testthat::expect_equal(p@meta@height, 56)
+  testthat::expect_equal(p@meta@unit, "mm")
+  testthat::expect_equal(as.numeric(p@gg$theme$panel.widths), 89)
+  testthat::expect_equal(as.numeric(p@gg$theme$panel.heights), 56)
 })
 
 testthat::test_that("[BDD] facet grids spread the declared panel area", {
@@ -69,12 +68,12 @@ testthat::test_that("[BDD] facet grids spread the declared panel area", {
     split_wrap(Species, ncol = 3)
   widths <- as.numeric(p@gg$theme$panel.widths)
   testthat::expect_length(widths, 3)
-  testthat::expect_equal(sum(widths), 5) # total panel area preserved
+  testthat::expect_equal(sum(widths), 89) # total panel area preserved
 })
 
-testthat::test_that("[BDD] default theme uses the compact base font", {
+testthat::test_that("[BDD] default theme uses the Nature base font", {
   thm <- plotit:::._theme_default()
-  testthat::expect_equal(thm$text$size, 10)
+  testthat::expect_equal(thm$text$size, 6.5)
 })
 
 testthat::test_that("[BDD] strip removes baked panel size via public reset", {
@@ -113,9 +112,9 @@ testthat::test_that("[BDD] AsIs constant colours bypass the default palette", {
   testthat::expect_equal(built_colours(p), "red")
 })
 
-testthat::test_that("[BDD] single-colour injection stays brand blue", {
+testthat::test_that("[BDD] single-colour injection stays friendly blue", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |> mark_point()
-  testthat::expect_equal(built_colours(p), "#4E79A7")
+  testthat::expect_equal(built_colours(p), "#0072B2")
 })
 
 testthat::test_that("[BDD] user scale calls override the construction defaults", {
@@ -143,18 +142,18 @@ testthat::test_that("[BDD] explicit friendly scheme supports reverse", {
   testthat::expect_setequal(cf, cr)
 })
 
-testthat::test_that("[BDD] boxplots render slim boxes with hairline strokes", {
+testthat::test_that("[BDD] boxplots follow the tidyplots add_boxplot recipe", {
   p <- plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_boxplot()
   bd <- ggplot2::ggplot_build(p@gg)
   d <- bd$data[[1]]
-  # Box occupies width 0.5 of each discrete slot (native resolution 1),
-  # leaving visible air between neighbouring groups.
+  # Box occupies width 0.6 of each discrete slot (tidyplots box_width)
   box_w <- unique(round(d$xmax - d$xmin, 6))
-  testthat::expect_equal(box_w, 0.5)
-  # Hairline stroke and slim staple caps carry the tidyplots-calibrated look
+  testthat::expect_equal(box_w, 0.6)
+  # Hairline stroke, translucent fill, wide staples, tiny outliers
   testthat::expect_true(all(d$linewidth == 0.25))
-  testthat::expect_true(all(d$staplewidth == 0.4))
-  testthat::expect_true(all(d$outlier.size == 0.6))
+  testthat::expect_true(all(abs(d$alpha - 0.3) < 1e-6))
+  testthat::expect_true(all(d$staplewidth == 0.8))
+  testthat::expect_true(all(d$outlier.size == 0.5))
 })
 
 testthat::test_that("[BDD] identity channels share one palette across mark families", {

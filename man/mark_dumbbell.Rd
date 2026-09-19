@@ -24,7 +24,7 @@ mark_dumbbell(
 \item{data}{Optional data for this layer}
 
 \item{color_start}{Colour for the start point
-(default \code{._MARK_STYLE$primary} = \code{"#4E79A7"}).}
+(default \code{._MARK_STYLE$primary} = \code{"#0072B2"}).}
 
 \item{color_end}{Colour for the end point
 (default \code{._MARK_STYLE$secondary} = \code{"#E15759"}).}

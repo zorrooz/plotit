@@ -70,7 +70,8 @@ NULL
   dots <- ._apply_mark_defaults(plot, mapping, dots, mark_name)
   pos <- position
   if (is.null(pos) && auto_dodge && !is.null(plot@meta@dodge) && plot@meta@dodge > 0) {
-    pos <- ggplot2::position_dodge(plot@meta@dodge)
+    # preserve="total" matches tidyplots (group keeps the dodge slot width)
+    pos <- ggplot2::position_dodge(plot@meta@dodge, preserve = "total")
   }
   # T6: grouped dodge-family marks over a NUMERIC x overlap silently (the
   # auto-dodge heuristic only fires for discrete x).  Warn and point at the
@@ -1731,7 +1732,7 @@ S7::method(mark_errorbar, plotit_class) <- function(
 #'   (percentile bootstrap; requires `seed`).
 #' @param seed RNG seed for `ci_method = "boot"`.
 #' @param alpha Band fill opacity; `NULL` (default) uses the statistical
-#'   token `alpha_ci` (0.25), tuned so stacked evidence stays readable
+#'   token `alpha_ci` (0.4), matching tidyplots ribbons
 #'   behind points and lines.
 #' @param width On a discrete x axis, the band occupies this share of each
 #'   category slot (default 0.9); a statistical entity becomes one
@@ -2131,7 +2132,7 @@ S7::method(mark_lollipop, plotit_class) <- function(
 #' @param mapping Optional new aesthetics
 #' @param data Optional data for this layer
 #' @param color_start Colour for the start point
-#'   (default `._MARK_STYLE$primary` = `"#4E79A7"`).
+#'   (default `._MARK_STYLE$primary` = `"#0072B2"`).
 #' @param color_end Colour for the end point
 #'   (default `._MARK_STYLE$secondary` = `"#E15759"`).
 #' @param line_color Colour for the connecting line
@@ -2491,11 +2492,12 @@ S7::method(mark_bar, plotit_class) <- function(plot, mapping = NULL, data = NULL
     !is.null(plot@gg$mapping$y)
   }
   geom_fun <- if (has_y) ggplot2::geom_col else ggplot2::geom_bar
-  ._mark_impl(
+  plot <- ._mark_impl(
     plot, mapping, data, position, geom_fun,
     rasterize, rasterize_dpi, rasterize_dev,
     bind_aes = ._MARK_BIND_AES$mark_bar, mark_name = "mark_bar", ...
   )
+  ._flush_value_axis(plot, "y")
 }
 
 # ---- mark_step ----

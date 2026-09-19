@@ -9,7 +9,7 @@ export(
   filename,
   width = NULL,
   height = NULL,
-  dpi = 300,
+  dpi = 600,
   device = NULL,
   ...
 )
@@ -28,7 +28,7 @@ list, applied to every page).}
 \item{height}{Output height (if NULL, uses meta then package default; for a
 list, applied to every page).}
 
-\item{dpi}{Resolution for raster formats (default 300).}
+\item{dpi}{Resolution for raster formats (default 600, journal submission).}
 
 \item{device}{Graphics device to use (if NULL, auto-detected from filename).}
 

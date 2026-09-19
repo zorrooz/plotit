@@ -21,7 +21,7 @@ maps tile fill against any hierarchy column.}
 \item{data}{Optional hierarchy table for this layer.}
 
 \item{node_color}{Default tile fill when no fill aesthetic is mapped
-(default \code{._MARK_STYLE$primary} = \code{"#4E79A7"}).}
+(default \code{._MARK_STYLE$primary} = \code{"#0072B2"}).}
 
 \item{show_labels}{If \code{TRUE} (default), draw leaf ids at tile centres.
 Labels render white over the unmapped brand-blue fill; when a fill is

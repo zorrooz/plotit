@@ -4,6 +4,8 @@
 ^playground\.R$
 ^scratch/
 ^AGENTS\.md$
+^DESIGN\.md$
+^spec$
 ^\.claude$
 ^README_ZH\.md$
 ^iris_plot\.svg$
@@ -15,8 +17,7 @@
 ^_pkgdown\.yml$
 ^docs$
 ^\.quarto$
-^\.reasonix$
-^\.agents$
 ^\.agent$
+^\.agents$
 ^plotit_.*[.]tar[.]gz$
 ^plotit[.]Rcheck$

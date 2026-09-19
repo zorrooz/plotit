@@ -122,7 +122,7 @@ test_that("[BDD] mark_ribbon default alpha uses the alpha_ci token", {
     pp@gg$layers[[1]]$stat_params$alpha %||%
       pp@gg$layers[[1]]$aes_params$alpha
   }
-  expect_equal(layer_alpha(p), 0.25)
+  expect_equal(layer_alpha(p), 0.4)
   p2 <- plotit(band, encode(x = x, ymin = ymin, ymax = ymax)) |>
     mark_ribbon(alpha = 0.5)
   expect_equal(layer_alpha(p2), 0.5)
@@ -164,5 +164,5 @@ test_that("[BDD] mark_polygon without fill mapping wears the brand primary", {
   tri <- data.frame(x = c(0, 1, 0.5), y = c(0, 0, 1))
   p <- plotit(tri, encode(x = x, y = y)) |> mark_polygon()
   b <- ggplot2::ggplot_build(p@gg)
-  expect_identical(unique(b$data[[1]]$fill), "#4E79A7")
+  expect_identical(unique(b$data[[1]]$fill), "#0072B2")
 })

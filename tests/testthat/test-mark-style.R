@@ -10,7 +10,7 @@
 
 test_that("[BDD] mark_line applies the unified data-line default", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |> mark_line()
-  expect_equal(unique(.built(p)[[1]]$linewidth), 0.9)
+  expect_equal(unique(.built(p)[[1]]$linewidth), 0.25)
 })
 
 test_that("[BDD] explicit parameters override mark style defaults", {
@@ -18,30 +18,30 @@ test_that("[BDD] explicit parameters override mark style defaults", {
   expect_equal(unique(.built(p)[[1]]$linewidth), 0.8)
 })
 
-test_that("[BDD] grouped bars get a white hairline border", {
+test_that("[BDD] grouped bars are flush (no white separators)", {
   df <- data.frame(g = rep(c("a", "b"), each = 3), y = 1:6)
   p <- plotit(df, encode(x = g, y = y, fill = g)) |> mark_bar()
-  expect_true(all(.built(p)[[1]]$colour == "white"))
-  expect_equal(unique(.built(p)[[1]]$linewidth), 0.25)
+  expect_true(all(.built(p)[[1]]$linewidth == 0))
 })
 
 test_that("[BDD] injected single-colour bars stay borderless", {
   p <- plotit(mtcars, encode(x = factor(cyl), y = mpg)) |> mark_bar()
   d <- .built(p)[[1]]
   expect_false(any(d$colour == "white"))
-  expect_true(all(d$fill == "#4E79A7"))
+  expect_true(all(d$fill == "#0072B2"))
+  expect_true(all(d$linewidth == 0))
 })
 
-test_that("[BDD] histogram shares the bar border default", {
+test_that("[BDD] histogram shares the flush bar default", {
   p <- plotit(iris, encode(x = Sepal.Width)) |> mark_histogram()
-  expect_equal(unique(.built(p)[[1]]$linewidth), 0.25)
+  expect_equal(unique(.built(p)[[1]]$linewidth), 0)
 })
 
 test_that("[BDD] density and violin render translucent fills", {
   pd <- plotit(iris, encode(x = Sepal.Width)) |> mark_density()
   pv <- plotit(iris, encode(x = Species, y = Sepal.Length)) |> mark_violin()
-  expect_equal(unique(.built(pd)[[1]]$alpha), 0.6)
-  expect_equal(unique(.built(pv)[[1]]$alpha), 0.6)
+  expect_equal(unique(.built(pd)[[1]]$alpha), 0.3)
+  expect_equal(unique(.built(pv)[[1]]$alpha), 0.3)
 })
 
 test_that("[BDD] mapped alpha beats the translucency default", {
@@ -54,7 +54,7 @@ test_that("[BDD] boxplot gains a contrast stroke under injected default color", 
   p <- plotit(iris, encode(x = Species, y = Petal.Length)) |> mark_boxplot()
   d <- .built(p)[[1]]
   expect_equal(unique(d$colour), "grey30")
-  expect_true(all(d$fill == "#4E79A7"))
+  expect_true(all(d$fill == "#0072B2"))
 })
 
 test_that("[BDD] boxplot respects a user colour mapping", {
@@ -88,7 +88,7 @@ test_that("[BDD] area and polygon drop their outline by default", {
 
 test_that("[BDD] smooth trend lines use the data-line weight", {
   p <- plotit(mtcars, encode(x = wt, y = mpg)) |> mark_smooth(se = FALSE)
-  expect_equal(unique(.built(p)[[1]]$linewidth), 0.9)
+  expect_equal(unique(.built(p)[[1]]$linewidth), 0.25)
 })
 
 test_that("[BDD] correlation matrix defaults to a diverging scale", {
@@ -164,10 +164,10 @@ test_that("[BDD] custom marks registered via make_mark are unaffected", {
 
 # ---- bar slot width (AGENTS.md 6: slim bars with air) ----
 
-test_that("[BDD] bars default to 0.7 of the slot", {
+test_that("[BDD] bars default to 0.6 of the slot", {
   p <- plotit(ggplot2::mpg, encode(x = class, y = hwy)) |> mark_bar()
   d <- .built(p)[[1]]
-  expect_true(all(abs((d$xmax - d$xmin) - 0.7) < 1e-6))
+  expect_true(all(abs((d$xmax - d$xmin) - 0.6) < 1e-6))
 })
 
 test_that("[BDD] explicit width overrides the bar default", {

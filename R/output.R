@@ -230,7 +230,7 @@ knit_print.plotit_composite <- function(x, ...) {
 #'   list, applied to every page).
 #' @param height Output height (if NULL, uses meta then package default; for a
 #'   list, applied to every page).
-#' @param dpi Resolution for raster formats (default 300).
+#' @param dpi Resolution for raster formats (default 600, journal submission).
 #' @param device Graphics device to use (if NULL, auto-detected from filename).
 #' @param ... Additional arguments passed to `ggplot2::ggsave()`.
 #' @return Invisibly, the original `plot` argument.
@@ -246,7 +246,7 @@ export <- S7::new_generic(
     filename,
     width = NULL,
     height = NULL,
-    dpi = 300,
+    dpi = 600,
     device = NULL,
     ...
   ) {
@@ -260,7 +260,7 @@ S7::method(export, plotit_class) <- function(
   filename,
   width = NULL,
   height = NULL,
-  dpi = 300,
+  dpi = 600,
   device = NULL,
   ...
 ) {
@@ -301,7 +301,7 @@ S7::method(export, S7::class_list) <- function(
   filename,
   width = NULL,
   height = NULL,
-  dpi = 300,
+  dpi = 600,
   device = NULL,
   ...
 ) {

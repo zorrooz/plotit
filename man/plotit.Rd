@@ -8,11 +8,11 @@ plotit(
   data,
   mapping = encode(),
   autofit = FALSE,
-  width = 5,
-  height = 3.5,
-  size_unit = "in",
+  width = 89,
+  height = 56,
+  size_unit = "mm",
   dodge = NULL,
-  default_color = "#4E79A7"
+  default_color = "#0072B2"
 )
 }
 \arguments{
@@ -21,20 +21,22 @@ or a \code{plotit_graph} (relational pipeline; see \code{\link[=as_graph]{as_gra
 
 \item{mapping}{An object created by \code{\link[=encode]{encode()}}.}
 
-\item{autofit}{Logical; if \code{TRUE}, plot dimensions are determined automatically.}
+\item{autofit}{Logical; if \code{TRUE}, panel size is not baked (follows the
+device). If \code{FALSE} (default) the panel is baked WYSIWYG at
+\code{width}/\code{height}.}
 
-\item{width, height}{Numeric; default width and height (ignored if \code{autofit = TRUE}).
-Defaults give a compact academic canvas (5 x 3.5 in panel) whose total
-footprint -- panel plus axes/legend -- fits standard 7-inch devices
-without clipping, keeping WYSIWYG previews and exports aligned.}
+\item{width, height}{Numeric; panel size in \code{size_unit}. Default is a
+Nature single-column canvas (89 x 56 mm). Ignored when \code{autofit = TRUE}.}
 
 \item{size_unit}{Unit for width/height: \code{"in"}, \code{"cm"}, \code{"mm"}.}
 
-\item{dodge}{Numeric; global default dodge width. If \code{NULL}, heuristically set.}
+\item{dodge}{Numeric; global default dodge width. If \code{NULL}, heuristically set
+to \code{0.8} when a discrete axis is present, else \code{0}.}
 
 \item{default_color}{Single color string. Applied as default color mapping if no
 color/fill aesthetic is present in \code{mapping}. Adding any \code{scale_color()} or
-\code{scale_fill()} later will automatically disable this single-color mapping.}
+\code{scale_fill()} later will automatically disable this single-color mapping.
+Default is the first friendly palette anchor (\verb{#0072B2}).}
 }
 \value{
 A \code{plotit} object.

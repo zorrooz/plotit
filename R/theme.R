@@ -3,14 +3,15 @@ NULL
 
 # ---- Global visual style tokens (single source of truth) ----
 #
-# Every global default visual decision lives in this one table.  Changing a
-# value here restyles every plotit output -- theme construction, default
-# colour scales, and WYSIWYG panel sizing all derive from these tokens.
-# Mark-level literals stay in mark_style.R; the two tables never cross-reference.
+# SINGLE SOURCE OF TRUTH for theme, canvas, and default palettes.
+# Mark-level literals live in mark_style.R (._MARK_STYLE / ._MARK_DEFAULTS).
+# The two tables never cross-reference. Behavioural pins:
+# tests/testthat/test-style-contract.R
 #
-# The palette follows tidyplots' "friendly" scheme: the Okabe-Ito
-# colourblind-safe qualitative palette with its bright yellow darkened to
-# "#F5C710" for print legibility (see easystats/see scale_colour_okabeito).
+# Calibrated to the Nature/publication figure contract (theme_classic,
+# 6.5 pt type ladder, 0.35 axis strokes, fixed 89 x 56 mm single-column
+# canvas, 600 dpi export). Mark-level literals live in mark_style.R.
+# Changing a value here restyles every plotit output.
 
 # Mix ink toward paper: 0 = pure ink, 1 = pure paper.
 #' Mix the ink token toward paper by a proportion.
@@ -33,27 +34,26 @@ NULL
   # Paper / ink anchors
   paper = ._PLOTIT_PAPER,
   ink = ._PLOTIT_INK,
-  # Derived greys (ink mixed toward paper) -- recomputed once at load
+  # Derived greys (ink mixed toward paper) -- still used by chrome helpers
   grey_title_sub = ._ink_mix(0.35),
   grey_caption = ._ink_mix(0.50),
   grey_text_axis = ._ink_mix(0.30),
   grey_legend_title = ._ink_mix(0.20),
   grey_legend_text = ._ink_mix(0.30),
-  # Line weights (academic hairlines, tidyplots-calibrated)
-  lw_axis = 0.25,
-  # Compact academic canvas (5 x 3.5 in panel) -> slightly denser base type
-  base_size = 10,
-  # Type hierarchy relative to base_size
-  rel_title = 1.15,
-  rel_subtitle = 0.95,
-  rel_caption = 0.85,
-  rel_axis_title = 0.95,
-  rel_axis_text = 0.85,
-  rel_strip = 0.90,
-  rel_legend_title = 0.85,
-  rel_legend_text = 0.85,
+  # Axis stroke (Nature contract: 0.35 pt)
+  lw_axis = 0.35,
+  # Type ladder in absolute pt (Nature / journal-final dense figures)
+  base_size = 6.5,
+  size_title = 7,
+  size_subtitle = 6.5,
+  size_caption = 6,
+  size_axis_title = 6.5,
+  size_axis_text = 6,
+  size_strip = 6.2,
+  size_legend_title = 6.2,
+  size_legend_text = 5.8,
   legend_key_mm = 3.5,
-  # Default palettes
+  # Default palettes (friendly qualitative / viridis sequential)
   palette_discrete = c(
     "#0072B2", "#56B4E9", "#009E73", "#F5C710", "#E69F00", "#D55E00"
   ),
@@ -77,68 +77,67 @@ NULL
 }
 
 # ---- Default theme builder ----
-# Academic-minimal recipe adapted from tidyplots' theme_tidyplot: white paper,
-# black-ink hairline axes and ticks, no grid, transparent chrome, compact type
-# hierarchy, right-hand borderless legend.
+# Nature/journal contract: classic base, white paper, L-spines only,
+# 0.35 pt axes, 6.5 pt type ladder, bold title, frameless legend.
 ._theme_default <- function(base_size = NULL, base_family = NULL) {
   tok <- ._STYLE_TOKENS
-  ggplot2::theme_minimal(
-    base_size = base_size %||% tok$base_size,
-    base_family = base_family %||% ""
+  size <- base_size %||% tok$base_size
+  family <- base_family %||% ""
+  # Scale the absolute type ladder when the caller overrides base_size
+  k <- size / tok$base_size
+  ggplot2::theme_classic(
+    base_size = size,
+    base_family = family,
+    base_line_size = tok$lw_axis,
+    base_rect_size = tok$lw_axis
   ) + ggplot2::theme(
-    # Clean paper panel, no grid
     panel.background = ggplot2::element_rect(fill = tok$paper, colour = NA),
+    panel.border = ggplot2::element_blank(),
     panel.grid = ggplot2::element_blank(),
-    panel.grid.major = ggplot2::element_blank(),
-    panel.grid.minor = ggplot2::element_blank(),
-    # Transparent outer elements
-    plot.background = ggplot2::element_rect(fill = NA, colour = NA),
+    plot.background = ggplot2::element_rect(fill = tok$paper, colour = NA),
     legend.background = ggplot2::element_rect(fill = NA, colour = NA),
     legend.key = ggplot2::element_rect(fill = NA, colour = NA),
     legend.box.background = ggplot2::element_rect(fill = NA, colour = NA),
     legend.box.spacing = ggplot2::unit(0, "cm"),
     strip.background = ggplot2::element_rect(fill = NA, colour = NA),
-    # Ink hairline axes and ticks (Cartesian)
     axis.line = ggplot2::element_line(colour = tok$ink, linewidth = tok$lw_axis),
     axis.ticks = ggplot2::element_line(colour = tok$ink, linewidth = tok$lw_axis),
-    # Type hierarchy
     plot.title = ggplot2::element_text(
-      size = ggplot2::rel(tok$rel_title),
-      face = "plain",
+      size = tok$size_title * k,
+      face = "bold",
       hjust = 0,
       colour = tok$ink
     ),
     plot.subtitle = ggplot2::element_text(
-      size = ggplot2::rel(tok$rel_subtitle),
+      size = tok$size_subtitle * k,
       hjust = 0,
-      colour = tok$grey_title_sub
+      colour = tok$ink
     ),
     plot.caption = ggplot2::element_text(
-      size = ggplot2::rel(tok$rel_caption),
-      colour = tok$grey_caption
+      size = tok$size_caption * k,
+      colour = tok$ink
     ),
     axis.title = ggplot2::element_text(
-      size = ggplot2::rel(tok$rel_axis_title),
+      size = tok$size_axis_title * k,
       colour = tok$ink
     ),
     axis.text = ggplot2::element_text(
-      size = ggplot2::rel(tok$rel_axis_text),
-      colour = tok$grey_text_axis
-    ),
-    strip.text = ggplot2::element_text(
-      size = ggplot2::rel(tok$rel_strip),
-      face = "plain",
+      size = tok$size_axis_text * k,
       colour = tok$ink
     ),
-    # Legend: borderless, right, compact keys
+    strip.text = ggplot2::element_text(
+      size = tok$size_strip * k,
+      face = "bold",
+      colour = tok$ink
+    ),
     legend.position = "right",
     legend.title = ggplot2::element_text(
-      size = ggplot2::rel(tok$rel_legend_title),
-      colour = tok$grey_legend_title
+      size = tok$size_legend_title * k,
+      colour = tok$ink
     ),
     legend.text = ggplot2::element_text(
-      size = ggplot2::rel(tok$rel_legend_text),
-      colour = tok$grey_legend_text
+      size = tok$size_legend_text * k,
+      colour = tok$ink
     ),
     legend.key.size = ggplot2::unit(tok$legend_key_mm, "mm")
   )

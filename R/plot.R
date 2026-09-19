@@ -4,16 +4,18 @@
 #' @param data A data frame, a matrix (coerced with `as.data.frame()`),
 #'   or a `plotit_graph` (relational pipeline; see [as_graph()]).
 #' @param mapping An object created by [encode()].
-#' @param autofit Logical; if `TRUE`, plot dimensions are determined automatically.
-#' @param width,height Numeric; default width and height (ignored if `autofit = TRUE`).
-#'   Defaults give a compact academic canvas (5 x 3.5 in panel) whose total
-#'   footprint -- panel plus axes/legend -- fits standard 7-inch devices
-#'   without clipping, keeping WYSIWYG previews and exports aligned.
+#' @param autofit Logical; if `TRUE`, panel size is not baked (follows the
+#'   device). If `FALSE` (default) the panel is baked WYSIWYG at
+#'   `width`/`height`.
+#' @param width,height Numeric; panel size in `size_unit`. Default is a
+#'   Nature single-column canvas (89 x 56 mm). Ignored when `autofit = TRUE`.
 #' @param size_unit Unit for width/height: `"in"`, `"cm"`, `"mm"`.
-#' @param dodge Numeric; global default dodge width. If `NULL`, heuristically set.
+#' @param dodge Numeric; global default dodge width. If `NULL`, heuristically set
+#'   to `0.8` when a discrete axis is present, else `0`.
 #' @param default_color Single color string. Applied as default color mapping if no
 #'   color/fill aesthetic is present in `mapping`. Adding any `scale_color()` or
 #'   `scale_fill()` later will automatically disable this single-color mapping.
+#'   Default is the first friendly palette anchor (`#0072B2`).
 #' @return A `plotit` object.
 #' @examples
 #' plotit(iris, encode(x = Sepal.Width, y = Sepal.Length))
@@ -23,11 +25,11 @@ plotit <- function(
   data,
   mapping = encode(),
   autofit = FALSE,
-  width = 5,
-  height = 3.5,
-  size_unit = "in",
+  width = 89,
+  height = 56,
+  size_unit = "mm",
   dodge = NULL,
-  default_color = "#4E79A7"
+  default_color = "#0072B2"
 ) {
   if (!inherits(mapping, "plotit_encode")) {
     cli::cli_abort(c(
@@ -97,6 +99,29 @@ plotit <- function(
 
     has_color <- "colour" %in% names(mapping)
     has_fill <- "fill" %in% names(mapping)
+
+    # tidyplots-style colour/fill mirroring -- DISCRETE channels only.
+    # A categorical group drives both outline and fill (boxplot strokes,
+    # bar edges, point borders).  Continuous fill (heatmap / corr magnitude)
+    # is left alone: mirroring it would inject a colour quosure that layer
+    # reshapes (Var1/Var2/value) cannot resolve.
+    .is_disc_quo <- function(q, data) {
+      col <- tryCatch(rlang::eval_tidy(q, data), error = function(e) NULL)
+      !is.null(col) && (is.factor(col) || is.character(col) || is.logical(col))
+    }
+    if (has_color && !has_fill && .is_disc_quo(mapping$colour, data)) {
+      mapping <- structure(
+        utils::modifyList(mapping, list(fill = mapping$colour)),
+        class = c("plotit_encode", "uneval")
+      )
+      has_fill <- TRUE
+    } else if (has_fill && !has_color && .is_disc_quo(mapping$fill, data)) {
+      mapping <- structure(
+        utils::modifyList(mapping, list(colour = mapping$fill)),
+        class = c("plotit_encode", "uneval")
+      )
+      has_color <- TRUE
+    }
 
     # Inject I(default_color) to both colour and fill so that all geoms
     # (points, bars, tiles, ...) pick up the same single-color appearance.

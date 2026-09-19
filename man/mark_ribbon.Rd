@@ -47,7 +47,7 @@ entity.}
 \item{seed}{RNG seed for \code{ci_method = "boot"}.}
 
 \item{alpha}{Band fill opacity; \code{NULL} (default) uses the statistical
-token \code{alpha_ci} (0.25), tuned so stacked evidence stays readable
+token \code{alpha_ci} (0.4), matching tidyplots ribbons
 behind points and lines.}
 
 \item{width}{On a discrete x axis, the band occupies this share of each
