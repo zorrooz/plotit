@@ -9,11 +9,11 @@ plotit(
   data,
   mapping = encode(),
   autofit = FALSE,
-  width = 5,
-  height = 3.5,
-  size_unit = "in",
+  width = 89,
+  height = 56,
+  size_unit = "mm",
   dodge = NULL,
-  default_color = "#4E79A7"
+  default_color = "#0072B2"
 )
 ```
 
@@ -33,14 +33,13 @@ plotit(
 
 - autofit:
 
-  Logical; if `TRUE`, plot dimensions are determined automatically.
+  Logical; if `TRUE`, panel size is not baked (follows the device). If
+  `FALSE` (default) the panel is baked WYSIWYG at `width`/`height`.
 
 - width, height:
 
-  Numeric; default width and height (ignored if `autofit = TRUE`).
-  Defaults give a compact academic canvas (5 x 3.5 in panel) whose total
-  footprint – panel plus axes/legend – fits standard 7-inch devices
-  without clipping, keeping WYSIWYG previews and exports aligned.
+  Numeric; panel size in `size_unit`. Default is a Nature single-column
+  canvas (89 x 56 mm). Ignored when `autofit = TRUE`.
 
 - size_unit:
 
@@ -48,7 +47,8 @@ plotit(
 
 - dodge:
 
-  Numeric; global default dodge width. If `NULL`, heuristically set.
+  Numeric; global default dodge width. If `NULL`, heuristically set to
+  `0.8` when a discrete axis is present, else `0`.
 
 - default_color:
 
@@ -57,7 +57,8 @@ plotit(
   [`scale_color()`](https://zorrooz.github.io/plotit/reference/scale_color.md)
   or
   [`scale_fill()`](https://zorrooz.github.io/plotit/reference/scale_fill.md)
-  later will automatically disable this single-color mapping.
+  later will automatically disable this single-color mapping. Default is
+  the first friendly palette anchor (`#0072B2`).
 
 ## Value
 

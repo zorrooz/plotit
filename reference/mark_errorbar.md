@@ -142,4 +142,5 @@ dfh <- data.frame(
 plotit(dfh, encode(x = x, y = y, xmin = xmin, xmax = xmax)) |>
   mark_point() |>
   mark_errorbar(orientation = "horizontal", caps = FALSE)
+#> Warning: Ignoring unknown parameters: `width`
 ```

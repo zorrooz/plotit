@@ -250,6 +250,7 @@ available via
 | [`compose_grid()`](https://zorrooz.github.io/plotit/reference/compose_grid.md) | Grid arrangement |
 | [`compose_inset()`](https://zorrooz.github.io/plotit/reference/compose_inset.md) | Floating inset overlay |
 | [`compose_marginal()`](https://zorrooz.github.io/plotit/reference/compose_marginal.md) | Scatter with marginal distributions |
+| [`compose_annot()`](https://zorrooz.github.io/plotit/reference/compose_annot.md) | Base plot + annotation strips (e.g. dendrogram) |
 
 ### Theme
 
@@ -272,13 +273,18 @@ available via
 
 ## Documentation
 
-Full documentation is available at
-[zorrooz.github.io/plotit](https://zorrooz.github.io/plotit/), including
-a [relational-charts
-guide](https://zorrooz.github.io/plotit/articles/relational.html) and
-figure galleries (groups, distributions, relationships, coordinates,
-relational charts, composition & annotation) under **Articles →
-Gallery**.
+Full documentation lives at
+[zorrooz.github.io/plotit](https://zorrooz.github.io/plotit/). The site
+is a short editorial set — five articles plus per-function Reference:
+
+|  |  |
+|:---|:---|
+| [**Get started**](https://zorrooz.github.io/plotit/articles/plotit.html) | First pipeline, grammar skeleton, export |
+| [**Gallery**](https://zorrooz.github.io/plotit/articles/visualizing-data.html) | Chart families by intent, with rendered recipes |
+| [**Advanced**](https://zorrooz.github.io/plotit/articles/advanced.html) | Multi-panel, relational layouts, scales, escape hatch |
+| [**API**](https://zorrooz.github.io/plotit/articles/api.html) | Verb families, shared signatures, contract tiers |
+| [**Reference**](https://zorrooz.github.io/plotit/reference/index.html) | Every exported function |
+| [**Design goals**](https://zorrooz.github.io/plotit/articles/design-goals.html) | Why the grammar looks this way |
 
 ## Contributing
 

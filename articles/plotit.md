@@ -1,8 +1,5 @@
 # Getting Started with plotit
 
-> **本页解决什么问题**：Get started with the verb-prefix pipeline
-> (`plotit() |> mark_*() |> scale_*()`).
-
 ## Overview
 
 **plotit** is a declarative plotting package built on ggplot2. It wraps
@@ -48,7 +45,7 @@ Every plotit pipeline follows the same grammar:
 
 ### `mark_*()` — Geometric Layers
 
-Thirty-nine mark functions add visual elements to your plot, spanning
+Forty-three mark functions add visual elements to your plot, spanning
 basic geometry (including step lines, ruggeds, spokes and curved links),
 distributions (histogram, density, box, violin, beeswarm, ECDF, QQ),
 statistical layers (smooth, hex, bin2d, density_2d, contour, correlation
@@ -254,3 +251,12 @@ p <- mtcars |>
 
 export(p, "mtcars_plot.png", width = 8, height = 5, dpi = 300)
 ```
+
+## Next
+
+- [Gallery](https://zorrooz.github.io/plotit/articles/visualizing-data.md)
+  — chart families by intent
+- [Advanced](https://zorrooz.github.io/plotit/articles/advanced.md) —
+  multi-panel, relational, scales, escape hatch
+- [API](https://zorrooz.github.io/plotit/articles/api.md) — the grammar
+  as a system

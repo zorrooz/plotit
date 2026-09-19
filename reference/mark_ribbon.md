@@ -70,8 +70,7 @@ mark_ribbon(
 - alpha:
 
   Band fill opacity; `NULL` (default) uses the statistical token
-  `alpha_ci` (0.25), tuned so stacked evidence stays readable behind
-  points and lines.
+  `alpha_ci` (0.4), matching tidyplots ribbons behind points and lines.
 
 - width:
 

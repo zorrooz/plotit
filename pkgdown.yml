@@ -2,28 +2,12 @@ pandoc: 3.8.3
 pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
-  articles/api-system: api-system.html
-  composing: composing.html
-  customizing: customizing.html
-  articles/gallery-annotations: gallery-annotations.html
-  articles/gallery-comparisons: gallery-comparisons.html
-  articles/gallery-composing: gallery-composing.html
-  articles/gallery-coordinates: gallery-coordinates.html
-  articles/gallery-distributions: gallery-distributions.html
-  articles/gallery-geo: gallery-geo.html
-  articles/gallery-matrix: gallery-matrix.html
-  articles/gallery-proportions: gallery-proportions.html
-  articles/gallery-relational: gallery-relational.html
-  articles/gallery-relationships: gallery-relationships.html
-  articles/gallery-system: gallery-system.html
-  articles/gallery-trends: gallery-trends.html
-  articles/philosophy: philosophy.html
+  advanced: advanced.html
+  api: api.html
+  design-goals: design-goals.html
   plotit: plotit.html
-  relational: relational.html
-  articles/transform-recipes: transform-recipes.html
-  articles/use-case-bioinformatics: use-case-bioinformatics.html
-  articles/use-case-publishing: use-case-publishing.html
-last_built: 2026-08-31T04:05Z
+  visualizing-data: visualizing-data.html
+last_built: 2026-09-19T07:09Z
 urls:
   reference: https://zorrooz.github.io/plotit/reference
   article: https://zorrooz.github.io/plotit/articles

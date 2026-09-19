@@ -26,7 +26,7 @@ style(plot, ..., base_size = NULL, base_family = NULL, base_theme = NULL)
 
 - base_size:
 
-  Base font size in pts (default 10).
+  Base font size in pts (default 7, tidyplots-calibrated).
 
 - base_family:
 

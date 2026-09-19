@@ -36,7 +36,7 @@ mark_treemap(
 - node_color:
 
   Default tile fill when no fill aesthetic is mapped (default
-  `._MARK_STYLE$primary` = `"#4E79A7"`).
+  `._MARK_STYLE$primary` = `"#0072B2"`).
 
 - show_labels:
 

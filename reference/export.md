@@ -11,7 +11,7 @@ export(
   filename,
   width = NULL,
   height = NULL,
-  dpi = 300,
+  dpi = 600,
   device = NULL,
   ...
 )
@@ -43,7 +43,7 @@ export(
 
 - dpi:
 
-  Resolution for raster formats (default 300).
+  Resolution for raster formats (default 600, journal submission).
 
 - device:
 

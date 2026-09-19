@@ -37,7 +37,7 @@ mark_dumbbell(
 - color_start:
 
   Colour for the start point (default `._MARK_STYLE$primary` =
-  `"#4E79A7"`).
+  `"#0072B2"`).
 
 - color_end:
 
